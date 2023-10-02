@@ -90,11 +90,11 @@ def parsing_files_into_memory():
     print(f"\nFirst block found in image:\n{block_text}")
 
     # Parse website
-    # website = "https://politico.com"
-    # print (f"\n > Parsing {website}")
-    # website_parsed_output = Parser().parse_website(website, write_to_db=False,save_history=False,get_links=False)
-    # block_text = website_parsed_output[0]["text"]
-    # print(f"\nFirst block found in website:\n{block_text}")
+    website = "https://politico.com"
+    print (f"\n > Parsing {website}")
+    website_parsed_output = Parser().parse_website(website, write_to_db=False,save_history=False,get_links=False)
+    block_text = website_parsed_output[0]["text"]
+    print(f"\nFirst block found in website:\n{block_text}")
 
     # Parse wiki
     wiki_topic = "Canada"

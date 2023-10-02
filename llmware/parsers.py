@@ -1731,7 +1731,11 @@ class Parser:
         fp_tmp = os.path.join(local_work_folder, "process_website/")
 
         website_name = "my_website.html"
-        out_name = str(random.randint(100000, 999999)) + "_" + website.url_main.split(".")[-2] + ".html"
+        
+        # apply secure_filename to remove any extra "/"
+        secure_url_name = secure_filename(website.url_main.split(".")[-2])
+
+        out_name = str(random.randint(100000, 999999)) + "_" + secure_url_name + ".html"
 
         if self.library:
             upload_fp = self.library.file_copy_path
