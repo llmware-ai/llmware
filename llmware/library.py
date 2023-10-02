@@ -458,12 +458,12 @@ class Library:
         # check if instantiated model and tokenizer -> load as HuggingFace model
         if model:
             if from_hf:
-                logging.warning("update: loading hf model")
+                logging.info("update: loading hf model")
                 my_model = ModelCatalog().load_hf_embedding_model(model, tokenizer)
                 batch_size = 50
 
             if from_sentence_transformer:
-                logging.warning("update: loading sentence transformer model")
+                logging.info("update: loading sentence transformer model")
                 if not embedding_model_name:
                     raise ImportingSentenceTransformerRequiresModelNameException
 
