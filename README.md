@@ -248,11 +248,13 @@ Information on ways to participate can be found in our [Contributors Guide](http
 - FAISS
 - Pinecone
 
-**Prereq's:**  
-- [Homebrew](https://docs.brew.sh/Installation)
-- [python v3.9 - 3.10](https://www.python.org/about/gettingstarted/)
-- On Linux, the pip package attempts to install the native dependencies.  If it is run without root permission or a package manager other than Apt is used, you will need to manually install the following native packages:
-  * mongo-c-driver, libpng, libzip, libtiff, zlib, tesseract, popplar
+**Prereqs:**  
+- All Platforms: [python v3.9 - 3.10](https://www.python.org/about/gettingstarted/)
+- Mac: [Homebrew](https://docs.brew.sh/Installation) is used to install the native dependencies
+- Linux: 
+  1. The pip package attempts to install the native dependencies. If it is run without root permission or a package manager other than Apt is used, you will need to manually install the following native packages: ```apt install -y libxml2 libpng-dev libmongoc-dev libzip4 tesseract-ocr poppler-utils```
+  2. The llmware parsers optimize for speed by using large stack frames. If you receive a "Segmentation Fault" during a parsing operation, update the system's 'stack size' resource limit: ```ulimit -s 32768000```
+  
 
 **Optional:**
 - [Docker](https://docs.docker.com/get-docker/) 

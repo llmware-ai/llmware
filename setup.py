@@ -26,10 +26,7 @@ def custom_install_command():
     
         if platform.system() == "Linux":
             if os.system('apt list') == 0:
-                os.system('apt update && apt install -y gcc libxml2 libmongoc-dev libzip4')
-                return
-            if os.system('yum help') == 0:
-                os.system('yum update && yum -y install gcc libxml2 libmongoc-dev libzip4')
+                os.system('apt update && apt install -y gcc libxml2 libpng-dev libmongoc-dev libzip4 tesseract-ocr poppler-utils')
                 return
     except Exception as e:
         print (e)
