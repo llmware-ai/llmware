@@ -52,7 +52,11 @@ Explore [additional llmware capabilities](https://github.com/llmware-ai/llmware/
 ### 1. Install llmware:
 
 ```bash
-python3 pip install llmware
+pip install llmware
+```
+or 
+```bash
+python3 -m pip install llmware
 ```
 See [Working with llmware](#%EF%B8%8F-working-with-the-llmware-github-repository) for other options to get up and running.
 
