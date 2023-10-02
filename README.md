@@ -234,7 +234,7 @@ pip install .
 Questions and discussions are welcome in our [github discussions](https://github.com/llmware-ai/llmware/discussions).
 
 Interested in contributing to llmware? We welcome involvement from the community to extend and enhance the framework!  
-- 💡 What's your favorite model or is there one you'd like to check out in your experiements? 
+- 💡 What's your favorite model or is there one you'd like to check out in your experiments? 
 - 💡 Have you had success with a different embedding databases?
 - 💡 Is there a prompt that shines in a RAG workflow?
 
