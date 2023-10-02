@@ -86,7 +86,7 @@ setup(
     ],
     keywords="ai,data,development",  # Optional 
     packages=['llmware'],
-    package_data={'llmware': ['lib/**/*.so', 'lib/**/**/*.dylib', 'default_model_repo/**/*.*']},
+    package_data={'llmware': ['lib/**/**/*.so', 'lib/**/**/*.dylib']},
     python_requires=">=3.9, <3.11",
     zip_safe=True,
     cmdclass={
