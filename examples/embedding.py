@@ -13,7 +13,7 @@ from llmware.setup import Setup
 def generate_vector_embeddings(library_name):  
 
     # Create and populate a library
-    print (f"\n > Creating a and populating library: {library_name}...")
+    print (f"\n > Creating and populating library: {library_name}...")
     library = Library().create_new_library(library_name)
     sample_files_path = Setup().load_sample_files()
     library.add_files(input_folder_path=os.path.join(sample_files_path, "SmallLibrary"))
@@ -28,7 +28,7 @@ def generate_vector_embeddings(library_name):
 
     # Then when doing semantic queries, the most recent vector DB used for embeddings will be used.
     # We just find the best 3 hits for "Salary"
-    query = Query(library,embedding_model_name=embedding_model)
+    query = Query(library)
     print (f"\n > Running a query for 'Salary'...")
     query_results = Query(library).semantic_query(query="Salary", result_count=3, results_only=True)
     print (query_results) 
@@ -36,5 +36,5 @@ def generate_vector_embeddings(library_name):
     for query_result in query_results:
         print("File: " +  query_result["file_source"] + " (Page " + str(query_result["page_num"]) + "):\n" + query_result["text"] + "\n")
 
-generate_vector_embeddings("embedding_tests")
+generate_vector_embeddings("embedding_test")
 
