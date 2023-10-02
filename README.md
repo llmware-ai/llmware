@@ -52,7 +52,7 @@ Explore [additional llmware capabilities](https://github.com/llmware-ai/llmware/
 ### 1. Install llmware:
 
 ```bash
-python3 -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ llmware
+python3 pip install llmware
 ```
 See [Working with llmware](#%EF%B8%8F-working-with-the-llmware-github-repository) for other options to get up and running.
 
@@ -60,7 +60,7 @@ See [Working with llmware](#%EF%B8%8F-working-with-the-llmware-github-repository
 
 MongoDB and Milvus are optional and used to provide production-grade database and vector embedding capabilities. The fastest way to get started is to use the provided Docker Compose file which takes care of running them both:
 ```bash
-curl -o docker-compose.yaml https://raw.githubusercontent.com/llmware-ai/llmware/main/mongodb-milvus-compose.yaml
+curl -o docker-compose.yaml https://raw.githubusercontent.com/llmware-ai/llmware/main/docker-compose.yaml
 ```
 and then run the containers:
 ```bash
@@ -205,7 +205,7 @@ git clone git@github.com:llmware-ai/llmware.git
 ```
 or download/extract a [zip of the llmware repository](https://github.com/llmware-ai/llmware/archive/refs/heads/main.zip)
 
-### Other options for running llmware - TODO UPDATE THESE INSTRUCTIONS
+### Other options for running llmware
 
 <details>
 <summary><b>Run llmware in a container </b></summary>
@@ -262,7 +262,7 @@ Information on ways to participate can be found in our [Contributors Guide](http
 <details>
   <summary><b>Change Log</b></summary>
 
-- **Oct 2,2023:**  🔥 Initial release of llmware to open source!! 🔥
+- **Oct 2, 2023:**  🔥 Initial release of llmware to open source!! 🔥
 
 </details>
 
