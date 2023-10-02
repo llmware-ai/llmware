@@ -1,0 +1,12 @@
+# Backup fiels
+~*
+
+# Python build / packaging
+build/
+dist/
+__pycache__/
+llmware.egg-info/
+venv/
+
+# Mac
+.DS_Store/

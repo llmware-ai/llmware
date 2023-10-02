@@ -1,0 +1,92 @@
+
+Copyright 2023, llmware 
+
+This software contains links to the llmware public model repository.  Models in this repository are licensed under the Apache License 2.0. (https://www.apache.org/licenses/LICENSE-2.0)
+
+This software contains code copied from, derived from or inspired by Nils Reimers and the UKP Labe Sentence Transformers Model. (https://github.com/UKPLab/sentence-transformers)
+Copyright 2019 Nils Reimers
+
+This software contains code copied from, derived from or inspired from the PyTorch BERT model.  (https://github.com/huggingface/transformers)
+Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
+Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+
+This software contains code copied from, derived from or inspired from the Huggingface transformers generation code. (https://github.com/huggingface/transformers/src/transformers/generation)
+Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
+Copyright (c) 2018, NVIDIA CORPORATION. All rights reserved.
+
+=================================================================================================
+
+Open-Source dependencies for the llmware package:
+
+3-clause BSD License (https://opensource.org/license/bsd-3-clause/)
+   * Software: libzip (https://libzip.org/)
+   * Software: lxml (https://github.com/lxml/lxml)
+   * Software: numpy (https://github.com/numpy/numpy)
+   * Software: scipy (https://github.com/scipy/scipy)
+   * Software: torch (https://github.com/pytorch/pytorch)
+   * Software: Werkzeug (https://github.com/pallets/werkzeug/)
+
+Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
+   * Software: boto3 (https://github.com/boto/boto3)
+   * Software: google-cloud-aiplatform (https://github.com/googleapis/python-aiplatform)
+   * Software: mongo-c-driver (https://github.com/mongodb/mongo-c-driver)
+   * Software: pymilvus (https://github.com/milvus-io/pymilvus)
+   * Software: pymongo (http://github.com/mongodb/mongo-python-driver)
+   * Software: pytesseract (https://github.com/madmaze/pytesseract)
+   * Software: tesseract (https://github.com/tesseract-ocr/tesseract)
+   * Software: tokenizers (https://github.com/huggingface/tokenizers)
+   * Software: yfinance (https://github.com/ranaroussi/yfinance)
+
+GNU GENERAL PUBLIC LICENSE 3.0 (https://www.gnu.org/licenses/gpl-3.0.html#license-text)
+   * Software:  poppler (https://poppler.freedesktop.org/)
+
+Historical Permission Notice and Disclaimer (HPND) (https://spdx.org/licenses/HPND)
+   * Software: pillow (https://github.com/python-pillow/Pillow)
+
+libtiff License (https://spdx.org/licenses/libtiff.html)
+   * Softward: libtiff (http://www.libtiff.org/)
+
+MIT License (https://opensource.org/license/mit/)
+   * Software: ai21 (https://pypi.org/project/ai21/) 
+   * Software: anthropic (https://github.com/anthropics/anthropic-sdk-python)
+   * Software: beautifulsoup4 (https://pypi.org/project/beautifulsoup4/)
+   * Software: cohere (https://github.com/cohere-ai/cohere-python)
+   * Software: faise-cpu (https://github.com/kyamagu/faiss-wheels)
+   * Software: openai (https://github.com/openai/openai-python)
+   * Software: pdf2image (https://github.com/Belval/pdf2image)
+   * Software: word2number (https://github.com/akshaynagpal/w2n)
+   * Software: Wikipedia-API (https://github.com/martin-majlis/Wikipedia-API)
+
+PNG Reference Library version 2 (https://spdx.org/licenses/libpng-2.0.html)
+   * Software: libpng (http://www.libpng.org/pub/png/libpng.html)
+
+=================================================================================================
+
+Citations for Open Source Software and Research used in the development of llmware:
+
+NumPy 
+Harris, C.R., Millman, K.J., van der Walt, S.J. et al. Array programming with NumPy. Nature 585, 357–362 (2020). 
+
+Tokenizers
+Moi, A., & Patry, N. (2023). HuggingFace's Tokenizers (Version 0.13.4) [Computer software]. https://github.com/huggingface/tokenizers
+
+Torch 
+Paszke, A., Gross, S., Massa, F., Lerer, A., Bradbury, J., Chanan, G., Killeen, T., Lin, Z., Gimelshein, N., Antiga, L., Desmaison, A., Kopf, A., Yang, E., DeVito, Z., Raison, M., Tejani, A., Chilamkurthy, S., Steiner, B., Fang, L., Bai, J., & Chintala, S. (2019). PyTorch: An Imperative Style, High-Performance Deep Learning Library [Conference paper]. Advances in Neural Information Processing Systems 32, 8024–8035. http://papers.neurips.cc/paper/9015-pytorch-an-imperative-style-high-performance-deep-learning-library.pdf
+
+BERT
+Turc, Iulia; Chang, Ming-Wei; Lee, Kenton; Toutanova, Kristina. Well-Read Students Learn Better: On the Importance of Pre-training Compact Models, arXiv preprint arXiv:1908.08962v2 (2019).
+
+Devlin, Jacob; Chang, Ming-Wei; Lee, Kenton; Toutanova, Kristina.  BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding, arXiv preprint arXiv:1810.04805 (2018).
+
+GPT2
+Radford, Alec; Wu, Jeff; Child, Rewon; Luan, David; Amodei, Dario; Sutskever, Ilya.  Language Models are Unsupervised Multitask Learners. (2019)
+
+Roberta
+Yinhan Liu, Myle Ott, Naman Goyal, Jingfei Du, Mandar Joshi, Danqi Chen, Omer Levy, Mike Lewis, Luke Zettlemoyer, Veselin Stoyanov.  RoBERTa: {A} Robustly Optimized {BERT} Pretraining Approach.  CoRR, abs/1907.11692, 2019.  http://arxiv.org/abs/1907.11692.
+
+Sentence-BERT
+Reimers, Nils and Gurevych, Iryna. Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing.  November 2019.  Association for Computational Linguistics. https://arxiv.org/abs/1908.10084.
+
+Huggingface Transformers
+Wolf, T., Debut, L., Sanh, V., Chaumond, J., Delangue, C., Moi, A., Cistac, P., Ma, C., Jernite, Y., Plu, J., Xu, C., Le Scao, T., Gugger, S., Drame, M., Lhoest, Q., & Rush, A. M. (2020). Transformers: State-of-the-Art Natural Language Processing [Conference paper]. 38–45. https://www.aclweb.org/anthology/2020.emnlp-demos.6
+
