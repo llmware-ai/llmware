@@ -15,10 +15,10 @@ import os
 from llmware.prompts import Prompt
 
 # Update these values with your own API Keys, either by setting env vars or editing them directly here:
-openai_api_key    = os.environ["OPENAI_API_KEY"]
-anthropic_api_key = os.environ["ANTHROPIC_API_KEY"]
-ai21_api_key      = os.environ["AI21_API_KEY"]
-google_api_key    = os.environ["GOOGLE_API_KEY"] 
+openai_api_key    = os.environ.get("OPENAI_API_KEY","")
+anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY","")
+ai21_api_key      = os.environ.get("AI21_API_KEY","")
+google_api_key    = os.environ.get("GOOGLE_API_KEY","") 
 
 def prompt_llm_and_print_response(query, vendor_name, llm_name, llm_api_key):
   # Create an instance of the Prompt class using the given LLM

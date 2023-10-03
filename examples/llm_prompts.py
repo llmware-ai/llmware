@@ -10,7 +10,7 @@ from llmware.setup import Setup
 from llmware.util import PromptCatalog
 
 # Update this value with your own API Key, either by setting the env var or editing it directly here:
-openai_api_key = os.environ["OPENAI_API_KEY"]
+openai_api_key = os.environ.get("OPENAI_API_KEY","")
 
 # llmware provides many out of the box prompt instructions such as yes_no, number_or_none, summarize_with_bullets,etc
 def print_all_prompt_instructions():

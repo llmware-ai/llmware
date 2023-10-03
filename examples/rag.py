@@ -6,7 +6,7 @@ from llmware.prompts import Prompt
 from llmware.setup import Setup
 
 # Update this value with your own API Key, either by setting the env var or editing it directly here:
-openai_api_key = os.environ["OPENAI_API_KEY"]
+openai_api_key = os.environ.get("OPENAI_API_KEY","")
 
 # A self-contained end-to-end example of RAG
 def end_to_end_rag():

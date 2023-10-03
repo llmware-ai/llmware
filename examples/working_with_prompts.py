@@ -14,7 +14,7 @@ from llmware.setup import Setup
 from llmware.util import PromptState, Datasets
 
 # Update these values with your own API Keys, either by setting env vars or editing them directly here:
-openai_api_key    = os.environ["OPENAI_API_KEY"]
+openai_api_key    = os.environ.get("OPENAI_API_KEY","")
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false" # Avoiding a HuggingFace warning about process forking
 

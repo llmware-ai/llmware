@@ -11,8 +11,8 @@ from llmware.util import PromptCatalog, Datasets
 from llmware.resources import PromptState
 
 # Update these values with your own API Keys, either by setting env vars or editing them directly here:
-openai_api_key    = os.environ["OPENAI_API_KEY"]
-anthropic_api_key = os.environ["ANTHROPIC_API_KEY"]
+openai_api_key    = os.environ.get("OPENAI_API_KEY","")
+anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY","")
 
 # Iterate through and analyze the contracts in a folder 
 def analyze_contracts_on_the_fly():
