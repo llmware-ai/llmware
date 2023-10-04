@@ -60,6 +60,9 @@ MIT License (https://opensource.org/license/mit/)
 PNG Reference Library version 2 (https://spdx.org/licenses/libpng-2.0.html)
    * Software: libpng (http://www.libpng.org/pub/png/libpng.html)
 
+zlib License (https://github.com/madler/zlib/blob/develop/LICENSE)
+   * Software: zlib (https://www.zlib.net/)
+   
 =================================================================================================
 
 Citations for Open Source Software and Research used in the development of llmware:
