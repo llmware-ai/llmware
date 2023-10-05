@@ -113,6 +113,13 @@ class ModelNotFoundException(LLMWareException):
         super().__init__(message)
 
 
+class EmbeddingModelNotFoundException(LLMWareException):
+
+    def __init__(self, library_name):
+        message = f"Embedding model for '{library_name}' could not be located"
+        super().__init__(message)
+
+
 class ImportingSentenceTransformerRequiresModelNameException(LLMWareException):
 
     def __init__(self):
