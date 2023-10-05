@@ -103,7 +103,7 @@ setup(
         'numpy>=1.23.2',
         'openai>=0.27.7',
         'pdf2image>=1.16.0',
-        'Pillow>=9.2.0',
+        'Pillow>=10.0.1',
         'pymilvus>=2.3.0',
         'pymongo>=4.5.0',
         'pytesseract>=0.3.10',
