@@ -1197,7 +1197,11 @@ class Query:
     def locate_query_match (self, query, core_text):
 
         matches_found = []
-
+        
+        # edge case - but return empty match if query is null
+        if not query:
+            return matches_found
+            
         b = CorpTokenizer(one_letter_removal=False, remove_stop_words=False, remove_punctuation=False,
                           remove_numbers=False)
 
