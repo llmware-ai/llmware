@@ -29,11 +29,11 @@ WARNING: This will "clean" the environment before running all tests:
 ### Only running tests from a specific folder or file
 
 ```bash
-./run-tests.sh tests/library
+./run-tests.sh library
 ```
 
 ```bash
-./run-tests.sh tests/models/test_all_generative_models.py
+./run-tests.sh models/test_all_generative_models.py
 ```
 
 ### Including printed output while test is running
