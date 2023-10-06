@@ -26,7 +26,7 @@ from llmware.resources import CollectionRetrieval, QueryState
 from llmware.util import Utilities, CorpTokenizer
 from llmware.models import ModelCatalog
 from llmware.exceptions import LibraryObjectNotFoundException,UnsupportedEmbeddingDatabaseException,\
-    ImportingSentenceTransformerRequiresModelNameException
+    ImportingSentenceTransformerRequiresModelNameException, EmbeddingModelNotFoundException
 
 
 class Query:
@@ -297,7 +297,11 @@ class Query:
         return results_dict
 
     def text_query_with_document_filter(self, query, doc_filter, result_count=20, exhaust_full_cursor=False,
-                                        results_only=True):
+                                        results_only=True, exact_mode=False):
+
+        # prepare query if exact match required
+        if exact_mode:
+            query = self.exact_query_prep(query)
 
         key = None
         value_range = []
@@ -547,8 +551,11 @@ class Query:
 
         self.load_embedding_model()
 
-        # will run semantic query and get blocks by similiarity
-        self.query_embedding = self.embedding_model.embedding(query)
+        # confirm that embedding model exists, or catch and raise error
+        if self.embedding_model:
+            self.query_embedding = self.embedding_model.embedding(query)
+        else:
+            raise EmbeddingModelNotFoundException(self.library_name)
 
         if self.embedding_db and self.embedding_model:
 
@@ -597,9 +604,11 @@ class Query:
 
         th = self.semantic_distance_threshold
 
-        #   run semantic query
-
-        self.query_embedding = self.embedding_model.embedding(query)
+        # confirm that embedding model exists, or catch and raise error
+        if self.embedding_model:
+            self.query_embedding = self.embedding_model.embedding(query)
+        else:
+            raise EmbeddingModelNotFoundException(self.library_name)
 
         if self.embedding_db and self.embedding_model:
             semantic_block_results = self.embeddings.search_index(self.query_embedding,
@@ -636,7 +645,11 @@ class Query:
     def similar_blocks_embedding(self, block, result_count=20, embedding_distance_threshold=10, results_only=True):
 
         # will use embedding to find similar blocks from a given block
-        block_ev = self.embedding_model.embedding(block["text"])
+        # confirm that embedding model exists, or catch and raise error
+        if self.embedding_model:
+            self.query_embedding = self.embedding_model.embedding(block["text"])
+        else:
+            raise EmbeddingModelNotFoundException(self.library_name)
 
         if self.embedding_model and self.embedding_db:
             semantic_block_results = self.embeddings.search_index(self.query_embedding,
