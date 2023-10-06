@@ -266,7 +266,10 @@ Information on ways to participate can be found in our [Contributors Guide](http
 <details>
   <summary><b>Change Log</b></summary>
 
-- **Oct 2, 2023:**  🔥 Initial release of llmware to open source!! 🔥
+- **06 Oct 2023: llmware v0.1.1**
+  - Added test scripts to the github repository for regression testing
+  - Minor defect fixes and version update of Pillow to address [dependency security alert](https://github.com/llmware-ai/llmware/security/dependabot/1).
+- **02 Oct 2023: llmware v0.1.0**  🔥 Initial release of llmware to open source!! 🔥
 
 </details>
 
