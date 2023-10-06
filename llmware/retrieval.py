@@ -1070,13 +1070,16 @@ class Query:
         if len(output) == 0:
             logging.info("update: Query - Library - block_lookup - block not found: %s ", block_id)
             result = None
-
+            
+            return result
+            
         if len(output) > 1:
             result = output[0]
 
         if len(output) == 1:
             result = output[0]
-
+        
+        # if arrived this point, then positive result has been identified
         result.update({"matches": []})
         result.update({"page_num": result["master_index"]})
 
