@@ -145,6 +145,9 @@ end_to_end_rag()
 File: /Users/llmware/llmware_data/prompt_history/interaction_report_Fri Sep 29 12:07:42 2023.csv
 ```
 #### See additional [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md) for more code samples and ideas.
+#### Or, check out these Getting Started videos:
+- [Fast Start to RAG with LLMWare Open Source Library](https://www.youtube.com/watch?v=0naqpH93eEU)
+- [Use Retrieval Augmented Generation (RAG) without a Database](https://www.youtube.com/watch?v=tAGz6yR14lw)
 
 ### 4. Accessing LLM's and setting-up API keys & secrets
 To get started with a proprietary model, you need to provide your own API Keys.  If you don't yet have one, more information can be found at: [AI21](https://docs.ai21.com/docs/quickstart), [Ai Bloks](https://www.aibloks.com/contact-us), [Anthropic](https://docs.anthropic.com/claude/reference/getting-started-with-the-api),  [Cohere](https://cohere.com/), [Google](https://cloud.google.com/vertex-ai/docs/generative-ai/start/quickstarts/api-quickstart), [OpenAI](https://help.openai.com/en/collections/3675940-getting-started-with-openai-api).
