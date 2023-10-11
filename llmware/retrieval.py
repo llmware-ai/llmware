@@ -1404,4 +1404,17 @@ class Query:
     def generate_csv_report(self):
         output = QueryState(self).generate_query_report_current_state()
         return output
+    
+    #   starting new method here
+    def filter_by_key_value_range(self, key, value_range, results_only=True):
+
+        cursor = CollectionRetrieval(self.library.collection).filter_by_key_value_range(key,value_range)
+
+        query= ""
+        result_dict = self._cursor_to_qr(query, cursor, exhaust_full_cursor=True)
+
+        if results_only:
+            return result_dict["results"]
+
+        return result_dict
 
