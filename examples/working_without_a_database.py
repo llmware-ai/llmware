@@ -76,21 +76,21 @@ def create_datasets_from_prompt_history():
 
     # Create dataset wrapped in "Alpaca format" 
     print (f"\n > Creating a dataset from prompt history in ALPACA format...")
-    alpaca_dataset = datasets.build_gen_ds_from_prompt_history(prompt_wrapping="alpaca")
+    alpaca_dataset = datasets.build_gen_ds_from_prompt_history(prompt_wrapper="alpaca")
     print (f"\nThe dataset dict:\n{json.dumps(alpaca_dataset, indent=2)}")
     sample = datasets.get_dataset_sample(datasets.current_ds_name)
     print (f"\nRandom sample from the dataset:\n{json.dumps(sample, indent=2)}")
 
     # Create dataset wrapped in "Chat GPT format" 
     print (f"\n > Creating a dataset from prompt history in CHAT GPT format...")
-    chatgpt_dataset = datasets.build_gen_ds_from_prompt_history(prompt_wrapping="chat_gpt")
+    chatgpt_dataset = datasets.build_gen_ds_from_prompt_history(prompt_wrapper="chat_gpt")
     print (f"\nThe dataset dict:\n{json.dumps(chatgpt_dataset, indent=2)}")
     sample = datasets.get_dataset_sample(datasets.current_ds_name)
     print (f"\nRandom sample from the dataset:\n{json.dumps(sample, indent=2)}")
 
     # Create dataset wrapped in "Chat GPT format" 
     print (f"\n > Creating a dataset from prompt history in HUMAN BOT format...")
-    humanbot_dataset = datasets.build_gen_ds_from_prompt_history(prompt_wrapping="human_bot")
+    humanbot_dataset = datasets.build_gen_ds_from_prompt_history(prompt_wrapper="human_bot")
     print (f"\nThe dataset dict:\n{json.dumps(humanbot_dataset, indent=2)}")
     sample = datasets.get_dataset_sample(datasets.current_ds_name)
     print (f"\nRandom sample from the dataset:\n{json.dumps(sample, indent=2)}")

@@ -38,11 +38,11 @@ def build_and_use_dataset(library_name):
 
     # Build a simple self-supervised generative dataset- extracts text and splits into 'text' & 'completion'
     # Several generative "prompt_wrappers" are available - chat_gpt | alpaca | 
-    basic_generative_completion_dataset= datasets.build_gen_ds_targeted_text_completion(prompt_wrapping="alpaca")
+    basic_generative_completion_dataset= datasets.build_gen_ds_targeted_text_completion(prompt_wrapper="alpaca")
     
     # Build a generative self-supervised training sets created by pairing 'header_text' with 'text'
-    xsum_generative_completion_dataset = datasets.build_gen_ds_headline_text_xsum(prompt_wrapping="human_bot")
-    topic_prompter_dataset = datasets.build_gen_ds_headline_topic_prompter(prompt_wrapping="chat_gpt")
+    xsum_generative_completion_dataset = datasets.build_gen_ds_headline_text_xsum(prompt_wrapper="human_bot")
+    topic_prompter_dataset = datasets.build_gen_ds_headline_topic_prompter(prompt_wrapper="chat_gpt")
     
     # Filter a library by a key term as part of building the dataset
     filtered_dataset = datasets.build_text_ds(query="agreement", filter_dict={"master_index":1})
@@ -69,7 +69,7 @@ def build_aws_transcribe_datasets(library_name):
 
     # Build generative conversation dataset 
     print (f"\n > Building generative conversation dataset...")
-    generative_conversation_dataset = datasets.build_gen_dialog_ds(prompt_wrapping="human_bot",human_first=True)
+    generative_conversation_dataset = datasets.build_gen_dialog_ds(prompt_wrapper="human_bot",human_first=True)
     dataset_location = os.path.join(library.dataset_path, generative_conversation_dataset["ds_id"])
     print (f"\n > Dataset:")
     print (f"(Files referenced below are found in {dataset_location})")
@@ -81,7 +81,7 @@ def build_aws_transcribe_datasets(library_name):
     
     # Build generative model fine-tuning dataset from llm prompt state history
     # supports 3 popular formats - alpaca, chatgpt, and 'human_bot'
-    generative_curated_dataset = datasets.build_gen_ds_from_prompt_history(prompt_wrapping="alpaca")
+    generative_curated_dataset = datasets.build_gen_ds_from_prompt_history(prompt_wrapper="alpaca")
 
 build_and_use_dataset("test_txt_datasets")
 build_aws_transcribe_datasets("aws_transcribe_datasets")

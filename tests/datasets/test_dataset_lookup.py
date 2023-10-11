@@ -1,34 +1,25 @@
-
 import os
+import sys
 
 from llmware.library import Library
+from llmware.setup import Setup
 from llmware.util import Datasets
 
+sys.path.append(os.path.join(os.path.dirname(__file__),".."))
+from utils import Logger
 
-def test_ds_lookup_by_name(my_test_library):
+def test_ds_lookup_by_name():
 
-    lib = Library().load_library(my_test_library)
+    library = Library().create_new_library("test_dataset_lookup")
+    sample_files_path = Setup().load_sample_files()
+    library.add_files(os.path.join(sample_files_path,"SmallLibrary"))
 
-    ds = Datasets(library=lib)
-
-    print("update: available dataset types: ", ds.dataset_available_types)
-
-    # *** NOTE: changed optional parameter "prompt_wrapping" to "prompt_wrapper" to conform with Prompt Catalog ***
-
-    # lookup dataset by name with new 'self-describing' dataset card
-    for i, entry in enumerate(ds.dataset_available_types):
-        ds_card = ds.get_dataset_card(entry)
-        print("update: dataset card - ", i, ds_card)
-
-    # build selected dataset by name
-    ds_dict = ds.build_ds_by_name("build_text_ds")
-
-    print("ds dict - ", ds_dict)
+    ds = Datasets(library=library)
 
     # iterate thru all datasets in one shot
     for i, entry in enumerate(ds.dataset_available_types):
-
-        # note: depending upon library/account set up - possible for empty datasets and/or potentially errors
+        ds_card = ds.get_dataset_card(entry)
+        Logger().log(f"\n--------------------")
+        Logger().log(f"{i+1}. {ds_card}")
         ds_dict = ds.build_ds_by_name(entry)
-
-    return 0
+        Logger().log(f"\n{ds_dict}")

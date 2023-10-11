@@ -22,13 +22,13 @@ def test_build_datasets():
 
     #   simple self-supervised generative dataset- extracts text and splits into 'text' & 'completion'
     #   several generative "prompt_wrappers" are available - chat_gpt | alpaca | human_bot
-    basic_generative_completion_ds = ds.build_gen_ds_targeted_text_completion(prompt_wrapping="alpaca")
+    basic_generative_completion_ds = ds.build_gen_ds_targeted_text_completion(prompt_wrapper="alpaca")
     assert basic_generative_completion_ds["testing_samples"] > 0
 
     # generative self-supervised training sets created by pairing 'header_text' with 'text'
-    xsum_generative_completion_ds = ds.build_gen_ds_headline_text_xsum(prompt_wrapping="human_bot")
+    xsum_generative_completion_ds = ds.build_gen_ds_headline_text_xsum(prompt_wrapper="human_bot")
     assert xsum_generative_completion_ds["testing_samples"] > 0
-    topic_prompter_ds = ds.build_gen_ds_headline_topic_prompter(prompt_wrapping="chat_gpt")
+    topic_prompter_ds = ds.build_gen_ds_headline_topic_prompter(prompt_wrapper="chat_gpt")
     assert topic_prompter_ds["testing_samples"] > 0
     
     #  options:  filter a library by a key term as part of building the dataset
@@ -60,12 +60,12 @@ def test_build_aws_transcribe_ds():
 
     ds = Datasets(library)
 
-    generative_conversation_ds = ds.build_gen_dialog_ds(prompt_wrapping="human_bot",human_first=True)
+    generative_conversation_ds = ds.build_gen_dialog_ds(prompt_wrapper="human_bot",human_first=True)
     assert generative_conversation_ds["testing_samples"] > 0
 
     # generative model fine-tuning dataset build from llm prompt state history
     # supports 3 popular formats - alpaca, chatgpt, and 'human_bot'
-    generative_curated_ds = ds.build_gen_ds_from_prompt_history(prompt_wrapping="alpaca")
+    generative_curated_ds = ds.build_gen_ds_from_prompt_history(prompt_wrapper="alpaca")
     assert generative_curated_ds["batches"] > 0
 
     library.delete_library()
