@@ -4,10 +4,11 @@ services:
   mongodb:
     container_name: mongodb
     image: mongo:5.0.10
-    environment:
-      # To secure the root account, provide credentials here
-      MONGO_INITDB_ROOT_USERNAME: 
-      MONGO_INITDB_ROOT_PASSWORD: 
+    # To secure MongoDB, uncomment and set the following values
+    # environment:
+    #   - MONGO_INITDB_DATABASE=admin
+    #   - MONGO_INITDB_ROOT_USERNAME=admin
+    #   - MONGO_INITDB_ROOT_PASSWORD=changeme
     volumes:
       - llmware-mongodb:/data/db
     ports:

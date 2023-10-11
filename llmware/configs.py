@@ -35,12 +35,12 @@ class LLMWareConfig:
            "prompt_path_name": "prompt_history/",
            "tmp_path_name": "tmp/"}
 
-    _conf = {"collection_db_uri": "mongodb://localhost:27017/",
-             "collection_db_username": "",
-             "collection_db_password": "",
+    _conf = {"collection_db_uri": os.environ.get("COLLECTION_DB_URI", "mongodb://localhost:27017/"),
+             "collection_db_username": "", # Not used for now
+             "collection_db_password": "", # Not used for now
              "collection_db": "mongo",
-             "milvus_host": "localhost",
-             "milvus_port": 19530,
+             "milvus_host": os.environ.get("MILVUS_HOST","localhost"),
+             "milvus_port": int(os.environ.get("MILVUS_PORT",19530)),
              "debug_mode": 0,
              "llmware_sample_files_bucket": "llmware-sample-docs",
              "llmware_public_models_bucket": "llmware-public-models",
