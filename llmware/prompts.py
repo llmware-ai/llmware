@@ -34,7 +34,7 @@ from llmware.exceptions import LibraryObjectNotFoundException, PromptNotInCatalo
 class Prompt:
 
     def __init__(self, llm_name=None, tokenizer=None, model_card=None, library=None, account_name="llmware",
-                 prompt_id=None, save_state=False, llm_api_key=None, llm_model=None, from_hf=False,
+                 prompt_id=None, save_state=True, llm_api_key=None, llm_model=None, from_hf=False,
                  prompt_catalog=None):
 
         self.account_name = account_name
@@ -52,33 +52,25 @@ class Prompt:
             self.llm_model = ModelCatalog().load_hf_generative_model(llm_model, tokenizer)
             # print("update: loading HF Generative model - ", self.llm_model)
 
-        """
-        if llm_model:
-            # intended for seamless passing of an in-memory HF Generative Model
-            self.llm_model = llm_model
-        """
-
-        if llm_name:
-            self.llm_model = ModelCatalog().load_model(llm_name, api_key=llm_api_key)
-
         # default batch size, assuming all LLMs have min 2048 full context (50% in / 50% out)
         self.context_window_size = 1000
 
         if model_card:
 
-            if "context_window" in model_card:
-                self.context_window_size = int(0.5 * model_card["context_window"])
-
             if "model_name" in model_card:
                 self.llm_model = ModelCatalog().load_model(model_card["model_name"], api_key=llm_api_key)
+                self.context_window_size = self.llm_model.max_input_len
+
+        # if passed llm model name, it will 'over-ride' the model_card if both passed
+        if llm_name:
+
+            self.llm_model = ModelCatalog().load_model(llm_name, api_key=llm_api_key)
+            self.context_window_size = self.llm_model.max_input_len
 
         if not tokenizer:
             self.tokenizer = Utilities().get_default_tokenizer()
         else:
             self.tokenizer = tokenizer
-
-        # if model card is passed, it will be used to derive batch sizes for packaging evidence
-        self.model_card = model_card
 
         # inference parameters
         self.temperature = 0.5
@@ -152,6 +144,7 @@ class Prompt:
 
         self.llm_model = ModelCatalog().load_model(gen_model, api_key=self.llm_model_api_key)
         self.llm_name = gen_model
+        self.context_window_size = self.llm_model.max_input_len
 
         return self
 
@@ -410,7 +403,8 @@ class Prompt:
 
         return source_summary_output
 
-    def prompt_with_source(self, prompt, prompt_name=None, source_id_list=None, first_source_only=True):
+    def prompt_with_source(self, prompt, prompt_name=None, source_id_list=None, first_source_only=True,
+                           max_output=None):
 
         #   this method is intended to be used in conjunction with sources as follows:
         #           prompter = Prompt().load_model("claude-instant-v1", api_key=None)
@@ -423,9 +417,13 @@ class Prompt:
         #               e.g., source_id_list = [0,1,5] would iterate through sources 0, 1, 5
 
         response_list = []
+        response_dict = {}
 
         if prompt_name:
             self.prompt_type = prompt_name
+
+        if max_output:
+            self.llm_max_output_len = max_output
 
         #   this method assumes a 'closed context' with set of preloaded sources into the prompt
         if len(self.source_materials) == 0:
@@ -481,6 +479,12 @@ class Prompt:
                         response_dict.update({"biblio": self.source_materials[i]["biblio"]})
 
                     response_list.append(response_dict)
+
+                # log progress of iterations at info level
+                logging.info("update: prompt_with_sources - iterating through batch - %s of total %s - %s",
+                             i, len(self.source_materials), response_dict)
+
+                logging.info("update: usage stats - %s ", response_dict["usage"])
 
         # register inferences in state history, linked to prompt_id
         for l, llm_inference in enumerate(response_list):
@@ -581,7 +585,7 @@ class Prompt:
     # core basic prompt inference method
     def prompt_main (self, prompt, prompt_name=None, context=None, call_back_attempts=1, calling_app_id="",
                      prompt_id=0,batch_id=0, trx_dict=None, selected_model= None, register_trx=False,
-                     inference_dict=None):
+                     inference_dict=None, max_output=None):
 
         usage = {}
 
@@ -602,7 +606,13 @@ class Prompt:
             self.llm_model = ModelCatalog().load_model(selected_model)
 
         self.llm_model.temperature = self.temperature
-        self.llm_model.max_tokens = self.llm_model.llm_max_output_len
+
+        # if max_output:  self.llm_model.max_tokens = max_output
+
+        if max_output:
+            self.llm_max_output_len = max_output
+
+        self.llm_model.target_requested_output_tokens = self.llm_max_output_len
         self.llm_model.add_context = context
         self.llm_model.add_prompt_engineering = prompt_name
 
@@ -674,6 +684,144 @@ class Prompt:
             self.register_llm_inference(output_dict,prompt_id,trx_dict)
 
         return output_dict
+
+    # new method
+    def _doc_summarizer_old_works(self, query_results, max_batch_size=100, max_batch_cap=None,key_issue=None):
+
+        # runs core summarization loop thru document
+
+        big_batches = len(query_results) // max_batch_size
+        # if there was a 'remainder', then run one additional loop ...
+        # ... this also picks up the 'normal' case of query_results < max_batch_size
+        if len(query_results) > big_batches * max_batch_size:
+            big_batches += 1
+
+        response = []
+
+        if max_batch_cap:
+            if big_batches > max_batch_cap:
+
+                logging.warning("warning: Prompt document summarization - you have requested a "
+                                "maximum cap of %s batches - so truncating the batches from %s to"
+                                "the cap requested - note that content will be missing as a result.",
+                                max_batch_cap, big_batches)
+
+                big_batches = max_batch_cap
+
+        for x in range(0,big_batches):
+
+            qr = query_results[x*max_batch_size:min((x+1)*max_batch_size,len(query_results))]
+
+            source = self.add_source_query_results(qr)
+
+            if key_issue:
+                response += self.prompt_with_source(key_issue, prompt_name="summarize_with_bullets_w_query",
+                                                    first_source_only=False)
+            else:
+                placeholder_issue = "What are the main points?"
+                response += self.prompt_with_source(placeholder_issue,prompt_name="summarize_with_bullets",
+                                                    first_source_only=False)
+
+        return response
+
+    # new method
+    def _doc_summarizer(self, query_results, max_batch_cap=None,key_issue=None):
+
+        # runs core summarization loop thru document
+        response = []
+
+        source = self.add_source_query_results(query_results)
+
+        # print("update - len source materials - ", len(self.source_materials))
+
+        if max_batch_cap:
+            if len(self.source_materials) > max_batch_cap:
+
+                logging.warning("warning: Prompt document summarization - you have requested a "
+                                "maximum cap of %s batches - so truncating the batches from %s to"
+                                "the cap requested - note that content will be missing as a result.",
+                                max_batch_cap, len(self.source_materials))
+
+                self.source_materials = self.source_materials[0:max_batch_cap]
+
+        if key_issue:
+            response += self.prompt_with_source(key_issue, prompt_name="summarize_with_bullets_w_query",
+                                                first_source_only=False)
+        else:
+            placeholder_issue = "What are the main points?"
+            response += self.prompt_with_source(placeholder_issue,prompt_name="summarize_with_bullets",
+                                                first_source_only=False)
+
+        return response
+
+    # new method - designed to receive one document - and directly summarize
+    def summarize_document(self, input_fp,input_fn, query=None, text_only=True, max_batch_cap=10,
+                           key_issue=None):
+
+        output = Parser().parse_one(input_fp,input_fn)
+
+        # run in memory filtering to sub-select from document only items matching query
+        if query:
+            output = Utilities().fast_search_dicts(query, output, remove_stop_words=True)
+
+        response = self._doc_summarizer(output, key_issue=key_issue, max_batch_cap=max_batch_cap)
+
+        if text_only:
+            # return only text
+            output_text = ""
+
+            for i, entries in enumerate(response):
+                # print("update: summaries - ", i, entries)
+                output_text += entries["llm_response"] + "\n"
+
+            return output_text
+
+        else:
+            return response
+
+    # new method - document summarization from library
+    def summarize_document_from_library(self, library, doc_id=None, filename=None, query=None,
+                                        text_only=True,max_batch_cap=10):
+
+        # need to handle error
+        if not doc_id and not filename:
+            placeholder = "no file received"
+            return -1
+
+        if doc_id:
+            key = "doc_ID"
+            value = doc_id
+        else:
+            key = "file_source"
+            value = filename
+
+        if not query:
+            if not isinstance(value,list):
+                value = [value]
+
+            query_results = Query(library).filter_by_key_value_range(key, value)
+
+        else:
+            if isinstance(value,list):
+                if len(value) > 0:
+                    value = value[0]
+            filter_dict = {key:value}
+            query_results = Query(library).text_query_with_custom_filter(query,filter_dict,result_count=20)
+
+        response = self._doc_summarizer(query_results, max_batch_cap=max_batch_cap)
+
+        if text_only:
+            # return only text
+            output_text = ""
+
+            for i, entries in enumerate(response):
+                # print("update: summaries - ", i, entries)
+                output_text += entries["llm_response"] + "\n"
+
+            return output_text
+
+        else:
+            return response
 
     # useful "call backs"
     def summarize_multiple_responses(self, list_of_response_dict=None, response_id_list=None):

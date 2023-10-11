@@ -25,6 +25,7 @@ import traceback
 import ast
 from collections import OrderedDict
 from tqdm.auto import trange
+import time
 
 import torch
 from torch.utils.data import Dataset
@@ -265,21 +266,34 @@ class ModelCatalog:
 
         # by default - if model not found - return None
         my_model = None
+        context_window= 2048    # used in generative models - use 2048 as default safe backup
+        embedding_dims = None   # used in embedding models
+
+        if "context_window" in model_card:
+            context_window = model_card["context_window"]
 
         if model_class in self.model_classes:
 
             # generative models
-            if model_class == "ClaudeModel": my_model = ClaudeModel(model_name=model_name)
-            if model_class == "OpenAIGenModel": my_model = OpenAIGenModel(model_name=model_name)
-            if model_class == "CohereGenModel": my_model = CohereGenModel(model_name=model_name)
-            if model_class == "JurassicModel": my_model = JurassicModel(model_name=model_name)
-            if model_class == "GoogleGenModel": my_model = GoogleGenModel(model_name=model_name)
+            if model_class == "ClaudeModel": my_model = ClaudeModel(model_name=model_name,
+                                                                    context_window=context_window)
+
+            if model_class == "OpenAIGenModel": my_model = OpenAIGenModel(model_name=model_name,
+                                                                          context_window=context_window)
+
+            if model_class == "CohereGenModel": my_model = CohereGenModel(model_name=model_name,
+                                                                          context_window=context_window)
+
+            if model_class == "JurassicModel": my_model = JurassicModel(model_name=model_name,
+                                                                        context_window=context_window)
+
+            if model_class == "GoogleGenModel": my_model = GoogleGenModel(model_name=model_name,
+                                                                          context_window=context_window)
 
             # stub for READ GPT provided -> will add other 3rd party models too
             if model_class == "AIBReadGPTModel": my_model = AIBReadGPTModel(model_name=model_name)
 
             # embedding models
-            embedding_dims = None
 
             if "embedding_dims" in model_card:
                 embedding_dims = model_card["embedding_dims"]
@@ -294,7 +308,7 @@ class ModelCatalog:
                                                                                       embedding_dims=embedding_dims)
 
             if model_class == "LLMWareSemanticModel": my_model = LLMWareSemanticModel(model_name=model_name,
-                                                                              embedding_dims=embedding_dims)
+                                                                                      embedding_dims=embedding_dims)
 
             # placeholder for HF models
             if model_class == "HFGenerativeModel": my_model = HFGenerativeModel(None,None,
@@ -319,7 +333,7 @@ class ModelCatalog:
         # step 2- instantiate the right model class
         my_model = self.get_model_by_name(model_card["model_name"])
         if not my_model:
-            logging.error("error: ModelCatalog - unexpected - could not identify the model - %s ", my_model)
+            logging.error("error: ModelCatalog - unexpected - could not identify the model - %s ", selected_model)
             raise ModelNotFoundException(selected_model)
 
         # step 3- if physical model, then find the location on local server, and if not available, then pull from s3
@@ -465,7 +479,7 @@ class ModelCatalog:
 
 class OpenAIGenModel:
 
-    def __init__(self, model_name=None, api_key=None):
+    def __init__(self, model_name=None, api_key=None, context_window=4000):
 
         self.api_key = api_key
         self.model_name = model_name
@@ -474,11 +488,10 @@ class OpenAIGenModel:
 
         self.separator = "\n"
 
-        #   set max_total_len -> adjust input and output based on use case
-        #   TODO - need to update these parameters by model
-        self.max_total_len = 4000
-        self.max_input_len = 2000
-        self.llm_max_output_len = 2000
+        # assume input (50%) + output (50%)
+        self.max_total_len = context_window
+        self.max_input_len = int(context_window * 0.5)
+        self.llm_max_output_len = int(context_window * 0.5)
 
         # inference settings
         self.temperature = 0.7
@@ -590,6 +603,7 @@ class OpenAIGenModel:
         prompt_enriched = prompt
 
         usage = {}
+        time_start = time.time()
 
         try:
 
@@ -607,7 +621,8 @@ class OpenAIGenModel:
                 usage = {"input": response["usage"]["prompt_tokens"],
                          "output": response["usage"]["completion_tokens"],
                          "total": response["usage"]["total_tokens"],
-                         "metric": "tokens"}
+                         "metric": "tokens",
+                         "processing_time": time.time() - time_start}
 
                 # logging.info("update: open ai response: %s ", response)
 
@@ -632,12 +647,14 @@ class OpenAIGenModel:
                 usage = {"input": response["usage"]["prompt_tokens"],
                          "output": response["usage"]["completion_tokens"],
                          "total": response["usage"]["total_tokens"],
-                         "metric": "tokens"}
+                         "metric": "tokens",
+                         "processing_time": time.time() - time_start}
 
         except Exception as e:
             # this is special error code that will be picked and handled in AIModels().inference handler
             text_out = "/***ERROR***/"
-            usage = {"input":0, "output":0, "total":0, "metric": "tokens"}
+            usage = {"input":0, "output":0, "total":0, "metric": "tokens",
+                     "processing_time": time.time() - time_start}
 
             # raise LLMInferenceResponseException(e)
             logging.error("error: OpenAI model inference produced error - %s ", e)
@@ -652,7 +669,7 @@ class OpenAIGenModel:
 
 class ClaudeModel:
 
-    def __init__(self, model_name=None, api_key=None):
+    def __init__(self, model_name=None, api_key=None, context_window=8000):
 
         self.api_key = api_key
         self.model_name = model_name
@@ -662,9 +679,9 @@ class ClaudeModel:
         self.separator = "\n"
 
         #   Claude/Anthropic model - 8000 max token context window
-        self.max_total_len = 8000
-        self.max_input_len = 4000
-        self.llm_max_output_len = 4000
+        self.max_total_len = context_window
+        self.max_input_len = int(context_window * 0.5)
+        self.llm_max_output_len = int(context_window * 0.5)
 
         # inference settings
         self.temperature = 0.7
@@ -761,6 +778,8 @@ class ClaudeModel:
 
         # preferred model = "claude-instant-v1"
 
+        time_start = time.time()
+
         try:
             response = client.completions.create(prompt=prompt_enriched,
                                                 stop_sequences=[anthropic.HUMAN_PROMPT],
@@ -775,12 +794,14 @@ class ClaudeModel:
             input_count = client.count_tokens(prompt_enriched)
             output_count = client.count_tokens(text_out)
 
-            usage = {"input": input_count, "output": output_count, "total": input_count + output_count, "metric": "tokens"}
+            usage = {"input": input_count, "output": output_count, "total": input_count + output_count,
+                     "metric": "tokens", "processing_time": time.time() - time_start}
 
         except Exception as e:
             # this is special error code that will be picked and handled by calling function
             text_out = "/***ERROR***/"
-            usage = {"input":0, "output":0, "total":0, "metric": "tokens"}
+            usage = {"input":0, "output":0, "total":0, "metric": "tokens",
+                     "processing_time": time.time() - time_start}
 
             # raise LLMInferenceResponseException(e)
             logging.error("error: Anthropic model inference produced error - %s ", e)
@@ -794,7 +815,7 @@ class ClaudeModel:
 
 class GoogleGenModel:
 
-    def __init__(self, model_name=None, api_key=None):
+    def __init__(self, model_name=None, api_key=None, context_window=8192):
 
         self.api_key = api_key
         self.model_name = model_name
@@ -804,9 +825,10 @@ class GoogleGenModel:
 
         # need to confirm max input and output
         #   set max_total_len -> adjust input and output based on use case
-        self.max_total_len = 8192 + 1024
-        self.max_input_len = 8192
+        self.max_total_len = context_window
+        self.max_input_len = int(context_window*0.5)
 
+        # need to check max output for Google - may be asymmetrical cap
         self.llm_max_output_len = 1024
 
         # inference settings
@@ -893,6 +915,8 @@ class GoogleGenModel:
         self.target_requested_output_tokens= 2000
         # note: google api is not well-documented
 
+        time_start = time.time()
+
         try:
 
             # Important: Before calling the model, we need to ensure the contents of the
@@ -914,13 +938,14 @@ class GoogleGenModel:
             output_count = len(text_out)
 
             usage = {"input": input_count, "output": output_count, "total": input_count + output_count,
-                     "metric": "characters"}
+                     "metric": "characters","processing_time": time.time() - time_start}
 
         except Exception as e:
 
             # this is special error code that will be picked and handled in AIModels().inference handler
             text_out = "/***ERROR***/"
-            usage = {"input":0, "output":0, "total":0, "metric": "characters"}
+            usage = {"input":0, "output":0, "total":0, "metric": "characters",
+                     "processing_time": time.time() - time_start}
 
             # raise LLMInferenceResponseException(e)
             logging.error("error: Google model inference produced error:  %s", e)
@@ -951,7 +976,7 @@ class GoogleGenModel:
 
 class JurassicModel:
 
-    def __init__(self, model_name=None, api_key=None):
+    def __init__(self, model_name=None, api_key=None, context_window=2048):
 
         self.api_key = api_key
         self.model_name = model_name
@@ -961,10 +986,10 @@ class JurassicModel:
         self.separator = " -- "
 
         #   set max_total_len -> adjust input and output based on use case
-        self.max_total_len = 2048
-        self.max_input_len = 1024
+        self.max_total_len = context_window
+        self.max_input_len = int(context_window * 0.5)
 
-        self.llm_max_output_len = 1024
+        self.llm_max_output_len = int(context_window * 0.5)
 
         # inference settings
         self.temperature = 0.7
@@ -1051,6 +1076,8 @@ class JurassicModel:
 
         prompt_enriched = self.prompt_engineer(prompt_enriched,self.add_context, inference_dict=inference_dict)
 
+        time_start = time.time()
+
         try:
             ai21.api_key = self.api_key
 
@@ -1075,7 +1102,8 @@ class JurassicModel:
             text_out = response["completions"][0]["data"]["text"]
 
             usage = {"input": len(prompt_enriched), "output": len(text_out),
-                     "total": len(prompt_enriched) + len(text_out), "metric": "chars"}
+                     "total": len(prompt_enriched) + len(text_out), "metric": "chars",
+                     "processing_time": time.time() - time_start}
 
         except Exception as e:
 
@@ -1083,7 +1111,8 @@ class JurassicModel:
 
             text_out = "/***ERROR***/"
 
-            usage = {"input": 0, "output": 0, "total": 0, "metric": "chars"}
+            usage = {"input": 0, "output": 0, "total": 0, "metric": "chars",
+                     "processing_time": time.time() - time_start}
 
             # raise LLMInferenceResponseException(e)
             logging.error("error: Jurassic model inference produced error - %s ", e)
@@ -1097,7 +1126,7 @@ class JurassicModel:
 
 class CohereGenModel:
 
-    def __init__(self, model_name=None, api_key=None):
+    def __init__(self, model_name=None, api_key=None, context_window=2048):
 
         self.api_key = api_key
         self.model_name = model_name
@@ -1108,10 +1137,10 @@ class CohereGenModel:
 
         #   set max_total_len -> adjust input and output based on use case
         #   confirmed - Cohere generation models - 2048 max context window
-        self.max_total_len = 2048
-        self.max_input_len = 1024
+        self.max_total_len = context_window
+        self.max_input_len = int(context_window * 0.5)
 
-        self.llm_max_output_len = 1024
+        self.llm_max_output_len = int(context_window * 0.5)
 
         # inference settings
         self.temperature = 0.7
@@ -1210,6 +1239,8 @@ class CohereGenModel:
 
         co = cohere.Client(self.api_key)
 
+        time_start = time.time()
+
         try:
 
             if self.model_name in ["summarize-xlarge", "summarize-medium"]:
@@ -1220,7 +1251,8 @@ class CohereGenModel:
                 text_out = response.summary
 
                 usage = {"input": len(prompt_enriched), "output": len(text_out),
-                         "total": len(prompt_enriched) + len(text_out), "metric": "chars"}
+                         "total": len(prompt_enriched) + len(text_out), "metric": "chars",
+                         "processing_time": time.time() - time_start}
 
             else:
                 # generate api
@@ -1231,7 +1263,8 @@ class CohereGenModel:
                 text_out = response.generations[0].text
 
                 usage = {"input": len(prompt_enriched), "output": len(text_out),
-                         "total": len(prompt_enriched) + len(text_out), "metric": "chars"}
+                         "total": len(prompt_enriched) + len(text_out), "metric": "chars",
+                         "processing_time": time.time() - time_start}
 
         except Exception as e:
 
@@ -1239,7 +1272,9 @@ class CohereGenModel:
 
             text_out = "/***ERROR***/"
 
-            usage = {"input": 0, "output": 0, "total": 0, "metric": "chars"}
+            usage = {"input": 0, "output": 0, "total": 0, "metric": "chars",
+                     "processing_time": time.time() - time_start}
+
             # raise LLMInferenceResponseException(e)
             logging.error("error: Cohere model inference produced error - %s - ", e)
 
@@ -1254,7 +1289,7 @@ class CohereGenModel:
 
 class AIBReadGPTModel:
 
-    def __init__(self, model_name=None, api_key=None):
+    def __init__(self, model_name=None, api_key=None, context_window=2048):
 
         self.api_key = api_key
 
@@ -1265,10 +1300,9 @@ class AIBReadGPTModel:
         self.error_message = "\nUnable to connect to AIB READ GPT API. Please try again later."
 
         #   set max_total_len -> adjust input and output based on use case
-        self.max_total_len = 2048
-        self.max_input_len = 1024
-
-        self.llm_max_output_len = 1024
+        self.max_total_len = context_window
+        self.max_input_len = int(0.4 * context_window)
+        self.llm_max_output_len = int(0.4 * context_window)
 
         self.separator = "\n"
 
@@ -1368,6 +1402,8 @@ class AIBReadGPTModel:
 
         params = {"prompt": prompt_enriched, "max_output_tokens": target_len, "api_key": self.api_key}
 
+        time_start = time.time()
+
         try:
             # linked to TEST SERVER
             output = requests.post(os.environ.get("AIB_READ_GPT_URI"), data=params)
@@ -1377,7 +1413,8 @@ class AIBReadGPTModel:
         except:
 
             text_output = "/***ERROR***/"
-            usage = {"input": 0, "output": 0, "total": 0, "metric": "tokens"}
+            usage = {"input": 0, "output": 0, "total": 0, "metric": "tokens",
+                     "processing_time": time.time() - time_start}
 
             logging.error("error: no response from aib remote server for aib-read-gpt model - "
                           "check api key and connection")
@@ -1397,6 +1434,7 @@ class AIBReadGPTModel:
                     usage.update({"output": output_len})
                     usage.update({"total": usage["input"] + output_len})
                     usage.update({"metric": "tokens"})
+                    usage.update({"processing_time": time.time() - time_start})
 
                     output_response = {"llm_response": response, "usage": usage}
 
@@ -1752,7 +1790,7 @@ class HFEmbeddingModel:
 class HFGenerativeModel:
 
     def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None,
-                 prompt_wrapper=None, instruction_following=False):
+                 prompt_wrapper=None, instruction_following=False, context_window=2048):
 
         # pull in expected hf input
         self.model_name = model_name
@@ -1765,9 +1803,9 @@ class HFGenerativeModel:
 
         self.model_type = None
         self.config = None
-        self.max_total_len = 2048
-        self.max_input_len = 1024
-        self.llm_max_output_len = 1024
+        self.max_total_len = context_window
+        self.max_input_len = int(0.5 * context_window)
+        self.llm_max_output_len = int(0.5 * context_window)
         self.model_architecture = None
         self.separator = "\n"
 
@@ -1897,6 +1935,9 @@ class HFGenerativeModel:
         input_token_len = len(tokenizer_output)
         input_ids = torch.tensor(tokenizer_output).unsqueeze(0)
 
+        # time start
+        time_start = time.time()
+
         #   Note: this is a simplified 'sampling' generation loop, derived from the far more
         #   sophisticated Generation capabilities provided by the Transformers library
         #   It is included here to enable transformers users to easily extend llmware to include
@@ -2021,7 +2062,8 @@ class HFGenerativeModel:
         usage = {"input": input_token_len,
                  "output": total_len - input_token_len,
                  "total": total_len,
-                 "metric": "tokens"}
+                 "metric": "tokens",
+                 "processing_time": time.time() - time_start}
 
         output_response = {"llm_response": output_str, "usage": usage}
 
