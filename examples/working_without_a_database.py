@@ -1,5 +1,4 @@
 ''' This example demonstrates what can be accomplished with llmware with no databases (e.g no MongoDB)
-    1. 
 '''
 
 import json
