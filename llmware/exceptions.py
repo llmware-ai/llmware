@@ -144,5 +144,10 @@ class SetUpLLMWareWorkspaceException(LLMWareException):
         super().__init__(message)
 
 
+class DatasetTypeNotFoundException(LLMWareException):
+
+    def __init__(self, ds_name):
+        message = f"'{ds_name}' is not a recognized dataset type"
+        super().__init__(message)
 
 
