@@ -3253,7 +3253,7 @@ class Datasets:
              "features": ["text", "file_source", "sample_number"],
              "input_configs": ["prompt_wrapper"]},
 
-            {"dataset_name": "build_gen_dialog_ds",
+            {"dataset_name": "build_gen_ds_dialog",
              "description": "Generative AI fine-tuning dataset, generated in self-supervised process using "
                             "dialog transcripts to re-create role-based dialog.",
              "features": ["text"],
@@ -4123,7 +4123,7 @@ class Datasets:
             total_sample_count += batch_counter
 
         # results.close()
-        ds_name = "build_gen_ds_dialog_ds"
+        ds_name = "build_gen_ds_dialog"
         dataset_card = self.get_dataset_card(ds_name)
 
         dataset_dict = {"ds_type": dataset_card["dataset_name"],
