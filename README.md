@@ -1,8 +1,6 @@
 # llmware
 ![Static Badge](https://img.shields.io/badge/python-3.9_%7C_3.10-blue?color=blue)
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
-![PyPI - Downloads](https://img.shields.io/pypi/dw/llmware?color=blue)
-
 
 `llmware` is a unified, open, extensible framework for LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides a comprehensive set of tools that anyone can use – from beginner to the most sophisticated AI developer – to rapidly build industrial-grade enterprise LLM-based applications. 
 
@@ -46,7 +44,10 @@ With `llmware`, our goal is to contribute to and help catalize an open community
 * A complete set of text-chunking tools to separate information and associated metadata to a consistent block format.
 </details>
 
-Explore [additional llmware capabilities](https://github.com/llmware-ai/llmware/blob/main/examples/README.md)
+#### 📚 Explore [additional llmware capabilities](https://github.com/llmware-ai/llmware/blob/main/examples/README.md) and 🎬 Check out these videos on how to quickly get started with RAG:
+- [Fast Start to RAG with LLMWare Open Source Library](https://www.youtube.com/watch?v=0naqpH93eEU)
+- [Use Retrieval Augmented Generation (RAG) without a Database](https://www.youtube.com/watch?v=tAGz6yR14lw)
+
 ## 🌱 Getting Started
 
 ### 1. Install llmware:
@@ -144,10 +145,8 @@ end_to_end_rag()
  > Generating CSV report...
 File: /Users/llmware/llmware_data/prompt_history/interaction_report_Fri Sep 29 12:07:42 2023.csv
 ```
-#### See additional [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md) for more code samples and ideas.
-#### Or, check out these Getting Started videos:
-- [Fast Start to RAG with LLMWare Open Source Library](https://www.youtube.com/watch?v=0naqpH93eEU)
-- [Use Retrieval Augmented Generation (RAG) without a Database](https://www.youtube.com/watch?v=tAGz6yR14lw)
+#### 📚 See additional [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md) for more code samples and ideas.
+
 
 ### 4. Accessing LLM's and setting-up API keys & secrets
 To get started with a proprietary model, you need to provide your own API Keys.  If you don't yet have one, more information can be found at: [AI21](https://docs.ai21.com/docs/quickstart), [Ai Bloks](https://www.aibloks.com/contact-us), [Anthropic](https://docs.anthropic.com/claude/reference/getting-started-with-the-api),  [Cohere](https://cohere.com/), [Google](https://cloud.google.com/vertex-ai/docs/generative-ai/start/quickstarts/api-quickstart), [OpenAI](https://help.openai.com/en/collections/3675940-getting-started-with-openai-api).
