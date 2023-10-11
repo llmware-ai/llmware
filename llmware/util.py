@@ -44,7 +44,7 @@ import yfinance
 from llmware.resources import CollectionRetrieval, CollectionWriter, PromptState, CloudBucketManager
 from llmware.configs import LLMWareConfig
 from llmware.exceptions import ModelNotFoundException, DependencyNotInstalledException, \
-    FilePathDoesNotExistException, LibraryObjectNotFoundException
+    FilePathDoesNotExistException, LibraryObjectNotFoundException, DatasetTypeNotFoundException
 
 
 class Utilities:
@@ -3220,6 +3220,73 @@ class Datasets:
         self.testing_sample_file_name_base = "testing_samples"
         self.validation_sample_file_name_base = "validation_samples"
 
+        #   available dataset builder types
+        self.dataset_available_types = ["build_text_ds", "build_gen_ds_headline_topic_prompter",
+                                        "build_gen_ds_headline_text_xsum", "build_gen_dialog_ds",
+                                        "build_gen_ds_from_prompt_history", "build_visual_ds_image_labels",
+                                        "build_gen_ds_targeted_text_completion"]
+
+        #   dataset catalog
+        self.dataset_catalog = [
+
+            {"dataset_name": "build_text_ds",
+             "description": "Core unsupervised text chunk dataset useful for text embedding "
+                            "fine-tuning and domain adaptation with token span size between "
+                            "{} - {}",
+             "features": ["text", "file_source", "sample_number"],
+             "input_configs": ["min_tokens", "max_tokens"]},
+
+            {"dataset_name": "build_gen_ds_headline_topic_prompter",
+             "description": "Generative AI Dataset created in self-supervised extraction of 'headlines', "
+                            "paired with longer neighboring text passages.  In this dataset, the 'headline' "
+                            "is used a prompter topic with the expected Generative output to be a longer "
+                            "paragraph or text on the selected headline subject matter- assembled in format "
+                            "{} for generative model fine-tuning",
+             "features": ["text", "file_source", "sample_number"],
+             "input_configs": ["prompt_wrapper"]},
+
+            {"dataset_name": "build_gen_ds_headline_text_xsum",
+             "description": "Generative AI Dataset for 'XSUM' or extreme summarization, created in "
+                            "self-supervised extraction of 'headlines' paired with neighboring text "
+                            "passages, and assembled in {} format for generative model "
+                            "fine-tuning.",
+             "features": ["text", "file_source", "sample_number"],
+             "input_configs": ["prompt_wrapper"]},
+
+            {"dataset_name": "build_gen_dialog_ds",
+             "description": "Generative AI fine-tuning dataset, generated in self-supervised process using "
+                            "dialog transcripts to re-create role-based dialog.",
+             "features": ["text"],
+             "input_configs": ["prompt_wrapper"]},
+
+            {"dataset_name": "build_gen_ds_from_prompt_history",
+             "description": "Generative AI Dataset created self-supervised from AI audit log records that "
+                            "capture all facets of generative AI inferences, and can be re-packaged to enhance "
+                            "fine-tuning.",
+             "features": ["text"],
+             "input_configs": ["prompt_wrapper"]},
+
+            {"dataset_name": "build_visual_ds_image_labels",
+             "description": "Generative Visual dataset, captured in self-supervised automated process "
+                            "by associating nearby text with images for training visual description "
+                            "generation.",
+             "features": ["sample_number","image_ref","doc_ID","block_ID","text_long","text_short"],
+             "input_configs": []},
+
+            {"dataset_name": "build_gen_ds_targeted_text_completion",
+             "description": "Generative Text/Completion Dataset - splits selected sentences to "
+                            "create an open-context 'what is the completion?' text gen dataset.",
+             "features": ["text"],
+             "input_configs": ["prompt_wrapper"]}
+        ]
+
+    def get_dataset_card(self, ds_name):
+
+        for entries in self.dataset_catalog:
+            if entries["dataset_name"] == ds_name:
+                return entries
+        return {}
+
     def token_counter(self, text_sample):
         toks = self.tokenizer.encode(text_sample).ids
         return len(toks)
@@ -3362,6 +3429,51 @@ class Datasets:
         sample = {"text": content}
 
         return sample
+
+    def build_ds_by_name(self, ds_name, min_tokens=100, max_tokens=1000,query=None,
+                         filter_dict=None, qr=None, custom_id=None,prompt_wrapper="human_bot",
+                         role_dict=None, human_first=True):
+
+        dataset_dict = None
+
+        # available dataset build types in self.dataset_catalog:
+        #   "build_text_ds", "build_gen_ds_headline_topic_prompter",
+        #   "build_gen_ds_headline_text_xsum", "build_gen_dialog_ds",
+        #   "build_gen_ds_from_prompt_history", "build_visual_ds_image_labels",
+        #   "build_gen_ds_targeted_text_completion"
+
+        if ds_name not in self.dataset_available_types:
+            raise DatasetTypeNotFoundException(ds_name)
+
+        if ds_name == "build_text_ds":
+            dataset_dict = self.build_text_ds(min_tokens=min_tokens, max_tokens=max_tokens,query=query,
+                                              filter_dict=filter_dict, qr=qr, custom_id=custom_id)
+
+        if ds_name == "build_gen_ds_headline_topic_prompter":
+            dataset_dict = self.build_gen_ds_headline_topic_prompter(prompt_wrapper=prompt_wrapper,
+                                                                     custom_id=custom_id, qr=qr)
+
+        if ds_name == "build_gen_ds_headline_text_xsum":
+            dataset_dict = self.build_gen_ds_headline_text_xsum(prompt_wrapper=prompt_wrapper,
+                                                                custom_id=custom_id, qr=qr)
+
+        if ds_name == "build_gen_dialog_ds":
+            dataset_dict = self.build_gen_dialog_ds(prompt_wrapper=prompt_wrapper, custom_id=custom_id, qr=qr,
+                                                    human_first=human_first, role_dict=role_dict)
+
+        if ds_name == "build_gen_ds_from_prompt_history":
+            dataset_dict = self.build_gen_ds_from_prompt_history(prompt_wrapper=prompt_wrapper, custom_id=custom_id)
+
+        if ds_name == "build_visual_ds_image_labels":
+            dataset_dict = self.build_visual_ds_image_labels(query=query, filter_dict=filter_dict,
+                                                             qr=qr, custom_id=custom_id)
+
+        if ds_name == "build_gen_ds_targeted_text_completion":
+            dataset_dict = self.build_gen_ds_targeted_text_completion (prompt_wrapper=prompt_wrapper,
+                                                                       query=query, filter_dict=filter_dict,
+                                                                       qr=qr, custom_id=custom_id)
+
+        return dataset_dict
 
     def build_text_ds (self, min_tokens=100, max_tokens=1000,query=None,filter_dict=None, qr=None, custom_id=None):
 
@@ -3550,7 +3662,11 @@ class Datasets:
             total_sample_count += len(validation_set)
             total_sample_count += len(testing_set)
 
-        dataset_dict = {"ds_id": ds_id,
+        ds_name = "build_text_ds"
+        dataset_card = self.get_dataset_card(ds_name)
+
+        dataset_dict = {"ds_type": dataset_card["dataset_name"],
+                        "ds_id": ds_id,
                         "training_samples": training_sample_count,
                         "training_files": training_files_created,
                         "validation_samples": validation_sample_count,
@@ -3558,11 +3674,10 @@ class Datasets:
                         "testing_samples": testing_sample_count,
                         "testing_files": testing_files_created,
                         "batches": batch_number + 1,
-                        "prompt_wrapping": "None",
-                        "description": "Core unsupervised text chunk dataset useful for text embedding "
-                                       "fine-tuning and domain adaptation with token span size between "
-                                       "{} - {}".format(str(min_tokens),str(max_tokens)),
-                        "features": ["text", "file_source", "sample_number"]
+                        "prompt_wrapper": "None",
+                        "description": dataset_card["description"].format(str(min_tokens),str(max_tokens)),
+                        "features": dataset_card["features"],
+                        "time_stamp": str(Utilities().get_current_time_now())
                         }
 
         # save dataset dict -> and put in ds folder
@@ -3572,7 +3687,7 @@ class Datasets:
 
         return dataset_dict
 
-    def build_gen_ds_headline_topic_prompter (self, prompt_wrapping="human_bot", custom_id=None, qr=None):
+    def build_gen_ds_headline_topic_prompter (self, prompt_wrapper="human_bot", custom_id=None, qr=None):
 
         #   create specific folder for dataset artifacts inside library dataset path
         ds_id, ds_folder = self.issue_new_ds_id(custom_id=custom_id)
@@ -3620,26 +3735,26 @@ class Datasets:
                 if len(text_long) > self.text_long_sample_min_len and len(text_short) > self.text_empty_min_threshold:
                     # need to additional checks if text_long is > max
 
-                    if prompt_wrapping == "human_bot":
+                    if prompt_wrapper == "human_bot":
 
                         instruction = "Please write a paragraph based on the topic: "
                         new_sample = self.package_human_bot_sample(text_short,text_long)
                         features = ["text"]
 
-                    if prompt_wrapping == "alpaca":
+                    if prompt_wrapper == "alpaca":
 
                         instruction = "Please write a paragraph based on the topic: " + text_short
                         response = text_long
                         new_sample = self.package_alpaca_sample(instruction,response)
                         features = ["text"]
 
-                    if prompt_wrapping == "chat_gpt":
+                    if prompt_wrapper == "chat_gpt":
 
                         instruction = "Please write a paragraph based on the topic: " + text_short
                         new_sample = self.package_chatgpt_sample(instruction, text_long)
                         features = ["role", "text"]
 
-                    if prompt_wrapping == "dict" or not new_sample:
+                    if prompt_wrapper == "dict" or not new_sample:
 
                         new_sample = {"sample_number": counter, "file_source": elements["file_source"],
                                       "text_long": text_long,
@@ -3708,8 +3823,11 @@ class Datasets:
             total_sample_count += batch_counter
 
         # results.close()
+        ds_name = "build_gen_ds_headline_topic_prompter"
+        dataset_card = self.get_dataset_card(ds_name)
 
-        dataset_dict = {"ds_id": ds_id,
+        dataset_dict = {"ds_type": dataset_card["dataset_name"],
+                        "ds_id": ds_id,
                         "training_samples": training_sample_count,
                         "training_files": training_files_created,
                         "validation_samples": validation_sample_count,
@@ -3717,13 +3835,10 @@ class Datasets:
                         "testing_samples": testing_sample_count,
                         "testing_files": testing_files_created,
                         "batches": batch_number + 1,
-                        "prompt_wrapping": prompt_wrapping,
-                        "description": "Generative AI Dataset created in self-supervised extraction of 'headlines', "
-                                       "paired with longer neighboring text passages.  In this dataset, the 'headline' "
-                                       "is used a prompter topic with the expected Generative output to be a longer "
-                                       "paragraph or text on the selected headline subject matter- assembled in format "
-                                       "{} for generative model fine-tuning".format(prompt_wrapping),
-                        "features": features}
+                        "prompt_wrapper": prompt_wrapper,
+                        "description": dataset_card["description"].format(prompt_wrapper),
+                        "features": features,   # note may differ from dataset_card
+                        "time_stamp": str(Utilities().get_current_time_now())}
 
         # save dataset dict -> and put in ds folder
         json_dict = json.dumps(dataset_dict,indent=2)
@@ -3732,7 +3847,7 @@ class Datasets:
 
         return dataset_dict
 
-    def build_gen_ds_headline_text_xsum(self, prompt_wrapping="human_bot", custom_id=None, qr=None):
+    def build_gen_ds_headline_text_xsum(self, prompt_wrapper="human_bot", custom_id=None, qr=None):
 
         #   create specific folder for dataset artifacts inside library dataset path
         ds_id, ds_folder = self.issue_new_ds_id(custom_id=custom_id)
@@ -3779,23 +3894,23 @@ class Datasets:
                 if len(text_long) > self.text_long_sample_min_len and len(text_short) > self.text_empty_min_threshold:
                     # need to additional checks if text_long is > max
 
-                    if prompt_wrapping == "human_bot":
+                    if prompt_wrapper == "human_bot":
                         instruction = "Please read the following passage, and provide a short summary.\n" + text_long
                         new_sample = self.package_human_bot_sample(instruction, text_short)
                         features = ["text"]
 
-                    if prompt_wrapping == "alpaca":
+                    if prompt_wrapper == "alpaca":
                         instruction = "Please read the following passage, and provide a short summary.\n" + text_long
                         response = text_short
                         new_sample = self.package_alpaca_sample(instruction, response)
                         features = ["text"]
 
-                    if prompt_wrapping == "chat_gpt":
+                    if prompt_wrapper == "chat_gpt":
                         instruction = "Please read the following passage, and provide a short summary.\n" + text_long
                         new_sample = self.package_chatgpt_sample(instruction, text_short)
                         features = ["role", "text"]
 
-                    if prompt_wrapping == "dict" or not new_sample:
+                    if prompt_wrapper == "dict" or not new_sample:
                         new_sample = {"sample_number": counter, "file_source": elements["file_source"],
                                       "text_long": text_long,
                                       "text_short": text_short}
@@ -3862,8 +3977,11 @@ class Datasets:
             total_sample_count += batch_counter
 
         # results.close()
+        ds_name = "build_gen_ds_headline_text_xsum"
+        dataset_card = self.get_dataset_card(ds_name)
 
-        dataset_dict = {"ds_id": ds_id,
+        dataset_dict = {"ds_type": dataset_card["dataset_name"],
+                        "ds_id": ds_id,
                         "training_samples": training_sample_count,
                         "training_files": training_files_created,
                         "validation_samples": validation_sample_count,
@@ -3871,12 +3989,10 @@ class Datasets:
                         "testing_samples": testing_sample_count,
                         "testing_files": testing_files_created,
                         "batches": batch_number + 1,
-                        "prompt_wrapping": prompt_wrapping,
-                        "description": "Generative AI Dataset for 'XSUM' or extreme summarization, created in "
-                                       "self-supervised extraction of 'headlines' paired with neighboring text "
-                                       "passages, and assembled in {} format for generative model "
-                                       "fine-tuning.".format(prompt_wrapping),
-                        "features": features}
+                        "prompt_wrapper": prompt_wrapper,
+                        "description": dataset_card["description"].format(prompt_wrapper),
+                        "features": features,   # note: may differ from dataset_card
+                        "time_stamp": str(Utilities().get_current_time_now())}
 
         # save dataset dict -> and put in ds folder
         json_dict = json.dumps(dataset_dict, indent=2)
@@ -3885,7 +4001,7 @@ class Datasets:
 
         return dataset_dict
 
-    def build_gen_dialog_ds (self, prompt_wrapping="human_bot", human_first=True, role_dict=None,
+    def build_gen_dialog_ds (self, prompt_wrapper="human_bot", human_first=True, role_dict=None,
                              custom_id=None, qr=None):
 
         #   create specific folder for dataset artifacts inside library dataset path
@@ -3940,7 +4056,7 @@ class Datasets:
                 # process transcript
 
                 transcript_output, trans_text = self._conversation_builder(current_transcript, current_speaker_list,
-                                                                           prompt_wrapping="human_bot")
+                                                                           prompt_wrapper="human_bot")
 
                 output += transcript_output
                 text_out += trans_text
@@ -4007,8 +4123,11 @@ class Datasets:
             total_sample_count += batch_counter
 
         # results.close()
+        ds_name = "build_gen_ds_dialog_ds"
+        dataset_card = self.get_dataset_card(ds_name)
 
-        dataset_dict = {"ds_id": ds_id,
+        dataset_dict = {"ds_type": dataset_card["dataset_name"],
+                        "ds_id": ds_id,
                         "training_samples": training_sample_count,
                         "training_files": training_files_created,
                         "validation_samples": validation_sample_count,
@@ -4016,10 +4135,10 @@ class Datasets:
                         "testing_samples": testing_sample_count,
                         "testing_files": testing_files_created,
                         "batches": batch_number + 1,
-                        "prompt_wrapping": prompt_wrapping,
-                        "description": "Generative AI fine-tuning dataset, generated in self-supervised process using "
-                                       "dialog transcripts to re-create role-based dialog.",
-                        "features": ["text"]}
+                        "prompt_wrapper": prompt_wrapper,
+                        "description": dataset_card["description"],
+                        "features": dataset_card["features"],
+                        "time_stamp": str(Utilities().get_current_time_now())}
 
         # save dataset dict -> and put in ds folder
         json_dict = json.dumps(dataset_dict, indent=2)
@@ -4028,7 +4147,7 @@ class Datasets:
 
         return dataset_dict
 
-    def _conversation_builder(self, conversation_blocks, speaker_list, prompt_wrapping="chat_gpt"):
+    def _conversation_builder(self, conversation_blocks, speaker_list, prompt_wrapper="chat_gpt"):
 
         #   note: currently only supports a human_bot format, and assumes human is first speaker
 
@@ -4065,8 +4184,8 @@ class Datasets:
                         for k, convo_turns in enumerate(dialog_turn):
                             turns.append(convo_turns[1])
 
-                        prompt_wrapping = "human_bot"
-                        if prompt_wrapping == "human_bot":
+                        prompt_wrapper = "human_bot"
+                        if prompt_wrapper == "human_bot":
                             sample = ""
                             p = "<human>: "
                             for t in turns:
@@ -4101,7 +4220,7 @@ class Datasets:
 
         return output, text_output
 
-    def build_gen_ds_from_prompt_history (self, prompt_wrapping="alpaca", custom_id=None):
+    def build_gen_ds_from_prompt_history (self, prompt_wrapper="alpaca", custom_id=None):
 
         #   create specific folder for dataset artifacts inside library dataset path
         ds_id, ds_folder = self.issue_new_ds_id(custom_id=custom_id)
@@ -4130,23 +4249,23 @@ class Datasets:
             instruction = str(entries["instruction"])
             sample = None
 
-            if prompt_wrapping not in ["human_bot", "alpaca", "chat_gpt"]:
+            if prompt_wrapper not in ["human_bot", "alpaca", "chat_gpt"]:
 
-                prompt_wrapping = "human_bot"
+                prompt_wrapper = "human_bot"
 
-            if prompt_wrapping == "human_bot":
+            if prompt_wrapper == "human_bot":
 
                 turn1 = evidence + "\n" + prompt
                 turn2 = ai_output
                 sample = self.package_human_bot_sample(turn1,turn2)
 
-            if prompt_wrapping == "alpaca":
+            if prompt_wrapper == "alpaca":
 
                 instruction = evidence + "\n" + prompt
                 response = ai_output
                 sample = self.package_alpaca_sample(instruction,response)
 
-            if prompt_wrapping == "chat_gpt":
+            if prompt_wrapper == "chat_gpt":
 
                 turn1 = evidence + "\n" + prompt
                 turn2 = ai_output
@@ -4213,8 +4332,11 @@ class Datasets:
             total_sample_count += batch_counter
 
         # results.close()
+        ds_name = "build_gen_ds_from_prompt_history"
+        dataset_card = self.get_dataset_card(ds_name)
 
-        dataset_dict = {"ds_id": ds_id,
+        dataset_dict = {"ds_type": dataset_card["dataset_name"],
+                        "ds_id": ds_id,
                         "training_samples": training_sample_count,
                         "training_files": training_files_created,
                         "validation_samples": validation_sample_count,
@@ -4222,11 +4344,10 @@ class Datasets:
                         "testing_samples": testing_sample_count,
                         "testing_files": testing_files_created,
                         "batches": batch_number + 1,
-                        "prompt_wrapping": prompt_wrapping,
-                        "description": "Generative AI Dataset created self-supervised from AI audit log records that "
-                                       "capture all facets of generative AI inferences, and can re-packaged to enhance "
-                                       "fine-tuning.",
-                        "features": ["text"]}
+                        "prompt_wrapper": prompt_wrapper,
+                        "description": dataset_card["description"],
+                        "features": dataset_card["features"],
+                        "time_stamp": str(Utilities().get_current_time_now())}
 
         # save dataset dict -> and put in ds folder
         json_dict = json.dumps(dataset_dict, indent=2)
@@ -4355,8 +4476,11 @@ class Datasets:
         # results.close()
 
         # need to package up images into zip folder
+        ds_name = "build_visual_ds_image_labels"
+        dataset_card = self.get_dataset_card(ds_name)
 
-        dataset_dict = {"ds_id": ds_id,
+        dataset_dict = {"ds_type": dataset_card["dataset_name"],
+                        "ds_id": ds_id,
                         "training_samples": training_sample_count,
                         "training_files": training_files_created,
                         "validation_samples": validation_sample_count,
@@ -4364,10 +4488,10 @@ class Datasets:
                         "testing_samples": testing_sample_count,
                         "testing_files": testing_files_created,
                         "batches": batch_number + 1,
-                        "description": "Generative Visual dataset, captured in self-supervised automated process "
-                                       "by associating nearby text with images for training visual description "
-                                       "generation.",
-                        "features": ["sample_number","image_ref","doc_ID","block_ID","text_long","text_short"]}
+                        "description": dataset_card["description"],
+                        "features": dataset_card["features"],
+                        "time_stamp": str(Utilities().get_current_time_now())
+                        }
 
         # save dataset dict -> and put in ds folder
         json_dict = json.dumps(dataset_dict, indent=2)
@@ -4376,7 +4500,7 @@ class Datasets:
 
         return dataset_dict
 
-    def build_gen_ds_targeted_text_completion (self, prompt_wrapping="alpaca",
+    def build_gen_ds_targeted_text_completion (self, prompt_wrapper="alpaca",
                                                query=None, filter_dict=None, qr=None, custom_id=None):
 
         #   create specific folder for dataset artifacts inside library dataset path
@@ -4443,22 +4567,22 @@ class Datasets:
                 t1 = self.tokenizer.decode(text_tokens[0:r])
                 t2 = self.tokenizer.decode(text_tokens[r:])
 
-                if prompt_wrapping == "human_bot":
+                if prompt_wrapper == "human_bot":
                     instruction = "Please read the following text, and provide a completion.\n" + t1
                     new_sample = self.package_human_bot_sample(instruction, t2)
                     features = ["text"]
 
-                if prompt_wrapping == "alpaca":
+                if prompt_wrapper == "alpaca":
                     instruction = "Please read the following text, and provide a completion.\n" + t1
                     new_sample = self.package_alpaca_sample(instruction, t2)
                     features = ["text"]
 
-                if prompt_wrapping == "chat_gpt":
+                if prompt_wrapper == "chat_gpt":
                     instruction = "Please read the following text, and provide a completion.\n" + t1
                     new_sample = self.package_chatgpt_sample(instruction, t2)
                     features = ["role", "text"]
 
-                if prompt_wrapping == "dict" or not new_sample:
+                if prompt_wrapper == "dict" or not new_sample:
                     new_sample = {"sample_number": counter, "file_source": elements["file_source"],
                                   "text": t1,
                                   "completion": t2}
@@ -4506,22 +4630,22 @@ class Datasets:
                         t1 = self.tokenizer.decode(text_tokens[0:r])
                         t2 = self.tokenizer.decode(text_tokens[r:])
 
-                        if prompt_wrapping == "human_bot":
+                        if prompt_wrapper == "human_bot":
                             instruction = "Please read the following text, and provide a completion.\n" + t1
                             new_sample = self.package_human_bot_sample(instruction, t2)
                             features = ["text"]
 
-                        if prompt_wrapping == "alpaca":
+                        if prompt_wrapper == "alpaca":
                             instruction = "Please read the following text, and provide a completion.\n" + t1
                             new_sample = self.package_alpaca_sample(instruction, t2)
                             features = ["text"]
 
-                        if prompt_wrapping == "chat_gpt":
+                        if prompt_wrapper == "chat_gpt":
                             instruction = "Please read the following text, and provide a completion.\n" + t1
                             new_sample = self.package_chatgpt_sample(instruction, t2)
                             features = ["role", "text"]
 
-                        if prompt_wrapping == "dict" or not new_sample:
+                        if prompt_wrapper == "dict" or not new_sample:
                             new_sample = {"sample_number": counter, "file_source": elements["file_source"],
                                           "text": t1,
                                           "completion": t2}
@@ -4545,22 +4669,22 @@ class Datasets:
                 t1 = self.tokenizer.decode(text_tokens[0:r])
                 t2 = self.tokenizer.decode(text_tokens[r:])
 
-                if prompt_wrapping == "human_bot":
+                if prompt_wrapper == "human_bot":
                     instruction = "Please read the following text, and provide a completion.\n" + t1
                     new_sample = self.package_human_bot_sample(instruction, t2)
                     features = ["text"]
 
-                if prompt_wrapping == "alpaca":
+                if prompt_wrapper == "alpaca":
                     instruction = "Please read the following text, and provide a completion.\n" + t1
                     new_sample = self.package_alpaca_sample(instruction, t2)
                     features = ["text"]
 
-                if prompt_wrapping == "chat_gpt":
+                if prompt_wrapper == "chat_gpt":
                     instruction = "Please read the following text, and provide a completion.\n" + t1
                     new_sample = self.package_chatgpt_sample(instruction, t2)
                     features = ["role", "text"]
 
-                if prompt_wrapping == "dict" or not new_sample:
+                if prompt_wrapper == "dict" or not new_sample:
                     new_sample = {"sample_number": counter, "file_source": elements["file_source"],
                                   "text": t1,
                                   "completion": t2}
@@ -4634,7 +4758,11 @@ class Datasets:
             total_sample_count += len(validation_set)
             total_sample_count += len(testing_set)
 
-        dataset_dict = {"ds_id": ds_id,
+        ds_name = "build_gen_ds_targeted_text_completion"
+        dataset_card = self.get_dataset_card(ds_name)
+
+        dataset_dict = {"ds_type": dataset_card["dataset_name"],
+                        "ds_id": ds_id,
                         "training_samples": training_sample_count,
                         "training_files": training_files_created,
                         "validation_samples": validation_sample_count,
@@ -4642,9 +4770,9 @@ class Datasets:
                         "testing_samples": testing_sample_count,
                         "testing_files": testing_files_created,
                         "batches": batch_number + 1,
-                        "description": "Generative Text/Completion Dataset - splits selected sentences to "
-                                       "create an open-context 'what is the completion?' text gen dataset.",
-                        "features": ["text"]}
+                        "description": dataset_card["description"],
+                        "features": dataset_card["features"],
+                        "time_stamp": str(Utilities().get_current_time_now())}
 
         # save dataset dict -> and put in ds folder
         json_dict = json.dumps(dataset_dict, indent=2)
