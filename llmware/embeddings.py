@@ -19,14 +19,16 @@ import faiss
 import logging
 import numpy as np
 import re
+import time
 
 from bson import ObjectId
 from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection
+from pymongo import MongoClient
 
 from llmware.configs import LLMWareConfig
 from llmware.resources import CollectionRetrieval, CollectionWriter
 from llmware.exceptions import UnsupportedEmbeddingDatabaseException
-
+from llmware.util import Utilities
 
 class EmbeddingHandler:
 
@@ -35,7 +37,7 @@ class EmbeddingHandler:
 
     def __init__(self, library):
         
-        self.supported_embedding_dbs = ["milvus", "faiss", "pinecone"]
+        self.supported_embedding_dbs = ["milvus", "faiss", "pinecone", "mongo_atlas"]
         self.library = library
    
     # Create a new embedding. 
@@ -89,6 +91,9 @@ class EmbeddingHandler:
 
         if embedding_db == "pinecone": 
             return EmbeddingPinecone(self.library, model)
+
+        if embedding_db == "mongo_atlas": 
+            return EmbeddingMongoAtlas(self.library, model)
 
     def generate_index_name(self, account_name, library_name, model_name, max_component_length=19):
 
@@ -511,6 +516,223 @@ class EmbeddingPinecone:
     def delete_index(self, index_name):
         pinecone.delete_index(index_name)
 
+        # Delete mongo fields
+        block_cursor = CollectionWriter(self.library.collection).update_many_records_custom({}, {
+            "$unset": {self.mongo_key: ""}})
+
+    def delete_all_indexes(self):
+        placeholder_no_action_taken_currently = 0
+
+    def convert_to_hyphens(self, input_string):
+        return input_string.replace("_", "-").replace(" ", "-").lower()
+
+
+class EmbeddingMongoAtlas:
+
+    def __init__(self, library, model=None):
+        
+        # Use a specified Mongo Atlas connection string if supplied.
+        # Otherwise fallback to the the Mongo DB connection string 
+        self.connection_uri = os.environ.get("MONGO_ATLAS_CONNECTION_URI",
+                                             LLMWareConfig.get_config("collection_db_uri"))
+
+        self.library = library
+
+        # look up model card
+        self.model_name = model.model_name
+        self.model = model
+        self.embedding_dims = model.embedding_dims
+
+        # Create a "safe" index name
+        converted_library_name = re.sub("[-@_.\/ ]", "", self.library.library_name).lower()
+        if len(converted_library_name) > 18:
+            converted_library_name = converted_library_name[0:18]
+
+        converted_model_name = re.sub("[-@_.\/ ]", "", self.model_name).lower()
+        if len(converted_model_name) > 18:
+            # chops off the start of the model name if longer than 18 chars
+            starter = len(converted_model_name) - 18
+            converted_model_name = converted_model_name[starter:]
+            # converted_model_name = converted_model_name[0:18]
+
+        converted_account_name = re.sub("[-@_.\/ ]", "", self.library.account_name).lower()
+        if len(converted_model_name) > 7:
+            converted_account_name = converted_account_name[0:7]
+
+        # build new name here
+        self.index_name = f"{converted_account_name}-{converted_library_name}-{converted_model_name}"
+
+        # Connect and create a MongoClient
+        self.mongo_client = MongoClient(self.connection_uri)
+
+        # Make sure the Database exists by creating a dummy metadata collection
+        self.embedding_db_name = "llmware_embeddings"
+        self.embedding_db = self.mongo_client["llmware_embeddings"]
+        if self.embedding_db_name not in self.mongo_client.list_database_names():
+            self.embedding_db["metadata"].insert_one({"created": Utilities().get_current_time_now()})
+
+        # Connect to collection and create it if it doesn't exist by creating a dummy doc
+        self.embedding_collection = self.embedding_db[self.index_name]
+        if self.index_name not in self.embedding_db.list_collection_names():
+            self.embedding_collection.insert_one({"created": Utilities().get_current_time_now()})
+        
+        # If the collection does not have a search index (e.g if it's new), create one
+        if len (list(self.embedding_collection.list_search_indexes())) < 1:
+            model = { 
+                        'name': self.index_name, 
+                        'definition': {
+                            'mappings': {
+                                'dynamic': True, 
+                                'fields': {
+                                    'eVector': {
+                                        'type': 'knnVector', 
+                                        'dimensions': self.embedding_dims, 
+                                        'similarity': 'euclidean'
+                                    },
+                                }
+                            }
+                        }
+                    }
+
+            self.embedding_collection.create_search_index(model)
+
+        # will leave "-" and "_" in file path, but remove "@" and " "
+        model_safe_path = re.sub("[@ ]", "", self.model_name).lower()
+        self.mongo_key = "embedding_mongoatlas_" + model_safe_path
+
+    def create_new_embedding(self, doc_ids = None, batch_size=500):
+
+        if doc_ids:
+            all_blocks_cursor = CollectionRetrieval(self.library.collection).filter_by_key_value_range("doc_ID", doc_ids)
+        else:
+            all_blocks_cursor = CollectionRetrieval(self.library.collection).\
+                custom_filter({self.mongo_key: { "$exists": False }})
+
+        num_of_blocks = self.library.collection.count_documents({})        
+        embeddings_created = 0
+
+        # starting current_index @ 0
+        current_index = 0
+
+        finished = False
+
+        all_blocks_iter = iter(all_blocks_cursor)
+        last_block_id = ""
+        while not finished:
+            block_ids, doc_ids, sentences = [], [], []
+            # Build the next batch
+            for i in range(batch_size):
+                block = next(all_blocks_iter, None)
+                if not block:
+                    finished = True
+                    break
+                text_search = block["text_search"].strip()
+                if not text_search or len(text_search) < 1:
+                    continue
+                block_ids.append(str(block["_id"]))
+                doc_ids.append(int(block["doc_ID"]))
+                sentences.append(text_search)
+            
+            if len(sentences) > 0:
+                # Process the batch
+                vectors = self.model.embedding(sentences).tolist()
+
+                docs_to_insert = []
+                for i, vector in enumerate(vectors):
+                    doc = {
+                        "id": str(block_ids[i]),
+                        "doc_ID": str(doc_ids[i]),
+                        "eVector": vector
+                    }
+                    docs_to_insert.append(doc)
+
+                insert_result = self.embedding_collection.insert_many(docs_to_insert)
+
+                # Update mongo
+                for block_id in block_ids:
+                    self.library.collection.update_one({"_id": ObjectId(block_id)},
+                                                       {"$set": {self.mongo_key: current_index}})
+                    current_index += 1
+
+                embeddings_created += len(sentences)
+                print (f"Embeddings Created: {embeddings_created} of {num_of_blocks}")
+                last_block_id = block_ids[-1]
+
+        if embeddings_created > 0:
+            print(f"Embedding(Mongo Atlas): Waiting for {self.embedding_db_name}.{self.index_name} to be ready for vector search...")
+            start_time = time.time()
+            self.wait_for_search_index(last_block_id, start_time)
+            wait_time = time.time() - start_time
+            print(f"Embedding(Mongo Atlas): {self.embedding_db_name}.{self.index_name} ready ({wait_time: .2f} seconds)")
+
+        embedding_summary = {"embeddings_created": embeddings_created}  
+
+        return embedding_summary
+    
+    # After doc insertion we want to make sure the index is ready before proceeding
+    def wait_for_search_index(self, last_block_id, start_time):
+        # If we've been waiting for 5 mins, then time out and just return
+        if time.time() > start_time + (5 * 60)
+            return
+
+        # Get the atlas search index
+        the_index = self.embedding_collection.list_search_indexes().next()
+        
+        # If the index doesn't have status="READY" or queryable=True, wait
+        if the_index["status"] != "READY" or not the_index["queryable"]:
+            time.sleep(3)
+            return self.wait_for_search_index(last_block_id, start_time)
+
+        # If we can't find the last block yet in the search index, wait
+        search_query = {
+            "$search": {
+                "index": self.index_name,
+                "text": {
+                    "query": str(last_block_id),
+                    "path": "id"  # The field in your documents you're matching against
+                }
+            }
+        }
+        results = self.embedding_collection.aggregate([search_query])
+        if not results.alive:
+            time.sleep(1)
+            return self.wait_for_search_index(last_block_id, start_time)
+
+    def search_index(self, query_embedding_vector, sample_count=10):
+
+        search_results = self.embedding_collection.aggregate([
+            {
+                "$vectorSearch": {
+                    "index": self.index_name,
+                    "path": "eVector",
+                    "queryVector": query_embedding_vector.tolist(),
+                    "numCandidates": sample_count * 10, # Following recommendation here: https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/
+                    "limit": sample_count
+                }
+            },
+            {
+                "$project": {
+                    "_id": 0,
+                    "id": 1,
+                    "doc_ID": 1,
+                    "score": { "$meta": "vectorSearchScore" }
+                }
+            }
+        ])
+
+        block_list = []
+        for search_result in search_results:
+            _id = search_result["id"]
+            block_cursor = CollectionRetrieval(self.library.collection).filter_by_key("_id", ObjectId(_id))
+            if block_cursor and block_cursor[0]:
+                    distance = 1 - search_result["score"] # Atlas returns a score from 0 to 1.0
+                    block_list.append( (block_cursor[0], distance) )
+
+        return block_list
+
+    def delete_index(self, index_name):
+        self.embedding_db.drop_collection(index_name)
+     
         # Delete mongo fields
         block_cursor = CollectionWriter(self.library.collection).update_many_records_custom({}, {
             "$unset": {self.mongo_key: ""}})
