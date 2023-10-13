@@ -16,9 +16,10 @@ The following are a set of guidelines for contributing to `llmware`.  As with ev
 
 **If you're interested in existing issues, you can**
 
+- Look for issues with the `good first issue` label as a good place to get started.
 - Provide answers for questions in our [github discussions](https://github.com/llmware-ai/llmware/discussions)
-- Provide help for bug or enhancement issues.
-  - Ask questions, reproduce the issue, or provide solutions.
+- Provide help for bug or enhancement issues. 
+  - Ask questions, reproduce the issues, or provide solutions.
   - Pull a request to fix the issue.
 
 **If you'd like to contribute a new feature or significantly change an existing one, you can**
