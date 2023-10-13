@@ -148,7 +148,7 @@ File: /Users/llmware/llmware_data/prompt_history/interaction_report_Fri Sep 29 1
 #### 📚 See additional [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md) for more code samples and ideas.
 
 
-### 4. Accessing LLM's and setting-up API keys & secrets
+### 4. Accessing LLMs and setting-up API keys & secrets
 To get started with a proprietary model, you need to provide your own API Keys.  If you don't yet have one, more information can be found at: [AI21](https://docs.ai21.com/docs/quickstart), [Ai Bloks](https://www.aibloks.com/contact-us), [Anthropic](https://docs.anthropic.com/claude/reference/getting-started-with-the-api),  [Cohere](https://cohere.com/), [Google](https://cloud.google.com/vertex-ai/docs/generative-ai/start/quickstarts/api-quickstart), [OpenAI](https://help.openai.com/en/collections/3675940-getting-started-with-openai-api).
 
 API keys and secrets for models, aws, and pinecone can be set-up for use in environment variables or managed however you prefer. 
