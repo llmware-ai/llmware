@@ -279,7 +279,7 @@ Information on ways to participate can be found in our [Contributors Guide](http
 <details>
   <summary><b>Change Log</b></summary>
 
-- **13 Oct 2023: llmware v0.1.2**
+- **13 Oct 2023: llmware v0.1.3**
   - MongoDB Atlas Vector Search support.
   - Support for authentication using a MongoDB connection string.
   - Document summarization methods.

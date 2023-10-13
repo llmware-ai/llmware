@@ -672,7 +672,7 @@ class EmbeddingMongoAtlas:
     # After doc insertion we want to make sure the index is ready before proceeding
     def wait_for_search_index(self, last_block_id, start_time):
         # If we've been waiting for 5 mins, then time out and just return
-        if time.time() > start_time + (5 * 60)
+        if time.time() > start_time + (5 * 60):
             return
 
         # Get the atlas search index
