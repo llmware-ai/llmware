@@ -203,7 +203,9 @@ See the [Official MongoDB Installation Guide](https://www.mongodb.com/docs/manua
 <details>
 <summary><b>🔗  D. Connect to an existing MongoDB deployment </b></summary>
   
-You can connect to an existing MongoDB deployment by setting the connection string to the environment variable, ```COLLECTION_DB_URI```.  See the example script [Using Mongo Atlas](examples/using_mongo_atlas.py) for detailed information on how to use Mongo Atlas as the NoSQL and/or Vector Database for `llmware`.  Additional information on finding and formatting connection strings can be found in the [MongoDB Connection Strings Documentation](https://www.mongodb.com/docs/manual/reference/connection-string/).
+You can connect to an existing MongoDB deployment by setting the connection string to the environment variable, ```COLLECTION_DB_URI```.  See the example script, [Using Mongo Atlas](https://github.com/llmware-ai/llmware/blob/main/examples/using_mongo_atlas.py), for detailed information on how to use Mongo Atlas as the NoSQL and/or Vector Database for `llmware`.  
+
+Additional information on finding and formatting connection strings can be found in the [MongoDB Connection Strings Documentation](https://www.mongodb.com/docs/manual/reference/connection-string/).
 
 
 </details>
@@ -279,8 +281,9 @@ Information on ways to participate can be found in our [Contributors Guide](http
 
 - **13 Oct 2023: llmware v0.1.2**
   - MongoDB Atlas Vector Search support.
-  - Support for authentication using a Mongo connection string.
-  - Document summarization methods with improvements in capturing the model context window automatically and passing changes in the expected output length.  
+  - Support for authentication using a MongoDB connection string.
+  - Document summarization methods.
+  - Improvements in capturing the model context window automatically and passing changes in the expected output length.  
   - Dataset card and description with lookup by name.
   - Processing time added to model inference usage dictionary.
   - Additional test scripts, examples, and defect fixes.
