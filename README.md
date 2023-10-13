@@ -200,6 +200,14 @@ See the [Official MongoDB Installation Guide](https://www.mongodb.com/docs/manua
 
 </details>
 
+<details>
+<summary><b>🔗  D. Connect to an existing MongoDB deployment </b></summary>
+  
+You can connect to an existing MongoDB deployment by setting the connection string to the environment variable, ```COLLECTION_DB_URI```.  See the example script [Using Mongo Atlas](examples/using_mongo_atlas.py) for detailed information on how to use Mongo Atlas as the NoSQL and/or Vector Database for `llmware`.  Additional information on finding and formatting connection strings can be found in the [MongoDB Connection Strings Documentation](https://www.mongodb.com/docs/manual/reference/connection-string/).
+
+
+</details>
+
 ## ✍️ Working with the llmware Github repository
 
 The llmware repo can be pulled locally to get access to all the examples, or to work directly with the llmware code
@@ -253,6 +261,7 @@ Information on ways to participate can be found in our [Contributors Guide](http
 - Milvus
 - FAISS
 - Pinecone
+- MongoDB Atlas Vector Search
 
 **Prereqs:**  
 - All Platforms: [python v3.9 - 3.10](https://www.python.org/about/gettingstarted/)
@@ -268,10 +277,18 @@ Information on ways to participate can be found in our [Contributors Guide](http
 <details>
   <summary><b>Change Log</b></summary>
 
+- **13 Oct 2023: llmware v0.1.2**
+  - MongoDB Atlas Vector Search support.
+  - Support for authentication using a Mongo connection string.
+  - Document summarization methods with improvements in capturing the model context window automatically and passing changes in the expected output length.  
+  - Dataset card and description with lookup by name.
+  - Processing time added to model inference usage dictionary.
+  - Additional test scripts, examples, and defect fixes.
 - **06 Oct 2023: llmware v0.1.1**
-  - Added test scripts to the github repository for regression testing
+  - Added test scripts to the github repository for regression testing.
   - Minor defect fixes and version update of Pillow to address [dependency security alert](https://github.com/llmware-ai/llmware/security/dependabot/1).
 - **02 Oct 2023: llmware v0.1.0**  🔥 Initial release of llmware to open source!! 🔥
+
 
 </details>
 
