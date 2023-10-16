@@ -3033,7 +3033,7 @@ class VoiceParser:
 
         if parser and not library:
             if parser.library:
-                self.text_chunk_size = library.block_size_target_characters + 200
+                self.text_chunk_size = parser.library.block_size_target_characters + 200
                 self.look_back_range = 300
 
         self.speech_model = None
