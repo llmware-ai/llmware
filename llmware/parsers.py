@@ -2879,7 +2879,7 @@ class ImageParser:
 
         if parser and not library:
             if parser.library:
-                self.text_chunk_size = library.block_size_target_characters + 200
+                self.text_chunk_size = parser.library.block_size_target_characters + 200
                 self.look_back_range = 300
 
     def process_ocr (self, dir_fp, fn, preserve_spacing=False):
@@ -3116,7 +3116,7 @@ class TextParser:
 
         if parser and not library:
             if parser.library:
-                self.text_chunk_size = library.block_size_target_characters + 200
+                self.text_chunk_size = parser.library.block_size_target_characters + 200
                 self.look_back_range = 300
 
     def jsonl_file_handler (self, dir_fp,sample_file, key_list=None, interpret_as_table=False,
