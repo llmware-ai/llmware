@@ -245,9 +245,12 @@ class EmbeddingMilvus:
             for hit in hits:
                 _id = hit.entity.get('block_mongo_id') 
                 block_cursor = CollectionRetrieval(self.library.collection).filter_by_key("_id", ObjectId(_id))
-                if block_cursor:
-                    block_list.append( (block_cursor[0], hit.distance) )
-
+                try:
+                    block = block_cursor.next()
+                    block_list.append((block, hit.distance))
+                except StopIteration:
+                    # The cursor is empty (no blocks found)
+                    continue 
         return block_list
    
     def delete_embedding(self):
@@ -367,10 +370,13 @@ class EmbeddingFAISS:
         block_list = []
         for i, index in enumerate(index_list[0]):
             index_int = int(index.item())
-            block_cursor = CollectionRetrieval(self.library.collection).filter_by_key(self.mongo_key, index_int) 
-            if block_cursor and block_cursor[0]:
-                block_list.append( (block_cursor[0], distance_list[0][i]) ) 
-
+            block_cursor = CollectionRetrieval(self.library.collection).filter_by_key(self.mongo_key, index_int)
+            try:
+                block = block_cursor.next()
+                block_list.append((block, distance_list[0][i]))
+            except StopIteration:
+                # The cursor is empty (no blocks found)
+                continue    
         return block_list
 
     def delete_embedding(self):
@@ -507,9 +513,13 @@ class EmbeddingPinecone:
         for match in result["matches"]:
             _id = match["id"]
             block_cursor = CollectionRetrieval(self.library.collection).filter_by_key("_id", ObjectId(_id))
-            if block_cursor and block_cursor[0]:
-                    distance = match["score"]
-                    block_list.append( (block_cursor[0], distance) )
+            try:
+                block = block_cursor.next()
+                distance = match["score"]
+                block_list.append((block, distance))
+            except StopIteration:
+                # The cursor is empty (no blocks found)
+                continue 
 
         return block_list
 
@@ -724,9 +734,13 @@ class EmbeddingMongoAtlas:
         for search_result in search_results:
             _id = search_result["id"]
             block_cursor = CollectionRetrieval(self.library.collection).filter_by_key("_id", ObjectId(_id))
-            if block_cursor and block_cursor[0]:
-                    distance = 1 - search_result["score"] # Atlas returns a score from 0 to 1.0
-                    block_list.append( (block_cursor[0], distance) )
+            try:
+                block = block_cursor.next()
+                distance = 1 - search_result["score"] # Atlas returns a score from 0 to 1.0
+                block_list.append((block, distance))
+            except StopIteration:
+                # The cursor is empty (no blocks found)
+                continue 
 
         return block_list
 
