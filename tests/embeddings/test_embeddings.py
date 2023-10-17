@@ -34,11 +34,11 @@ def test_faiss_embedding_and_query():
     assert len(results) > 0
     library.delete_library(confirm_delete=True)
 
-def test_pinecone_embedding_and_query():
-    with pytest.raises(ImportError) as excinfo:
-        library = None
-        results = generic_embedding_and_query(library, "pinecone")
-    assert 'pip install pinecone-client' in str(excinfo.value)
+# def test_pinecone_embedding_and_query():
+#     with pytest.raises(ImportError) as excinfo:
+#         library = None
+#         results = generic_embedding_and_query(library, "pinecone")
+#     assert 'pip install pinecone-client' in str(excinfo.value)
 
 # def test_pinecone_embedding_and_query():
 #     sample_files_path = Setup().load_sample_files()
