@@ -1790,7 +1790,8 @@ class HFEmbeddingModel:
 class HFGenerativeModel:
 
     def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None,
-                 prompt_wrapper=None, instruction_following=False, context_window=2048):
+                 prompt_wrapper=None, instruction_following=False, context_window=2048,
+                 use_gpu_if_available=True):
 
         # pull in expected hf input
         self.model_name = model_name
@@ -1808,6 +1809,10 @@ class HFGenerativeModel:
         self.llm_max_output_len = int(0.5 * context_window)
         self.model_architecture = None
         self.separator = "\n"
+
+        #   will load model and inference onto gpu,
+        #   if (a) CUDA available and (b) use_gpu_if_available set to True (default)
+        self.use_gpu = torch.cuda.is_available() and use_gpu_if_available
 
         if self.model:
 
@@ -1830,6 +1835,13 @@ class HFGenerativeModel:
                     self.model_architectures = self.config["architectures"][0]
                 else:
                     self.model_architectures = self.config["architectures"]
+
+            # prepare model for inference
+            self.model.eval()
+
+            if self.use_gpu:
+                self.model.to('cuda')
+                logging.info("update: HFGenerative loading - moving model to cuda")
 
         else:
             logging.error("error: HFGenerativeModel - could not identify model  - ", model_name)
@@ -1935,6 +1947,12 @@ class HFGenerativeModel:
         input_token_len = len(tokenizer_output)
         input_ids = torch.tensor(tokenizer_output).unsqueeze(0)
 
+        #   explicit check and setting to facilitate debugging
+        if self.use_gpu:
+            input_ids = input_ids.to('cuda')
+        else:
+            input_ids = input_ids.to('cpu')
+
         # time start
         time_start = time.time()
 
@@ -1971,6 +1989,12 @@ class HFGenerativeModel:
 
         attn_mask = torch.ones(input_ids.shape[1]).unsqueeze(0)
 
+        #   explicit check and setting to facilitate debugging, if needed
+        if self.use_gpu:
+            attn_mask = attn_mask.to('cuda')
+        else:
+            attn_mask = attn_mask.to('cpu')
+
         batch_size = input_ids.shape[0]
         seq_len = input_ids.shape[1]
 
@@ -1983,12 +2007,19 @@ class HFGenerativeModel:
             if new_tokens_generated > 0:
                 inp_one_time = input_ids[:, -1:]
 
-            inp0 = inp_one_time
-            inp1 = attn_mask
+            #   explicit check and setting to facilitate debugging, if needed
+            if self.use_gpu:
+                inp0 = inp_one_time.to('cuda')
+                inp1 = attn_mask.to('cuda')
+            else:
+                inp0 = inp_one_time.to('cpu')
+                inp1 = attn_mask.to('cpu')
+
             # inp3 = torch.LongTensor([new_tokens_generated])
 
             # need to invoke forward pass on model
             # outputs = self.model(inp0,inp1,pkv)
+
             outputs = self.model(input_ids=inp0,attention_mask=inp1, past_key_values=pkv,
                                  return_dict=True)
 
@@ -2046,8 +2077,11 @@ class HFGenerativeModel:
 
         #   Generation completed - prepare the output
 
-        # outputs_detached = outputs.to('cpu')
-        outputs_np = np.array(input_ids[0])
+        if self.use_gpu:
+            outputs_np = np.array(input_ids[0].to('cpu'))
+        else:
+            outputs_np = np.array(input_ids[0])
+
         output_only = outputs_np[input_token_len:]
         output_str = self.tokenizer.decode(output_only)
 
