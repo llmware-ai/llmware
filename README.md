@@ -279,6 +279,9 @@ Information on ways to participate can be found in our [Contributors Guide](http
 <details>
   <summary><b>Change Log</b></summary>
 
+- **20 Oct 2023: llmware v0.1.4**
+  - GPU support for Hugging Face models.
+  - Defect fixes and additional test scripts.
 - **13 Oct 2023: llmware v0.1.3**
   - MongoDB Atlas Vector Search support.
   - Support for authentication using a MongoDB connection string.
