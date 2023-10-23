@@ -1846,7 +1846,7 @@ class PromptCatalog:
 
         return new_sample
 
-    def wrap_human_bot_sample(self, text, user_separator="<human>: ", response_separator="<bot>: "):
+    def wrap_human_bot_sample(self, text, user_separator="<human>: ", response_separator="<bot>:"):
         content = user_separator + text + "\n" + response_separator
         return content
 
