@@ -17,6 +17,7 @@
 | 13.  Working without Databases ([code](working_without_a_database.py))| Parse, Prompt and generate Datasets from Prompt history without installing MongoDB or a vector database.|
 | 14.  Working with Libraries ([code](working_with_libraries.py)) | Explore all Library operations. |
 | 15.  Using MongoDB Atlas ([code](using_mongo_atlas.py))  | Demonstrates using MongoDB Atlas as `llmware`'s NoSQL datastore and Atlas Vector Search for vector embeddings.|
+| 16.  Model Hallucination Guardrails  |  Fact checking model responses with the `analyze_contracts_on_the_fly` function ([code](working_without_a_database.py)), a variety of fact checking techniques with the `prompt_fact_checking` function ([code](working_with_prompts.py)), human in the loop interaction reports with the `send_to_human_for_review` function ([code](rag.py)).|
 
 # Using llmware without MongoDB or an embedding database
 You can do some interesting things using `llmware` without a database or vector embeddings.  Parsing can be done in memory and outputted to text or json. Prompts can be crafted with sources from files, Wikipedia or the Yahoo Finance API.  The [Working without a Database](working_without_a_database.py), [LLM Prompts](llm_prompts.py), and [Parsing](parsing.py) examples show scenarios that can be accomplished and through out the examples are specific methods that do not require MongoDB or embeddings.  
