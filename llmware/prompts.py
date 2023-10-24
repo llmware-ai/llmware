@@ -28,8 +28,7 @@ from llmware.models import ModelCatalog
 from llmware.parsers import Parser
 from llmware.retrieval import Query
 from llmware.library import Library
-from llmware.exceptions import LibraryObjectNotFoundException, PromptNotInCatalogException
-
+from llmware.exceptions import LibraryObjectNotFoundException, PromptNotInCatalogException, DependencyNotInstalledException
 
 class Prompt:
 
@@ -137,16 +136,41 @@ class Prompt:
 
         self.query_results = None
 
-    def load_model(self, gen_model,api_key=None):
+    # changes in importing huggingface models
+    def load_model(self, gen_model,api_key=None, from_hf=False):
 
         if api_key:
             self.llm_model_api_key = api_key
 
-        self.llm_model = ModelCatalog().load_model(gen_model, api_key=self.llm_model_api_key)
+        if not from_hf:
+            self.llm_model = ModelCatalog().load_model(gen_model, api_key=self.llm_model_api_key)
+        else:
+            try:
+                # will wrap in Exception if import fails and move to model catalog class
+                from transformers import AutoModelForCausalLM, AutoTokenizer
+            except:
+                raise DependencyNotInstalledException("transformers")
+
+            if api_key:
+                # may look to add further settings/configuration in the future for hf models, e.g., trust_remote_code
+                custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model,token=api_key, trust_remote_code=True)
+                hf_tokenizer = AutoTokenizer.from_pretrained(gen_model,token=api_key)
+            else:
+                custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model)
+                hf_tokenizer = AutoTokenizer.from_pretrained(gen_model)
+
+            #   now, we have 'imported' our own custom 'instruct' model into llmware
+            self.llm_model = ModelCatalog().load_hf_generative_model(custom_hf_model, hf_tokenizer,
+                                                                     instruction_following=False,
+                                                                     prompt_wrapper="human_bot")
+            # prepare 'safe name' without file paths
+            self.llm_model.model_name = re.sub("[/]","---",gen_model)
+
         self.llm_name = gen_model
         self.context_window_size = self.llm_model.max_input_len
 
         return self
+
 
     def set_inference_parameters(self, temperature=0.5, llm_max_output_len=200):
         self.temperature = temperature
