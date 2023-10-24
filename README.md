@@ -2,7 +2,7 @@
 ![Static Badge](https://img.shields.io/badge/python-3.9_%7C_3.10-blue?color=blue)
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
 
-`llmware` is a unified, open, extensible framework for LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides a comprehensive set of tools that anyone can use – from beginner to the most sophisticated AI developer – to rapidly build industrial-grade enterprise LLM-based applications.  Key differentiators include: source citation for Q & A scenarios, fact checking, and other guardrails for model hallucination.
+`llmware` is a unified, open, extensible framework for LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides a comprehensive set of tools that anyone can use – from beginner to the most sophisticated AI developer – to rapidly build industrial-grade enterprise LLM-based applications.  _Key differentiators include: source citation for Q & A scenarios, fact checking, and other guardrails for model hallucination_.
 
 With `llmware`, our goal is to contribute to and help catalize an open community around the new combination of open, extensible technologies being assembled to accomplish fact-based generative workflows.
 
