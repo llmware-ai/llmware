@@ -26,8 +26,9 @@ from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataTy
 from pymongo import MongoClient
 
 from llmware.configs import LLMWareConfig
-from llmware.resources import CollectionRetrieval, CollectionWriter
 from llmware.exceptions import UnsupportedEmbeddingDatabaseException
+from llmware.resources import CollectionRetrieval, CollectionWriter
+from llmware.status import Status
 from llmware.util import Utilities
 
 class EmbeddingHandler:
@@ -178,12 +179,17 @@ class EmbeddingMilvus:
     def create_new_embedding(self, doc_ids = None, batch_size=500):
 
         if doc_ids:
+            num_of_blocks = self.library.collection.count_documents({"doc_ID": {"$in": doc_ids}})
             all_blocks_cursor = CollectionRetrieval(self.library.collection).filter_by_key_value_range("doc_ID", doc_ids)
         else:
+            num_of_blocks = self.library.collection.count_documents({self.mongo_key: {"$exists": False }})
             all_blocks_cursor = CollectionRetrieval\
                 (self.library.collection).custom_filter({self.mongo_key: {"$exists": False }})
+        
+        # Initialize a new status
+        status = Status(self.library.account_name)
+        status.new_embedding_status(self.library.library_name, self.model_name, num_of_blocks)
 
-        num_of_blocks = self.library.collection.count_documents({})        
         embeddings_created = 0
         current_index = 0
         finished = False
@@ -217,7 +223,9 @@ class EmbeddingMilvus:
                     current_index += 1
             
                 embeddings_created += len(sentences)
-                print (f"Embeddings Created: {embeddings_created} of {num_of_blocks}")
+
+                status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
+                #print (f"Embeddings Created: {embeddings_created} of {num_of_blocks}")
         
         self.collection.flush()
         embedding_summary = {"embeddings_created": embeddings_created}
@@ -299,14 +307,16 @@ class EmbeddingFAISS:
                 self.index = faiss.IndexFlatL2(self.embedding_dims)
 
         if doc_ids:
+            num_of_blocks = self.library.collection.count_documents({"doc_ID": {"$in": doc_ids}})
             all_blocks_cursor = CollectionRetrieval(self.library.collection).filter_by_key_value_range("doc_ID", doc_ids)
         else:
+            num_of_blocks = self.library.collection.count_documents({self.mongo_key: {"$exists": False }})
             all_blocks_cursor = CollectionRetrieval(self.library.collection).\
                 custom_filter({self.mongo_key: { "$exists": False }})
 
-        num_of_blocks = self.library.collection.count_documents({})
-
-        # print("update: num_of_blocks = ", num_of_blocks)
+        # Initialize a new status
+        status = Status(self.library.account_name)
+        status.new_embedding_status(self.library.library_name, self.model_name, num_of_blocks)
 
         embeddings_created = 0
         finished = False
@@ -349,7 +359,8 @@ class EmbeddingFAISS:
                     current_index += 1          
 
                 embeddings_created += len(sentences)
-                print (f"Embeddings Created: {embeddings_created} of {num_of_blocks}")
+                status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
+                #print (f"Embeddings Created: {embeddings_created} of {num_of_blocks}")
         
         # Ensure any existing file is removed before saving
         if os.path.exists(self.embedding_file_path):
@@ -455,12 +466,17 @@ class EmbeddingPinecone:
     def create_new_embedding(self, doc_ids = None, batch_size=500):
 
         if doc_ids:
+            num_of_blocks = self.library.collection.count_documents({"doc_ID": {"$in": doc_ids}})
             all_blocks_cursor = CollectionRetrieval(self.library.collection).filter_by_key_value_range("doc_ID", doc_ids)
         else:
+            num_of_blocks = self.library.collection.count_documents({self.mongo_key: {"$exists": False }})
             all_blocks_cursor = CollectionRetrieval(self.library.collection).\
                 custom_filter({self.mongo_key: { "$exists": False }})
 
-        num_of_blocks = self.library.collection.count_documents({})        
+        # Initialize a new status
+        status = Status(self.library.account_name)
+        status.new_embedding_status(self.library.library_name, self.model_name, num_of_blocks)
+
         embeddings_created = 0
 
         # starting current_index @ 0
@@ -500,7 +516,8 @@ class EmbeddingPinecone:
                     current_index += 1
 
                 embeddings_created += len(sentences)
-                print (f"Embeddings Created: {embeddings_created} of {num_of_blocks}")
+                status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
+                #print (f"Embeddings Created: {embeddings_created} of {num_of_blocks}")
 
         embedding_summary = {"embeddings_created": embeddings_created}  
         return embedding_summary
@@ -613,12 +630,17 @@ class EmbeddingMongoAtlas:
     def create_new_embedding(self, doc_ids = None, batch_size=500):
 
         if doc_ids:
+            num_of_blocks = self.library.collection.count_documents({"doc_ID": {"$in": doc_ids}})
             all_blocks_cursor = CollectionRetrieval(self.library.collection).filter_by_key_value_range("doc_ID", doc_ids)
         else:
+            num_of_blocks = self.library.collection.count_documents({self.mongo_key: {"$exists": False }})
             all_blocks_cursor = CollectionRetrieval(self.library.collection).\
                 custom_filter({self.mongo_key: { "$exists": False }})
+       
+        # Initialize a new status
+        status = Status(self.library.account_name)
+        status.new_embedding_status(self.library.library_name, self.model_name, num_of_blocks)
 
-        num_of_blocks = self.library.collection.count_documents({})        
         embeddings_created = 0
 
         # starting current_index @ 0
@@ -665,7 +687,8 @@ class EmbeddingMongoAtlas:
                     current_index += 1
 
                 embeddings_created += len(sentences)
-                print (f"Embeddings Created: {embeddings_created} of {num_of_blocks}")
+                status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
+                #print (f"Embeddings Created: {embeddings_created} of {num_of_blocks}")
                 last_block_id = block_ids[-1]
 
         if embeddings_created > 0:

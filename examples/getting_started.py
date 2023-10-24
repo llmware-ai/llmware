@@ -1,14 +1,15 @@
 ''' This example demonstrates:
-      1. Creating your first library
-      2. Adding some files to it
-      3. Generating vector embeddings and storing them in Milvus 
-      4. Doing a semantic query
+    1. Creating your first library
+    2. Adding some files to it
+    3. Generating vector embeddings and storing them in Milvus 
+    4. Doing a semantic query
 '''
 
 import os
 from llmware.library import Library
 from llmware.retrieval import Query
 from llmware.setup import Setup
+from llmware.status import Status
 
 library_name="getting_started"
 
@@ -22,6 +23,7 @@ print (f"\n > Adding some files to the library...")
 library.add_files(input_folder_path=os.path.join(sample_files_path, "SmallLibrary"))
 
 print (f"\n > Generating embedding vectors (using the 'mini-lm-sbert' model) and storing them (using 'Milvus')...")
+Status(library.account_name).tail_embedding_status(library.library_name, "mini-lm-sbert")
 library.install_new_embedding(embedding_model_name="mini-lm-sbert", vector_db="milvus")
 
 print (f"\n > Running a query for 'Salary'...")
