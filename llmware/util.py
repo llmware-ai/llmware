@@ -545,15 +545,41 @@ class Utilities:
 
         key_terms = c.tokenize(query)
 
+        # handle edge case - if empty search result, then return all dicts with updated keys
+        if len(key_terms) == 0:
+            for i, entries in enumerate(output_dicts):
+                if "page_num" not in entries:
+                    if "master_index" in entries:
+                        page_num = entries["master_index"]
+                    else:
+                        page_num = 0
+                    entries.update({"page_num": page_num})
+                if "query" not in entries:
+                    entries.update({"query": ""})
+                matched_dicts.append(entries)
+            return matched_dicts
+
+        # len of key_terms >= 1 -> initiate key term match search
         for i, entries in enumerate(output_dicts):
 
             text_tokens = c.tokenize(entries[text_key])
 
-            match_found = 0
-
             for j, toks in enumerate(text_tokens):
-                for key_term in key_terms:
-                    if key_term.lower() == toks.lower():
+                match_found = 0
+                if toks.lower() == key_terms[0].lower():
+                    match_found += 1
+
+                    if len(key_terms) > 1:
+                        if len(text_tokens) > (j + len(key_terms)):
+                            for x in range(1,len(key_terms)):
+                                if text_tokens[j+x].lower() == key_terms[x].lower():
+                                    match_found += 1
+                                else:
+                                    match_found = 0
+                                    break
+
+                    if match_found == len(key_terms):
+                        # found confirmed match
 
                         if "page_num" not in entries:
 
@@ -565,17 +591,13 @@ class Utilities:
                             entries.update({"page_num": page_num})
 
                         if "query" not in entries:
-                            entries.update({"query": key_term})
+                            entries.update({"query": query})
 
                         matched_dicts.append(entries)
-                        match_found = 1
                         break
 
-                if match_found == 1:
-                    break
-
         return matched_dicts
-
+        
     def find_match(self, key_term, sentence):
 
         matches_found = []
