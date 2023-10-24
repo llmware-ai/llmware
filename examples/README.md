@@ -11,7 +11,7 @@
 | 7.  Parsing ([code](parsing.py)) | Ingest at scale into library and ‘at runtime' into any Prompt.|
 | 8.  Embedding ([code](embedding.py)) | Simple access to multiple embedding models and vector DBs (“mix and match”). |
 | 9.  Huggingface Integration ([code](huggingface_integration.py)) | How to bring your favorite HF model into llmware seamlessly.  Customize a generative model with weights from a custom fine-tuned model. |
-| 10.  `llmware` BLING model ([code](llmware_bling.py)) | Experiement with RAG scenarios using ~1B parameter GPT models that can run on your laptop.  BLING models are fine-tuned for common RAG scenarios, specifically: question-answering, key-value extraction, and basic summarization.   | 
+| 10.  `llmware` BLING model ([code](llmware_bling.py)) | Experiment with RAG scenarios using ~1B parameter GPT models that can run on your laptop.  BLING models are fine-tuned for common RAG scenarios, specifically: question-answering, key-value extraction, and basic summarization.  | 
 | 11.  Knowledge Graph ([code](knowledge_graph.py)) | Generate scalable, statistical NLP artifacts - knowledge graphs & document graphs.  |
 | 12.  Datasets ([code](datasets.py)) | Dataset generation streamlined for fine-tuning generative and embedding models and formats such as Alpaca, ChatGPT, Human-Bot.  |
 | 13.  Working without Databases ([code](working_without_a_database.py))| Parse, Prompt and generate Datasets from Prompt history without installing MongoDB or a vector database.|
