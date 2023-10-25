@@ -8,6 +8,7 @@ from llmware.exceptions import UnsupportedEmbeddingDatabaseException
 from llmware.models import ModelCatalog
 from llmware.retrieval import Query
 from llmware.setup import Setup
+from llmware.status import Status
 from llmware.configs import LLMWareConfig
 from llmware.resources import CloudBucketManager
 
@@ -56,6 +57,7 @@ def generic_embedding_and_query(library, embedding_db):
     # Run the embeddings (only of first 3 docs ) 
     model=ModelCatalog().load_model("mini-lm-sbert")
     embedding_handler = EmbeddingHandler(library=library)
+    Status(library.account_name).tail_embedding_status(library.library_name, "mini-lm-sbert")
     embedding_summary = embedding_handler.create_new_embedding(embedding_db=embedding_db, model=model,doc_ids=[1, 2, 3, 4, 5])
 
     # Do a query
