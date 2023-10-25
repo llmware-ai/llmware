@@ -2095,8 +2095,7 @@ class HFGenerativeModel:
         bot = output_str.find("<bot>:")
 
         if bot > -1:
-            # note: will enhance checks over time
-            output_str = output_str[bot:]
+            output_str = output_str[bot+len("<bot>:"):]
 
         # end - post-processing
         
