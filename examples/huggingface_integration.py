@@ -64,7 +64,7 @@ def load_and_use_decoder_generative_model():
                              "EleutherAI/pythia-1b-v0", "EleutherAI/pythia-1.4b-v0"]
 
     # Here we'll just select one of the above models
-    model_name = hf_model_testing_list[5]
+    model_name = hf_model_testing_list[6]
 
     # Load the model using the Transformer classes
     print (f"\n > Loading model '{model_name}'from HuggingFace...")
@@ -79,13 +79,6 @@ def load_and_use_decoder_generative_model():
     prompt_text = "The future of artificial intelligence is likely to be"
     print (f"\n > Prompting the model with '{prompt_text}'")
     output = model.inference(prompt_text)["llm_response"]
-    print(f"\nResponse:\n{prompt_text}{output}")
-
-    # Integrate the model into a llmware prompt
-    prompt_text = "As the man turned around, off in the distance, he noticed"
-    print (f"\n > Prompting the model with '{prompt_text}'")
-    prompter = Prompt(llm_model=hf_model,tokenizer=hf_tokenizer,from_hf=True)
-    output = prompter.prompt_main(prompt_text)["llm_response"]
     print(f"\nResponse:\n{prompt_text}{output}")
 
 # Load a HuggingFace generative model and override the weights to use a custom user-developed fine-tuned model
