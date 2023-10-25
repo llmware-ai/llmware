@@ -28,14 +28,13 @@ from llmware.models import ModelCatalog
 from llmware.parsers import Parser
 from llmware.retrieval import Query
 from llmware.library import Library
-from llmware.exceptions import LibraryObjectNotFoundException, PromptNotInCatalogException
-
+from llmware.exceptions import LibraryObjectNotFoundException, PromptNotInCatalogException, DependencyNotInstalledException
 
 class Prompt:
 
     def __init__(self, llm_name=None, tokenizer=None, model_card=None, library=None, account_name="llmware",
                  prompt_id=None, save_state=True, llm_api_key=None, llm_model=None, from_hf=False,
-                 prompt_catalog=None):
+                 prompt_catalog=None, temperature=0.5):
 
         self.account_name = account_name
         self.library = library
@@ -73,7 +72,7 @@ class Prompt:
             self.tokenizer = tokenizer
 
         # inference parameters
-        self.temperature = 0.5
+        self.temperature = temperature
         self.prompt_type = ""
         self.llm_max_output_len = 200
 
@@ -137,16 +136,41 @@ class Prompt:
 
         self.query_results = None
 
-    def load_model(self, gen_model,api_key=None):
+    # changes in importing huggingface models
+    def load_model(self, gen_model,api_key=None, from_hf=False):
 
         if api_key:
             self.llm_model_api_key = api_key
 
-        self.llm_model = ModelCatalog().load_model(gen_model, api_key=self.llm_model_api_key)
+        if not from_hf:
+            self.llm_model = ModelCatalog().load_model(gen_model, api_key=self.llm_model_api_key)
+        else:
+            try:
+                # will wrap in Exception if import fails and move to model catalog class
+                from transformers import AutoModelForCausalLM, AutoTokenizer
+            except:
+                raise DependencyNotInstalledException("transformers")
+
+            if api_key:
+                # may look to add further settings/configuration in the future for hf models, e.g., trust_remote_code
+                custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model,token=api_key, trust_remote_code=True)
+                hf_tokenizer = AutoTokenizer.from_pretrained(gen_model,token=api_key)
+            else:
+                custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model)
+                hf_tokenizer = AutoTokenizer.from_pretrained(gen_model)
+
+            #   now, we have 'imported' our own custom 'instruct' model into llmware
+            self.llm_model = ModelCatalog().load_hf_generative_model(custom_hf_model, hf_tokenizer,
+                                                                     instruction_following=False,
+                                                                     prompt_wrapper="human_bot")
+            # prepare 'safe name' without file paths
+            self.llm_model.model_name = re.sub("[/]","---",gen_model)
+
         self.llm_name = gen_model
         self.context_window_size = self.llm_model.max_input_len
 
         return self
+
 
     def set_inference_parameters(self, temperature=0.5, llm_max_output_len=200):
         self.temperature = temperature
@@ -404,7 +428,7 @@ class Prompt:
         return source_summary_output
 
     def prompt_with_source(self, prompt, prompt_name=None, source_id_list=None, first_source_only=True,
-                           max_output=None):
+                           max_output=None, temperature=None):
 
         #   this method is intended to be used in conjunction with sources as follows:
         #           prompter = Prompt().load_model("claude-instant-v1", api_key=None)
@@ -424,7 +448,10 @@ class Prompt:
 
         if max_output:
             self.llm_max_output_len = max_output
-
+        
+        if temperature:
+            self.temperature = temperature
+            
         #   this method assumes a 'closed context' with set of preloaded sources into the prompt
         if len(self.source_materials) == 0:
             logging.error("error:  to use prompt_with_source, there must be a loaded source - try '.add_sources' first")
@@ -435,7 +462,7 @@ class Prompt:
 
             response_dict = self.prompt_main(prompt,prompt_name=self.prompt_type,
                                              context=self.source_materials[0]["text"],
-                                             register_trx=False)
+                                             register_trx=False, temperature=temperature)
 
             # add details on the source materials to the response dict
             if "metadata" in self.source_materials[0]:
@@ -454,7 +481,7 @@ class Prompt:
                     if i in source_id_list:
                         response_dict = self.prompt_main(prompt,prompt_name=self.prompt_type,
                                                          context=self.source_materials[i]["text"],
-                                                         register_trx=False)
+                                                         register_trx=False, temperature=temperature)
 
                         # add details on the source materials to the response dict
                         if "metadata" in self.source_materials[i]:
@@ -469,7 +496,7 @@ class Prompt:
 
                     response_dict = self.prompt_main(prompt, prompt_name=self.prompt_type,
                                                      context=self.source_materials[i]["text"],
-                                                     register_trx=False)
+                                                     register_trx=False, temperature=temperature)
 
                     # add details on the source materials to the response dict
                     if "metadata" in self.source_materials[i]:
@@ -585,7 +612,7 @@ class Prompt:
     # core basic prompt inference method
     def prompt_main (self, prompt, prompt_name=None, context=None, call_back_attempts=1, calling_app_id="",
                      prompt_id=0,batch_id=0, trx_dict=None, selected_model= None, register_trx=False,
-                     inference_dict=None, max_output=None):
+                     inference_dict=None, max_output=None, temperature=None):
 
         usage = {}
 
@@ -604,7 +631,10 @@ class Prompt:
 
         if selected_model:
             self.llm_model = ModelCatalog().load_model(selected_model)
-
+        
+        if temperature:
+            self.temperature = temperature
+            
         self.llm_model.temperature = self.temperature
 
         # if max_output:  self.llm_model.max_tokens = max_output

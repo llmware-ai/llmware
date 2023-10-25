@@ -2084,13 +2084,21 @@ class HFGenerativeModel:
 
         output_only = outputs_np[input_token_len:]
         output_str = self.tokenizer.decode(output_only)
+        
+        # post-processing clean-up - stop at endoftext
+        eot = output_str.find("<|endoftext|>")
 
-        if output_str.endswith("<|endoftext|>"):
-            output_str = output_str[:-len("<|endoftext|>")]
-            if output_str.strip().startswith("<bot>:"):
-                output_str = output_str[len("<bot>:"):]
-                output_str.strip()
+        if eot > -1:
+            output_str = output_str[:eot]
 
+        # post-processing clean-up - start after bot wrapper
+        bot = output_str.find("<bot>:")
+
+        if bot > -1:
+            output_str = output_str[bot+len("<bot>:"):]
+
+        # end - post-processing
+        
         total_len = len(outputs_np)
 
         usage = {"input": input_token_len,

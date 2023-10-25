@@ -141,7 +141,7 @@ def use_llmware_bling():
     # You can also integrate the model into an llmware Prompt
     prompt = "What is my age?"
     context = "I am 33 years old"
-    prompter = Prompt(llm_model=custom_hf_model, tokenizer=hf_tokenizer, from_hf=True)
+    prompter = Prompt().load_model(hf_model_name, from_hf=True)
     output = prompter.prompt_main(prompt, context=context)["llm_response"]
     print(f"\nPrompt: {prompt}\nResponse:\n{output.strip()}")
 
