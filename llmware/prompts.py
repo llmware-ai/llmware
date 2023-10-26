@@ -1035,7 +1035,7 @@ class Sources:
                             "batch_stats.chars", "batch_stats.samples"]
 
         self.source_metadata = ["batch_source_num", "evidence_start_char", "evidence_stop_char",
-                                "doc_fn", "page_num"]
+                                "source_name", "page_num"]
 
     def token_counter(self, text_sample):
         toks = self.tokenizer.encode(text_sample).ids
@@ -1199,7 +1199,7 @@ class Sources:
                 new_source = {"batch_source_num": 0,
                               "evidence_start_char": 0,
                               "evidence_stop_char": len(samples[x]["text"]),
-                              "doc_fn": source_fn,
+                              "source_name": source_fn,
                               "page_num": page_num,
                               }
 
@@ -1448,8 +1448,8 @@ class QualityCheck:
                             if "page_num" in evidence_metadata[minibatch]:
                                 page_num = evidence_metadata[minibatch]["page_num"]
 
-                            if "file_source" in evidence_metadata[minibatch]:
-                                source_fn = evidence_metadata[minibatch]["file_source"]
+                            if "source_name" in evidence_metadata[minibatch]:
+                                source_fn = evidence_metadata[minibatch]["source_name"]
 
                         new_fact_check_entry = {"fact": current_str_token,
                                                 "status": "Confirmed",
@@ -1573,8 +1573,7 @@ class QualityCheck:
 
             # min threshold to count as source -> % of total or absolute # of matching tokens
             if match_score > min_th or len(ev_match_tokens) > min_match_count:
-                matching_evidence_score.append([match_score, x, ev_match_tokens, evidence_tokens_tmp,
-                                                evidence_metadata[x]["page_num"]])
+                matching_evidence_score.append([match_score, x, ev_match_tokens, evidence_tokens_tmp, evidence_metadata[x]["page_num"], evidence_metadata[x]["source_name"]])
 
         mes = sorted(matching_evidence_score, key=lambda x: x[0], reverse=True)
 
@@ -1589,7 +1588,8 @@ class QualityCheck:
         for m in range(0, top_sources):
 
             page_num = mes[m][4]
-
+            source_name = mes[m][5]
+            
             # text_snippet = "Page {}- ... ".format(str(page_num))
             text_snippet = ""
 
@@ -1613,15 +1613,9 @@ class QualityCheck:
 
             if text_snippet not in text_output:
                 text_output.append(text_snippet)
-                # print("update: source_reviewer: ", evidence_metadata[mes[m][1]][1])
-                try:
-                    # mes[m][1] = array index corresponding to the 'batch' of evidence metadata
-                    # the batch = (index, content), so look at index [1] to get the actual content
-                    source = evidence_metadata[mes[m][1]][1]["doc_fn"]
-                except:
-                    source = ""
+
                 # new_output = {"text": text_snippet, "match_score": mes[m][0],"source": evidence_metadata[mes[m][1]]}
-                new_output = {"text": text_snippet, "match_score": mes[m][0], "source": source,
+                new_output = {"text": text_snippet, "match_score": mes[m][0], "source": source_name,
                               "page_num": page_num}
 
                 sources_output.append(new_output)
