@@ -113,7 +113,7 @@ setup(
         'scikit-learn>=1.3.1',
         'tokenizers>=0.13.3',
         'torch>=1.13.1',
-        'Werkzeug>=2.3.7',
+        'Werkzeug>=3.0.1',
         'word2number>=1.1',
         'Wikipedia-API>=0.6.0',
         'yfinance>=0.2.28'

@@ -145,7 +145,7 @@ end_to_end_rag()
  > Generating CSV report...
 File: /Users/llmware/llmware_data/prompt_history/interaction_report_Fri Sep 29 12:07:42 2023.csv
 ```
-#### 📚 See additional [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md) for more code samples and ideas.
+#### 📚 See 20+ [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md) for more RAG examples and other code samples and ideas.
 
 
 ### 4. Accessing LLMs and setting-up API keys & secrets
@@ -277,8 +277,17 @@ Information on ways to participate can be found in our [Contributors Guide](http
 - [Docker](https://docs.docker.com/get-docker/) 
 
 <details>
-  <summary><b>Change Log</b></summary>
+  <summary><b>🚧 Change Log</b></summary>
 
+- **27 Oct 2023: llmware v0.1.5**
+  - Four new example scripts focused on RAG workflows with small, fine-tuned instruct models that run on a laptop (`llmware` [BLING](https://huggingface.co/llmware) models).
+  - Expanded options for setting temperature inside a prompt class.
+  - Improvement in post processing of Hugging Face model generation.
+  - Streamlined loading of Hugging Face generative models into prompts.
+  - Initial delivery of a central status class: read/write of embedding status with a consistent interface for callers.
+  - Enhanced in-memory dictionary search support for multi-key queries.
+  - Removed trailing space in human-bot wrapping to improve generation quality in some fine-tuned models.
+  - Minor defect fixes, updated test scripts, and version update for Werkzeug to address [dependency security alert](https://github.com/llmware-ai/llmware/security/dependabot/2).
 - **20 Oct 2023: llmware v0.1.4**
   - GPU support for Hugging Face models.
   - Defect fixes and additional test scripts.
