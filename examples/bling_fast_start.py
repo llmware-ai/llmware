@@ -390,4 +390,4 @@ model_list = ["llmware/bling-1b-0.1",
               "llmware/bling-stable-lm-3b-4e1t-v0"
               ]
 
-bling_meets_llmware_hello_world(model_list[5], from_hf=True)
+bling_meets_llmware_hello_world(model_list[0], from_hf=True)
