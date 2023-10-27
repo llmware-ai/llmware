@@ -18,7 +18,7 @@
 | 14.  Embedding ([code](embedding.py)) | Simple access to multiple embedding models and vector DBs (“mix and match”). |
 | 15.  Hugging Face Integration ([code](huggingface_integration.py)) | How to bring your favorite HF model into llmware seamlessly.  Customize a generative model with weights from a custom fine-tuned model. |
 | 16.  Knowledge Graph ([code](knowledge_graph.py)) | Generate scalable, statistical NLP artifacts - knowledge graphs & document graphs.  |
-| 17.  Datasets ([code](datasets.py)) | Dataset generation streamlined for fine-tuning generative and embedding models and formats such as Alpaca, ChatGPT, Human-Bot.  |
+| 17.  Working with Datasets ([code](working_with_datasets.py)) | Dataset generation streamlined for fine-tuning generative and embedding models and formats such as Alpaca, ChatGPT, Human-Bot.  |
 | 18.  Working without Databases ([code](working_without_a_database.py))| Parse, Prompt and generate Datasets from Prompt history without installing MongoDB or a vector database.|
 | 19.  Working with Libraries ([code](working_with_libraries.py)) | Explore all Library operations. |
 | 20.  Using MongoDB Atlas ([code](using_mongo_atlas.py))  | Demonstrates using MongoDB Atlas as `llmware`'s NoSQL datastore and Atlas Vector Search for vector embeddings.|
