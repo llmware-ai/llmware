@@ -20,7 +20,7 @@ try:
     from transformers import AutoModel, AutoTokenizer, AutoModelForCausalLM
 except ImportError:
     raise ImportError (
-        "This example requires classes from the 'transformers' Python package" 
+        "This example requires classes from the 'transformers' Python package. " 
         "You can install it with 'pip install transformers'"
     )
 try:
