@@ -7,7 +7,7 @@
 | 3.   LLM Prompts ([code](llm_prompts.py)) | Prompt LLMs with various sources, explore the out-of-the-box Prompt Catalog, and use different prompt styles.|
 | 4.   Retrieval ([code](retrieval.py)) | Explore the breadth of retrieval capabilities and persisting, loading and saving retrieval history.|
 | 5.   RAG Quick Start ([code](rag.py)) | End-to-end RAG scenario in less than 15 lines of code.|
-| 6.   The BLING model ([code](bling_fast_start.py))   | Explore `llmware`s BLING model series ("Best Little Instruction-following No-GPU-required").  See how they perform in common RAG scenarios - question-answering, key-value extraction, and basic summarization.   |
+| 6.   BLING models ([code](bling_fast_start.py))   | Explore `llmware`s BLING model series ("Best Little Instruction-following No-GPU-required").  See how they perform in common RAG scenarios - question-answering, key-value extraction, and basic summarization.   |
 | 7.   RAG with BLING ([code](bling_rag.py)) | Experiment with RAG scenarios using `llmware`'s BLING ~1B parameter GPT model running on your laptop.   |
 | 8.   RAG benchmark testing ([code](bling_rag_benchmark_tests.py)) | Run RAG instruct benchmark tests against the `llmware` BLING models to find the best one for your RAG workflow.  |
 | 9.   RAG "on the fly" ([code](working_without_a_database.py)) |  Analyze a set of documents using RAG _without_ a database or vector embeddings. |
@@ -33,7 +33,7 @@ The `llmware` public model repository has out-of-the-box custom trained sentence
 # Additional llmware capabilities
 - Create knowledge graphs with a high-powered and fast C-based co-occurrence table matrix builder, the output of which can feed NLP statistics as well as potentially graph databases.  Explore the [Knowledge Graph](knowledge_graph.py) example.
 
-- Generate datasets for fine-tuning both generative and embedding models.  `llmware` uses sophisticated data-crafting strategies, and leveraging the data captured throughout the system.  Explore the [Datasets](datasets.py) example.  
+- Generate datasets for fine-tuning both generative and embedding models.  `llmware` uses sophisticated data-crafting strategies, and leveraging the data captured throughout the system.  Explore the [Datasets](working_with_datasets.py) example.  
   
 - Library is the simple, flexible, unifying construct in `llmware` to assemble and normalize parsed text chunks, and is linked to both a text search index, and an open platform of embedding models and vector databases. Explore the [Working with Libraries](working_with_libraries.py) example.
 
