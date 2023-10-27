@@ -1,14 +1,7 @@
-
-
+''' This example demonstrates prompting local BLING models with provided context
+'''
 import time
-
 from llmware.prompts import Prompt
-
-#   SAMPLE SCRIPT - run RAG on CPU tests with LLMWare and BLING models (from HuggingFace)
-#   -- sample set of 'hello world' questions
-#   -- list of available BLING models
-#   -- simple 'loop' to load the model into prompt, run the inferences, and check the results
-
 
 def hello_world_questions():
 
@@ -360,38 +353,31 @@ def hello_world_questions():
 def bling_meets_llmware_hello_world (model_name, from_hf=False):
 
     t0 = time.time()
-
     test_list = hello_world_questions()
 
-    # note: api_key must be passed in llmware to automatically use "trust_remote_code" option
-    #   -- many of the newer models use local custom code in their HF repo, rather than the transformer class code
-    #   -- we should assess whether to expose this config option directly and/or handle implicitly for users
-
-    # load the model
+    print(f"\n > Loading Model: {model_name}...")
+    # Note: Some newer models use local custom code in their HF repos which is not trusted by default
+    #  For now, you can pass in a dummy api_key and we'll set the right config to trust that code
+    #  This will likely be changing in the future
     prompter = Prompt().load_model(model_name, from_hf=from_hf, api_key="dummy_not_used_by_hf")
 
     t1 = time.time()
-
-    print("\nModel: ", model_name, " -- loading time: ", t1-t0)
-
+    print(f"\n > Model {model_name} load time: {t1-t0} seconds")
+ 
     for i, entries in enumerate(test_list):
-
-        print("\nupdate: ", str(i+1), "Query: ", entries["query"])
-
+        print(f"\n{i+1}. Query: {entries['query']}")
+     
         # run the prompt
-        output = prompter.prompt_main(entries["query"],context=entries["context"],prompt_name="default_with_context",
-                                      temperature=0.30)
+        output = prompter.prompt_main(entries["query"],context=entries["context"]
+                                      , prompt_name="default_with_context",temperature=0.30)
 
-        print("update: ", str(i+1), "LLM Response: ", output["llm_response"].strip("\n"))
-        print("update: ", str(i+1), "Gold Answer: ", entries["answer"])
-        print("update: ", str(i+1), "LLM Usage: ", output["usage"])
+        llm_response = output["llm_response"].strip("\n")
+        print(f"LLM Response: {llm_response}")
+        print(f"Gold Answer: {entries['answer']}")
+        print(f"LLM Usage: {output['usage']}")
 
     t2 = time.time()
-
-    print("\nupdate: total processing time: ", t2-t1)
-
-    return 0
-
+    print(f"\nTotal processing time: {t2-t1} seconds")
 
 # list of 8 available 'rag-instruct' bling models on HuggingFace
 model_list = ["llmware/bling-1b-0.1",
@@ -401,11 +387,7 @@ model_list = ["llmware/bling-1b-0.1",
               "llmware/bling-sheared-llama-1.3b-0.1",
               "llmware/bling-sheared-llama-2.7b-0.1",
               "llmware/bling-red-pajamas-3b-0.1",
-              "llmware/bling-stable-lm-3b-4e1t-v0",
-              # "llmware/bling-sheared-llama-1.3b-0.2" - WIP
+              "llmware/bling-stable-lm-3b-4e1t-v0"
               ]
 
-# test loop to confirm if all working
-for model_name in model_list:
-
-    bling_meets_llmware_hello_world(model_name, from_hf=True)
+bling_meets_llmware_hello_world(model_list[5], from_hf=True)
