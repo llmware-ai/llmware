@@ -12,7 +12,7 @@ The following are a set of guidelines for contributing to `llmware`.  As with ev
 - File an issue about the bug.
 - Provide clear and concrete ways/scripts to reproduce the bug.
 - Provide possible solutions for the bug.
-- Pull a request to fix the bug.
+- Submit a pull a request to fix the bug.
 
 **If you're interested in existing issues, you can**
 
@@ -47,7 +47,7 @@ Generally, we follow the "fork-and-pull" Git workflow.
 5.  [Commit](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/committing-changes-to-a-pull-request-branch-created-from-a-fork) changes to your own branch, then push to GitHub with `git push origin my-topic-branch`.
 6.  Submit a [pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests) so that we can review your changes.
 
-Remember to [sync your forked repository](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo#keep-your-fork-synced) _before_ submitting proposed changes upstream. If you have an existing local repository, please update it before you start, to minimize the chance of merge conflicts.
+Remember to [synchronize your forked repository](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo#keep-your-fork-synced) _before_ submitting proposed changes upstream. If you have an existing local repository, please update it before you start, to minimize the chance of merge conflicts.
 
 ```shell
 git remote add upstream git@github.com:llmware-ai/llmware.git
