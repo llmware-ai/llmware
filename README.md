@@ -47,6 +47,8 @@ With `llmware`, our goal is to contribute to and help catalyze an open community
 #### 📚 Explore [additional llmware capabilities](https://github.com/llmware-ai/llmware/blob/main/examples/README.md) and 🎬 Check out these videos on how to quickly get started with RAG:
 - [Fast Start to RAG with LLMWare Open Source Library](https://www.youtube.com/watch?v=0naqpH93eEU)
 - [Use Retrieval Augmented Generation (RAG) without a Database](https://www.youtube.com/watch?v=tAGz6yR14lw)
+- [Use small LLMs for RAG for Contract Analysis (feat. LLMWare)](https://www.youtube.com/watch?v=8aV5p3tErP0)
+- [RAG using CPU-based (No-GPU required) Hugging Face Models with LLMWare on your laptop](https://www.youtube.com/watch?v=JjgqOZ2v5oU)
 
 ## 🌱 Getting Started
 
