@@ -4,7 +4,7 @@
 
 `llmware` is a unified, open, extensible framework for LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides a comprehensive set of tools that anyone can use – from beginner to the most sophisticated AI developer – to rapidly build industrial-grade enterprise LLM-based applications.  _Key differentiators include: source citation for Q & A scenarios, fact checking, and other guardrails for model hallucination_.
 
-With `llmware`, our goal is to contribute to and help catalize an open community around the new combination of open, extensible technologies being assembled to accomplish fact-based generative workflows.
+With `llmware`, our goal is to contribute to and help catalyze an open community around the new combination of open, extensible technologies being assembled to accomplish fact-based generative workflows.
 
 ## 🎯  Key features
 `llmware` is an integrated framework comprised of four major components:
