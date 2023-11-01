@@ -6,9 +6,9 @@
 | 2.   Working with LLMs ([code](working_with_llms.py)) | Connect to your favorite LLM and perform basic prompts. |
 | 3.   LLM Prompts ([code](llm_prompts.py)) | Prompt LLMs with various sources, explore the out-of-the-box Prompt Catalog, and use different prompt styles.|
 | 4.   Retrieval ([code](retrieval.py)) | Explore the breadth of retrieval capabilities and persisting, loading and saving retrieval history.|
-| 5.   RAG Quick Start ([code](rag.py) / [video](https://www.youtube.com/watch?v=0naqpH93eEU)) | End-to-end RAG scenario in less than 15 lines of code.|
+| 5.   RAG Quick Start ([code](rag.py) / [video](https://www.youtube.com/watch?v=0naqpH93eEU)) | End-to-end RAG scenario in _less than 15 lines of code_.|
 | 6.   BLING models ([code](bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU))   | Explore `llmware`'s BLING model series ("Best Little Instruction-following No-GPU-required").  See how they perform in common RAG scenarios - question-answering, key-value extraction, and basic summarization.   |
-| 7.   RAG with BLING ([code](bling_rag.py)) | Experiment with RAG scenarios using `llmware`'s BLING ~1B parameter GPT model running on your laptop.   |
+| 7.   RAG with BLING ([code](bling_rag.py) / [video](https://www.youtube.com/watch?v=8aV5p3tErP0)) | Using contract analysis as an example, experiment with RAG for complex document analysis and text extraction using `llmware`'s BLING ~1B parameter GPT model running on your laptop.   |
 | 8.   RAG benchmark testing ([code](bling_rag_benchmark_tests.py)) | Run RAG instruct benchmark tests against the `llmware` BLING models to find the best one for your RAG workflow.  |
 | 9.   RAG "on the fly" ([code](working_without_a_database.py)) |  Analyze a set of documents using RAG _without_ a database or vector embeddings. |
 | 10.  Fact Checking ([code](bling_evidence_checking.py))  | Explore the full set of evidence methods in this example script that analyzes a set of contracts. |
