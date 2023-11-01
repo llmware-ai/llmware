@@ -3,7 +3,7 @@
 '''
 import os
 import re
-from llmware.prompts import Prompt
+from llmware.prompts import Prompt, HumanInTheLoop
 from llmware.setup import Setup
 from llmware.configs import LLMWareConfig
 
@@ -52,6 +52,10 @@ def contract_analysis_on_laptop (model_name, from_hf=False):
     # Save jsonl report to jsonl to /prompt_history folder
     print("\nPrompt state saved at: ", os.path.join(LLMWareConfig.get_prompt_path(),prompter.prompt_id))
     prompter.save_state()
+
+    #Save csv report that includes the model, response, prompt, and evidence for human-in-the-loop review
+    csv_output = HumanInTheLoop(prompter).export_current_interaction_to_csv()
+    print("csv output - ", csv_output)
 
 hf_model_list = ["llmware/bling-1b-0.1", "llmware/bling-1.4b-0.1", "llmware/bling-falcon-1b-0.1",
               "llmware/bling-sheared-llama-2.7b-0.1", "llmware/bling-sheared-llama-1.3b-0.1",
