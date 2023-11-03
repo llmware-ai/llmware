@@ -1069,7 +1069,7 @@ class Query:
 
         doc_fn_out = []
         for i, file in enumerate(doc_fn_raw_list):
-            doc_fn_out.append(file.split("/")[-1])
+            doc_fn_out.append(file.split(os.sep)[-1])
         return doc_fn_out
 
     def block_lookup(self, block_id, doc_id):
