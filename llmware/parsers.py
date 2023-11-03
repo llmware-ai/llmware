@@ -121,7 +121,7 @@ class Parser:
             os.mkdir(self.parser_folder)
 
         # create tmp workspace for parser
-        parser_tmp_work_folder = os.path.join(LLMWareConfig.get_tmp_path(), "parser_tmp/")
+        parser_tmp_work_folder = os.path.join(LLMWareConfig.get_tmp_path(), "parser_tmp" + os.sep)
 
         # if tmp workspace folder already exists, then delete - start fresh
         if os.path.exists(parser_tmp_work_folder):
@@ -218,14 +218,14 @@ class Parser:
         if not os.path.exists(local_work_path):
             os.makedirs(local_work_path, exist_ok=True)
 
-        office_fp = os.path.join(local_work_path, "process_office_files/")
-        pdf_fp = os.path.join(local_work_path, "process_pdf_files/")
-        text_fp = os.path.join(local_work_path, "process_text_files/")
-        ocr_fp = os.path.join(local_work_path, "process_ocr_files/")
-        voice_fp = os.path.join(local_work_path, "process_voice_files/")
-        zip_fp = os.path.join(local_work_path, "process_zip_files/")
+        office_fp = os.path.join(local_work_path, "process_office_files" + os.sep)
+        pdf_fp = os.path.join(local_work_path, "process_pdf_files" + os.sep)
+        text_fp = os.path.join(local_work_path, "process_text_files" + os.sep)
+        ocr_fp = os.path.join(local_work_path, "process_ocr_files" + os.sep)
+        voice_fp = os.path.join(local_work_path, "process_voice_files" + os.sep)
+        zip_fp = os.path.join(local_work_path, "process_zip_files" + os.sep)
 
-        office_workspace_fp = os.path.join(local_work_path, "office_tmp/")
+        office_workspace_fp = os.path.join(local_work_path, "office_tmp" + os.sep)
 
         # start clean with new directories for both office + pdf
         if os.path.exists(office_fp):
@@ -529,27 +529,27 @@ class Parser:
                     if success_code == 1:
 
                         if ext in ["pptx", "docx", "xlsx"]:
-                            shutil.copy(os.path.join(self.zip_work_folder,"tmp/",f),
+                            shutil.copy(os.path.join(self.zip_work_folder,"tmp" + os.sep,f),
                                         os.path.join(self.office_work_folder,fn))
                             office_found += 1
 
                         if ext in ["pdf"]:
-                            shutil.copy(os.path.join(self.zip_work_folder, "tmp/", f),
+                            shutil.copy(os.path.join(self.zip_work_folder, "tmp" + os.sep, f),
                                         os.path.join(self.pdf_work_folder,fn))
                             pdf_found += 1
 
                         if ext in ["txt", "csv"]:
-                            shutil.copy(os.path.join(self.zip_work_folder, "tmp/", f),
+                            shutil.copy(os.path.join(self.zip_work_folder, "tmp" + os.sep, f),
                                         os.path.join(self.text_work_folder,fn))
                             text_found += 1
 
                         if ext in ["png", "jpg", "jpeg"]:
-                            shutil.copy(os.path.join(self.zip_work_folder,"tmp/",f),
+                            shutil.copy(os.path.join(self.zip_work_folder,"tmp" + os.sep,f),
                                         os.path.join(self.ocr_work_folder,fn))
                             ocr_found += 1
 
                         if ext in ["wav"]:
-                            shutil.copy(os.path.join(self.zip_work_folder,"tmp/",f),
+                            shutil.copy(os.path.join(self.zip_work_folder,"tmp" + os.sep,f),
                                         os.path.join(self.voice_work_folder, fn))
                             voice_found += 1
 
@@ -572,9 +572,10 @@ class Parser:
 
         # test script for parsing txt file
         try:
-            output_file = open(os.path.join(file_path, fn), "r").read()
+            output_file = open(os.path.join(file_path, fn), "r", encoding="utf-8").read()
 
-        except:
+        except Exception as e:
+            print (e)
             logging.warning("warning: Parser - could not find parsing output - %s - %s ", file_path, fn)
             return []
 
@@ -685,16 +686,16 @@ class Parser:
         # image_fp = self.library.image_path
         image_fp = self.parser_image_folder
 
-        if not image_fp.endswith("/"):
-            image_fp += "/"
+        if not image_fp.endswith(os.sep):
+            image_fp += os.sep
 
         image_fp_c = create_string_buffer(image_fp.encode('ascii', 'ignore'))
         input_collection_db_path = self.collection_path
         collection_db_path_c = create_string_buffer(input_collection_db_path.encode('ascii', 'ignore'))
 
         #   fp = passed as parameter -> this is the input file path folder containing the .PDF docs to be parsed
-        if not fp.endswith("/"):
-            fp += "/"
+        if not fp.endswith(os.sep):
+            fp += os.sep
 
         fp_c = create_string_buffer(fp.encode('ascii', 'ignore'))
 
@@ -803,12 +804,12 @@ class Parser:
 
         # designed for bulk upload of office parse into library structure
 
-        if not input_fp.endswith("/"):
-            input_fp += "/"
+        if not input_fp.endswith(os.sep):
+            input_fp += os.sep
 
         office_fp = input_fp
 
-        workspace_fp = os.path.join(self.parser_tmp_folder,"office_tmp/")
+        workspace_fp = os.path.join(self.parser_tmp_folder,"office_tmp" + os.sep)
 
         if not os.path.exists(workspace_fp):
             os.mkdir(workspace_fp)
@@ -880,8 +881,8 @@ class Parser:
         # image_fp = self.library.image_path
 
         image_fp = self.parser_image_folder
-        if not image_fp.endswith("/"):
-            image_fp += "/"
+        if not image_fp.endswith(os.sep):
+            image_fp += os.sep
 
         image_fp_c = create_string_buffer(image_fp.encode('ascii', 'ignore'))
 
@@ -1582,7 +1583,7 @@ class Parser:
         if not os.path.exists(local_work_folder):
             os.mkdir(local_work_folder)
 
-        self.website_work_folder = os.path.join(local_work_folder, "process_website/")
+        self.website_work_folder = os.path.join(local_work_folder, "process_website" + os.sep)
 
         # start clean
         if os.path.exists(self.website_work_folder):
@@ -1728,7 +1729,7 @@ class Parser:
                                                                     added_pages=1)
 
         # c.uploads - upload website_file
-        fp_tmp = os.path.join(local_work_folder, "process_website/")
+        fp_tmp = os.path.join(local_work_folder, "process_website" + os.sep)
 
         website_name = "my_website.html"
         
@@ -1813,7 +1814,7 @@ class Parser:
 
         doc_fn_out = []
         for i, file in enumerate(doc_fn_raw_list):
-            doc_fn_out.append(file.split("/")[-1])
+            doc_fn_out.append(file.split(os.sep)[-1])
 
         for i, input_file in enumerate(file_list):
             found_file = -1
@@ -1904,8 +1905,8 @@ class Parser:
             os.chmod(workspace_fp, 0o777)
 
         # safety check - will need to improve + expand for supporting windows path
-        if not workspace_fp.endswith("/"):
-            workspace_fp += "/"
+        if not workspace_fp.endswith(os.sep):
+            workspace_fp += os.sep
             logging.warning("warning: workspace_fp did not end with trailing '/' as expected by parser")
 
         # need to update this
@@ -1943,8 +1944,8 @@ class Parser:
         account_name = create_string_buffer(self.account_name.encode('ascii', 'ignore'))
         library_name = create_string_buffer(self.library_name.encode('ascii', 'ignore'))
 
-        if not fp.endswith("/"):
-            fp += "/"
+        if not fp.endswith(os.sep):
+            fp += os.sep
 
         fp_c = create_string_buffer(fp.encode('ascii', 'ignore'))
         fn_c = create_string_buffer(fn.encode('ascii', 'ignore'))
@@ -1957,8 +1958,8 @@ class Parser:
         # image_fp = self.parser_tmp_folder #   + "/"
         image_fp = self.parser_image_folder
 
-        if not image_fp.endswith("/"):
-            image_fp += "/"
+        if not image_fp.endswith(os.sep):
+            image_fp += os.sep
             logging.warning("warning: adding '/' to image_fp as expected by c parser")
 
         image_fp_c = create_string_buffer(image_fp.encode('ascii', 'ignore'))
@@ -2025,8 +2026,8 @@ class Parser:
 
         #   fp = passed as parameter -> this is the input file path folder containing the .PDF docs to be parsed
 
-        if not fp.endswith("/"):
-            fp += "/"
+        if not fp.endswith(os.sep):
+            fp += os.sep
 
         fp_c = create_string_buffer(fp.encode('ascii', 'ignore'))
 
@@ -2035,8 +2036,8 @@ class Parser:
         # shift output fp to
         # image_fp = self.library.image_path
         image_fp = self.parser_tmp_folder
-        if not image_fp.endswith("/"):
-            image_fp += "/"
+        if not image_fp.endswith(os.sep):
+            image_fp += os.sep
 
         image_fp_c = create_string_buffer(image_fp.encode('ascii', 'ignore'))
 
