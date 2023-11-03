@@ -271,15 +271,23 @@ Information on ways to participate can be found in our [Contributors Guide](http
 - All Platforms: [python v3.9 - 3.10](https://www.python.org/about/gettingstarted/)
 - Mac: [Homebrew](https://docs.brew.sh/Installation) is used to install the native dependencies
 - Linux: 
-  1. The pip package attempts to install the native dependencies. If it is run without root permission or a package manager other than Apt is used, you will need to manually install the following native packages: ```apt install -y libxml2 libpng-dev libmongoc-dev libzip4 tesseract-ocr poppler-utils```
+  1. The pip package attempts to install the native dependencies. If it is run without root permission or a package manager other than Apt is used, you will need to manually install the following native packages: ```apt install -y libxml2 libpng-dev libmongoc-dev libzip4 tesseract-ocr poppler-utils```   *Note:  libmongoc-dev <= v1.24.4 is required.
   2. The llmware parsers optimize for speed by using large stack frames. If you receive a "Segmentation Fault" during a parsing operation, update the system's 'stack size' resource limit: ```ulimit -s 32768000```
   
 
 **Optional:**
 - [Docker](https://docs.docker.com/get-docker/) 
 
+**Known issues:**
+- A segmentation fault can occur when parsing if the native package for mongo-c-driver is 1.25 or above.  To address this issue, install llmware v0.1.6 and above or downgrade mongo-c-driver to v1.24.4.  
+
 <details>
   <summary><b>🚧 Change Log</b></summary>
+
+  
+- **03 Nov 2023: llmware v0.1.6**
+  - Updated packaging to require mongo-c-driver 1.24.4 to temporarily workaround segmentation fault with mongo-c-driver 1.25.
+  - Updates in python code needed in anticipation of future Windows support.  
 
 - **27 Oct 2023: llmware v0.1.5**
   - Four new example scripts focused on RAG workflows with small, fine-tuned instruct models that run on a laptop (`llmware` [BLING](https://huggingface.co/llmware) models).
