@@ -21,7 +21,10 @@ def custom_install_command():
                 error_message="llmware needs Homebrew ('brew') to be installed to setup a few depencencies."
                 error_message+="\nInstalling HomeBrew is quick and easy: https://brew.sh"
                 sys.exit(error_message)
-            os.system('brew install mongo-c-driver libpng libzip libtiff zlib tesseract poppler')
+            os.system('brew install libpng libzip libtiff zlib tesseract poppler')
+            os.system('brew uninstall -f mongo-c-driver')
+            os.system('curl -o mongo-c-driver.rb https://raw.githubusercontent.com/Homebrew/homebrew-core/da8bc5b7656b53bf3c32b8c4c624432e9673cf31/Formula/m/mongo-c-driver.rb')
+            os.system('brew install mongo-c-driver.rb && rm mongo-c-driver.rb')
             return
     
         if platform.system() == "Linux":
