@@ -108,13 +108,13 @@ class Library:
         self.library_main_path = os.path.join(LLMWareConfig.get_library_path(), account_name, library_name)
 
         # add new file dir for this collection
-        self.file_copy_path = os.path.join(self.library_main_path,"uploads/")
-        self.image_path = os.path.join(self.library_main_path, "images/")
-        self.dataset_path = os.path.join(self.library_main_path, "datasets/")
-        self.nlp_path = os.path.join(self.library_main_path, "nlp/")
-        self.output_path = os.path.join(self.library_main_path, "output/")
-        self.tmp_path = os.path.join(self.library_main_path, "tmp/")
-        self.embedding_path = os.path.join(self.library_main_path, "embedding/")
+        self.file_copy_path = os.path.join(self.library_main_path,"uploads" + os.sep )
+        self.image_path = os.path.join(self.library_main_path, "images" + os.sep)
+        self.dataset_path = os.path.join(self.library_main_path, "datasets" + os.sep)
+        self.nlp_path = os.path.join(self.library_main_path, "nlp" + os.sep)
+        self.output_path = os.path.join(self.library_main_path, "output" + os.sep)
+        self.tmp_path = os.path.join(self.library_main_path, "tmp" + os.sep)
+        self.embedding_path = os.path.join(self.library_main_path, "embedding" + os.sep)
 
         library_folder = os.path.exists(self.library_main_path)
 
@@ -178,13 +178,13 @@ class Library:
         self.library_main_path = os.path.join(LLMWareConfig.get_library_path(), account_name, library_name)
 
         # add new file dir for this collection
-        self.file_copy_path = os.path.join(self.library_main_path, "uploads/")
-        self.image_path = os.path.join(self.library_main_path, "images/")
-        self.dataset_path = os.path.join(self.library_main_path, "datasets/")
-        self.nlp_path = os.path.join(self.library_main_path, "nlp/")
-        self.output_path = os.path.join(self.library_main_path, "output/")
-        self.tmp_path = os.path.join(self.library_main_path, "tmp/")
-        self.embedding_path = os.path.join(self.library_main_path, "embedding/")
+        self.file_copy_path = os.path.join(self.library_main_path, "uploads" + os.sep)
+        self.image_path = os.path.join(self.library_main_path, "images" + os.sep)
+        self.dataset_path = os.path.join(self.library_main_path, "datasets" + os.sep)
+        self.nlp_path = os.path.join(self.library_main_path, "nlp" + os.sep)
+        self.output_path = os.path.join(self.library_main_path, "output" + os.sep)
+        self.tmp_path = os.path.join(self.library_main_path, "tmp" + os.sep)
+        self.embedding_path = os.path.join(self.library_main_path, "embedding" + os.sep)
         os.makedirs(self.library_main_path, exist_ok=True)
         os.makedirs(self.file_copy_path,exist_ok=True)
         os.makedirs(self.image_path,exist_ok=True)
@@ -401,7 +401,7 @@ class Library:
 
         results = CollectionRetrieval(self.collection).filter_by_key_value_range("content_type",filter_list)
 
-        file_location = os.path.join(output_fp + "/", output_fn + ".txt")
+        file_location = os.path.join(output_fp, output_fn + ".txt")
         output_file = open(file_location, "w")
         text_field = "text_search"
         for elements in results:

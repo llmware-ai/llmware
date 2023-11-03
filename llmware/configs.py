@@ -27,13 +27,13 @@ class LLMWareConfig:
     _base_fp = {"home_path": os.environ.get("HOME"),
                 "llmware_path_name": "llmware_data/"}
 
-    _fp = {"model_repo_path_name": "model_repo/",
-           "library_path_name": "accounts/",
-           "input_path_name": "input_channel/",
-           "parser_path_name": "parser_history/",
-           "query_path_name": "query_history/",
-           "prompt_path_name": "prompt_history/",
-           "tmp_path_name": "tmp/"}
+    _fp = {"model_repo_path_name": "model_repo" + os.sep,
+           "library_path_name": "accounts" + os.sep,
+           "input_path_name": "input_channel" + os.sep,
+           "parser_path_name": "parser_history" + os.sep,
+           "query_path_name": "query_history" + os.sep,
+           "prompt_path_name": "prompt_history" + os.sep,
+           "tmp_path_name": "tmp" + os.sep}
 
     _conf = {"collection_db_uri": os.environ.get("COLLECTION_DB_URI", "mongodb://localhost:27017/"),
              "collection_db_username": "", # Not used for now
