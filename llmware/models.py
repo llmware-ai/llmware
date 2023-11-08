@@ -41,7 +41,7 @@ from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss
 from llmware.util import Utilities, PromptCatalog
 from llmware.configs import LLMWareConfig
 from llmware.resources import CloudBucketManager
-from llmware.exceptions import ModelNotFoundException, LLMInferenceResponseException
+from llmware.exceptions import ModelNotFoundException, LLMInferenceResponseException, DependencyNotInstalledException
 
 # api model imports
 import openai, anthropic, ai21, cohere
@@ -82,6 +82,39 @@ global_model_repo_catalog_list = [
     {"model_name": 'xlarge', "display_name": "Cohere-XLarge-Embedding", "model_family": "CohereEmbeddingModel",
      "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
      "embedding_dims": 4096},
+
+    # insert new cohere embedding model - v3 - announced first week of November 2023
+    {"model_name": 'embed-english-v3.0', "display_name": "Cohere-English-v3", "model_family": "CohereEmbeddingModel",
+     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
+     "embedding_dims": 1024},
+
+    {"model_name": 'embed-multilingual-v3.0', "display_name": "Cohere-Multi-Lingual-v3", "model_family": "CohereEmbeddingModel",
+     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
+     "embedding_dims": 1024},
+
+    {"model_name": 'embed-english-light-v3.0', "display_name": "Cohere-English-v3", "model_family": "CohereEmbeddingModel",
+     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
+     "embedding_dims": 384},
+
+    {"model_name": 'embed-multilingual-light-v3.0', "display_name": "Cohere-English-v3", "model_family": "CohereEmbeddingModel",
+     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
+     "embedding_dims": 384},
+
+    {"model_name": 'embed-english-v2.0', "display_name": "Cohere-English-v3",
+     "model_family": "CohereEmbeddingModel",
+     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
+     "embedding_dims": 4096},
+
+    {"model_name": 'embed-english-light-v2.0', "display_name": "Cohere-English-v3",
+     "model_family": "CohereEmbeddingModel",
+     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
+     "embedding_dims": 1024},
+
+    {"model_name": 'embed-multilingual-v2.0', "display_name": "Cohere-English-v3",
+     "model_family": "CohereEmbeddingModel",
+     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
+     "embedding_dims": 768},
+    # end - new cohere embeddings
 
     # add google embeddings
     # textembedding-gecko@001
@@ -147,6 +180,16 @@ global_model_repo_catalog_list = [
      "model_category": "generative-api", "model_location": "api", "is_trainable": "no",
      "context_window": 4000},
 
+    # new gpt-4 models announced in November 2023
+    {"model_name": "gpt-4-1106-preview", "display_name": "GPT-4-Turbo", "model_family": "OpenAIGenModel",
+     "model_category": "generative_api", "model_location": "api", "is_trainable": "no",
+     "context_window": 128000},
+
+    {"model_name": "gpt-3.5-turbo-1106", "display_name": "GPT-3.5-Turbo", "model_family": "OpenAIGenModel",
+     "model_category": "generative_api", "model_location": "api", "is_trainable": "no",
+     "context_window": 16385},
+    # end - gpt-4 model update
+
     # generative AIB models - aib-read-gpt - "main model"
     {"model_name": "aib-read-gpt", "display_name": "AIB-READ-GPT", "model_family": "AIBReadGPTModel",
      "model_category": "generative-api", "model_location": "api", "is_trainable": "no",
@@ -168,8 +211,51 @@ global_model_repo_catalog_list = [
     {"model_name": "roberta", "display_name": "Roberta", "model_family": "BaseModel", "model_category": "base",
      "is_trainable": "no","model_location": "llmware_repo"},
     {"model_name": "gpt2", "display_name": "GPT-2", "model_family": "BaseModel", "model_category": "base",
-     "is_trainable": "no","model_location": "llmware_repo"}
-    ]
+     "is_trainable": "no","model_location": "llmware_repo"},
+
+    # add api-based llmware custom model
+    {"model_name": "llmware-inference-server", "display_name": "LLMWare-GPT", "model_family": "LLMWareModel", "model_category":
+     "generative_api", "model_location": "api", "is_trainable": "no", "context_window": 2048},
+
+    # core llmware bling open source models available in catalog directly
+    {"model_name": "llmware/bling-1.4b-0.1", "display_name": "Bling-Pythia-1.4B", "model_family": "HFGenerativeModel",
+     "model_category": "generative_api", "model_location": "api", "is_trainable": "no", "context_window": 2048,
+     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3},
+
+    {"model_name": "llmware/bling-1b-0.1", "display_name": "Bling-Pythia-1.0B", "model_family": "HFGenerativeModel",
+     "model_category": "generative_api", "model_location": "api", "is_trainable": "no", "context_window": 2048,
+     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3},
+
+    {"model_name": "llmware/bling-falcon-1b-0.1", "display_name": "Bling-Falcon-1.3B", "model_family": "HFGenerativeModel",
+     "model_category": "generative_api", "model_location": "api", "is_trainable": "no", "context_window": 2048,
+     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3},
+
+    {"model_name": "llmware/bling-sheared-llama-1.3b-0.1", "display_name": "Bling-Sheared-LLama-1.3B",
+     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3},
+
+    {"model_name": "llmware/llmware/bling-red-pajamas-3b-0.1", "display_name": "Bling-Pythia-1.4B",
+     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3},
+
+    {"model_name": "llmware/bling-sheared-llama-2.7b-0.1", "display_name": "Bling-Sheared-Llama-2.7B",
+     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3},
+
+    {"model_name": "llmware/bling-stable-lm-3b-4e1t-v0", "display_name": "Bling-Stable-LM-3B",
+     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3},
+
+    {"model_name": "llmware/bling-cerebras-1.3b-0.1", "display_name": "Bling-Cerebras-1.3B",
+     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3},
+
+]
 
 
 def build_json_models_manifest(manifest_dict, fp, fn="llmware_supported_models_manifest.json"):
@@ -195,7 +281,7 @@ class ModelCatalog:
                                 # generative model classes
                                 "OpenAIGenModel", "ClaudeModel", "GoogleGenModel",
                                 "CohereGenModel", "JurassicModel", "AIBReadGPTModel",
-                                "HFGenerativeModel",
+                                "HFGenerativeModel", "LLMWareModel",
 
                                 # embedding model classes
                                 "LLMWareSemanticModel",
@@ -211,6 +297,42 @@ class ModelCatalog:
     def pull_latest_manifest(self):
         # will add to check manifest in global repo and make available for pull down
         return 0
+
+    def register_new_model_card(self, model_card_dict):
+
+        # validate keys
+        if "model_family" not in model_card_dict:
+            # error - could not add new model card
+            raise ModelNotFoundException("no-model-family-identified")
+
+        else:
+            if model_card_dict["model_family"] not in self.model_classes:
+                # error
+                raise ModelNotFoundException("model-family-not-recognized")
+
+            else:
+
+                # format of new model card registered in model catalog
+                """
+                model_card = {"model_name": "llmware", "display_name": "LLMWare-GPT", "model_family": "LLMwareModel", "model_category":
+                    "generative_api", "model_location": "api", "is_trainable": "no", "context_window": 2048}
+                """
+
+                self.global_model_list.append(model_card_dict)
+
+        return 0
+
+    def setup_custom_llmware_inference_server(self, uri_string, secret_key=None):
+
+        #   Examples:
+        #       os.environ["LLMWARE_GPT_URI"] = "http://111.111.1.111:8080"
+        #       os.environ["USER_MANAGED_LLMWARE_GPT_API_KEY"] = "demo-pass-test-key"
+
+        # set environ variables with the URL and password key
+        os.environ["LLMWARE_GPT_URI"] = uri_string
+        os.environ["USER_MANAGED_LLMWARE_GPT_API_KEY"] = secret_key
+
+        return 1
 
     def lookup_model_card (self, selected_model_name):
 
@@ -244,7 +366,6 @@ class ModelCatalog:
         if os.path.exists(model_location):
             model_parts_in_folder = os.listdir(model_location)
             if len(model_parts_in_folder) > 0:
-                # print("path exists - ", model_location)
                 return model_location
 
         logging.info("update: ModelCatalog - this model - %s - is not in local repo - %s, so pulling "
@@ -262,7 +383,7 @@ class ModelCatalog:
         
         raise ModelNotFoundException(model_name)
 
-    def _instantiate_model_class_from_string(self, model_class, model_name, model_card):
+    def _instantiate_model_class_from_string(self, model_class, model_name, model_card, api_key=None):
 
         # by default - if model not found - return None
         my_model = None
@@ -276,22 +397,31 @@ class ModelCatalog:
 
             # generative models
             if model_class == "ClaudeModel": my_model = ClaudeModel(model_name=model_name,
-                                                                    context_window=context_window)
+                                                                    context_window=context_window,
+                                                                    api_key=api_key)
 
             if model_class == "OpenAIGenModel": my_model = OpenAIGenModel(model_name=model_name,
-                                                                          context_window=context_window)
+                                                                          context_window=context_window,
+                                                                          api_key=api_key)
 
             if model_class == "CohereGenModel": my_model = CohereGenModel(model_name=model_name,
-                                                                          context_window=context_window)
+                                                                          context_window=context_window,
+                                                                          api_key=api_key)
 
             if model_class == "JurassicModel": my_model = JurassicModel(model_name=model_name,
-                                                                        context_window=context_window)
+                                                                        context_window=context_window,
+                                                                        api_key=api_key)
 
             if model_class == "GoogleGenModel": my_model = GoogleGenModel(model_name=model_name,
-                                                                          context_window=context_window)
+                                                                          context_window=context_window,
+                                                                          api_key=api_key)
 
             # stub for READ GPT provided -> will add other 3rd party models too
-            if model_class == "AIBReadGPTModel": my_model = AIBReadGPTModel(model_name=model_name)
+            if model_class == "AIBReadGPTModel": my_model = AIBReadGPTModel(model_name=model_name,api_key=api_key)
+
+            # *new* - stub for LLMWare Model
+            if model_class == "LLMWareModel":
+                my_model = LLMWareModel(model_name=model_name,api_key=api_key)
 
             # embedding models
 
@@ -299,23 +429,44 @@ class ModelCatalog:
                 embedding_dims = model_card["embedding_dims"]
 
             if model_class == "OpenAIEmbeddingModel": my_model = OpenAIEmbeddingModel(model_name=model_name,
-                                                                                      embedding_dims=embedding_dims)
+                                                                                      embedding_dims=embedding_dims,
+                                                                                      api_key=api_key)
 
             if model_class == "CohereEmbeddingModel": my_model = CohereEmbeddingModel(model_name=model_name,
-                                                                                      embedding_dims=embedding_dims)
+                                                                                      embedding_dims=embedding_dims,
+                                                                                      api_key=api_key)
 
             if model_class == "GoogleEmbeddingModel": my_model = GoogleEmbeddingModel(model_name=model_name,
-                                                                                      embedding_dims=embedding_dims)
+                                                                                      embedding_dims=embedding_dims,
+                                                                                      api_key=api_key)
 
             if model_class == "LLMWareSemanticModel": my_model = LLMWareSemanticModel(model_name=model_name,
-                                                                                      embedding_dims=embedding_dims)
+                                                                                      embedding_dims=embedding_dims,
+                                                                                      api_key=api_key)
 
             # placeholder for HF models
-            if model_class == "HFGenerativeModel": my_model = HFGenerativeModel(None,None,
-                                                                                model_name=model_name)
+            if model_class == "HFGenerativeModel":
+                my_model = HFGenerativeModel(model_name=model_name,api_key=api_key)
 
-            if model_class == "HFEmbeddingModel": my_model = HFEmbeddingModel(None,None,
-                                                                              model_name=model_name)
+                # set specific parameters associated with custom models
+
+                if "instruction_following" in model_card:
+                    my_model.instruction_following = model_card["instruction_following"]
+                else:
+                    my_model.instruction_following = False
+
+                if "prompt_wrapper" in model_card:
+                    my_model.prompt_wrapper = model_card["prompt_wrapper"]
+                else:
+                    my_model.prompt_wrapper = "human_bot"
+
+                if "temperature" in model_card:
+                    my_model.temperature = model_card["temperature"]
+                else:
+                    my_model.temperature = 0.3
+
+            if model_class == "HFEmbeddingModel": my_model = HFEmbeddingModel(model_name=model_name,
+                                                                              api_key=api_key)
 
         return my_model
 
@@ -331,7 +482,7 @@ class ModelCatalog:
             raise ModelNotFoundException(selected_model)
 
         # step 2- instantiate the right model class
-        my_model = self.get_model_by_name(model_card["model_name"])
+        my_model = self.get_model_by_name(model_card["model_name"], api_key=api_key)
         if not my_model:
             logging.error("error: ModelCatalog - unexpected - could not identify the model - %s ", selected_model)
             raise ModelNotFoundException(selected_model)
@@ -462,7 +613,7 @@ class ModelCatalog:
 
         return my_model
 
-    def get_model_by_name(self, model_name):
+    def get_model_by_name(self, model_name, api_key=None):
 
         my_model = None
 
@@ -471,7 +622,7 @@ class ModelCatalog:
             if models["model_name"] == model_name:
                 selected_model = models
                 my_model = self._instantiate_model_class_from_string(selected_model["model_family"],
-                                                                     model_name, models)
+                                                                     model_name, models,api_key=api_key)
                 break
 
         return my_model
@@ -1446,6 +1597,150 @@ class AIBReadGPTModel:
         return output_response
 
 
+class LLMWareModel:
+
+    def __init__(self, model_name=None, api_key=None, context_window=2048):
+
+        self.api_key = api_key
+
+        self.model_name = model_name
+        self.model = None
+        self.tokenizer = None
+
+        self.error_message = "\nUnable to connect to LLMWare GPT API. Please try again later."
+
+        #   set max_total_len -> adjust input and output based on use case
+        self.max_total_len = context_window
+        self.max_input_len = int(0.4 * context_window)
+        self.llm_max_output_len = int(0.4 * context_window)
+
+        self.separator = "\n"
+
+        # inference settings
+        self.temperature = 0.2
+        self.target_requested_output_tokens = 200
+        self.add_prompt_engineering = True
+        self.add_context = ""
+
+    def set_api_key(self, api_key, env_var="USER_MANAGED_LLMWARE_GPT_API_KEY"):
+
+        # set api_key
+        os.environ[env_var] = api_key
+        logging.info("update: added and stored READ_GPT api_key in environmental variable- %s", env_var)
+
+        return self
+
+    def _get_api_key(self, env_var="USER_MANAGED_LLMWARE_GPT_API_KEY"):
+
+        self.api_key = os.environ.get(env_var)
+
+        return self.api_key
+
+    def token_counter(self, text_sample):
+
+        tokenizer = Utilities().get_default_tokenizer()
+        toks = tokenizer.encode(text_sample).ids
+        return len(toks)
+
+    # very simple prompt construction used for now -> will likely evolve over time
+    def prompt_engineer(self, query, context, inference_dict=None):
+
+        if not query:
+            query = "What is a list that summarizes the key points?"
+
+        # default_case
+        prompt_engineered = context + "\n" + query
+
+        if self.add_prompt_engineering == "top_level_summary_select":
+            prompt_engineered += query + "\n"
+            prompt_engineered += "Which of the following selections best answers the question?"
+            prompt_engineered += context
+
+        if self.add_prompt_engineering == "summarize_with_bullets_no_query":
+            issue = "What is a list of the most important points?"
+            prompt_engineered = context + "\n" + issue
+
+        return prompt_engineered
+
+    def load_model_for_inference(self, model_name=None, fp=None):
+        # look up model_name in configs
+        if model_name:
+            self.model_name = model_name
+        return self
+
+    def load_pretrained_model(self, model_name=None):
+        if model_name:
+            self.model_name = model_name
+        # convenience method for pretrained models as a single step
+        return self
+
+    def inference(self, prompt, add_context=None, add_prompt_engineering=None, inference_dict=None,
+                  api_key=None):
+
+        if add_context:
+            self.add_context = add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        prompt_enriched = self.prompt_engineer(prompt, self.add_context, inference_dict=inference_dict)
+
+        # safety check on length - set cap with small 'buffer'
+        input_tokens = self.token_counter(prompt_enriched)
+        buffer = 10
+        available_tokens_in_output_context_window = self.max_total_len - input_tokens - buffer
+        # if target requested output is less, then keep - otherwise, cap with 'safe' maximum len
+        target_len = min(self.target_requested_output_tokens, available_tokens_in_output_context_window)
+
+        output_dict_new = {}
+        output_response = {}
+        usage = {"input": input_tokens}
+
+        if api_key:
+            self.api_key = api_key
+
+        if not self.api_key:
+            self.api_key = self._get_api_key()
+
+        params = {"context": self.add_context,
+                  "question": prompt,
+                  "max_output_tokens": target_len,
+                  "api_key": self.api_key}
+
+        # params = {"context": prompt["context"],"question": prompt["query"], "max_output_tokens": 50, "api_key": good_key}
+
+        time_start = time.time()
+
+        try:
+
+            output = requests.post(os.environ.get("LLMWARE_GPT_URI"), data=params)
+            output_dict_new = ast.literal_eval(output.text)
+            success_path = 1
+            output_response = output_dict_new
+
+        except:
+
+            text_output = "/***ERROR***/"
+            usage = {"input": 0, "output": 0, "total": 0, "metric": "tokens",
+                     "processing_time": time.time() - time_start}
+
+            logging.error("error: no response from aib remote server for llmware-gpt model - "
+                          "check api key and connection")
+
+            success_path = -1
+            output_response = {"llm_response": "", "usage": usage}
+
+        return output_response
+
+
 class OpenAIEmbeddingModel:
 
     def __init__(self, model_name=None, api_key=None, embedding_dims=None):
@@ -1577,7 +1872,8 @@ class CohereEmbeddingModel:
             text_prompt = [text_sample]
             input_len = 1
 
-        response = co.embed(text_prompt)
+        # adding model name as parameter passed to the Cohere embedding API
+        response = co.embed(text_prompt,model=self.model_name)
 
         output = []
         for i, emb in enumerate(response.embeddings):
@@ -1789,6 +2085,10 @@ class HFEmbeddingModel:
 
 class HFGenerativeModel:
 
+    #   support instantiating HF model in two different ways:
+    #       1.  directly passing a previously loaded HF model object and tokenizer object
+    #       2.  passing a model_name only, which will then create the model and tokenizer
+
     def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None,
                  prompt_wrapper=None, instruction_following=False, context_window=2048,
                  use_gpu_if_available=True):
@@ -1797,6 +2097,22 @@ class HFGenerativeModel:
         self.model_name = model_name
         self.model = model
         self.tokenizer= tokenizer
+
+        # instantiate if model_name passed without actual model and tokenizer
+        if model_name and not model and not tokenizer:
+
+            try:
+                # will wrap in Exception if import fails and move to model catalog class
+                from transformers import AutoModelForCausalLM, AutoTokenizer
+            except:
+                raise DependencyNotInstalledException("transformers")
+
+            if api_key:
+                self.model = AutoModelForCausalLM.from_pretrained(model_name,token=api_key, trust_remote_code=True)
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name,token=api_key)
+            else:
+                self.model = AutoModelForCausalLM.from_pretrained(model_name)
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         # note - these two parameters will control how prompts are handled - model-specific
         self.prompt_wrapper = prompt_wrapper
@@ -1810,6 +2126,9 @@ class HFGenerativeModel:
         self.model_architecture = None
         self.separator = "\n"
 
+        # use 0 as eos token id by default in generation -> but try to pull from model config
+        self.eos_token_id = 0
+
         #   will load model and inference onto gpu,
         #   if (a) CUDA available and (b) use_gpu_if_available set to True (default)
         self.use_gpu = torch.cuda.is_available() and use_gpu_if_available
@@ -1820,6 +2139,9 @@ class HFGenerativeModel:
                 self.config = self.model.config
             else:
                 self.config = self.model.config.to_dict()
+
+            if "eos_token_id" in self.config:
+                self.eos_token_id = self.config["eos_token_id"]
 
             if "model_type" in self.config:
                 self.model_type = self.config["model_type"]
@@ -1856,6 +2178,23 @@ class HFGenerativeModel:
         self.target_requested_output_tokens = 100
         self.add_prompt_engineering = False
         self.add_context = ""
+
+    def set_api_key (self, api_key, env_var="USER_MANAGED_HF_API_KEY"):
+
+        # set api_key
+        os.environ[env_var] = api_key
+        logging.info("update: added and stored HF api_key in environmental variable- %s", env_var)
+
+        return self
+
+    def _get_api_key (self, env_var="USER_MANAGED_HF_API_KEY"):
+
+        self.api_key = os.environ.get(env_var)
+
+        if not self.api_key:
+            logging.error("error: _get_api_key could not successfully retrieve value from: %s ", env_var)
+
+        return self.api_key
 
     def token_counter(self, text_sample):
         tokenizer = Utilities().get_default_tokenizer()
@@ -1915,7 +2254,7 @@ class HFGenerativeModel:
         return prompt_engineered
 
     @torch.no_grad()
-    def inference(self, prompt,add_context=None, add_prompt_engineering=None, api_key=None,
+    def inference(self, prompt, add_context=None, add_prompt_engineering=None, api_key=None,
                   inference_dict=None):
 
         # first prepare the prompt
@@ -1976,6 +2315,8 @@ class HFGenerativeModel:
 
         # default settings
         pad_token_id = 0
+
+        # eos_token_id = [self.eos_token_id]
         eos_token_id = [0]
 
         eos_token_id_tensor = torch.tensor(eos_token_id).to(input_ids.device)
@@ -2083,6 +2424,9 @@ class HFGenerativeModel:
             outputs_np = np.array(input_ids[0])
 
         output_only = outputs_np[input_token_len:]
+
+        # print("update: output only - ", output_only)
+
         output_str = self.tokenizer.decode(output_only)
         
         # post-processing clean-up - stop at endoftext
@@ -2114,7 +2458,7 @@ class HFGenerativeModel:
 
 class LLMWareSemanticModel:
 
-    def __init__(self, model_name=None, model=None, embedding_dims=None, max_seq_length=150):
+    def __init__(self, model_name=None, model=None, embedding_dims=None, max_seq_length=150,api_key=None):
 
         self.model_name = model_name
         self.error_message = "\nUnable to process LLMWare Semantic Model. Please try again later"
@@ -2908,5 +3252,120 @@ def prune_linear_layer(layer, index, dim= 0):
         new_layer.bias.requires_grad = True
     return new_layer
 
+
+class LLMWareInferenceServer:
+
+    def __init__(self, model_name, model_catalog=None, hf_api_key=None, secret_api_key=None, home_path=None):
+
+        # parameter samples
+        #   hf_api_key="hf_...",
+        #   secret_api_key="...",
+        #   home_path="/home/ubuntu/"
+
+        self.HOME_PATH = home_path
+        self.hf_api_key = hf_api_key
+        self.current_api_key = secret_api_key
+
+        if not model_catalog:
+            self.model_catalog = ModelCatalog()
+        else:
+            self.model_catalog = model_catalog
+
+        self.model = self.model_catalog.load_model(model_name, api_key=self.hf_api_key)
+
+        """
+        print("update: creating LLMWareInferenceServer - model config - ", self.model.model_name,
+              self.model.prompt_wrapper, self.model.temperature, self.model.instruction_following,
+              self.model.eos_token_id)
+        """
+
+    def start(self):
+
+        # if inference server started, then try to get flask dependency
+        try:
+            global flask
+            from flask import Flask, request, jsonify
+        except:
+            raise DependencyNotInstalledException("flask")
+
+        app = Flask(__name__, template_folder=self.HOME_PATH, static_folder=self.HOME_PATH)
+        app.add_url_rule("/", methods=['GET', 'POST'], view_func=self.index_route)
+        app.config.update(
+            TESTING=True,
+            # note: this is not a real secret key - it is just random letters
+            SECRET_KEY='asdasdsaddfdsggsdfdsfsdggdsd',
+            SEND_FILE_MAX_AGE_DEFAULT=0,
+            MAX_CONTENT_LENGTH=1000 * 1024 * 1024
+        )
+
+        # launch server
+        my_host = '0.0.0.0'
+        my_port = 8080
+        app.run(host=my_host, port=my_port)
+
+    def llmware_inference(self, prompt, context):
+
+        t1 = time.time()
+
+        output = self.model.inference(prompt, add_context=context, add_prompt_engineering=True)
+
+        print("update: model inference output - ", output["llm_response"], output["usage"])
+
+        t2 = time.time()
+
+        print("update: total processing time: ", t2 - t1)
+
+        return output
+
+    def index_route(self):
+
+        # defaults
+        api_key = ""
+        question = ""
+        context = ""
+
+        # if inference server started, then try to get flask dependency
+        try:
+            from flask import Flask, request, jsonify
+        except:
+            raise DependencyNotInstalledException("flask")
+
+        for keys in request.form:
+
+            print("update: keys / values input received: ", keys, request.form.get(keys))
+
+            if keys == "context":
+                context = request.form.get(keys)
+
+            if keys == "question":
+                question = request.form.get(keys)
+
+            if keys == "max_output_tokens":
+                max_output_len = request.form.get(keys)
+                try:
+                    max_output_len = int(max_output_len)
+                except:
+                    max_output_len = 200
+
+            if keys == "api_key":
+                api_key = request.form.get(keys)
+
+        t1 = time.time()
+
+        if not question and not context:
+            output_str = "Got your message - No content found to process"
+            return jsonify({"message": output_str})
+
+        if api_key != self.current_api_key:
+            output_str = "Got your message - Thanks for testing - API key not confirmed!"
+            return jsonify({"message": output_str})
+
+        # start processing here
+
+        output = self.llmware_inference(question, context)
+
+        torch.cuda.empty_cache()
+
+        return jsonify(output)
 
 
