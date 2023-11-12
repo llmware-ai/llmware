@@ -712,9 +712,12 @@ class Prompt:
                        "batch_id": batch_id,
                         }
 
-        # placeholder for evidence_metadata -> this will be over-written if called by prompts_with_sources
+        if context:
+            evidence_stop_char = len(context)
+        else:
+            evidence_stop_char = 0
         output_dict.update({"evidence_metadata": [{"evidence_start_char":0,
-                                                   "evidence_stop_char": len(context),
+                                                   "evidence_stop_char": evidence_stop_char,
                                                    "page_num": "NA",
                                                    "source_name": "NA"}]})
 
