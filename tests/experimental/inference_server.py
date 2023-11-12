@@ -1,87 +1,52 @@
 
-import os
-import time
+import sys
 
-from llmware.models import ModelCatalog, LLMWareModel
-from llmware.prompts import Prompt, HumanInTheLoop
-from llmware.configs import LLMWareConfig
+from llmware.models import ModelCatalog, LLMWareInferenceServer
 
+# note: will need to pip install transformers & flask
 
-def new_expanded_list_in_model_catalog():
+custom_models = [
 
-    #   new models from OpenAI (turbo-3.5 and turbo-4 added
-    #   new embedding models (v3) from Cohere added
-    #   'bling' models on HuggingFace added directly, so that they can be invoked and discovered like any other model
+        # add custom models - in this case - not needed, since these are directly in the new catalog
+        # -- this creates the opportunity for us to offer 'privately available' versions of models
 
-    mc = ModelCatalog()
+        {"model_name": "llmware/bling-sheared-llama-2.7b-0.1", "display_name": "dragon-sheared_llama_2.7b",
+         "model_family": "HFGenerativeModel", "model_category": "generative-api", "model_location": "api",
+         "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+         "temperature": 0.3},
 
-    for i, models in enumerate(mc.global_model_list):
+        {"model_name": "llmware/bling-red-pajamas-3b-0.1", "display_name": "dragon-rp-3b",
+         "model_family": "HFGenerativeModel", "model_category": "generative-api", "model_location": "api",
+         "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+         "temperature": 0.3}
 
-        print("update: models in catalog - ", i, models)
-
-    return 0
-
-
-# new_expanded_list_in_model_catalog()
+    ]
 
 
-def add_new_model_name_to_catalog_directly():
+if __name__ == "__main__":
 
-    # new model name
-    new_model_card = {"model_name": "llmware2", "display_name": "LLMWare-GPT2", "model_family": "LLMWareModel",
-                      "model_category": "generative_api", "model_location": "api", "is_trainable": "no",
-                      "context_window": 2048}
+    custom_model_catalog = ModelCatalog()
+    for model_card in custom_models:
+        custom_model_catalog.register_new_model_card(model_card)
 
-    mc = ModelCatalog()
-    mc.register_new_model_card(new_model_card)
+    model_selection = "llmware/bling-red-pajamas-3b-0.1"
 
-    # print list of models and will now include in the new_model_card in the registry list
-    for i, models in enumerate(mc.global_model_list):
-        print("update: models in catalog - ", i, models)
+    # different models can be selected by adding as parameter on the launch command line
+    if len(sys.argv) > 1:
+        model_selection = sys.argv[1]
 
-    return 0
+    print("update: model selection - ", model_selection)
 
+    #   pulls down and instantiates the selected model and then launches a very simple Flask-based API server
+    #   --on the client side, will need the uri_string for the server + the secret_api_key
 
-# add_new_model_name_to_catalog_directly()
-
-
-def add_new_model_name_to_catalog_in_prompt():
-
-    # new model name in ***existing model classes***
-    #   --enables user to add a newly created model (or some model_name not in our global catalog)
-
-    new_model_card = {"model_name": "llmware2", "display_name": "LLMWare-GPT2", "model_family": "LLMWareModel",
-                      "model_category": "generative_api", "model_location": "api", "is_trainable": "no", "context_window": 2048}
-
-    # create new Prompt object, which now has its own copy of the ModelCatalog() object
-    prompter = Prompt()
-
-    # register new model_card in the catalog associated with the prompt
-    prompter.model_catalog.register_new_model_card(new_model_card)
-
-    # now, the new 'custom' model can be loaded into the prompt
-    prompter.load_model("llmware2", api_key="llmware-custom-api-key")
-
-    return 0
+    LLMWareInferenceServer(model_selection,
+                           model_catalog=custom_model_catalog,
+                           secret_api_key="demo-test",
+                           home_path="/home/paperspace/").start()
 
 
-def register_custom_llmware_inference_server():
-
-    #   adds a LLMWare Model class to be used for remote API-based models
-    #   --intended for use case with 7B open source model running on a remote GPU server
-    #   --will be used to support AIB specific use cases, but in principle, enables any custom API-based model
-
-    #   --note:  the setup method on the client-side is very thin
-    #            -> just puts the uri_string and secret_key in os.environ variables
-
-    uri_string = "http://184.105.6.239:8080"
-    secret_key = "demo-test"
-    ModelCatalog().setup_custom_llmware_inference_server(uri_string, secret_key=secret_key)
-
-    return 0
-
-
-def new_llmware_model_class():
+def test_new_llmware_model_class():
 
     #   adds a LLMWare Model class to be used for remote API-based models
     #   --will be used to support AIB specific use cases, but in principle, enables any custom API-based model
@@ -99,6 +64,20 @@ def new_llmware_model_class():
 
     return 0
 
+def register_custom_llmware_inference_server():
+
+    #   adds a LLMWare Model class to be used for remote API-based models
+    #   --intended for use case with 7B open source model running on a remote GPU server
+    #   --will be used to support AIB specific use cases, but in principle, enables any custom API-based model
+
+    #   --note:  the setup method on the client-side is very thin
+    #            -> just puts the uri_string and secret_key in os.environ variables
+
+    uri_string = "http://184.105.6.239:8080"
+    secret_key = "demo-test"
+    ModelCatalog().setup_custom_llmware_inference_server(uri_string, secret_key=secret_key)
+
+    return 0
 
 def integrate_llmware_remote_inference_server_into_prompt():
 
