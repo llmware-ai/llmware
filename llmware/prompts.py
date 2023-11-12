@@ -30,6 +30,7 @@ from llmware.retrieval import Query
 from llmware.library import Library
 from llmware.exceptions import LibraryObjectNotFoundException, PromptNotInCatalogException, DependencyNotInstalledException
 
+
 class Prompt:
 
     def __init__(self, llm_name=None, tokenizer=None, model_card=None, library=None, account_name="llmware",
@@ -136,6 +137,8 @@ class Prompt:
 
         self.query_results = None
 
+        self.model_catalog = ModelCatalog()
+
     # changes in importing huggingface models
     def load_model(self, gen_model,api_key=None, from_hf=False):
 
@@ -143,7 +146,7 @@ class Prompt:
             self.llm_model_api_key = api_key
 
         if not from_hf:
-            self.llm_model = ModelCatalog().load_model(gen_model, api_key=self.llm_model_api_key)
+            self.llm_model = self.model_catalog.load_model(gen_model, api_key=self.llm_model_api_key)
         else:
             try:
                 # will wrap in Exception if import fails and move to model catalog class
@@ -160,7 +163,7 @@ class Prompt:
                 hf_tokenizer = AutoTokenizer.from_pretrained(gen_model)
 
             #   now, we have 'imported' our own custom 'instruct' model into llmware
-            self.llm_model = ModelCatalog().load_hf_generative_model(custom_hf_model, hf_tokenizer,
+            self.llm_model = self.model_catalog.load_hf_generative_model(custom_hf_model, hf_tokenizer,
                                                                      instruction_following=False,
                                                                      prompt_wrapper="human_bot")
             # prepare 'safe name' without file paths
@@ -170,7 +173,6 @@ class Prompt:
         self.context_window_size = self.llm_model.max_input_len
 
         return self
-
 
     def set_inference_parameters(self, temperature=0.5, llm_max_output_len=200):
         self.temperature = temperature
@@ -630,7 +632,7 @@ class Prompt:
                     prompt_name = "default_no_context"
 
         if selected_model:
-            self.llm_model = ModelCatalog().load_model(selected_model)
+            self.llm_model = self.model_catalog.load_model(selected_model)
         
         if temperature:
             self.temperature = temperature
@@ -709,6 +711,15 @@ class Prompt:
                        "prompt_id": prompt_id,
                        "batch_id": batch_id,
                         }
+
+        if context:
+            evidence_stop_char = len(context)
+        else:
+            evidence_stop_char = 0
+        output_dict.update({"evidence_metadata": [{"evidence_start_char":0,
+                                                   "evidence_stop_char": evidence_stop_char,
+                                                   "page_num": "NA",
+                                                   "source_name": "NA"}]})
 
         if register_trx:
             self.register_llm_inference(output_dict,prompt_id,trx_dict)
@@ -1432,6 +1443,7 @@ class QualityCheck:
                         # insert page_num - future update
                         # default - set to the last batch
                         minibatch = len(evidence_metadata)-1
+
                         for m in range(0,len(evidence_metadata)):
 
                             starter = evidence_metadata[m]["evidence_start_char"]

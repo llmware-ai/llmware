@@ -2,7 +2,7 @@
       1. Prompting LLMs with different kinds of sources/context
       2. The Prompt Catalog and the use different prompt styles
 
-      Note: This example uses OpenAI's gpt-4 LLM.  See the "working_with_llms.py" for examples of connecting to other LLMs
+      Note: This example uses OpenAI's gpt-4 LLM.
 '''
 import os
 from llmware.prompts import Prompt
