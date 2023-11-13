@@ -4,7 +4,7 @@ import os
 import platform
 import re
 import sys
-from setuptools import find_packages, setup
+from setuptools import find_packages, setup, Extension
 from setuptools.command.install import install
 from setuptools.command.develop import develop
 from setuptools.command.egg_info import egg_info
@@ -21,15 +21,15 @@ def custom_install_command():
                 error_message="llmware needs Homebrew ('brew') to be installed to setup a few depencencies."
                 error_message+="\nInstalling HomeBrew is quick and easy: https://brew.sh"
                 sys.exit(error_message)
-            os.system('brew install libpng libzip libtiff zlib tesseract poppler')
-            os.system('brew uninstall -f mongo-c-driver')
-            os.system('curl -o mongo-c-driver.rb https://raw.githubusercontent.com/Homebrew/homebrew-core/da8bc5b7656b53bf3c32b8c4c624432e9673cf31/Formula/m/mongo-c-driver.rb')
-            os.system('brew install mongo-c-driver.rb && rm mongo-c-driver.rb')
+            os.system('brew install tesseract poppler')
             return
     
         if platform.system() == "Linux":
             if os.system('apt list') == 0:
-                os.system('apt update && apt install -y gcc libxml2 libpng-dev libmongoc-dev libzip4 tesseract-ocr poppler-utils')
+                os.system('apt update && apt install -y tesseract-ocr poppler-utils')
+                return
+            else:
+                os.system('sudo apt update && sudo apt install -y tesseract-ocr poppler-utils')
                 return
     except Exception as e:
         print (e)
@@ -63,7 +63,6 @@ else:
 with open("README.md") as readme_file:
     long_description = readme_file.read()
 
-
 setup(
     name="llmware",  # Required
     version=version,  # Required
@@ -86,7 +85,7 @@ setup(
     ],
     keywords="ai,data,development",  # Optional 
     packages=['llmware'],
-    package_data={'llmware': ['lib/**/**/*.so', 'lib/**/**/*.dylib']},
+    package_data={'llmware': ['*.c', '*.so', '*.dylib']},
     python_requires=">=3.9, <3.11",
     zip_safe=True,
     cmdclass={
@@ -95,30 +94,30 @@ setup(
         'egg_info': CustomEggInfoCommand,
     },
     install_requires=[
-        'ai21>=1.0.3',
-        'anthropic>=0.3.11',
-        'beautifulsoup4>=4.11.1',
-        'boto3>=1.24.53',
-        'cohere>=4.1.3',
-        'faiss-cpu>=1.7.4',
-        'google-cloud-aiplatform>=1.33.1',
-        'lxml>=4.9.3',
-        'numpy>=1.23.2',
-        'openai>=0.27.7',
-        'pandas>=2.1.1',
-        'pdf2image>=1.16.0',
-        'Pillow>=10.0.1',
-        'pymilvus>=2.3.0',
-        'pymongo>=4.5.0',
-        'pytesseract>=0.3.10',
-        'python-on-whales>=0.64.3',
-        'scipy>=1.11.2',
-        'scikit-learn>=1.3.1',
-        'tokenizers>=0.13.3',
-        'torch>=1.13.1',
-        'Werkzeug>=3.0.1',
-        'word2number>=1.1',
-        'Wikipedia-API>=0.6.0',
-        'yfinance>=0.2.28'
+        'ai21==1.0.3',
+        'anthropic==0.3.11',
+        'beautifulsoup4==4.11.1',
+        'boto3==1.24.53',
+        'cohere==4.1.3',
+        'faiss-cpu==1.7.4',
+        'google-cloud-aiplatform==1.33.1',
+        'lxml==4.9.3',
+        'numpy==1.23.2',
+        'openai==0.27.7',
+        'pandas==2.1.1',
+        'pdf2image==1.16.0',
+        'Pillow==10.0.1',
+        'pymilvus==2.3.0',
+        'pymongo==4.5.0',
+        'pytesseract==0.3.10',
+        'python-on-whales==0.64.3',
+        'scipy==1.11.2',
+        'scikit-learn==1.3.1',
+        'tokenizers==0.13.3',
+        'torch==1.13.1',
+        'Werkzeug==3.0.1',
+        'word2number==1.1',
+        'Wikipedia-API==0.6.0',
+        'yfinance==0.2.28'
     ]
 )
