@@ -1,0 +1,13 @@
+Suggested changes for LLMWareInferenceServer:
+
+These changes are mostly around thinking about what I'd like to have if I was writing a server-side wrapper responsible for starting and stopping my LLMWareInferenceServer(s) on-demand
+
+- Allow the port to be passed in as I may have something unrelated already on port 8080
+
+- Provide a stop() method in addition to start(). With Flask this is typically done by adding a /shutdown endpoint (secured with the api_key obviously), and then in that handler it just does:
+    request.environ.get('werkzeug.server.shutdown')
+So we could provide a LLMWareInferenceServer.stop() method that handles for the user and just calls that /shutdown endpoint securely on their behalf.
+
+- I should be able to control where server logs go (e.g a file instead of stdout). This will require some investigation as to the best approach.  Ideally the user could configure default logging for their python code and then we just need to make sure the Flask app.logging is registered to use the global python logging config.
+
+- Minor: In the API, just call it "api_key" instead of "secret_api_key"
