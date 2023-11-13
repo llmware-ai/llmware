@@ -46,64 +46,15 @@ from llmware.exceptions import DependencyNotInstalledException, FilePathDoesNotE
 # setting important when testing locally - should be removed in production
 # ssl._create_default_https_context = ssl._create_unverified_context
 
-# Best ways we've found to detect machine architecture
-system = platform.system().lower()
-machine = os.uname().machine.lower()
-file_ext = { "darwin": "dylib", "linux": "so", "windows": "dll" }
 
-# Default to known architectures if we encounter an unknown one
-if system == 'darwin' and machine not in ['arm64','x86_64']:
-    machine = 'arm64'
-if system == 'linux' and machine not in ['aarch64','x86_64']:
-    machine = 'x86_64'
-
-# Constuct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
-machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
-
-_path_office = os.path.join(machine_dependent_lib_path, "liboffice_llmware." + file_ext[system])
-_path_pdf    = os.path.join(machine_dependent_lib_path, "libpdf_llmware."    + file_ext[system])
-_path_graph  = os.path.join(machine_dependent_lib_path, "libgraph_llmware."  + file_ext[system])
+# Load shared libraries. These are built into the wheels
+_path_office = os.path.join(os.path.dirname(__file__), "liboffice_llmware.so")
+_path_pdf    = os.path.join(os.path.dirname(__file__), "libpdf_llmware.so")
+_path_graph  = os.path.join(os.path.dirname(__file__), "libgraph_llmware.so")
 
 _mod = cdll.LoadLibrary(_path_office)
 _mod_pdf = cdll.LoadLibrary(_path_pdf)
 _mod_initialize = cdll.LoadLibrary(_path_graph)
-
-
-"""
-# Load shared libraries based on current platform/architecture
-system = platform.system().lower()
-machine = sysconfig.get_platform().split("-")[-1].lower()
-_path_office, _path_pdf, _path_graph = None, None, None
-
-
-if system == "darwin" and machine == "x86_64":
-    _path_office  = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "darwin", "x86_64", "liboffice_llmware.dylib")
-    _path_pdf  = os.path.join(LLMWareConfig.get_config("shared_lib_path"),    "darwin", "x86_64", "libpdf_llmware.dylib")
-    _path_graph  = os.path.join(LLMWareConfig.get_config("shared_lib_path"),  "darwin", "x86_64", "libgraph_llmware.dylib")
-
-print("system - machine - ", system, machine, LLMWareConfig.get_config("shared_lib_path"))
-
-if system == "darwin" and machine in ["arm64", "universal2"]:
-    _path_office  = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "darwin", "arm64", "liboffice_llmware.dylib")
-    _path_pdf  = os.path.join(LLMWareConfig.get_config("shared_lib_path"),    "darwin", "arm64", "libpdf_llmware.dylib")
-    _path_graph  = os.path.join(LLMWareConfig.get_config("shared_lib_path"),  "darwin", "arm64", "libgraph_llmware.dylib")
-
-if system == "linux" and machine == "x86_64":
-    _path_office = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "x86_64", "liboffice_llmware.so")
-    _path_pdf    = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "x86_64", "libpdf_llmware.so")
-    _path_graph  = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "x86_64", "libgraph_llmware.so")
-
-if system == "linux" and machine == "aarch64":
-    _path_office = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "aarch64", "liboffice_llmware.so")
-    _path_pdf    = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "aarch64", "libpdf_llmware.so")
-    _path_graph  = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "aarch64", "libgraph_llmware.so")
-
-_mod = cdll.LoadLibrary(_path_office)
-_mod_pdf = cdll.LoadLibrary(_path_pdf)
-_mod_initialize = cdll.LoadLibrary(_path_graph)
-
-"""
-
 
 class Parser:
 
