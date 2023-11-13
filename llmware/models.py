@@ -2315,9 +2315,10 @@ class HFGenerativeModel:
 
         # default settings
         pad_token_id = 0
-
-        # eos_token_id = [self.eos_token_id]
-        eos_token_id = [0]
+        
+        # for most models, eos_token_id = 0, but llama and mistral = 2
+        eos_token_id = [self.eos_token_id]
+        # eos_token_id = [0]
 
         eos_token_id_tensor = torch.tensor(eos_token_id).to(input_ids.device)
 
@@ -2431,16 +2432,24 @@ class HFGenerativeModel:
         
         # post-processing clean-up - stop at endoftext
         eot = output_str.find("<|endoftext|>")
-
         if eot > -1:
             output_str = output_str[:eot]
+        
+        # new post-processing clean-up - stop at </s>
+        eots = output_str.find("</s>")
+        if eots > -1:
+            output_str = output_str[:eots]
 
         # post-processing clean-up - start after bot wrapper
         bot = output_str.find("<bot>:")
-
         if bot > -1:
             output_str = output_str[bot+len("<bot>:"):]
-
+        
+        # new post-processing cleanup - skip repeating starting <s>
+        boss = output_str.find("<s>")
+        if boss > -1:
+            output_str = output_str[boss+len("<s>"):]
+        
         # end - post-processing
         
         total_len = len(outputs_np)
