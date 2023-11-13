@@ -284,10 +284,10 @@ Information on ways to participate can be found in our [Contributors Guide](http
   <summary><b>🚧 Change Log</b></summary>
   
 - **13 Nov 2023: llmware v0.1.7**
-  - Moved to Python Wheel package formate for PyPi distribution to provide seamless installation of native dependencies on all supported platforms.  
+  - Moved to Python Wheel package format for PyPi distribution to provide seamless installation of native dependencies on all supported platforms.  
   - ModelCatalog enhancements:
-    - OpenAI update to include newly announced ‘turbo’ 4 and 3.5 models
-    - Cohere embedding v3 update to include new Cohere embedding models
+    - OpenAI update to include newly announced ‘turbo’ 4 and 3.5 models.
+    - Cohere embedding v3 update to include new Cohere embedding models.
     - BLING models as out-of-the-box registered options in the catalog. They can be instantiated like any other model, even without the “hf=True” flag.
     - Ability to register new model names, within existing model classes, with the register method in ModelCatalog.
   - Prompt enhancements:
