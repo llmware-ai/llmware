@@ -5,6 +5,51 @@ import platform
 import re
 import sys
 from setuptools import find_packages, setup, Extension
+from setuptools.command.install import install
+from setuptools.command.develop import develop
+from setuptools.command.egg_info import egg_info
+
+def custom_install_command():
+
+    try:
+        if platform.system() == "Windows":
+            print("llmware is not yet supported on Windows, but it's on our roadmap.  Check back soon!")
+            sys.exit(-1)
+
+        if platform.system() == "Darwin":
+            if os.system('brew --version') != 0:
+                error_message="llmware needs Homebrew ('brew') to be installed to setup a few depencencies."
+                error_message+="\nInstalling HomeBrew is quick and easy: https://brew.sh"
+                sys.exit(error_message)
+            os.system('brew install tesseract poppler')
+            return
+    
+        if platform.system() == "Linux":
+            if os.system('apt list') == 0:
+                os.system('apt update && apt install -y tesseract-ocr poppler-utils')
+                return
+            else:
+                os.system('sudo apt update && sudo apt install -y tesseract-ocr poppler-utils')
+                return
+    except Exception as e:
+        print (e)
+        # Silently exit (and allow the install to continue if there was any problem)
+
+
+class CustomInstallCommand(install):
+    def run(self):
+        custom_install_command()
+        install.run(self)
+        
+class CustomDevelopCommand(develop):
+    def run(self):
+        custom_install_command()
+        develop.run(self)
+
+class CustomEggInfoCommand(egg_info):
+    def run(self):
+        custom_install_command()
+        egg_info.run(self)
 
 VERSION_FILE = "llmware/__init__.py"
 with open(VERSION_FILE) as version_file:
@@ -43,6 +88,11 @@ setup(
     package_data={'llmware': ['*.c', '*.so', '*.dylib']},
     python_requires=">=3.9, <3.11",
     zip_safe=True,
+    cmdclass={
+        'install': CustomInstallCommand,
+        'develop': CustomDevelopCommand,
+        'egg_info': CustomEggInfoCommand,
+    },
     install_requires=[
         'ai21>=1.0.3',
         'anthropic>=0.3.11',
