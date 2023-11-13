@@ -268,23 +268,35 @@ Information on ways to participate can be found in our [Contributors Guide](http
 - MongoDB Atlas Vector Search
 
 **Prereqs:**  
-- All Platforms: [python v3.9 - 3.10](https://www.python.org/about/gettingstarted/)
-- Mac: [Homebrew](https://docs.brew.sh/Installation) is used to install the native dependencies
-- Linux: 
-  1. The pip package attempts to install the native dependencies. If it is run without root permission or a package manager other than Apt is used, you will need to manually install the following native packages: ```apt install -y libxml2 libpng-dev libmongoc-dev libzip4 tesseract-ocr poppler-utils```   *Note:  libmongoc-dev <= v1.24.4 is required.
-  2. The llmware parsers optimize for speed by using large stack frames. If you receive a "Segmentation Fault" during a parsing operation, update the system's 'stack size' resource limit: ```ulimit -s 32768000```.  If running llmware in a container then the ulimit needs to be set by the host with a command like the following: ```docker run --ulimit stack=32768000:32768000 ...```
-  
-
+- All Platforms: [Python v3.9 - 3.10](https://www.python.org/about/gettingstarted/)
+- To enable the OCR parsing capabilities, install [Tesseract v5.3.3](https://tesseract-ocr.github.io/tessdoc/Installation.html) and [Poppler v23.10.0](https://poppler.freedesktop.org/) native packages.  
+     
 **Optional:**
 - [Docker](https://docs.docker.com/get-docker/) 
 
 **Known issues:**
-- A segmentation fault can occur when parsing if the native package for mongo-c-driver is 1.25 or above.  To address this issue, install llmware v0.1.6 and above or downgrade mongo-c-driver to v1.24.4.  
+- A segmentation fault can occur when parsing if the native package for mongo-c-driver is 1.25 or above.  To address this issue, install llmware v0.1.6 and above or downgrade mongo-c-driver to v1.24.4.
+- The llmware parsers optimize for speed by using large stack frames. If you receive a "Segmentation Fault" during a parsing operation, update the system's 'stack size' resource limit: ```ulimit -s 32768000```.  If running llmware in a container then the ulimit needs to be set by the host with a command like the following: ```docker run --ulimit stack=32768000:32768000 ...```
+- For llmware versions <= v0.1.6, the pip package attempts to install the native dependencies. If it is run without root permission or a package manager other than Apt is used, you will need to manually install the following native packages: ```apt install -y libxml2 libpng-dev libmongoc-dev libzip4 tesseract-ocr poppler-utils```   *Note:  libmongoc-dev <= v1.24.4 is required.
+  
 
 <details>
   <summary><b>🚧 Change Log</b></summary>
-
   
+- **13 Nov 2023: llmware v0.1.7**
+  - Moved to Python Wheel package formate for PyPi distribution to provide seamless installation of native dependencies on all supported platforms.  
+  - ModelCatalog enhancements:
+    - OpenAI update to include newly announced ‘turbo’ 4 and 3.5 models
+    - Cohere embedding v3 update to include new Cohere embedding models
+    - BLING models as out-of-the-box registered options in the catalog. They can be instantiated like any other model, even without the “hf=True” flag.
+    - Ability to register new model names, within existing model classes, with the register method in ModelCatalog.
+  - Prompt enhancements:
+    - “evidence_metadata” added to prompt_main output dictionaries allowing prompt_main responses to be plug into the evidence and fact-checking steps without modification.
+    - API key can now be passed directly in a prompt.load_model(model_name, api_key = “[my-api-key]”)
+  - LLMWareInference Server - Initial delivery:
+    - New Class for LLMWareModel which is a wrapper on a custom HF-style API-based model.    
+    - LLMWareInferenceServer is a new class that can be instantiated on a remote (GPU) server to create a testing API-server that can be integrated into any Prompt workflow.    
+ 
 - **03 Nov 2023: llmware v0.1.6**
   - Updated packaging to require mongo-c-driver 1.24.4 to temporarily workaround segmentation fault with mongo-c-driver 1.25.
   - Updates in python code needed in anticipation of future Windows support.  
