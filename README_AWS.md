@@ -13,7 +13,7 @@ update ~/set-env.sh and run the following to get the environment variables loade
     
 
 Note: You can expect a one-time delay of 30-60 seconds when running llmware on this instance for the first time. 
-This is due to how EBS storage volumes get loaded on-demand from the AMI storage snapshot
+This is due to how EBS storage volumes get loaded on-demand from the AMI storage snapshot.
 
 MongoDB & Milvus
 ================
@@ -111,12 +111,24 @@ File: /Users/llmware/llmware_data/prompt_history/interaction_report_Fri Sep 29 1
 Updating llmware
 ================
 
-To pull and install the latest code from the llmware repository:
 
+To install the latest code from the llmware:
+``` bash
+ pip install llmware
+```
+or
+
+``` bash
+python3 -m pip install llmware
+```
+
+To pull the latest code from the llmware repository:  
+
+  ```bash
   cd ~/llmware
   git pull
-  pip3 install .
-
+ 
+  ```
 
 Need help or have questions?
 ============================
