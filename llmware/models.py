@@ -220,40 +220,76 @@ global_model_repo_catalog_list = [
     # core llmware bling open source models available in catalog directly
     {"model_name": "llmware/bling-1.4b-0.1", "display_name": "Bling-Pythia-1.4B", "model_family": "HFGenerativeModel",
      "model_category": "generative_api", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3},
+     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space":""},
 
     {"model_name": "llmware/bling-1b-0.1", "display_name": "Bling-Pythia-1.0B", "model_family": "HFGenerativeModel",
      "model_category": "generative_api", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3},
+     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space": ""},
 
     {"model_name": "llmware/bling-falcon-1b-0.1", "display_name": "Bling-Falcon-1.3B", "model_family": "HFGenerativeModel",
      "model_category": "generative_api", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3},
+     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space": ""},
 
     {"model_name": "llmware/bling-sheared-llama-1.3b-0.1", "display_name": "Bling-Sheared-LLama-1.3B",
      "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
      "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3},
+     "temperature": 0.3, "trailing_space": ""},
 
     {"model_name": "llmware/llmware/bling-red-pajamas-3b-0.1", "display_name": "Bling-Pythia-1.4B",
      "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
      "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3},
+     "temperature": 0.3, "trailing_space": ""},
 
     {"model_name": "llmware/bling-sheared-llama-2.7b-0.1", "display_name": "Bling-Sheared-Llama-2.7B",
      "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
      "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3},
+     "temperature": 0.3, "trailing_space": ""},
 
     {"model_name": "llmware/bling-stable-lm-3b-4e1t-v0", "display_name": "Bling-Stable-LM-3B",
      "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
      "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3},
+     "temperature": 0.3, "trailing_space": ""},
 
     {"model_name": "llmware/bling-cerebras-1.3b-0.1", "display_name": "Bling-Cerebras-1.3B",
      "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
      "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3},
+     "temperature": 0.3, "trailing_space": ""},
+     
+    # create dragon models
+    {"model_name": "llmware/dragon-yi-6b-v0", "display_name": "Dragon-Yi-6B",
+     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "\n"},
+
+    {"model_name": "llmware/dragon-stablelm-7b-v0", "display_name": "Dragon-StableLM-7B",
+     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": ""},
+
+    {"model_name": "llmware/dragon-mistral-7b-v0", "display_name": "Dragon-Mistral-7B",
+     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": ""},
+
+    {"model_name": "llmware/dragon-red-pajama-7b-v0", "display_name": "Dragon-Red-Pajama-7B",
+     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": ""},
+
+    {"model_name": "llmware/dragon-deci-6b-v0", "display_name": "Dragon-Deci-6B",
+     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": ""},
+
+    {"model_name": "llmware/dragon-falcon-7b-v0", "display_name": "Dragon-Falcon-7B",
+     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": ""},
+
+    {"model_name": "llmware/dragon-llama-7b-v0", "display_name": "Dragon-Llama-7B",
+     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": ""}
 
 ]
 
@@ -464,7 +500,10 @@ class ModelCatalog:
                     my_model.temperature = model_card["temperature"]
                 else:
                     my_model.temperature = 0.3
-
+                
+                if "trailing_space" in model_card:
+                    my_model.trailing_space = model_card["trailing_space"]
+                    
             if model_class == "HFEmbeddingModel": my_model = HFEmbeddingModel(model_name=model_name,
                                                                               api_key=api_key)
 
@@ -2117,7 +2156,9 @@ class HFGenerativeModel:
         # note - these two parameters will control how prompts are handled - model-specific
         self.prompt_wrapper = prompt_wrapper
         self.instruction_following = instruction_following
-
+        
+        self.trailing_space = ""
+        
         self.model_type = None
         self.config = None
         self.max_total_len = context_window
@@ -2139,7 +2180,10 @@ class HFGenerativeModel:
                 self.config = self.model.config
             else:
                 self.config = self.model.config.to_dict()
-
+            
+            if "trailing_space" in self.config:
+                self.trailing_space = self.config["trailing_space"]
+                
             if "eos_token_id" in self.config:
                 self.eos_token_id = self.config["eos_token_id"]
 
@@ -2278,8 +2322,17 @@ class HFGenerativeModel:
         if self.add_prompt_engineering:
             prompt_enriched = self.prompt_engineer(prompt, self.add_context, inference_dict=inference_dict)
             prompt_final = prompt_enriched
-            text_prompt = prompt_final + "\n"
-
+            
+            # text_prompt = prompt_final + "\n"
+            
+            # most models perform better with no trailing space or line-break at the end of prompt
+            #   -- in most cases, the trailing space will be ""
+            #   -- yi model prefers a trailing "\n"
+            #   -- keep as parameterized option to maximize generation performance
+            #   -- can be passed either thru model_card or model config from HF
+            
+            text_prompt = prompt_final + self.trailing_space
+            
         # second - tokenize to get the input_ids
 
         tokenizer_output = self.tokenizer.encode(text_prompt)
