@@ -150,4 +150,10 @@ class DatasetTypeNotFoundException(LLMWareException):
         message = f"'{ds_name}' is not a recognized dataset type"
         super().__init__(message)
 
-
+class OCRDependenciesNotFoundException(LLMWareException):
+    def __init__(self, dependency_name):
+        message = f"'{dependency_name}' does not appear to be installed locally. " \
+                  f"OCR requires both tesseract and poppler. " \
+                  f"For MacOS: 'brew install tesseract poppler'. " \
+                  f"For Linux: 'apt install -y tesseract-ocr poppler-utils'."
+        super().__init__(message)
