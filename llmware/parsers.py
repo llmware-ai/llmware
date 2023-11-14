@@ -30,7 +30,9 @@ from urllib.request import urlopen, Request
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 import pytesseract
+from pytesseract.pytesseract import TesseractNotFoundError
 from pdf2image import convert_from_path
+from pdf2image.exceptions import PDFInfoNotInstalledError
 import struct
 import logging
 import random
@@ -41,7 +43,7 @@ import sysconfig
 from llmware.configs import LLMWareConfig
 from llmware.util import Utilities, WikiKnowledgeBase, TextChunker
 from llmware.resources import CollectionRetrieval, CollectionWriter, check_db_uri, ParserState
-from llmware.exceptions import DependencyNotInstalledException, FilePathDoesNotExistException
+from llmware.exceptions import DependencyNotInstalledException, FilePathDoesNotExistException, OCRDependenciesNotFoundException
 
 # setting important when testing locally - should be removed in production
 # ssl._create_default_https_context = ssl._create_unverified_context
@@ -1043,7 +1045,7 @@ class Parser:
                         else:
                             new_output, new_blocks, _ = self._write_output_to_dict(blocks,doc_fn,page_num=(j+1))
 
-                        output += new_blocks
+                        output += new_output
                         blocks_added += new_blocks
                         pages_added += 1
 
@@ -2836,7 +2838,10 @@ class ImageParser:
 
     def process_ocr (self, dir_fp, fn, preserve_spacing=False):
 
-        text_out = pytesseract.image_to_string(os.path.join(dir_fp,fn))
+        try:
+            text_out = pytesseract.image_to_string(os.path.join(dir_fp,fn))
+        except TesseractNotFoundError as e:
+            raise OCRDependenciesNotFoundException("tesseract")
 
         if not preserve_spacing:
             text_out = text_out.replace("\n", " ")
@@ -2856,7 +2861,10 @@ class ImageParser:
         text_list_out = []
         scanned_files = os.listdir(fp)
         for docs in scanned_files:
-            text_out = pytesseract.image_to_string(os.path.join(fp,docs))
+            try:
+                text_out = pytesseract.image_to_string(os.path.join(fp,docs))
+            except TesseractNotFoundError as e:
+                raise OCRDependenciesNotFoundException("tesseract")
             text_out = text_out.replace("\n", " ")
             logging.info("update: ocr text_out: %s ", text_out)
             text_list_out.append(text_out)
@@ -2868,13 +2876,17 @@ class ImageParser:
         text_output_by_page = []
 
         # decompose pdf into set of images by page
-        images = convert_from_path(os.path.join(input_fp,file))
-
+        try:
+            images = convert_from_path(os.path.join(input_fp,file))
+        except PDFInfoNotInstalledError as e:
+            raise OCRDependenciesNotFoundException("poppler")
         for j, image in enumerate(images):
 
             # run ocr over page image
-            text = pytesseract.image_to_string(image)
-
+            try:
+                text = pytesseract.image_to_string(image)
+            except TesseractNotFoundError as e:
+                raise OCRDependenciesNotFoundException("tesseract")
             # will chop up the long text into individual blocks
             text_chunks = TextChunker(text_chunk=text,
                                       max_char_size=self.text_chunk_size,
@@ -2944,14 +2956,19 @@ class ImageParser:
             if ext == "pdf":
                 try:
                     # decomposes pdf into set of image .png files
-                    images = convert_from_path(os.path.join(input_fp,files))
-
+                    try:
+                        images = convert_from_path(os.path.join(input_fp,files))
+                    except PDFInfoNotInstalledError as e:
+                        raise OCRDependenciesNotFoundException("poppler")
                     for j, image in enumerate(images):
 
                         # saves .png images in target output folder
                         fn = str(i) + "_" + str(j) + ".png"
                         image.save(os.path.join(output_fp,fn))
-                        text = pytesseract.image_to_string(image)
+                        try:
+                            text = pytesseract.image_to_string(image)
+                        except TesseractNotFoundError as e:
+                            raise OCRDependenciesNotFoundException("tesseract")
                         all_text += text
                         # all_text += re.sub("[\n\r]"," ", text)
                         logging.info("update: ocr text out - %s ", text)

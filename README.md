@@ -256,7 +256,7 @@ Information on ways to participate can be found in our [Contributors Guide](http
 
 ## 📣  Release notes and Change Log
 
-**Supported OS's:**  
+**Supported Operating Systems:**  
 - MacOS
 - Linux
 - (Windows is a roadmap item)
@@ -276,14 +276,14 @@ Information on ways to participate can be found in our [Contributors Guide](http
 
 **Known issues:**
 - A segmentation fault can occur when parsing if the native package for mongo-c-driver is 1.25 or above.  To address this issue, install llmware v0.1.6 and above or downgrade mongo-c-driver to v1.24.4.
-- The llmware parsers optimize for speed by using large stack frames. If you receive a "Segmentation Fault" during a parsing operation, update the system's 'stack size' resource limit: ```ulimit -s 32768000```.  If running llmware in a container then the ulimit needs to be set by the host with a command like the following: ```docker run --ulimit stack=32768000:32768000 ...```
+- The llmware parsers optimize for speed by using large stack frames. If you receive a "Segmentation Fault" during a parsing operation, increase the system's 'stack size' resource limit: ```ulimit -s 160000```. If running in a linux container on Mac, we've found this has to be set signficantly higher and must be set by the host with a command like the following: ```docker run --ulimit stack=32768000:32768000 ...```
 - For llmware versions <= v0.1.6, the pip package attempts to install the native dependencies. If it is run without root permission or a package manager other than Apt is used, you will need to manually install the following native packages: ```apt install -y libxml2 libpng-dev libmongoc-dev libzip4 tesseract-ocr poppler-utils```   *Note:  libmongoc-dev <= v1.24.4 is required.
   
 
 <details>
   <summary><b>🚧 Change Log</b></summary>
   
-- **13 Nov 2023: llmware v0.1.7**
+- **14 Nov 2023: llmware v0.1.7**
   - Moved to Python Wheel package format for PyPi distribution to provide seamless installation of native dependencies on all supported platforms.  
   - ModelCatalog enhancements:
     - OpenAI update to include newly announced ‘turbo’ 4 and 3.5 models.
