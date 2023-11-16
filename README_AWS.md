@@ -114,12 +114,12 @@ Updating llmware
 
 To install the latest code from the llmware:
 ``` bash
- pip install llmware
+ pip install llmware --upgrade
 ```
 or
 
 ``` bash
-python3 -m pip install llmware
+python3 -m pip install llmware --upgrade
 ```
 
 To pull the latest code from the llmware repository:  
