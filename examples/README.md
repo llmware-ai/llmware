@@ -5,15 +5,15 @@
 | 1.   Getting Started ([code](getting_started.py)) | Create and populate your first library, prepare the library for semantic search with vector embeddings stored in Milvus, and run a semantic search. |
 | 2.   LLM Prompts ([code](llm_prompts.py)) | Prompt LLMs with various sources, explore the out-of-the-box Prompt Catalog, and use different prompt styles.|
 | 3.   Retrieval ([code](retrieval.py)) | Explore the breadth of retrieval capabilities and persisting, loading and saving retrieval history.|
-| 4.   RAG Quick Start ([code](rag.py) / [video](https://www.youtube.com/watch?v=0naqpH93eEU)) | End-to-end RAG scenario in _less than 15 lines of code_ using OpenAI and Milvus.|
+| 4.   RAG with OpenAI ([code](rag_with_openai.py) / [video](https://www.youtube.com/watch?v=0naqpH93eEU)) | End-to-end RAG scenario in _less than 15 lines of code_ using OpenAI and Milvus.|
 | 5.   BLING models ([code](bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU))   | Explore `llmware`'s BLING model series ("Best Little Instruction-following No-GPU-required").  See how they perform in common RAG scenarios - question-answering, key-value extraction, and basic summarization.   |
-| 6.   RAG with BLING ([code](bling_rag.py) / [video](https://www.youtube.com/watch?v=8aV5p3tErP0)) | Using contract analysis as an example, experiment with RAG for complex document analysis and text extraction using `llmware`'s BLING ~1B parameter GPT model running on your laptop.   |
+| 6.   RAG with BLING ([code](rag_with_bling.py) / [video](https://www.youtube.com/watch?v=8aV5p3tErP0)) | Using contract analysis as an example, experiment with RAG for complex document analysis and text extraction using `llmware`'s BLING ~1B parameter GPT model running on your laptop.   |
 | 7.   BLING RAG benchmark testing ([code](bling_rag_benchmark_tests.py)) | Run RAG instruct benchmark tests against the `llmware` BLING models to find the best one for your RAG workflow.|
 | 8.   DRAGON RAG benchmark testing with huggingface ([code](dragon_rag_benchmark_tests_huggingface.py)) | Run RAG instruct benchmark tests against the `llmware` DRAGON models to find the best one for your RAG workflow.  This example uses basic Transformer APIs. |
 | 9.   DRAGON RAG benchmark testing with llmware ([code](dragon_rag_benchmark_tests_llmware.py)) | Run RAG instruct benchmark tests against the `llmware` DRAGON models to find the best one for your RAG workflow. This example uses the llmware Prompt API which provides additional capabilities such as evidence/fact checking |
 | 10.   RAG "on the fly" ([code](working_without_a_database.py)) |  Analyze a set of documents using RAG _without_ a database or vector embeddings. |
 | 11.  Fact Checking ([code](bling_evidence_checking.py))  | Explore the full set of evidence methods in this example script that analyzes a set of contracts. |
-| 12.  Hallucination Guardrails |  Fact checking model responses with the `analyze_contracts_on_the_fly` ([code](working_without_a_database.py)), a variety of fact checking techniques with the `prompt_fact_checking` ([code](working_with_prompts.py)), human in the loop interaction reports with the `send_to_human_for_review` ([code](rag.py)).  |
+| 12.  Hallucination Guardrails |  Fact checking model responses with the `analyze_contracts_on_the_fly` ([code](working_without_a_database.py)), a variety of fact checking techniques with the `prompt_fact_checking` ([code](working_with_prompts.py)), human in the loop interaction reports with the `send_to_human_for_review` ([code](rag_with_openai.py)).  |
 | 13.  Working with Prompts ([code](working_with_prompts.py)) |  Inspection of Prompt history which is useful in AI Audit scenarios.| 
 | 14.  Parsing ([code](parsing.py)) | Ingest at scale into library and ‘at runtime' into any Prompt.|
 | 15.  Embedding ([code](embedding.py)) | Simple access to multiple embedding models and vector DBs (“mix and match”). |
@@ -34,7 +34,7 @@ The `llmware` public model repository has 3 model collections:
 - **BLING model series:**  Small CPU-based RAG-optimized, instruct-following 1B-3B parameter models.
 - **DRAGON model series:**  Production-grade RAG-optimized 6-7B parameter models - "Delivering RAG on ..." the leading foundation base models.
 
-These models collections are available at [`llmware` on Hugging Face](https://huggingface.co/llmware). Explore their use in the [Embedding](embedding.py), [Hugging Face Integration](huggingface_integration.py),[`llmware` BLING model](bling_fast_start.py), [RAG with BLING](bling_rag.py), and [RAG benchmark testing](bling_rag_benchmark_tests.py) examples.
+These models collections are available at [`llmware` on Hugging Face](https://huggingface.co/llmware). Explore their use in the [Embedding](embedding.py), [Hugging Face Integration](huggingface_integration.py),[`llmware` BLING model](bling_fast_start.py), [RAG with BLING](rag_with_bling.py), and [RAG benchmark testing](bling_rag_benchmark_tests.py) examples.
 
 # Additional `llmware` capabilities
 - Create knowledge graphs with a high-powered and fast C-based co-occurrence table matrix builder, the output of which can feed NLP statistics as well as potentially graph databases.  Explore the [Knowledge Graph](knowledge_graph.py) example.
