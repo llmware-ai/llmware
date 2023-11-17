@@ -95,3 +95,5 @@ dragon_models = ['llmware/dragon-yi-6b-v0', 'llmware/dragon-red-pajama-7b-v0', '
 # Pick a model
 model_name = dragon_models[1]
 output = run_test(model_name,test_dataset)
+# If you'd like to run with the benchmark with a smaller model, you can use the BLING 1B model instead:
+#output = run_test("llmware/bling-1b-0.1",test_dataset)
