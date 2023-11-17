@@ -7,6 +7,8 @@ dist/
 __pycache__/
 llmware.egg-info/
 venv/
+**/*.so
+**/*.dylib
 
 # Mac
 .DS_Store/
