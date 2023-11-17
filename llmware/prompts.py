@@ -140,7 +140,7 @@ class Prompt:
         self.model_catalog = ModelCatalog()
 
     # changes in importing huggingface models
-    def load_model(self, gen_model,api_key=None, from_hf=False):
+    def load_model(self, gen_model,api_key=None, from_hf=False, trust_remote_code=False):
 
         if api_key:
             self.llm_model_api_key = api_key
@@ -156,11 +156,11 @@ class Prompt:
 
             if api_key:
                 # may look to add further settings/configuration in the future for hf models, e.g., trust_remote_code
-                custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model,token=api_key, trust_remote_code=True)
-                hf_tokenizer = AutoTokenizer.from_pretrained(gen_model,token=api_key)
+                custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model,token=api_key, trust_remote_code=trust_remote_code,  torch_dtype="auto")
+                hf_tokenizer = AutoTokenizer.from_pretrained(gen_model,token=api_key,trust_remote_code=trust_remote_code)
             else:
-                custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model)
-                hf_tokenizer = AutoTokenizer.from_pretrained(gen_model)
+                custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model, trust_remote_code=trust_remote_code, torch_dtype="auto")
+                hf_tokenizer = AutoTokenizer.from_pretrained(gen_model, trust_remote_code=trust_remote_code)
 
             #   now, we have 'imported' our own custom 'instruct' model into llmware
             self.llm_model = self.model_catalog.load_hf_generative_model(custom_hf_model, hf_tokenizer,
@@ -957,7 +957,7 @@ class Prompt:
 
         return response_out
 
-    def classify_not_found_response(self, response_list,parse_response=True,evidence_match=True,ask_the_model=True):
+    def classify_not_found_response(self, response_list,parse_response=True,evidence_match=True,ask_the_model=False):
 
         output_response_all = []
 
@@ -972,7 +972,7 @@ class Prompt:
 
         return output_response_all
 
-    def _classify_not_found_one_response(self, response_dict, parse_response=True, evidence_match=True, ask_the_model=True):
+    def _classify_not_found_one_response(self, response_dict, parse_response=True, evidence_match=True, ask_the_model=False):
 
         output_response = {}
         nf = []

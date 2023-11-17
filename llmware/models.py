@@ -482,7 +482,7 @@ class ModelCatalog:
 
             # placeholder for HF models
             if model_class == "HFGenerativeModel":
-                my_model = HFGenerativeModel(model_name=model_name,api_key=api_key)
+                my_model = HFGenerativeModel(model_name=model_name,api_key=api_key, trust_remote_code=True)
 
                 # set specific parameters associated with custom models
 
@@ -2130,7 +2130,7 @@ class HFGenerativeModel:
 
     def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None,
                  prompt_wrapper=None, instruction_following=False, context_window=2048,
-                 use_gpu_if_available=True):
+                 use_gpu_if_available=True, trust_remote_code=False):
 
         # pull in expected hf input
         self.model_name = model_name
@@ -2147,11 +2147,11 @@ class HFGenerativeModel:
                 raise DependencyNotInstalledException("transformers")
 
             if api_key:
-                self.model = AutoModelForCausalLM.from_pretrained(model_name,token=api_key, trust_remote_code=True)
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name,token=api_key)
+                self.model = AutoModelForCausalLM.from_pretrained(model_name,token=api_key, trust_remote_code=trust_remote_code, torch_dtype="auto")
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name,token=api_key, trust_remote_code=trust_remote_code)
             else:
-                self.model = AutoModelForCausalLM.from_pretrained(model_name)
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+                self.model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=trust_remote_code, torch_dtype="auto")
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=trust_remote_code)
 
         # note - these two parameters will control how prompts are handled - model-specific
         self.prompt_wrapper = prompt_wrapper
@@ -2185,7 +2185,9 @@ class HFGenerativeModel:
                 self.trailing_space = self.config["trailing_space"]
                 
             if "eos_token_id" in self.config:
-                self.eos_token_id = self.config["eos_token_id"]
+                # only use to set if value is not None
+                if self.config["eos_token_id"]:
+                    self.eos_token_id = self.config["eos_token_id"]
 
             if "model_type" in self.config:
                 self.model_type = self.config["model_type"]
