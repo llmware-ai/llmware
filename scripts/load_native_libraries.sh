@@ -6,13 +6,15 @@
 # It will pull the latest llmware native libraries and their dependencies
 
 # Pull the latest wheel locally (temporarily)
-python3 -m pip download llmware
+cd "$(dirname "$0")"
+
+python3 -m pip download --no-deps llmware
 
 # Extract the right files depending on local OS
 if [ "$(uname)" = "Darwin" ]; then
-    unzip llmware-*.whl "llmware/.dylibs/*" "llmware/*.so"
+    unzip llmware-*.whl "llmware/.dylibs/*" "llmware/*.so" -d ..
 else
-    unzip llmware-*.whl "llmware.libs/*" "llmware/*.so"
+    unzip llmware-*.whl "llmware.libs/*" "llmware/*.so" -d ..
 fi
 
 # Delete the wheel
