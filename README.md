@@ -128,7 +128,7 @@ end_to_end_rag()
 #### Response from end-to-end RAG example
 
 ```
-> python examples/rag.py
+> python examples/rag_with_openai.py
 
  > Creating library 'Agreements'...
 
