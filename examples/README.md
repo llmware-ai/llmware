@@ -26,10 +26,15 @@
 # Using `llmware` without a database
 You can do some interesting things using `llmware` without a database or vector embeddings.  Parsing can be done in memory and outputted to text or json. Prompts can be crafted with sources from files, Wikipedia or the Yahoo Finance API.  The **Working without Databases** ([code](working_without_a_database.py) / [video](https://www.youtube.com/watch?v=tAGz6yR14lw)), [LLM Prompts](llm_prompts.py), and [Parsing](parsing.py) examples show scenarios that can be accomplished and throughout the examples are specific methods that do not require MongoDB or embeddings.  
 
-# `llmware` BLING Models
-The `llmware` public model repository has out-of-the-box custom trained sentence transformer embedding models fine-tuned for the following industries:  Insurance, Contracts, Asset Management, SEC. These domain specific models along with `llmware`'s generative BLING model series ("Best Little Instruction-following No-GPU-required") are available at [llmware on Hugging Face](https://huggingface.co/llmware). Explore their use in the [Embedding](embedding.py), [Hugging Face Integration](huggingface_integration.py),[`llmware` BLING model](bling_fast_start.py), [RAG with BLING](bling_rag.py), and [RAG benchmark testing](bling_rag_benchmark_tests.py) examples.
+# `llmware` Open Source Models
+The `llmware` public model repository has 3 model collections:
+- **Industry BERT models:**  out-of-the-box custom trained sentence transformer embedding models fine-tuned for the following industries:  Insurance, Contracts, Asset Management, SEC.
+- **BLING model series:**  Small CPU-based RAG-optimized, instruct-following 1B-3B parameter models.
+- **DRAGON model series:**  Production-grade RAG-optimized 6-7B parameter models - "Delivering RAG on ..." the leading foundation base models.
 
-# Additional llmware capabilities
+These models collections are available at [`llmware` on Hugging Face](https://huggingface.co/llmware). Explore their use in the [Embedding](embedding.py), [Hugging Face Integration](huggingface_integration.py),[`llmware` BLING model](bling_fast_start.py), [RAG with BLING](bling_rag.py), and [RAG benchmark testing](bling_rag_benchmark_tests.py) examples.
+
+# Additional `llmware` capabilities
 - Create knowledge graphs with a high-powered and fast C-based co-occurrence table matrix builder, the output of which can feed NLP statistics as well as potentially graph databases.  Explore the [Knowledge Graph](knowledge_graph.py) example.
 
 - Generate datasets for fine-tuning both generative and embedding models.  `llmware` uses sophisticated data-crafting strategies, and leveraging the data captured throughout the system.  Explore the [Datasets](working_with_datasets.py) example.  
