@@ -21,7 +21,7 @@ With `llmware`, our goal is to contribute to and help catalyze an open community
 <details>    
 <summary><b><u>Prompt</u>: Tools for sophisticated generative scenarios </b></summary>
 
-- **Connect Models:** Open interface designed to support AI21, Ai Bloks READ-GPT, Anthropic, Cohere, HuggingFace Generative models, OpenAI.
+- **Connect Models:** Open interface designed to support AI21, Ai Bloks READ-GPT, Anthropic, Cohere, HuggingFace Generative models, llmware BLING and DRAGON models, OpenAI.
 - **Prepare Sources:** Tools for packaging and tracking a wide range of materials into model context window sizes. Sources include files, websites, audio, AWS Transcribe transcripts, Wikipedia and Yahoo Finance.  
 - **Prompt Catalog:** Dynamically configurable prompts to experiment with multiple models without any change in the code.
 - **Post Processing:** a full set of metadata and tools for evidence verification, classification of a response, and fact-checking.
@@ -155,7 +155,7 @@ To get started with a proprietary model, you need to provide your own API Keys. 
 
 API keys and secrets for models, aws, and pinecone can be set-up for use in environment variables or managed however you prefer. 
 
-You can also access the `llmware` public model repository which includes out-of-the-box custom trained sentence transformer embedding models fine-tuned for the following industries: Insurance, Contracts, Asset Management, SEC. These domain specific models along with llmware's generative BLING model series ("Best Little Instruction-following No-GPU-required") are available at [llmware on Huggingface](https://huggingface.co/llmware). Explore using the model repository and the `llmware` Huggingface integration in [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md).
+You can also access the `llmware` public model repository which includes out-of-the-box custom trained sentence transformer embedding models fine-tuned for the following industries: Insurance, Contracts, Asset Management, SEC. These domain specific models along with llmware's generative BLING model series ("Best Little Instruction-following No-GPU-required") and DRAGON model series ("Delivering RAG on ...") are available at [llmware on Huggingface](https://huggingface.co/llmware). Explore using the model repository and the `llmware` Huggingface integration in [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md).
 
 
 ## 🔹 Alternate options for running MongoDB and Milvus
@@ -283,6 +283,12 @@ Information on ways to participate can be found in our [Contributors Guide](http
 <details>
   <summary><b>🚧 Change Log</b></summary>
   
+- **17 Nov 2023: llmwre v0.1.8**
+  - Enhanced generation performance by allowing each model to specific the trailing space parameter.
+  - Improved handling for eos_token_id for llama2 and mistral.
+  - Improved support for Hugging Face dynamic loading
+  - New examples with the new llmware DRAGON models.
+    
 - **14 Nov 2023: llmware v0.1.7**
   - Moved to Python Wheel package format for PyPi distribution to provide seamless installation of native dependencies on all supported platforms.  
   - ModelCatalog enhancements:
