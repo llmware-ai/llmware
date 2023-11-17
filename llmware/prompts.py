@@ -156,10 +156,10 @@ class Prompt:
 
             if api_key:
                 # may look to add further settings/configuration in the future for hf models, e.g., trust_remote_code
-                custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model,token=api_key, trust_remote_code=trust_remote_code)
+                custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model,token=api_key, trust_remote_code=trust_remote_code,  torch_dtype="auto")
                 hf_tokenizer = AutoTokenizer.from_pretrained(gen_model,token=api_key,trust_remote_code=trust_remote_code)
             else:
-                custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model, trust_remote_code=trust_remote_code)
+                custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model, trust_remote_code=trust_remote_code, torch_dtype="auto")
                 hf_tokenizer = AutoTokenizer.from_pretrained(gen_model, trust_remote_code=trust_remote_code)
 
             #   now, we have 'imported' our own custom 'instruct' model into llmware
