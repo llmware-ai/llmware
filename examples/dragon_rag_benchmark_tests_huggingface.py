@@ -32,7 +32,10 @@ def run_test(model_name, test_dataset):
     # Load the model and tokenizer
     print(f"\n > Loading model '{model_name}'") 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True, torch_dtype="auto")
+    if torch.cuda.is_available():
+        model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True, torch_dtype="auto")
+    else:
+        model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
     model.to(device)
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 
