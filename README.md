@@ -214,7 +214,7 @@ Additional information on finding and formatting connection strings can be found
 
 ## ✍️ Working with the llmware Github repository
 
-The llmware repo can be pulled locally to get access to all the examples, or to work directly with the llmware code
+The llmware repo can be pulled locally to get access to all the examples, or to work directly with the latest version of the llmware code.
 
 ### Pull the repo locally
 
@@ -223,26 +223,24 @@ git clone git@github.com:llmware-ai/llmware.git
 ```
 or download/extract a [zip of the llmware repository](https://github.com/llmware-ai/llmware/archive/refs/heads/main.zip)
 
-### Other options for running llmware
+### Run llmware natively
 
-<details>
-<summary><b>Run llmware in a container </b></summary>
-  
-  ```bash
-TODO insert command for pulling the container here
+Update the local copy of the repository:
+
+```bash
+git pull
 ```
-</details>
-
-<details>
-<summary><b>Run llmware natively </b></summary>
+Download the shared llmware native libraries and dependencies by running the load_native_libraries.sh script. This pulls the right wheel for your platform and extracts the llmware native libraries and dependencies into the proper place in the local repository.   
+ 
+```bash
+./scripts/dev/load_native_libraries.sh
+```
 
 At the top level of the llmware repository run the following command:
 
 ```bash
 pip install .
 ```
-
-</details>
 
 ## ✨  Getting help or sharing your ideas with the community
 Questions and discussions are welcome in our [github discussions](https://github.com/llmware-ai/llmware/discussions).
