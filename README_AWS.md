@@ -3,17 +3,29 @@
 Getting Started: `llmware` AMI from the AWS Marketplace
 ===============
 
-The llmware python package is pre-installed on the AMI.  Examples of how to use llmware can be found locally in ~/llmware/examples and can be run using "python3 <filename>.py".
+The llmware python package is pre-installed on the AMI.  Examples of how to use llmware can be found locally in ~/llmware/examples and can be run using "python3 [filename].py".
 
+The llmware package is updated frequenty, so it is strongly recommended to update the version running on your AMI with the following commands. To install the latest llmware package from PyPi:
+```
+ pip install llmware --upgrade
+```
+
+To pull the latest code from the llmware repository and gain access to the latest examples:  
+
+  ```bash
+  cd ~/llmware
+  git pull
+ 
+  ```
 Some examples require LLM API Keys. You can edit the example code to include your own, or 
-update ~/set-env.sh and run the following to get the environment variables loaded in your shell:
+update ```~/set-env.sh``` and run the following to get the environment variables loaded in your shell:
 
+```
+source ~/set-env.sh
+```
     
-    source ~/set-env.sh
-    
-
-Note: You can expect a one-time delay of 30-60 seconds when running llmware on this instance for the first time. 
-This is due to how EBS storage volumes get loaded on-demand from the AMI storage snapshot.
+_Note: You can expect a one-time delay of 60-90 seconds when running llmware on this instance for the first time. 
+This is due to how EBS storage volumes get loaded on-demand from the AMI storage snapshot._
 
 MongoDB & Milvus
 ================
@@ -107,28 +119,6 @@ File: /Users/llmware/llmware_data/prompt_history/interaction_report_Fri Sep 29 1
 
 **Additional examples of how to use llmware can be found locally in ~/llmware/examples and can be run using `python3 <filename>.py`**
 
-
-Updating llmware
-================
-
-
-To install the latest code from the llmware:
-``` bash
- pip install llmware --upgrade
-```
-or
-
-``` bash
-python3 -m pip install llmware --upgrade
-```
-
-To pull the latest code from the llmware repository:  
-
-  ```bash
-  cd ~/llmware
-  git pull
- 
-  ```
 
 Need help or have questions?
 ============================
