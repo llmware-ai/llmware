@@ -13,7 +13,7 @@
 #      - The default storage size is 100GB, which is sufficient for modest workloads
 #      - If you plan to experiment with many models we recommend increasing that size below
 #   tag-specifications:
-#      - By default the command below will name the instance "llmware-001". You can change his below
+#      - By default the command below will name the instance "llmware-001". You can change this below
 
 INSTANCE_TYPE=t2.2xlarge
 KEY_NAME=YOUR-KEY-NAME
