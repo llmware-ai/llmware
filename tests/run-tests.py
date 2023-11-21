@@ -53,7 +53,7 @@ class RunTests():
         command_output = ""
         p = subprocess.Popen(command_array, cwd=working_dir, stdout=subprocess.PIPE)
         for line in p.stdout:
-            output_line = line.decode('ascii')
+            output_line = line.decode('utf8')
             command_output += output_line
             Logger().log(output_line)
         p.wait()
