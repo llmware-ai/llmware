@@ -23,7 +23,13 @@ update ```~/set-env.sh``` and run the following to get the environment variables
 ```
 source ~/set-env.sh
 ```
-    
+
+If you have deployed on a NVIDIA GPU instance type (g5.x2large or g5.4xlarge are good and cost-effective options), then you'll need to run this additional script to update the AMI with the NVIDIA drivers and CUDA:
+
+```
+source <(curl https://raw.githubusercontent.com/llmware-ai/llmware/main/scripts/aws/update-ami-nvidia-gpu.sh)
+```
+
 _Note: You can expect a one-time delay of 60-90 seconds when running llmware on this instance for the first time. 
 This is due to how EBS storage volumes get loaded on-demand from the AMI storage snapshot._
 
