@@ -5,6 +5,7 @@ import platform
 import re
 import sys
 from setuptools import find_packages, setup, Extension
+from pathlib import Path
 
 VERSION_FILE = "llmware/__init__.py"
 with open(VERSION_FILE) as version_file:
@@ -17,6 +18,12 @@ else:
 
 with open("README.md") as readme_file:
     long_description = readme_file.read()
+
+def glob_fix(package_name, glob):
+    # this assumes setup.py lives in the folder that contains the package
+    package_path = Path(f'./{package_name}').resolve()
+    return [str(path.relative_to(package_path)) 
+            for path in package_path.glob(glob)]
 
 setup(
     name="llmware",  # Required
@@ -40,7 +47,7 @@ setup(
     ],
     keywords="ai,data,development",  # Optional 
     packages=['llmware'],
-    package_data={'llmware': ['*.c', '*.so', '*.dylib', '.dylibs/*'], 'llmware.libs': ['*']},
+    package_data={'llmware': ['*.c', '*.so', '*.dylib', '.dylibs/*', *glob_fix('llmware', 'lib/**/*')], 'llmware.libs': ['*']},
     python_requires=">=3.9, <3.11",
     zip_safe=True,
     install_requires=[
