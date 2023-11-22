@@ -48,11 +48,22 @@ from llmware.exceptions import DependencyNotInstalledException, FilePathDoesNotE
 # setting important when testing locally - should be removed in production
 # ssl._create_default_https_context = ssl._create_unverified_context
 
+# Best ways we've found to detect machine architecture
+system = platform.system().lower()
+machine = os.uname().machine.lower()
 
-# Load shared libraries. These are built into the wheels
-_path_office = os.path.join(os.path.dirname(__file__), "liboffice_llmware.so")
-_path_pdf    = os.path.join(os.path.dirname(__file__), "libpdf_llmware.so")
-_path_graph  = os.path.join(os.path.dirname(__file__), "libgraph_llmware.so")
+# Default to known architectures if we encounter an unknown one
+if system == 'darwin' and machine not in ['arm64','x86_64']:
+    machine = 'arm64'
+if system == 'linux' and machine not in ['aarch64','x86_64']:
+    machine = 'x86_64'
+
+# Constuct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
+machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
+
+_path_office = os.path.join(machine_dependent_lib_path, "llmware", "liboffice_llmware.so")
+_path_pdf    = os.path.join(machine_dependent_lib_path, "llmware", "libpdf_llmware.so")
+_path_graph  = os.path.join(machine_dependent_lib_path, "llmware", "libgraph_llmware.so")
 
 _mod = cdll.LoadLibrary(_path_office)
 _mod_pdf = cdll.LoadLibrary(_path_pdf)
