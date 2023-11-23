@@ -142,10 +142,10 @@ class Parser:
         self.parser_output = []
 
         self.ACCEPTED_FILE_FORMATS = ["pptx","xlsx","docx","pdf","txt","csv","html","jsonl",
-                                      "jpg","jpeg","png","wav","zip"]
+                                      "jpg","jpeg","png","wav","zip", "md"]
         self.office_types = ["PPTX", "pptx", "XLSX", "xlsx", "DOCX", "docx"]
         self.pdf_types = ["PDF", "pdf"]
-        self.text_types = ["txt", "csv", "html", "jsonl"]
+        self.text_types = ["txt", "csv", "html", "jsonl", "md"]
         self.ocr_types = ["jpg", "jpeg", "png"]
         self.voice_types = ["wav"]
         self.zip_types = ["zip"]
@@ -947,7 +947,7 @@ class Parser:
 
             # sub-routing by type of text file to appropriate handler
 
-            if file_type.lower() in ["txt"]:
+            if file_type.lower() in ["txt", "md"]:
                 # will parse as text
                 text_output = TextParser(self).text_file_handler (input_fp, file)
                 content_type = "text"
@@ -2150,7 +2150,7 @@ class Parser:
 
         # sub-routing by type of text file to appropriate handler
 
-        if file_type in ["txt"]:
+        if file_type in ["txt", "md"]:
             # will parse as text
             parser_output = TextParser(self).text_file_handler (input_fp, input_fn)
             content_type = "text"
