@@ -46,7 +46,7 @@ def prompt_user_for_model_selection(prompt=None):
     num_models = len(table_data)
 
     if prompt is None:
-        prompt = f"\nSelect a model (1-{num_models+1}): "
+        prompt = f"\nSelect a model (1-{num_models}): "
     while True:
         try:
             user_input = input(prompt)
