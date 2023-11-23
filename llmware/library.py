@@ -393,7 +393,7 @@ class Library:
         filter_list = []
         if include_text: filter_list.append("text")
         if include_tables: filter_list.append("table")
-        if include_images: filter_list.append("images")
+        if include_images: filter_list.append("image")
 
         if not filter_list:
             # go with default - text only
@@ -428,7 +428,7 @@ class Library:
         filter_list = []
         if include_text: filter_list.append("text")
         if include_tables: filter_list.append("table")
-        if include_images: filter_list.append("images")
+        if include_images: filter_list.append("image")
 
         if not filter_list:
             # go with default - text only
