@@ -934,11 +934,11 @@ class Parser:
         blocks_created = 0
         docs_added = 0
         pages_added = 0
-        text_output = []
         content_type = "text"
 
         for file in os.listdir(input_fp):
 
+            text_output = []
             # increment and get new doc_id
             if write_to_db_on == 1:
                 self.library.doc_ID = self.library.get_and_increment_doc_id()
@@ -995,12 +995,13 @@ class Parser:
 
         # update overall library counter at end of parsing
 
-        if write_to_db_on == 1:
-            dummy = self.library.set_incremental_docs_blocks_images(added_docs=docs_added,added_blocks=blocks_created,
-                                                                    added_images=0, added_pages=pages_added)
+        if len(text_output) > 0:
+            if write_to_db_on == 1:
+                dummy = self.library.set_incremental_docs_blocks_images(added_docs=docs_added,added_blocks=blocks_created,
+                                                                        added_images=0, added_pages=pages_added)
 
-        if save_history and write_to_db_on == 0:
-            ParserState().save_parser_output(self.parser_job_id, self.parser_output)
+            if save_history and write_to_db_on == 0:
+                ParserState().save_parser_output(self.parser_job_id, self.parser_output)
 
         return output
 
