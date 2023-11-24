@@ -45,10 +45,6 @@ from llmware.exceptions import ModelNotFoundException, LLMInferenceResponseExcep
 
 # api model imports
 import openai, anthropic, ai21, cohere
-from vertexai.preview.language_models import TextGenerationModel, TextEmbeddingModel
-from vertexai import init
-import google.cloud.aiplatform as aiplatform
-
 
 global_model_repo_catalog_list = [
 
@@ -1007,6 +1003,13 @@ class GoogleGenModel:
 
     def __init__(self, model_name=None, api_key=None, context_window=8192):
 
+        try:
+            from vertexai.preview.language_models import TextGenerationModel, TextEmbeddingModel
+            from vertexai import init
+            import google.cloud.aiplatform as aiplatform
+        except:
+            raise DependencyNotInstalledException("google-cloud-aiplatform")
+
         self.api_key = api_key
         self.model_name = model_name
         self.model = None
@@ -1930,6 +1933,13 @@ class CohereEmbeddingModel:
 class GoogleEmbeddingModel:
 
     def __init__(self, model_name=None, api_key=None, embedding_dims=None):
+
+        try:
+            from vertexai.preview.language_models import TextGenerationModel, TextEmbeddingModel
+            from vertexai import init
+            import google.cloud.aiplatform as aiplatform
+        except:
+            raise DependencyNotInstalledException("google-cloud-aiplatform")
 
         self.api_key = api_key
         self.model_name = model_name

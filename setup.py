@@ -58,7 +58,6 @@ setup(
         'cohere==4.1.3',
         'datasets==2.15.0',
         'faiss-cpu==1.7.4',
-        'google-cloud-aiplatform==1.33.1',
         'huggingface-hub==0.19.4',
         'lxml==4.9.3',
         'numpy==1.23.2',
