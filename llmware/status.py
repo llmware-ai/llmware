@@ -21,11 +21,23 @@ from llmware.resources import DBManager
     }
 '''
 
+
 class Status:
 
     def __init__ (self, account_name="llmware"):
         self.account_name = account_name
         self.status_collection = DBManager().client[self.account_name]["status"]
+
+    # new status 'get' from c parsers ('set' in parser code directly)
+    def get_pdf_parsing_status(self, library_name, job_id="0"):
+        status_key = f"{library_name}_pdf_parser_{job_id}"
+        status = self.status_collection.find_one({"key": status_key})
+        return status
+
+    def get_office_parsing_status(self, library_name,job_id="0"):
+        status_key = f"{library_name}_office_parser_{job_id}"
+        status = self.status_collection.find_one({"key": status_key})
+        return status
 
     # Return the status dict
     def get_embedding_status(self, library_name, embedding_model):
