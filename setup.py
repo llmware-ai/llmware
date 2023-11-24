@@ -48,7 +48,7 @@ setup(
     keywords="ai,data,development",  # Optional 
     packages=['llmware'],
     package_data={'llmware': ['*.c', '*.so', '*.dylib', '.dylibs/*', *glob_fix('llmware', 'lib/**/*')], 'llmware.libs': ['*']},
-    python_requires=">=3.9, <3.11",
+    python_requires=">=3.9",
     zip_safe=True,
     install_requires=[
         'ai21==1.0.3',
