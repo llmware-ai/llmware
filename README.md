@@ -1,5 +1,5 @@
 # llmware
-![Static Badge](https://img.shields.io/badge/python-3.9_%7C_3.10-blue?color=blue)
+![Static Badge](https://img.shields.io/badge/python-3.9_%7C_3.10%7C_3.11-blue?color=blue)
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
 
 `llmware` is a unified, open, extensible framework for LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides a comprehensive set of tools that anyone can use – from beginner to the most sophisticated AI developer – to rapidly build industrial-grade enterprise LLM-based applications.  _Key differentiators include: source citation for Q & A scenarios, fact checking, and other guardrails for model hallucination_.
@@ -266,7 +266,7 @@ Information on ways to participate can be found in our [Contributors Guide](http
 - MongoDB Atlas Vector Search
 
 **Prereqs:**  
-- All Platforms: [Python v3.9 - 3.10](https://www.python.org/about/gettingstarted/)
+- All Platforms: [Python v3.9 - 3.11](https://www.python.org/about/gettingstarted/)
 - To enable the OCR parsing capabilities, install [Tesseract v5.3.3](https://tesseract-ocr.github.io/tessdoc/Installation.html) and [Poppler v23.10.0](https://poppler.freedesktop.org/) native packages.  
      
 **Optional:**
