@@ -16,8 +16,9 @@ pymilvus==2.3.0
 pymongo==4.5.0
 pytesseract==0.3.10
 scipy==1.11.2
+sentence-transformers==2.2.2
 tabulate==0.9.0
-tokenizers==0.13.3
+tokenizers==0.15.0
 torch==1.13.1
 transformers==4.35.2
 Werkzeug==3.0.1
