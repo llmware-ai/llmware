@@ -280,7 +280,14 @@ Information on ways to participate can be found in our [Contributors Guide](http
 
 <details>
   <summary><b>🚧 Change Log</b></summary>
-  
+
+- **24 Nov 2023: llmwre v0.1.9**
+  - Markdown (.md) files are now parsed and treated as text files
+  - PDF and Office parser stack optimizations which should avoid the need to set ulimit -s
+  - New llmware_models_fast_start.py example that allows discovery and selection of all llmware HuggingFace models
+  - Native dependencies (shared libraries and dependencies) now included in repo to faciliate local development
+  - Minor defect fixes including image block handling in library exports
+
 - **17 Nov 2023: llmwre v0.1.8**
   - Enhanced generation performance by allowing each model to specific the trailing space parameter.
   - Improved handling for eos_token_id for llama2 and mistral.
