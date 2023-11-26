@@ -21,6 +21,9 @@ def create_and_populate_a_library(library_name):
     if Library().check_if_library_exists(library_name):
         # Load the library
         library = Library().load_library(library_name)
+        # Load an embedding model and create vector embeddings for the library 
+        library.install_new_embedding(from_sentence_transformer=True, embedding_model_name=embedding_model_name, model=embedding_model, vector_db="milvus")
+ 
     else:
         # Create the library
         library = Library().create_new_library(library_name) 
