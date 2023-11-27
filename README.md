@@ -223,7 +223,7 @@ git clone git@github.com:llmware-ai/llmware.git
 ```
 or download/extract a [zip of the llmware repository](https://github.com/llmware-ai/llmware/archive/refs/heads/main.zip)
 
-### Run llmware natively
+### Run llmware natively 
 
 Update the local copy of the repository:
 
@@ -282,12 +282,12 @@ Information on ways to participate can be found in our [Contributors Guide](http
   <summary><b>🚧 Change Log</b></summary>
 
 - **24 Nov 2023: llmware v0.1.9**
-  - Markdown (.md) files are now parsed and treated as text files
-  - PDF and Office parser stack optimizations which should avoid the need to set ulimit -s
-  - New llmware_models_fast_start.py example that allows discovery and selection of all llmware HuggingFace models
-  - Native dependencies (shared libraries and dependencies) now included in repo to faciliate local development
-  - Updates to the Status class to support PDF and Office document parsing status updates
-  - Minor defect fixes including image block handling in library exports
+  - Markdown (.md) files are now parsed and treated as text files.
+  - PDF and Office parser stack optimizations which should avoid the need to set ulimit -s.
+  - New llmware_models_fast_start.py example that allows discovery and selection of all llmware HuggingFace models.
+  - Native dependencies (shared libraries and dependencies) now included in repo to faciliate local development.
+  - Updates to the Status class to support PDF and Office document parsing status updates.
+  - Minor defect fixes including image block handling in library exports.
 
 - **17 Nov 2023: llmware v0.1.8**
   - Enhanced generation performance by allowing each model to specific the trailing space parameter.
