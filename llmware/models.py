@@ -231,7 +231,7 @@ global_model_repo_catalog_list = [
      "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": ""},
 
-    {"model_name": "llmware/llmware/bling-red-pajamas-3b-0.1", "display_name": "Bling-Pythia-1.4B",
+    {"model_name": "llmware/bling-red-pajamas-3b-0.1", "display_name": "Bling-Pythia-1.4B",
      "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
      "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": ""},
@@ -2146,7 +2146,11 @@ class HFGenerativeModel:
         self.model_name = model_name
         self.model = model
         self.tokenizer= tokenizer
-
+        
+        # note - these two parameters will control how prompts are handled - model-specific
+        self.prompt_wrapper = prompt_wrapper
+        self.instruction_following = instruction_following
+        
         # instantiate if model_name passed without actual model and tokenizer
         if model_name and not model and not tokenizer:
 
@@ -2169,11 +2173,12 @@ class HFGenerativeModel:
                 else:
                     self.model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=trust_remote_code)
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=trust_remote_code)
-
-        # note - these two parameters will control how prompts are handled - model-specific
-        self.prompt_wrapper = prompt_wrapper
-        self.instruction_following = instruction_following
-        
+            
+            # set to defaults for HF models in Model Catalog
+            # this can be over-ridden post initiation if needed for custom models
+            self.prompt_wrapper = "human_bot"
+            self.instruction_following = False
+            
         self.trailing_space = ""
         
         self.model_type = None
