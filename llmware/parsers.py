@@ -1301,7 +1301,7 @@ class Parser:
                 article_txt = articles["title"]+".txt"
                 safe_name = self.prep_filename(article_txt)
 
-                art = open(os.path.join(upload_fp,safe_name), "w")
+                art = open(os.path.join(upload_fp,safe_name), "w", encoding='utf-8')
                 art.write(articles["text"])
                 art.close()
 
@@ -2379,7 +2379,7 @@ class WebSiteParser:
                 for x in self.html:
                     out_str += str(x) + " "
     
-                with open(self.local_dir + "my_website.html", "w") as f:
+                with open(self.local_dir + "my_website.html", "w", encoding='utf-8') as f:
                     f.write(out_str)
                 f.close()
 
@@ -2674,7 +2674,7 @@ class WebSiteParser:
     # called in two different places
     def _save_image(self, img_raw, fp):
 
-        with open(fp, 'wb') as f:
+        with open(fp, 'wb', encoding='utf-8') as f:
             img_raw.decode_content = True
             shutil.copyfileobj(img_raw, f)
 
@@ -2692,9 +2692,9 @@ class WebSiteParser:
         # new_img_name = "image" + str(library.image_ID) + "." + img_type
         created = 0
 
-        img = open(os.path.join(fp,img_num), "rb").read()
+        img = open(os.path.join(fp,img_num), "rb", encoding='utf-8').read()
         if img:
-            f = open(os.path.join(save_file_path,new_img_name), "wb")
+            f = open(os.path.join(save_file_path,new_img_name), "wb", encoding='utf-8')
             f.write(img)
             f.close()
             created += 1
@@ -2991,7 +2991,7 @@ class ImageParser:
                 except:
                     logging.error("error - could not convert pdf")
 
-        f = open(input_fp + summary_text_fn, "w")
+        f = open(input_fp + summary_text_fn, "w", encoding='utf-8')
         f.write(all_text)
         f.close()
 
@@ -3260,7 +3260,7 @@ class DialogParser:
     # map to aws transcript json output format
     def parse_aws_json_file_format(self, input_folder, fn_json):
 
-        f = json.load(open(os.path.join(input_folder, fn_json), "r"))
+        f = json.load(open(os.path.join(input_folder, fn_json), "r", encoding='utf-8'))
 
         # aws standard call transcript format:  ["results"]["items"] -> key conversation elements to aggregate
         #   note:  we will need many more documents for testing

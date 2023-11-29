@@ -293,7 +293,7 @@ global_model_repo_catalog_list = [
 def build_json_models_manifest(manifest_dict, fp, fn="llmware_supported_models_manifest.json"):
 
     json_dict = json.dumps(manifest_dict,indent=1)
-    with open(os.path.join(fp,fn), "w") as outfile:
+    with open(os.path.join(fp,fn), "w", encoding='utf-8') as outfile:
         outfile.write(json_dict)
 
     return 0
@@ -1161,7 +1161,7 @@ class GoogleGenModel:
 
         temp_json_path = tempfile.NamedTemporaryFile(prefix="googlecreds", delete=False).name
 
-        with open(temp_json_path, "w") as f:
+        with open(temp_json_path, "w", encoding='utf-8') as f:
             f.write(self.api_key.replace("\n", "\\n"))
 
         return temp_json_path
@@ -2038,7 +2038,7 @@ class GoogleEmbeddingModel:
         # google auth json files
 
         temp_json_path = tempfile.NamedTemporaryFile(prefix="googlecreds", delete=False).name
-        with open(temp_json_path, "w") as f:
+        with open(temp_json_path, "w", encoding='utf-8') as f:
             f.write(self.api_key.replace("\n", "\\n"))
         return temp_json_path
 
@@ -2766,7 +2766,7 @@ class Transformer (nn.Module):
 
         # need to look up model config first
         try:
-            self.config = json.load(open(os.path.join(model_path,"config.json"), "r"))
+            self.config = json.load(open(os.path.join(model_path,"config.json"), "r", encoding='utf-8'))
 
         except:
             if model_size == "mini":

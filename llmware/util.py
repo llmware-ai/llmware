@@ -333,7 +333,7 @@ class Utilities:
 
         stop_words = self.get_stop_words_master_list()
 
-        s = open(os.path.join(library_fp, "stop_words_list.txt"), "w")
+        s = open(os.path.join(library_fp, "stop_words_list.txt"), "w", encoding='utf-8')
 
         for words in stop_words:
             s.write((words + ","))
@@ -1984,7 +1984,7 @@ class Graph:
                 logging.warning("warning - Graph - unexpected - could not identify bow index on bow file - %s ", top_bow_file)
                 bow_index = 0
 
-            fp = open(os.path.join(dataset_fp, top_bow_file), "r")
+            fp = open(os.path.join(dataset_fp, top_bow_file), "r", encoding='utf-8')
             fp.seek(0, 2)
             bow_byte_index = fp.tell()
             fp.seek(0, 0)  # rewind
@@ -2067,7 +2067,7 @@ class Graph:
 
         #   write to manifest.json for knowledge graph
         json_dict = json.dumps(graph_summary,indent=2)
-        with open(os.path.join(self.library.nlp_path,"manifest.json"),"w") as outfile:
+        with open(os.path.join(self.library.nlp_path,"manifest.json"),"w", encoding='utf-8') as outfile:
             outfile.write(json_dict)
 
         return graph_summary
@@ -2230,7 +2230,7 @@ class Graph:
 
                 mc_final = sorted(mc_final, key=lambda x: x[1], reverse=True)
 
-        mcw = open(os.path.join(dataset_fp,"most_common_words.txt"), 'w')
+        mcw = open(os.path.join(dataset_fp,"most_common_words.txt"), 'w', encoding='utf-8')
 
         #   for vocab lookup, cap vocab at .vocab_len_max, e.g., 50,000 by default
         logging.info("update: Graph() mcw_builder - vocab len: %s ", len(mc_final))
@@ -2261,22 +2261,22 @@ class Graph:
         # create bigrams list from the bow_list -> initialization (store in nlp)
 
         bigrams = self.get_bigrams(bow_files)
-        bi = open(os.path.join(dataset_fp,"bigrams.txt"), 'w')
+        bi = open(os.path.join(dataset_fp,"bigrams.txt"), 'w', encoding='utf-8')
         for x in range(0, len(bigrams)):
             bi.write((bigrams[x][0] + ","))
             bi.write((str(bigrams[x][1]) + ","))
         bi.close()
 
         json_dict = json.dumps(vocab_dict)
-        with open(os.path.join(dataset_fp,"vocab_lookup.json"), "w") as outfile:
+        with open(os.path.join(dataset_fp,"vocab_lookup.json"), "w", encoding='utf-8') as outfile:
             outfile.write(json_dict)
 
         reverse_look_up_dict = {v: k for k, v in vocab_dict.items()}
         rlu_json_dict = json.dumps(reverse_look_up_dict)
-        with open(os.path.join(dataset_fp,"token_lookup.json"), "w") as outfile:
+        with open(os.path.join(dataset_fp,"token_lookup.json"), "w", encoding='utf-8') as outfile:
             outfile.write(rlu_json_dict)
 
-        mcw_alt = open(os.path.join(dataset_fp,"mcw_counts.txt"), 'w')
+        mcw_alt = open(os.path.join(dataset_fp,"mcw_counts.txt"), 'w', encoding='utf-8')
 
         min_len = -1
         MIN_COUNT = 5
@@ -2445,7 +2445,7 @@ class Graph:
             logging.error("error: Graph - could not identify correct file in nlp path")
 
         # write to file
-        g = open(os.path.join(self.library.nlp_path,"bg_text.txt"), "w")
+        g = open(os.path.join(self.library.nlp_path,"bg_text.txt"), "w", encoding='utf-8')
         for t in text_out:
             g.write((t + "\n"))
         g.close()
@@ -2508,10 +2508,10 @@ class Graph:
 
         if len(bow_list) > 1:
             bow_list = sorted(bow_list)
-            last_bow = open(os.path.join(ds_fp,bow_list[-1]), "r").read().split(",")
+            last_bow = open(os.path.join(ds_fp,bow_list[-1]), "r", encoding='utf-8').read().split(",")
             bow_count = (len(bow_list) - 1) * self.bow_max + len(last_bow)
         elif len(bow_list) == 1:
-            only_bow = open(os.path.join(ds_fp,bow_list[0]), "r").read().split(",")
+            only_bow = open(os.path.join(ds_fp,bow_list[0]), "r", encoding='utf-8').read().split(",")
             bow_count = len(only_bow)
         else:
             bow_count = 0
@@ -2677,7 +2677,7 @@ class Graph:
         if self.library.get_knowledge_graph_status() != "yes":
             self.build_graph()
 
-        j = json.load(open(os.path.join(self.library.nlp_path,"vocab_lookup.json"), "r"))
+        j = json.load(open(os.path.join(self.library.nlp_path,"vocab_lookup.json"), "r", encoding='utf-8'))
 
         return j
 
@@ -2686,7 +2686,7 @@ class Graph:
         if self.library.get_knowledge_graph_status() != "yes":
             self.build_graph()
 
-        j = json.load(open(os.path.join(self.library.nlp_path,"token_lookup.json"), "r"))
+        j = json.load(open(os.path.join(self.library.nlp_path,"token_lookup.json"), "r", encoding='utf-8'))
 
         return j
 
@@ -2746,7 +2746,7 @@ class Graph:
             self.build_graph()
 
         try:
-            mcw = open(os.path.join(self.library.nlp_path,"mcw_counts.txt"), "r").read().split(",")
+            mcw = open(os.path.join(self.library.nlp_path,"mcw_counts.txt"), "r", encoding='utf-8').read().split(",")
 
         except OSError:
             logging.exception("error:  Graph - opening mcw_counts file - path not found.")
@@ -2774,7 +2774,7 @@ class Graph:
             self.build_graph()
 
         try:
-            bigrams = open(os.path.join(self.library.nlp_path,"bigrams.txt"), "r").read().split(",")
+            bigrams = open(os.path.join(self.library.nlp_path,"bigrams.txt"), "r", encoding='utf-8').read().split(",")
 
         except OSError:
             logging.exception("error: Graph - unexpected error opening bigrams file.")
@@ -2853,7 +2853,7 @@ class Graph:
         # get BOW + unique vocab data from manifest.json in /nlp
 
         try:
-            data_manifest = json.load(open(os.path.join(self.library.nlp_path,"manifest.json"), "r"))
+            data_manifest = json.load(open(os.path.join(self.library.nlp_path,"manifest.json"), "r", encoding='utf-8'))
 
         except OSError:
             logging.exception("error: Graph - could not open manifest file at path- %s ", self.library.nlp_path)
@@ -2891,7 +2891,7 @@ class Graph:
         if self.library.get_knowledge_graph_stats() != "yes":
             self.build_graph()
 
-        mcw = open(os.path.join(self.library.nlp_path,"mcw_counts.txt"), "r").read().split(",")
+        mcw = open(os.path.join(self.library.nlp_path,"mcw_counts.txt"), "r", encoding='utf-8').read().split(",")
         mcw_pairs_list = []
 
         for z in range(0, len(mcw), 2):
@@ -3046,7 +3046,7 @@ class Graph:
 
         #   write to manifest.json for knowledge graph
         json_dict = json.dumps(doc_graph,indent=1)
-        with open(self.library.nlp_path + "doc_graph.json","w") as outfile:
+        with open(self.library.nlp_path + "doc_graph.json","w", encoding='utf-8') as outfile:
             outfile.write(json_dict)
 
         return doc_graph
@@ -3703,7 +3703,7 @@ class Datasets:
 
         # save dataset dict -> and put in ds folder
         json_dict = json.dumps(dataset_dict,indent=2)
-        with open(os.path.join(ds_folder, "manifest.json"),"w") as outfile:
+        with open(os.path.join(ds_folder, "manifest.json"),"w", encoding='utf-8') as outfile:
             outfile.write(json_dict)
 
         return dataset_dict
@@ -3863,7 +3863,7 @@ class Datasets:
 
         # save dataset dict -> and put in ds folder
         json_dict = json.dumps(dataset_dict,indent=2)
-        with open(os.path.join(ds_folder, "manifest.json"),"w") as outfile:
+        with open(os.path.join(ds_folder, "manifest.json"),"w", encoding='utf-8') as outfile:
             outfile.write(json_dict)
 
         return dataset_dict
@@ -4017,7 +4017,7 @@ class Datasets:
 
         # save dataset dict -> and put in ds folder
         json_dict = json.dumps(dataset_dict, indent=2)
-        with open(os.path.join(ds_folder, "manifest.json"), "w") as outfile:
+        with open(os.path.join(ds_folder, "manifest.json"), "w", encoding='utf-8') as outfile:
             outfile.write(json_dict)
 
         return dataset_dict
@@ -4163,7 +4163,7 @@ class Datasets:
 
         # save dataset dict -> and put in ds folder
         json_dict = json.dumps(dataset_dict, indent=2)
-        with open(os.path.join(ds_folder, "manifest.json"), "w") as outfile:
+        with open(os.path.join(ds_folder, "manifest.json"), "w", encoding='utf-8') as outfile:
             outfile.write(json_dict)
 
         return dataset_dict
@@ -4372,7 +4372,7 @@ class Datasets:
 
         # save dataset dict -> and put in ds folder
         json_dict = json.dumps(dataset_dict, indent=2)
-        with open(os.path.join(ds_folder, "manifest.json"), "w") as outfile:
+        with open(os.path.join(ds_folder, "manifest.json"), "w", encoding='utf-8') as outfile:
             outfile.write(json_dict)
 
         return dataset_dict
@@ -4516,7 +4516,7 @@ class Datasets:
 
         # save dataset dict -> and put in ds folder
         json_dict = json.dumps(dataset_dict, indent=2)
-        with open(os.path.join(ds_folder, "manifest.json"), "w") as outfile:
+        with open(os.path.join(ds_folder, "manifest.json"), "w", encoding='utf-8') as outfile:
             outfile.write(json_dict)
 
         return dataset_dict
@@ -4797,7 +4797,7 @@ class Datasets:
 
         # save dataset dict -> and put in ds folder
         json_dict = json.dumps(dataset_dict, indent=2)
-        with open(os.path.join(ds_folder, "manifest.json"), "w") as outfile:
+        with open(os.path.join(ds_folder, "manifest.json"), "w", encoding='utf-8') as outfile:
             outfile.write(json_dict)
 
         return dataset_dict
@@ -4856,7 +4856,7 @@ class Datasets:
 
         # save training files
         json_batch = self.training_sample_file_name_base + "_{}.jsonl".format(str(batch_number))
-        with open(os.path.join(ds_folder,json_batch), "w") as outfile:
+        with open(os.path.join(ds_folder,json_batch), "w", encoding='utf-8') as outfile:
             for i, sample_dict in enumerate(tr_output):
                 jsonl_row = json.dumps(sample_dict)
                 outfile.write(jsonl_row)
@@ -4871,7 +4871,7 @@ class Datasets:
         if len(va_output) > 0:
 
             new_json_batch = self.validation_sample_file_name_base + "_{}.jsonl".format(str(batch_number))
-            with open(os.path.join(ds_folder,new_json_batch), "w") as outfile:
+            with open(os.path.join(ds_folder,new_json_batch), "w", encoding='utf-8') as outfile:
                 for i, sample_dict in enumerate(va_output):
                     jsonl_row = json.dumps(sample_dict)
                     outfile.write(jsonl_row)
@@ -4886,7 +4886,7 @@ class Datasets:
         if len(te_output) > 0:
 
             new_json_batch = self.testing_sample_file_name_base + "_{}.jsonl".format(str(batch_number))
-            with open(os.path.join(ds_folder,new_json_batch), "w") as outfile:
+            with open(os.path.join(ds_folder,new_json_batch), "w", encoding='utf-8') as outfile:
 
                 for i, sample_dict in enumerate(te_output):
                     jsonl_row = json.dumps(sample_dict)
@@ -4899,7 +4899,7 @@ class Datasets:
 
         # save text only version for easy access
         new_txt_batch = self.training_sample_file_name_base + "_text_{}.txt".format(str(batch_number))
-        t = open(os.path.join(ds_folder,new_txt_batch), 'w')
+        t = open(os.path.join(ds_folder,new_txt_batch), 'w', encoding='utf-8')
         for x in range(0, len(tr_text)):
             t.write((str(tr_text[x]) + "\n"))
         t.close()
@@ -4910,7 +4910,7 @@ class Datasets:
 
         if len(va_text) > 0:
             new_txt_batch = self.validation_sample_file_name_base + "_text_{}.txt".format(str(batch_number))
-            t = open(os.path.join(ds_folder,new_txt_batch), 'w')
+            t = open(os.path.join(ds_folder,new_txt_batch), 'w', encoding='utf-8')
             for x in range(0, len(va_text)):
                 t.write((str(va_text[x]) + "\n"))
             t.close()
@@ -4921,7 +4921,7 @@ class Datasets:
 
         if len(te_text) > 0:
             new_txt_batch = self.testing_sample_file_name_base + "_text_{}.txt".format(str(batch_number))
-            t = open(os.path.join(ds_folder,new_txt_batch), 'w')
+            t = open(os.path.join(ds_folder,new_txt_batch), 'w', encoding='utf-8')
             for x in range(0, len(te_text)):
                 t.write((str(te_text[x]) + "\n"))
             t.close()

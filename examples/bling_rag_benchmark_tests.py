@@ -72,7 +72,7 @@ def rag_instruct_tester(model_name, from_hf=False, save_path=None):
 
     if save_path:
         fn = secure_filename(model_name) + "_rag_instruct_test.jsonl"
-        f_out = open(os.path.join(save_path, fn), "w")
+        f_out = open(os.path.join(save_path, fn), "w", encoding='utf-8')
 
         for entry in total_response_output:
             jsonl_row = json.dumps(entry)

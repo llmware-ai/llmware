@@ -702,7 +702,7 @@ class ParserState:
         fn = self.get_parser_state_fn_from_id(parser_job_id)
         fp = os.path.join(self.parser_output_fp, fn)
 
-        outfile = open(fp, "w")
+        outfile = open(fp, "w", encoding='utf-8')
 
         for entry_dict in parser_output:
             jsonl_row = json.dumps(entry_dict)
@@ -958,7 +958,7 @@ class PromptState:
         fn = self.get_prompt_state_fn_from_id(prompt_id)
         fp = os.path.join(prompt_path, fn)
 
-        outfile = open(fp, "w")
+        outfile = open(fp, "w", encoding='utf-8')
 
         for entry_dict in custom_history:
             jsonl_row = json.dumps(entry_dict)
@@ -977,7 +977,7 @@ class PromptState:
         fn = self.get_prompt_state_fn_from_id(prompt_id)
         fp = os.path.join(prompt_path, fn)
 
-        outfile = open(fp, "w")
+        outfile = open(fp, "w", encoding='utf-8')
 
         for entry_dict in self.prompt.interaction_history:
             jsonl_row = json.dumps(entry_dict)
@@ -1019,7 +1019,7 @@ class PromptState:
 
         report_fp = os.path.join(output_path,report_name)
 
-        with open(report_fp, 'w', newline='') as csvfile:
+        with open(report_fp, 'w', , encoding='utf-8', newline='') as csvfile:
             c = csv.writer(csvfile, dialect='excel', doublequote=False, delimiter=',', escapechar=']')
 
             header_row = ["Prompt_ID", "Prompt", "LLM_Response", "Instruction", "Evidence", "Model", "Time-Stamp"]
@@ -1068,7 +1068,7 @@ class PromptState:
 
         report_fp = os.path.join(output_path,report_name)
 
-        with open(report_fp, 'w', newline='') as csvfile:
+        with open(report_fp, 'w', , encoding='utf-8', newline='') as csvfile:
             c = csv.writer(csvfile, dialect='excel', doublequote=False, delimiter=',', escapechar=']')
 
             header_row = ["Prompt_ID", "Prompt", "LLM_Response", "Instruction", "Evidence", "Model", "Time-Stamp"]
@@ -1220,7 +1220,7 @@ class QueryState:
         fn = self.get_query_state_fn_from_id(query_id)
         fp = os.path.join(self.query_path, fn)
 
-        outfile = open(fp, "w")
+        outfile = open(fp, "w", encoding='utf-8')
 
         for entry_dict in self.query.results:
             jsonl_row = json.dumps(entry_dict)
