@@ -49,8 +49,14 @@ from llmware.exceptions import DependencyNotInstalledException, FilePathDoesNotE
 # ssl._create_default_https_context = ssl._create_unverified_context
 
 # Best ways we've found to detect machine architecture
-system = platform.system().lower()
-machine = os.uname().machine.lower()
+if platform.system() == "Windows":
+    system = "windows"
+    machine = "x86_64"
+    file_ext = ".dll"
+else:
+    system = platform.system().lower()
+    machine = os.uname().machine.lower()
+    file_ext = ".so"
 
 # Default to known architectures if we encounter an unknown one
 if system == 'darwin' and machine not in ['arm64','x86_64']:
@@ -61,9 +67,9 @@ if system == 'linux' and machine not in ['aarch64','x86_64']:
 # Constuct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
 machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
 
-_path_office = os.path.join(machine_dependent_lib_path, "llmware", "liboffice_llmware.so")
-_path_pdf    = os.path.join(machine_dependent_lib_path, "llmware", "libpdf_llmware.so")
-_path_graph  = os.path.join(machine_dependent_lib_path, "llmware", "libgraph_llmware.so")
+_path_office = os.path.join(machine_dependent_lib_path, "llmware", "liboffice_llmware" + file_ext)
+_path_pdf    = os.path.join(machine_dependent_lib_path, "llmware", "libpdf_llmware" + file_ext)
+_path_graph  = os.path.join(machine_dependent_lib_path, "llmware", "libgraph_llmware" + file_ext)
 
 _mod = cdll.LoadLibrary(_path_office)
 _mod_pdf = cdll.LoadLibrary(_path_pdf)
@@ -2450,6 +2456,7 @@ class WebSiteParser:
                         if "content" in elements.attrs:
 
                             img_extension = elements["content"]
+                            print ("Jeff", elements.attrs)
                             img_success, img, img_url, img_name = \
                                 self.image_handler(img_extension, elements, img_counter)
 
@@ -2674,7 +2681,7 @@ class WebSiteParser:
     # called in two different places
     def _save_image(self, img_raw, fp):
 
-        with open(fp, 'wb', encoding='utf-8') as f:
+        with open(fp, 'wb') as f:
             img_raw.decode_content = True
             shutil.copyfileobj(img_raw, f)
 
@@ -2692,9 +2699,9 @@ class WebSiteParser:
         # new_img_name = "image" + str(library.image_ID) + "." + img_type
         created = 0
 
-        img = open(os.path.join(fp,img_num), "rb", encoding='utf-8').read()
+        img = open(os.path.join(fp,img_num), "rb").read()
         if img:
-            f = open(os.path.join(save_file_path,new_img_name), "wb", encoding='utf-8')
+            f = open(os.path.join(save_file_path,new_img_name), "wb")
             f.write(img)
             f.close()
             created += 1

@@ -404,7 +404,7 @@ class CloudBucketManager:
                 #   simple model_repo structure - each model is a separate folder
                 #   each model is a 'flat list' of files, so safe to split on ("/") to get key name
                 if not file.key.endswith(os.sep):
-                    local_file_path = os.path.join(local_model_folder,file.key.split(os.sep)[-1])
+                    local_file_path = os.path.join(local_model_folder,file.key.split('/')[-1])
                     bucket.download_file(file.key, local_file_path)
 
         logging.info("update: successfully downloaded model - %s -  from aws s3 bucket for future access",
@@ -1019,7 +1019,7 @@ class PromptState:
 
         report_fp = os.path.join(output_path,report_name)
 
-        with open(report_fp, 'w', , encoding='utf-8', newline='') as csvfile:
+        with open(report_fp, 'w', encoding='utf-8', newline='') as csvfile:
             c = csv.writer(csvfile, dialect='excel', doublequote=False, delimiter=',', escapechar=']')
 
             header_row = ["Prompt_ID", "Prompt", "LLM_Response", "Instruction", "Evidence", "Model", "Time-Stamp"]
@@ -1068,7 +1068,7 @@ class PromptState:
 
         report_fp = os.path.join(output_path,report_name)
 
-        with open(report_fp, 'w', , encoding='utf-8', newline='') as csvfile:
+        with open(report_fp, 'w', encoding='utf-8', newline='') as csvfile:
             c = csv.writer(csvfile, dialect='excel', doublequote=False, delimiter=',', escapechar=']')
 
             header_row = ["Prompt_ID", "Prompt", "LLM_Response", "Instruction", "Evidence", "Model", "Time-Stamp"]

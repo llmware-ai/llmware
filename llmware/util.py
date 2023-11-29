@@ -1881,8 +1881,14 @@ class PromptCatalog:
 # Load shared libraries based on current platform/architecture
 
 # Best ways we've found to detect machine architecture
-system = platform.system().lower()
-machine = os.uname().machine.lower()
+if platform.system() == "Windows":
+    system = "windows"
+    machine = "x86_64"
+    file_ext = ".dll"
+else:
+    system = platform.system().lower()
+    machine = os.uname().machine.lower()
+    file_ext = ".so"
 
 # Default to known architectures if we encounter an unknown one
 if system == 'darwin' and machine not in ['arm64','x86_64']:
@@ -1893,7 +1899,7 @@ if system == 'linux' and machine not in ['aarch64','x86_64']:
 # Constuct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
 machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
 
-_path_graph  = os.path.join(machine_dependent_lib_path, "llmware", "libgraph_llmware.so")
+_path_graph  = os.path.join(machine_dependent_lib_path, "llmware", "libgraph_llmware" + file_ext)
 
 _mod_utility = cdll.LoadLibrary(_path_graph)
 
