@@ -36,7 +36,7 @@ class Prompt:
 
     def __init__(self, llm_name=None, tokenizer=None, model_card=None, library=None, account_name="llmware",
                  prompt_id=None, save_state=True, llm_api_key=None, llm_model=None, from_hf=False,
-                 prompt_catalog=None, temperature=0.5):
+                 prompt_catalog=None, temperature=0.5, prompt_wrapper="human_bot", instruction_following=False):
 
         self.account_name = account_name
         self.library = library
@@ -50,7 +50,12 @@ class Prompt:
         self.llm_name = llm_name
 
         if from_hf and llm_model:
-            self.llm_model = ModelCatalog().load_hf_generative_model(llm_model, tokenizer)
+        
+            # will apply passed prompt wrapper and instruction_following settings
+            self.llm_model = ModelCatalog().load_hf_generative_model(llm_model, tokenizer,
+                                                                     prompt_wrapper=prompt_wrapper,
+                                                                     instruction_following=instruction_following)
+                                                                     
             # print("update: loading HF Generative model - ", self.llm_model)
 
         # default batch size, assuming all LLMs have min 2048 full context (50% in / 50% out)
