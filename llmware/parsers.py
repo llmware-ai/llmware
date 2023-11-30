@@ -2456,7 +2456,6 @@ class WebSiteParser:
                         if "content" in elements.attrs:
 
                             img_extension = elements["content"]
-                            print ("Jeff", elements.attrs)
                             img_success, img, img_url, img_name = \
                                 self.image_handler(img_extension, elements, img_counter)
 
