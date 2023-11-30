@@ -8,7 +8,7 @@ from setuptools import find_packages, setup, Extension
 from pathlib import Path
 
 VERSION_FILE = "llmware/__init__.py"
-with open(VERSION_FILE) as version_file:
+with open(VERSION_FILE, encoding='utf-8') as version_file:
     match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",version_file.read(), re.MULTILINE)
 
 if match:
@@ -16,7 +16,7 @@ if match:
 else:
     raise RuntimeError(f"Unable to find version string in {VERSION_FILE}.")
 
-with open("README.md") as readme_file:
+with open("README.md", encoding='utf-8') as readme_file:
     long_description = readme_file.read()
 
 def glob_fix(package_name, glob):

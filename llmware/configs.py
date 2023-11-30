@@ -16,6 +16,7 @@
 
 
 import os
+import platform
 
 from llmware.exceptions import HomePathDoesNotExistException
 
@@ -23,9 +24,12 @@ from llmware.exceptions import HomePathDoesNotExistException
 class LLMWareConfig:
 
     # initial setting will pull from environ variables - future updates must be set directly
-
-    _base_fp = {"home_path": os.environ.get("HOME"),
-                "llmware_path_name": "llmware_data/"}
+    if platform.system() == "Windows":
+        _base_fp = {"home_path": os.environ.get("USERPROFILE"),
+                    "llmware_path_name": "llmware_data" + os.sep}
+    else:
+        _base_fp = {"home_path": os.environ.get("HOME"),
+                    "llmware_path_name": "llmware_data" + os.sep}
 
     _fp = {"model_repo_path_name": "model_repo" + os.sep,
            "library_path_name": "accounts" + os.sep,

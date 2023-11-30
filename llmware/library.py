@@ -402,7 +402,7 @@ class Library:
         results = CollectionRetrieval(self.collection).filter_by_key_value_range("content_type",filter_list)
 
         file_location = os.path.join(output_fp, output_fn + ".txt")
-        output_file = open(file_location, "w")
+        output_file = open(file_location, "w", encoding='utf-8')
         text_field = "text_search"
         for elements in results:
             new_entry = elements[text_field].strip() + "\n"
@@ -437,7 +437,7 @@ class Library:
         results = CollectionRetrieval(self.collection).filter_by_key_value_range("content_type", filter_list)
 
         file_location = os.path.join(output_fp, output_fn + ".jsonl")
-        output_file = open(file_location, "w")
+        output_file = open(file_location, "w", encoding='utf-8')
 
         for elements in results:
 

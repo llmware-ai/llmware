@@ -49,8 +49,14 @@ from llmware.exceptions import DependencyNotInstalledException, FilePathDoesNotE
 # ssl._create_default_https_context = ssl._create_unverified_context
 
 # Best ways we've found to detect machine architecture
-system = platform.system().lower()
-machine = os.uname().machine.lower()
+if platform.system() == "Windows":
+    system = "windows"
+    machine = "x86_64"
+    file_ext = ".dll"
+else:
+    system = platform.system().lower()
+    machine = os.uname().machine.lower()
+    file_ext = ".so"
 
 # Default to known architectures if we encounter an unknown one
 if system == 'darwin' and machine not in ['arm64','x86_64']:
@@ -61,9 +67,9 @@ if system == 'linux' and machine not in ['aarch64','x86_64']:
 # Constuct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
 machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
 
-_path_office = os.path.join(machine_dependent_lib_path, "llmware", "liboffice_llmware.so")
-_path_pdf    = os.path.join(machine_dependent_lib_path, "llmware", "libpdf_llmware.so")
-_path_graph  = os.path.join(machine_dependent_lib_path, "llmware", "libgraph_llmware.so")
+_path_office = os.path.join(machine_dependent_lib_path, "llmware", "liboffice_llmware" + file_ext)
+_path_pdf    = os.path.join(machine_dependent_lib_path, "llmware", "libpdf_llmware" + file_ext)
+_path_graph  = os.path.join(machine_dependent_lib_path, "llmware", "libgraph_llmware" + file_ext)
 
 _mod = cdll.LoadLibrary(_path_office)
 _mod_pdf = cdll.LoadLibrary(_path_pdf)
@@ -1301,7 +1307,7 @@ class Parser:
                 article_txt = articles["title"]+".txt"
                 safe_name = self.prep_filename(article_txt)
 
-                art = open(os.path.join(upload_fp,safe_name), "w")
+                art = open(os.path.join(upload_fp,safe_name), "w", encoding='utf-8')
                 art.write(articles["text"])
                 art.close()
 
@@ -2379,7 +2385,7 @@ class WebSiteParser:
                 for x in self.html:
                     out_str += str(x) + " "
     
-                with open(self.local_dir + "my_website.html", "w") as f:
+                with open(self.local_dir + "my_website.html", "w", encoding='utf-8') as f:
                     f.write(out_str)
                 f.close()
 
@@ -2450,6 +2456,7 @@ class WebSiteParser:
                         if "content" in elements.attrs:
 
                             img_extension = elements["content"]
+                            print ("Jeff", elements.attrs)
                             img_success, img, img_url, img_name = \
                                 self.image_handler(img_extension, elements, img_counter)
 
@@ -2991,7 +2998,7 @@ class ImageParser:
                 except:
                     logging.error("error - could not convert pdf")
 
-        f = open(input_fp + summary_text_fn, "w")
+        f = open(input_fp + summary_text_fn, "w", encoding='utf-8')
         f.write(all_text)
         f.close()
 
@@ -3260,7 +3267,7 @@ class DialogParser:
     # map to aws transcript json output format
     def parse_aws_json_file_format(self, input_folder, fn_json):
 
-        f = json.load(open(os.path.join(input_folder, fn_json), "r"))
+        f = json.load(open(os.path.join(input_folder, fn_json), "r", encoding='utf-8'))
 
         # aws standard call transcript format:  ["results"]["items"] -> key conversation elements to aggregate
         #   note:  we will need many more documents for testing

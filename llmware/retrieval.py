@@ -1104,7 +1104,7 @@ class Query:
 
         results = CollectionRetrieval(self.library.collection).get_whole_collection()
 
-        f = open(ds_folder + "header_text.txt", "w")
+        f = open(ds_folder + "header_text.txt", "w", encoding='utf-8')
         counter = 0
         for elements in results:
             text_sample = elements[text_field]
@@ -1125,7 +1125,7 @@ class Query:
 
         results = CollectionRetrieval(self.library.collection).get_whole_collection()
 
-        f = open(os.path.join(ds_folder,"core_text.txt"), "w")
+        f = open(os.path.join(ds_folder,"core_text.txt"), "w", encoding='utf-8')
         counter = 0
         for elements in results:
             text_sample = elements[text_field]
