@@ -403,7 +403,7 @@ class CloudBucketManager:
 
                 #   simple model_repo structure - each model is a separate folder
                 #   each model is a 'flat list' of files, so safe to split on ("/") to get key name
-                if not file.key.endswith(os.sep):
+                if not file.key.endswith('/'):
                     local_file_path = os.path.join(local_model_folder,file.key.split('/')[-1])
                     bucket.download_file(file.key, local_file_path)
 
