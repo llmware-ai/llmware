@@ -257,7 +257,7 @@ Information on ways to participate can be found in our [Contributors Guide](http
 **Supported Operating Systems:**  
 - MacOS
 - Linux
-- (Windows is a roadmap item)
+- Windows
 
 **Supported Vector Databases:**
 - Milvus
@@ -273,16 +273,13 @@ Information on ways to participate can be found in our [Contributors Guide](http
 - [Docker](https://docs.docker.com/get-docker/) 
 
 **Known issues:**
-- A segmentation fault can occur when parsing if the native package for mongo-c-driver is 1.25 or above.  To address this issue, install llmware v0.1.6 and above or downgrade mongo-c-driver to v1.24.4.
-- The llmware parsers optimize for speed by using large stack frames. If you receive a "Segmentation Fault" during a parsing operation, increase the system's 'stack size' resource limit: ```ulimit -s 160000```. If running in a linux container on Mac, we've found this has to be set signficantly higher and must be set by the host with a command like the following: ```docker run --ulimit stack=32768000:32768000 ...```
-- For llmware versions <= v0.1.6, the pip package attempts to install the native dependencies. If it is run without root permission or a package manager other than Apt is used, you will need to manually install the following native packages: ```apt install -y libxml2 libpng-dev libmongoc-dev libzip4 tesseract-ocr poppler-utils```   *Note:  libmongoc-dev <= v1.24.4 is required.
-  
+- A segmentation fault can occur when parsing if the native package for mongo-c-driver is 1.25 or above.  To address this issue, install the latest version of llmware or downgrade mongo-c-driver to v1.24.4.
 
 <details>
   <summary><b>🚧 Change Log</b></summary>
 
 - **30 Nov 2023: llmware v0.1.10**
-  - New support for running on Windows.
+  - Windows added as a supported operating system.
   - Further enhancements to native code for stack management. 
   - Minor defect fixes.
 
