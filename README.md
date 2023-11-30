@@ -281,6 +281,11 @@ Information on ways to participate can be found in our [Contributors Guide](http
 <details>
   <summary><b>🚧 Change Log</b></summary>
 
+- **30 Nov 2023: llmware v0.1.10**
+  - New support for running on Windows.
+  - Further enhancements to native code for stack management. 
+  - Minor defect fixes.
+
 - **24 Nov 2023: llmware v0.1.9**
   - Markdown (.md) files are now parsed and treated as text files.
   - PDF and Office parser stack optimizations which should avoid the need to set ulimit -s.
