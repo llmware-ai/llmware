@@ -31,6 +31,7 @@ from llmware.resources import CollectionRetrieval, CollectionWriter
 from llmware.status import Status
 from llmware.util import Utilities
 
+
 class EmbeddingHandler:
 
     # An EmbeddingHandler is used for all embedding-related interactions with a library
@@ -225,7 +226,9 @@ class EmbeddingMilvus:
                 embeddings_created += len(sentences)
 
                 status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
-                #print (f"Embeddings Created: {embeddings_created} of {num_of_blocks}")
+
+                # will add configuration options to show/display
+                print (f"update: embedding_handler - Milvus - Embeddings Created: {embeddings_created} of {num_of_blocks}")
         
         self.collection.flush()
         embedding_summary = {"embeddings_created": embeddings_created}
@@ -360,7 +363,9 @@ class EmbeddingFAISS:
 
                 embeddings_created += len(sentences)
                 status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
-                #print (f"Embeddings Created: {embeddings_created} of {num_of_blocks}")
+
+                # will add options to display/hide
+                print (f"update: embedding_handler - FAISS - Embeddings Created: {embeddings_created} of {num_of_blocks}")
         
         # Ensure any existing file is removed before saving
         if os.path.exists(self.embedding_file_path):
@@ -517,7 +522,9 @@ class EmbeddingPinecone:
 
                 embeddings_created += len(sentences)
                 status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
-                #print (f"Embeddings Created: {embeddings_created} of {num_of_blocks}")
+
+                # will add options to configure to show/hide
+                print (f"update: embedding_handler - Pinecone - Embeddings Created: {embeddings_created} of {num_of_blocks}")
 
         embedding_summary = {"embeddings_created": embeddings_created}  
         return embedding_summary
@@ -688,7 +695,10 @@ class EmbeddingMongoAtlas:
 
                 embeddings_created += len(sentences)
                 status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
-                #print (f"Embeddings Created: {embeddings_created} of {num_of_blocks}")
+
+                # will add configuration options to hide/show
+                print (f"update: embedding_handler - Mongo Atlas - Embeddings Created: {embeddings_created} of {num_of_blocks}")
+
                 last_block_id = block_ids[-1]
 
         if embeddings_created > 0:
