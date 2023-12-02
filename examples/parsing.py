@@ -20,8 +20,12 @@ def parsing_files_into_library(library_name):
 
     # Load the llmware sample files
     print (f"\n > Loading the llmware sample files...")
-    sample_files_path = Setup().load_sample_files()
-    pdf_file_path = os.path.join(sample_files_path,"UN-Resolutions-76th")
+
+    # note: if you have used this example previously, UN-Resolutions-500 is new path
+    #   -- to pull updated sample files, set: 'over_write=True'
+
+    sample_files_path = Setup().load_sample_files(over_write=False)
+    pdf_file_path = os.path.join(sample_files_path,"UN-Resolutions-500")
     office_file_path = os.path.join(sample_files_path,"Agreements")
     
     # Add files from a local path (this will pull in all supported file types:
