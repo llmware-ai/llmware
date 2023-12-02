@@ -30,7 +30,7 @@ import logging
 class Setup:
 
     @staticmethod
-    def load_sample_files():
+    def load_sample_files(over_write=False):
 
         #   changed name from demo to 'sample_files'
         #   simplified:  no user config - pulls into llmware_path
@@ -44,7 +44,9 @@ class Setup:
         if not os.path.exists(sample_files_path):
             os.makedirs(sample_files_path,exist_ok=True)
         else:
-            logging.info("update: sample_files path already exists - %s ", sample_files_path)
+            if not over_write:
+                logging.info("update: sample_files path already exists - %s ", sample_files_path)
+                return sample_files_path
 
         # pull from sample files bucket
         bucket_name = LLMWareConfig().get_config("llmware_sample_files_bucket")
