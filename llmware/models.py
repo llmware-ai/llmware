@@ -3341,16 +3341,13 @@ def prune_linear_layer(layer, index, dim= 0):
 
 class LLMWareInferenceServer:
 
-    def __init__(self, model_name, model_catalog=None, hf_api_key=None, secret_api_key=None, home_path=None):
-
-        # parameter samples
-        #   hf_api_key="hf_...",
-        #   secret_api_key="...",
-        #   home_path="/home/ubuntu/"
+    def __init__(self, model_name, model_catalog=None, hf_api_key=None, secret_api_key=None, home_path=None,
+                 port=8080):
 
         self.HOME_PATH = home_path
         self.hf_api_key = hf_api_key
         self.current_api_key = secret_api_key
+        self.port = port
 
         if not model_catalog:
             self.model_catalog = ModelCatalog()
@@ -3358,12 +3355,6 @@ class LLMWareInferenceServer:
             self.model_catalog = model_catalog
 
         self.model = self.model_catalog.load_model(model_name, api_key=self.hf_api_key)
-
-        """
-        print("update: creating LLMWareInferenceServer - model config - ", self.model.model_name,
-              self.model.prompt_wrapper, self.model.temperature, self.model.instruction_following,
-              self.model.eos_token_id)
-        """
 
     def start(self):
 
@@ -3386,7 +3377,7 @@ class LLMWareInferenceServer:
 
         # launch server
         my_host = '0.0.0.0'
-        my_port = 8080
+        my_port = self.port
         app.run(host=my_host, port=my_port)
 
     def llmware_inference(self, prompt, context):
