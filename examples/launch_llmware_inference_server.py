@@ -71,8 +71,7 @@ if __name__ == "__main__":
     LLMWareInferenceServer(model_selection,
                            model_catalog=ModelCatalog(),
                            secret_api_key="demo-test",
-                           home_path="/home/ubuntu/",
-                           port=8080).start()
+                           home_path="/home/ubuntu/").start()
 
     #   note: run on client will need 2 parameters from the server:
     #       1 - server URL and PORT - e.g., URL = 123.456.78.90 & PORT = 8080
