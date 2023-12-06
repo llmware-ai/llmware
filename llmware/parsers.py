@@ -669,10 +669,18 @@ class Parser:
 
         fp_c = create_string_buffer(fp.encode('ascii', 'ignore'))
 
+        # debug_mode global parameter
+        #   "on" = 1
+        #   "file name only" = 2
+        #   "deep debug" = 3
+        #   "off" = 0 & all other values
+        
         # pull debug mode 'verbosity' levels from LLMWareConfig
-        if LLMWareConfig.get_config("debug_mode") == 1:
-            debug_mode = 1
-        else:
+        debug_mode = LLMWareConfig.get_config("debug_mode")
+        
+        supported_options = [0,1,2,3]
+        
+        if debug_mode not in supported_options:
             debug_mode = 0
 
         input_debug_mode = c_int(debug_mode)            # default - 0 = "off"
@@ -839,13 +847,17 @@ class Parser:
 
         # debug_mode global parameter
         #   "on" = 1
-        #   "off" = all other values
-
-        if LLMWareConfig.get_config("debug_mode") == 1:
-            debug_mode = 1
-        else:
+        #   "file name only" = 2
+        #   "deep debug" = 3
+        #   "off" = 0 & all other values
+        
+        debug_mode = LLMWareConfig.get_config("debug_mode")
+        
+        supported_options = [0,1,2,3]
+        
+        if debug_mode not in supported_options:
             debug_mode = 0
-
+        
         debug_mode_c = c_int(debug_mode)
 
         # image_fp = self.library.image_path
