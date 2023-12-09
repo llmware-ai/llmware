@@ -12,6 +12,6 @@
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
 
-__version__ = '0.1.11.4'
+__version__ = '0.1.11'
 __author__ = 'llmware'
 __license__ = 'Apache 2.0 License'
