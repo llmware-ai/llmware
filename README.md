@@ -278,6 +278,13 @@ Information on ways to participate can be found in our [Contributors Guide](http
 <details>
   <summary><b>🚧 Change Log</b></summary>
 
+- **8 Dec 2023: llmware v0.1.11**
+  - New fast start examples for high volume Document Ingestion and Embeddings with Milvus.
+  - New LLMWare 'Pop up' Inference Server model class and example script.
+  - New Invoice Processing example for RAG.
+  - Improved Windows stack management to support parsing larger documents.
+  - Enhancing debugging log output mode options for PDF and Office parsers.
+
 - **30 Nov 2023: llmware v0.1.10**
   - Windows added as a supported operating system.
   - Further enhancements to native code for stack management. 
