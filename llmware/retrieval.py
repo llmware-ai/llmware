@@ -841,27 +841,36 @@ class Query:
 
     def page_lookup(self, page_list=None, doc_id_list=None, text_only=False):
 
-        doc_id = doc_id_list
-        page = page_list
+        if not doc_id_list:
+            doc_id_list = self.list_doc_id()
+        else:
+            if isinstance(doc_id_list,dict):
+                if "doc_ID" in doc_id_list:
+                    doc_id_list = doc_id_list["doc_ID"]
+                else:
+                    logging.warning("warning: could not recognize doc id list requested.  by default, will set to all documents in the library collection.")
+                    doc_id_list = self.list_doc_id()
+
+        if not page_list:
+            logging.warning("warning: page lookup requested, but no value range identified.  by default, will set "
+                            "to retrieve the first page only.")
+            page_list = [1]
 
         if text_only:
-            page_dict = {"doc_ID": doc_id, "master_index": page, "content_type": "text"}
+            page_dict = {"doc_ID": {"$in":doc_id_list}, "master_index": {"$in": page_list}, "content_type":"text"}
         else:
-            page_dict = {"doc_ID": doc_id, "master_index": page}
+            page_dict = {"doc_ID": {"$in":doc_id_list}, "master_index": {"$in": page_list}}
 
         cursor_results = CollectionRetrieval(self.library.collection).filter_by_key_dict(page_dict)
 
-        counter = 0
         output = []
 
         for x in cursor_results:
+
             x.update({"matches": []})
             x.update({"page_num": x["master_index"]})
 
             output.append(x)
-            counter += 1
-            if counter > 10:
-                break
 
         return output
 
