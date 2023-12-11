@@ -28,7 +28,7 @@ The `llmware` public model repository has 3 model collections:
 - **BLING model series:**  Small CPU-based RAG-optimized, instruct-following 1B-3B parameter models.
 - **DRAGON model series:**  Production-grade RAG-optimized 6-7B parameter models - "Delivering RAG on ..." the leading foundation base models.
 
-These models collections are available at [`llmware` on Hugging Face](https://huggingface.co/llmware). Explore their use in the [Embedding](Embedding/embedding_fast_start.py), [Hugging Face Integration](Models/huggingface_integration.py),[`llmware` BLING model](bling_fast_start.py), [RAG with BLING](RAG/contract_analysis_on_laptop_with_bling_models.py), and [RAG benchmark testing](Models/dragon_rag_benchmark_tests_llmware.py) examples.
+These models collections are available at [`llmware` on Hugging Face](https://huggingface.co/llmware). Explore their use in the [Embedding](Embedding/embeddings_fast_start.py), [Hugging Face Integration](Models/huggingface_integration.py),[`llmware` BLING model](Models/bling_fast_start.py), [RAG with BLING](RAG/contract_analysis_on_laptop_with_bling_models.py), and [RAG benchmark testing](Models/dragon_rag_benchmark_tests_llmware.py) examples.
 
 # Additional `llmware` capabilities
 - Create knowledge graphs with a high-powered and fast C-based co-occurrence table matrix builder, the output of which can feed NLP statistics as well as potentially graph databases.  Explore the [Knowledge Graph](Datasets/knowledge_graph.py) example.
