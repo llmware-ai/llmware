@@ -20,7 +20,7 @@
 
 
 # Using `llmware` without a database
-You can do some interesting things using `llmware` without a database or vector embeddings.  Parsing can be done in memory and outputted to text or json. Prompts can be crafted with sources from files, Wikipedia or the Yahoo Finance API.  The **Working without Databases** ([code](working_without_a_database.py) / [video](https://www.youtube.com/watch?v=tAGz6yR14lw)), [LLM Prompts](llm_prompts.py), and [Parsing](parsing.py) examples show scenarios that can be accomplished and throughout the examples are specific methods that do not require MongoDB or embeddings.  
+You can do some interesting things using `llmware` without a database or vector embeddings.  Parsing can be done in memory and outputted to text or json. Prompts can be crafted with sources from files, Wikipedia or the Yahoo Finance API.  The **Working without Databases** ([code](Getting_Started/working_without_a_database.py) / [video](https://www.youtube.com/watch?v=tAGz6yR14lw)), [LLM Prompts](Getting_Started/working_with_prompts.py), and [Parsing](Parsing/parse_documents.py) examples show scenarios that can be accomplished and throughout the examples are specific methods that do not require MongoDB or embeddings.  
 
 # `llmware` Open Source Models
 The `llmware` public model repository has 3 model collections:
@@ -28,16 +28,16 @@ The `llmware` public model repository has 3 model collections:
 - **BLING model series:**  Small CPU-based RAG-optimized, instruct-following 1B-3B parameter models.
 - **DRAGON model series:**  Production-grade RAG-optimized 6-7B parameter models - "Delivering RAG on ..." the leading foundation base models.
 
-These models collections are available at [`llmware` on Hugging Face](https://huggingface.co/llmware). Explore their use in the [Embedding](embedding.py), [Hugging Face Integration](huggingface_integration.py),[`llmware` BLING model](bling_fast_start.py), [RAG with BLING](rag_with_bling.py), and [RAG benchmark testing](bling_rag_benchmark_tests.py) examples.
+These models collections are available at [`llmware` on Hugging Face](https://huggingface.co/llmware). Explore their use in the [Embedding](Embedding/embedding_fast_start.py), [Hugging Face Integration](Models/huggingface_integration.py),[`llmware` BLING model](bling_fast_start.py), [RAG with BLING](RAG/contract_analysis_on_laptop_with_bling_models.py), and [RAG benchmark testing](Models/dragon_rag_benchmark_tests_llmware.py) examples.
 
 # Additional `llmware` capabilities
-- Create knowledge graphs with a high-powered and fast C-based co-occurrence table matrix builder, the output of which can feed NLP statistics as well as potentially graph databases.  Explore the [Knowledge Graph](knowledge_graph.py) example.
+- Create knowledge graphs with a high-powered and fast C-based co-occurrence table matrix builder, the output of which can feed NLP statistics as well as potentially graph databases.  Explore the [Knowledge Graph](Datasets/knowledge_graph.py) example.
 
-- Generate datasets for fine-tuning both generative and embedding models.  `llmware` uses sophisticated data-crafting strategies, and leveraging the data captured throughout the system.  Explore the [Datasets](working_with_datasets.py) example.  
+- Generate datasets for fine-tuning both generative and embedding models.  `llmware` uses sophisticated data-crafting strategies, and leveraging the data captured throughout the system.  Explore the [Datasets](Datasets/working_with_datasets.py) example.  
   
-- Library is the simple, flexible, unifying construct in `llmware` to assemble and normalize parsed text chunks, and is linked to both a text search index, and an open platform of embedding models and vector databases. Explore the [Working with Libraries](working_with_libraries.py) example.
+- Library is the simple, flexible, unifying construct in `llmware` to assemble and normalize parsed text chunks, and is linked to both a text search index, and an open platform of embedding models and vector databases. Explore the [Working with Libraries](Getting_Started/working_with_libraries.py) example.
 
-- The `llmware` parsers follow a consistent 27 key metadata dictionary, so that you can extract the same information from a PDF as a PowerPoint or Text file. The parsers generally extract images, tables, and all available document metadata.  There is a complete set of text chunking tools to parse a batch of documents (across multiple formats) and chunk and store in consistent format in a document store.  Explore the [Parsing](parsing.py) example.
+- The `llmware` parsers follow a consistent 27 key metadata dictionary, so that you can extract the same information from a PDF as a PowerPoint or Text file. The parsers generally extract images, tables, and all available document metadata.  There is a complete set of text chunking tools to parse a batch of documents (across multiple formats) and chunk and store in consistent format in a document store.  Explore the [Parsing](Parsing/parse_documents.py) example.
 
 - All data artifacts are published in standard formats – json, txt files, pytorch_model.bin files, and fully portable and exportable to any platform. 
 
