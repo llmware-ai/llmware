@@ -294,7 +294,7 @@ Information on ways to participate can be found in our [Contributors Guide](http
   - Markdown (.md) files are now parsed and treated as text files.
   - PDF and Office parser stack optimizations which should avoid the need to set ulimit -s.
   - New llmware_models_fast_start.py example that allows discovery and selection of all llmware HuggingFace models.
-  - Native dependencies (shared libraries and dependencies) now included in repo to faciliate local development.
+  - Native dependencies (shared libraries and dependencies) now included in repo to facilitate local development.
   - Updates to the Status class to support PDF and Office document parsing status updates.
   - Minor defect fixes including image block handling in library exports.
 
