@@ -7,14 +7,12 @@ datasets==2.15.0
 faiss-cpu==1.7.4
 huggingface-hub==0.19.4
 lxml==4.9.3
-numpy==1.23.2
+numpy>=1.23.2
 openai==0.27.7
 pdf2image==1.16.0
-Pillow==10.0.1
 pymilvus==2.3.0
 pymongo==4.5.0
 pytesseract==0.3.10
-scipy==1.11.2
 sentence-transformers==2.2.2
 tabulate==0.9.0
 tokenizers==0.15.0

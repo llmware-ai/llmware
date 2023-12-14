@@ -22,9 +22,6 @@ Open-Source dependencies for the llmware package:
    * Software: libzip (https://libzip.org/)
    * Software: lxml (https://github.com/lxml/lxml)
    * Software: numpy (https://github.com/numpy/numpy)
-   * Software: pandas (https://github.com/pandas-dev/pandas)
-   * Software: scikit-learn (https://github.com/scikit-learn/scikit-learn)
-   * Software: scipy (https://github.com/scipy/scipy)
    * Software: torch (https://github.com/pytorch/pytorch)
    * Software: Werkzeug (https://github.com/pallets/werkzeug/)
 
