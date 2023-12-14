@@ -21,8 +21,6 @@ from llmware.configs import LLMWareConfig
 from llmware.library import Library
 from llmware.retrieval import Query
 
-from python_on_whales import DockerClient
-
 import subprocess
 import logging
 
