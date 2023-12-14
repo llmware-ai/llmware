@@ -27,8 +27,7 @@ from collections import Counter
 import requests
 from bs4 import BeautifulSoup
 from urllib.request import urlopen, Request
-from PIL import Image
-from PIL.ExifTags import TAGS, GPSTAGS
+
 import pytesseract
 from pytesseract.pytesseract import TesseractNotFoundError
 from pdf2image import convert_from_path
@@ -2937,6 +2936,15 @@ class ImageParser:
         exif_table = {}
         creator_device = {}
         time_stamps = {}
+        
+        #   PIL/Pillow required for EXIF image processing - must be installed separately
+        
+        try:
+            from PIL import Image
+            from PIL.ExifTags import TAGS, GPSTAGS
+            
+        except:
+            raise DependencyNotInstalledException("PIL")
 
         try:
             img = Image.open(fp)
