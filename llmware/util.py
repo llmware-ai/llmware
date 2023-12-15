@@ -193,11 +193,16 @@ class Utilities:
         seconds = time_delta_obj.seconds
 
         return time_delta_obj, days, seconds
-
+    
+    
     @staticmethod
     def get_current_time_now (time_str="%a %b %e %H:%M:%S %Y"):
-        time_stamp = datetime.now().strftime(time_str)
-        return time_stamp
+        
+        #   if time stamp used in filename, needs to be Windows compliant
+        if platform.system() == "Windows":
+            time_str = "%Y-%m-%d_%H%M%S"
+    
+        return datetime.now().strftime(time_str)
 
     @staticmethod
     def get_time_string_standard():
