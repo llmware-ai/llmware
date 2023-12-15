@@ -14,19 +14,20 @@
 # permissions and limitations under the License.
 
 
-from bson.int64 import Int64
+# from bson.int64 import Int64
+# from bson.objectid import ObjectId
+# import bson.json_util as json_util
+# import shutil
 
+import platform
 from pymongo import ReturnDocument
 from pymongo import MongoClient
 import pymongo
-from bson.objectid import ObjectId
 import sys
-import bson.json_util as json_util
 import boto3
 from botocore import UNSIGNED
 from botocore.config import Config
 from werkzeug.utils import secure_filename
-import shutil
 from botocore.exceptions import ClientError
 import os
 import json
@@ -1304,8 +1305,12 @@ class StateResourceUtil:
 
     @staticmethod
     def get_current_time_now (time_str="%a %b %e %H:%M:%S %Y"):
-        time_stamp = datetime.now().strftime(time_str)
-        return time_stamp
+    
+        #   if time stamp used in filename, needs to be Windows compliant
+        if platform.system() == "Windows":
+            time_str = "%Y-%m-%d_%H%M%S"
+    
+        return datetime.now().strftime(time_str)
 
     @staticmethod
     def file_save (cfile, file_path, file_name):
