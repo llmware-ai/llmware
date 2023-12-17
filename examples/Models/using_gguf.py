@@ -30,9 +30,9 @@ def register_gguf_model():
 
     your_model_name = "my_gguf_model_1"
     hf_repo_name = "TheBloke/model_name"
-    model_file = ""
+    model_file = "abc.gguf"
 
-    prompter.model_catalog.register_gguf_model(your_model_name,hf_repo_name, model_file, prompt_wrapper="human_bot")
+    prompter.model_catalog.register_gguf_model(your_model_name,hf_repo_name, model_file, prompt_wrapper="open_chat")
     prompter.load_model(your_model_name)
 
     return 0
@@ -42,7 +42,7 @@ def register_gguf_model():
 def build_your_own_llama_cpp_lib():
 
     import os
-    os.environ["GGUF_CUSTOM_LIB"] = "/path/to/your/custom/lib"
+    os.environ["GGUF_CUSTOM_LIB_PATH"] = "/path/to/your/custom/lib"
 
     return 0
 
