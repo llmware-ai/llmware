@@ -71,7 +71,7 @@ See [Working with llmware](#%EF%B8%8F-working-with-the-llmware-github-repository
 
 ### 2. MongoDB and Milvus
 
-MongoDB and Milvus are optional and used to provide production-grade database and vector embedding capabilities. The fastest way to get started is to use the provided Docker Compose file which takes care of running them both:
+MongoDB and Milvus are optional and used to provide production-grade database and vector embedding capabilities. The fastest way to get started is to use the provided Docker Compose file (note: requires Docker Compose / Docker desktop to be installed) which takes care of running them both:
 ```bash
 curl -o docker-compose.yaml https://raw.githubusercontent.com/llmware-ai/llmware/main/docker-compose.yaml
 ```
