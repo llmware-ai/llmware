@@ -2,7 +2,7 @@
 ![Static Badge](https://img.shields.io/badge/python-3.9_%7C_3.10%7C_3.11-blue?color=blue)
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
 
-`llmware` is a unified, open, extensible framework for LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides a comprehensive set of tools that anyone can use – from beginner to the most sophisticated AI developer – to rapidly build industrial-grade enterprise LLM-based applications.  _Key differentiators include: source citation for Q & A scenarios, fact checking, and other guardrails for model hallucination_.
+`llmware` is a unified, open, extensible framework for LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides a comprehensive set of tools that anyone can use – from beginner to the most sophisticated AI developer – to rapidly build industrial-grade enterprise LLM-based applications with specific focus on leveraging open source models, small specialized LLMs, and delivering end-to-end private cloud LLM-based applications.  _Key differentiators include: first-tier integration of 20+ RAG-optimized open source models between 1B-7B parameters (BLING and DRAGON); scalable ingestion and embedding of documents and integration of sources into Prompts; and tools for source citation for Q & A, fact checking, and other guardrails for model hallucination_.
 
 With `llmware`, our goal is to contribute to and help catalyze an open community around the new combination of open, extensible technologies being assembled to accomplish fact-based generative workflows.
 
@@ -10,46 +10,53 @@ With `llmware`, our goal is to contribute to and help catalyze an open community
 `llmware` is an integrated framework comprised of four major components:
 
 <details>
-<summary><b><u>Retrieval</u>: Assemble fact-sets </b></summary>
+<summary><b><u>Retrieval</u>: Assemble and Query knowledge base </b></summary>
 
-- A comprehensive set of querying methods: semantic, text, and hybrid retrieval with integrated metadata.
-- Ranking and filtering strategies to enable semantic search and rapid retrieval of information.
-- Web scrapers, Wikipedia integration, and Yahoo Finance API integration as additional tools to assemble fact-sets for generation.
+- **High-performance document parsers** to rapidly ingest, text chunk and ingest common document types.
+- **Comprehensive intuitive querying methods**: semantic, text, and hybrid retrieval with integrated metadata.
+- **Ranking and filtering strategies** to enable semantic search and rapid retrieval of information.
+- **Web scrapers, Wikipedia integration, and Yahoo Finance API** integration as additional tools to assemble fact-sets for generation.
 </details>
 
 
 <details>    
-<summary><b><u>Prompt</u>: Tools for sophisticated generative scenarios </b></summary>
+<summary><b><u>Prompt</u>: Simple, Unified Abstraction across 50+ Models</b></summary>
 
-- **Connect Models:** Open interface designed to support AI21, Ai Bloks READ-GPT, Anthropic, Cohere, HuggingFace Generative models, llmware BLING and DRAGON models, OpenAI.
-- **Prepare Sources:** Tools for packaging and tracking a wide range of materials into model context window sizes. Sources include files, websites, audio, AWS Transcribe transcripts, Wikipedia and Yahoo Finance.  
+- **Connect Models:** Simple high-level interface with flexible Model Catalog and support for 50+ models out of the box, with focus on open source generative and embedding models, along with all of the leading commercial LLMs.
+- **Prompts with Sources:** Powerful abstraction to easily package a wide range of materials into model context window sizes. Sources include files, websites, audio, AWS Transcribe transcripts, Wikipedia and Yahoo Finance.  
 - **Prompt Catalog:** Dynamically configurable prompts to experiment with multiple models without any change in the code.
 - **Post Processing:** a full set of metadata and tools for evidence verification, classification of a response, and fact-checking.
 - **Human in the Loop:** Ability to enable user ratings, feedback, and corrections of AI responses.
-- **Auditability:** A flexible state mechanism to capture, track, analyze and audit the LLM prompt lifecycle  
+- **Auditability:** A flexible state mechanism to capture, track, analyze and audit the LLM prompt lifecycle. 
 </details>
 
 <details>
 <summary><b><u>Vector Embeddings</u>:  swappable embedding models and vector databases</b></summary>
 
-- Custom trained sentence transformer embedding models and support for embedding models from Cohere, Google, HuggingFace Embedding models, and OpenAI.
-- Mix-and-match among multiple options to find the right solution for any particular application.
-- Out-of-the-box support for 3 vector databases - Milvus, FAISS, and Pinecone.
+- **Industry Bert**: provide out-of-the-box industry finetuned open source Sentence Transformers.
+- **Wide Model Support**: Custom trained HuggingFace, sentence transformer embedding models and support for leading commercial models.
+- **Mix-and-match** among multiple options to find the right solution for any particular application.
+- **Out-of-the-box** support for 4 vector databases - Milvus, FAISS, Pinecone and Mongo Atlas.
 </details>
   
 <details>
-<summary><b><u>Parsing and Text Chunking</u>: Prepare your data for RAG</b></summary>
+<summary><b><u>Parsing and Text Chunking</u>: Scalable Ingestion </b></summary>
   
-* Parsers for:  PDF, PowerPoint, Word, Excel, HTML, Text, WAV, AWS Transcribe transcripts.
+* Integrated High-Speed Parsers for:  PDF, PowerPoint, Word, Excel, HTML, Text, WAV, AWS Transcribe transcripts.
 * A complete set of text-chunking tools to separate information and associated metadata to a consistent block format.
 </details>
 
 #### 📚 Explore [additional llmware capabilities](https://github.com/llmware-ai/llmware/blob/main/examples/README.md) and 🎬 Check out these videos on how to quickly get started with RAG:
+- [Use small LLMs for RAG for Contract Analysis (feat. LLMWare)](https://www.youtube.com/watch?v=8aV5p3tErP0)
+- [Invoice Processing with LLMware](https://www.youtube.com/watch?v=VHZSaBBG-Bo&t=10s)
+- [Ingest PDFs at Scale](https://www.youtube.com/watch?v=O0adUfrrxi8&t=10s)
+- [Evaluate LLMs for RAG with LLMWare](https://www.youtube.com/watch?v=s0KWqYg5Buk&t=105s)
 - [Fast Start to RAG with LLMWare Open Source Library](https://www.youtube.com/watch?v=0naqpH93eEU)
 - [Use Retrieval Augmented Generation (RAG) without a Database](https://www.youtube.com/watch?v=tAGz6yR14lw)
-- [Use small LLMs for RAG for Contract Analysis (feat. LLMWare)](https://www.youtube.com/watch?v=8aV5p3tErP0)
 - [RAG using CPU-based (No-GPU required) Hugging Face Models with LLMWare on your laptop](https://www.youtube.com/watch?v=JjgqOZ2v5oU)
-
+- [Pop up LLMWare Inference Server](https://www.youtube.com/watch?v=qiEmLnSRDUA&t=20s)
+- [DRAGON-7B-Models](https://www.youtube.com/watch?v=d_u7VaKu6Qk&t=37s)
+- 
 ## 🌱 Getting Started
 
 ### 1. Install llmware:
@@ -77,86 +84,80 @@ Not ready to install MongoDB or Milvus?  Check out what you can do without them 
 
 See [Running MongoDB and Milvus](#%EF%B8%8F-alternate-options-for-running-mongodb-and-milvus) for other options to get up and running with these optional dependencies.
 
-### 3. 🔥 Start coding - Quick Start For RAG 🔥 
+### 3. 🔥 Start coding - Quick Start for RAG 🔥 
 ```python
-# This example demonstrates Retrieval Augmented Retrieval (RAG):
+# This example illustrates a simple contract analysis using a small RAG-optimized LLM running locally:
+
 import os
-from llmware.library import Library
-from llmware.retrieval import Query
-from llmware.prompts import Prompt
+import re
+from llmware.prompts import Prompt, HumanInTheLoop
 from llmware.setup import Setup
+from llmware.configs import LLMWareConfig
 
-# Update this value with your own API Key, either by setting the env var or editing it directly here:
-openai_api_key = os.environ["OPENAI_API_KEY"]
+def contract_analysis_on_laptop (model_name):
 
-# A self-contained end-to-end example of RAG
-def end_to_end_rag():
-    
-    # Create a library called "Agreements", and load it with llmware sample files
-    print (f"\n > Creating library 'Agreements'...")
-    library = Library().create_new_library("Agreements")
+    # Load the llmware sample files
+    print (f"\n > Loading the llmware sample files...")
     sample_files_path = Setup().load_sample_files()
-    library.add_files(os.path.join(sample_files_path,"Agreements"))
+    contracts_path = os.path.join(sample_files_path,"Agreements")
+ 
+    # query list
+    query_list = {"executive employment agreement": "What are the name of the two parties?",
+                  "base salary": "What is the executive's base salary?",
+                  "governing law": "What is the governing law?"}
 
-    # Create vector embeddings for the library using the "industry-bert-contracts model and store them in Milvus
-    print (f"\n > Generating vector embeddings using embedding model: 'industry-bert-contracts'...")
-    library.install_new_embedding(embedding_model_name="industry-bert-contracts", vector_db="milvus")
+    print (f"\n > Loading model {model_name}...")
 
-    # Perform a semantic search against our library.  This will gather evidence to be used in the LLM prompt
-    print (f"\n > Performing a semantic query...")
-    os.environ["TOKENIZERS_PARALLELISM"] = "false" # Avoid a HuggingFace tokenizer warning
-    query_results = Query(library).semantic_query("Termination", result_count=20)
+    prompter = Prompt().load_model(model_name)
 
-    # Create a new prompter using the GPT-4 and add the query_results captured above
-    prompt_text = "Summarize the termination provisions"
-    print (f"\n > Prompting LLM with '{prompt_text}'")
-    prompter = Prompt().load_model("gpt-4", api_key=openai_api_key)
-    sources = prompter.add_source_query_results(query_results)
+    for i, contract in enumerate(os.listdir(contracts_path)):
 
-    # Prompt the LLM with the sources and a query string
-    responses = prompter.prompt_with_source(prompt_text, prompt_name="summarize_with_bullets")
-    for response in responses:
-        print ("\n > LLM response\n" + response["llm_response"])
-    
-    # Finally, generate a CSV report that can be shared
-    print (f"\n > Generating CSV report...")
-    report_data = prompter.send_to_human_for_review()
-    print ("File: " + report_data["report_fp"] + "\n")
+        #   excluding Mac file artifact
+        if contract != ".DS_Store":
 
-end_to_end_rag()
+            print("\nAnalyzing contract: ", str(i+1), contract)
+
+            print("LLM Responses:")
+            for key, value in query_list.items():
+
+                # contract is parsed, text-chunked, and then filtered by topic key
+                source = prompter.add_source_document(contracts_path, contract, query=key)
+
+                # calling the LLM with 'source' information from the contract automatically packaged into the prompt
+                responses = prompter.prompt_with_source(value, prompt_name="just_the_facts", temperature=0.3)
+
+                for r, response in enumerate(responses):
+                    print(key, ":", re.sub("[\n]"," ", response["llm_response"]).strip())
+
+                # We're done with this contract, clear the source from the prompt
+                prompter.clear_source_materials()
+
+    # Save jsonl report to jsonl to /prompt_history folder
+    print("\nPrompt state saved at: ", os.path.join(LLMWareConfig.get_prompt_path(),prompter.prompt_id))
+    prompter.save_state()
+
+    # Save csv report that includes the model, response, prompt, and evidence for human-in-the-loop review
+    csv_output = HumanInTheLoop(prompter).export_current_interaction_to_csv()
+    print("csv output saved at:  ", csv_output)
+
+
+if __name__ == "__main__":
+
+    # use local cpu model - smallest, fastest (use larger BLING models for higher accuracy)
+    model = "llmware/bling-1b-0.1"
+
+    contract_analysis_on_laptop(model)
+
 ```
-#### Response from end-to-end RAG example
 
-```
-> python examples/rag_with_openai.py
-
- > Creating library 'Agreements'...
-
- > Generating vector embeddings using embedding model: 'industry-bert-contracts'...
-
- > Performing a semantic query...
-
- > Prompting LLM with 'Summarize the termination provisions'
-
- > LLM response
-- Employment period ends on the first occurrence of either the 6th anniversary of the effective date or a company sale.
-- Early termination possible as outlined in sections 3.1 through 3.4.
-- Employer can terminate executive's employment under section 3.1 anytime without cause, with at least 30 days' prior written notice.
-- If notice is given, the executive is allowed to seek other employment during the notice period.
-
- > Generating CSV report...
-File: /Users/llmware/llmware_data/prompt_history/interaction_report_Fri Sep 29 12:07:42 2023.csv
-```
-#### 📚 See 20+ [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md) for more RAG examples and other code samples and ideas.
+#### 📚 See 50+ [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md) for more RAG examples and other code samples and ideas.
 
 
 ### 4. Accessing LLMs and setting-up API keys & secrets
-To get started with a proprietary model, you need to provide your own API Keys.  If you don't yet have one, more information can be found at: [AI21](https://docs.ai21.com/docs/quickstart), [Ai Bloks](https://www.aibloks.com/contact-us), [Anthropic](https://docs.anthropic.com/claude/reference/getting-started-with-the-api),  [Cohere](https://cohere.com/), [Google](https://cloud.google.com/vertex-ai/docs/generative-ai/start/quickstarts/api-quickstart), [OpenAI](https://help.openai.com/en/collections/3675940-getting-started-with-openai-api).
 
-API keys and secrets for models, aws, and pinecone can be set-up for use in environment variables or managed however you prefer. 
+To use LLMWare, you do not need to use any proprietary LLM - we would encourage you to experiment with (BLING)[https://huggingface.co/llmware], (DRAGON)[https://huggingface.co/llmware], (Industry-BERT)[https://huggingface.co/llmware], the GGUF examples, along with bringing in your favorite models from HuggingFace and Sentence Transformers. 
 
-You can also access the `llmware` public model repository which includes out-of-the-box custom trained sentence transformer embedding models fine-tuned for the following industries: Insurance, Contracts, Asset Management, SEC. These domain specific models along with llmware's generative BLING model series ("Best Little Instruction-following No-GPU-required") and DRAGON model series ("Delivering RAG on ...") are available at [llmware on Huggingface](https://huggingface.co/llmware). Explore using the model repository and the `llmware` Huggingface integration in [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md).
-
+If you would like to use a proprietary model, you will need to provide your own API Keys.   API keys and secrets for models, aws, and pinecone can be set-up for use in environment variables or managed however you prefer. 
 
 ## 🔹 Alternate options for running MongoDB and Milvus
 
@@ -254,6 +255,13 @@ Information on ways to participate can be found in our [Contributors Guide](http
 
 ## 📣  Release notes and Change Log
 
+**Latest Updates - 17 Dec 2023: llmware v0.1.12**
+  - dragon-deci-7b added to catalog - RAG-finetuned model on high-performance new 7B model base from Deci
+  - New GGUFGenerativeModel class for easy integration of GGUF Models
+  - Adding prebuilt llama_cpp / ctransformer shared libraries for 'out of the box' use on Mac M1, Mac x86, Linux x86 and Windows
+  - 3 DRAGON models packaged as Q4_K_M GGUF models for CPU laptop use (dragon-mistral-7b, dragon-llama-7b, dragon-yi-6b)
+  - 4 leading open source chat models added to default catalog with Q4_K_M with support for specific chat prompt wrappers
+  
 **Supported Operating Systems:**  
 - MacOS
 - Linux
