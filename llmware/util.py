@@ -23,7 +23,7 @@ import urllib.parse
 import platform
 import sysconfig
 from pathlib import Path
-from PIL import Image
+# from PIL import Image
 import json
 from zipfile import ZipFile, ZIP_DEFLATED
 import numpy as np
@@ -193,15 +193,14 @@ class Utilities:
         seconds = time_delta_obj.seconds
 
         return time_delta_obj, days, seconds
-    
-    
+
     @staticmethod
     def get_current_time_now (time_str="%a %b %e %H:%M:%S %Y"):
-        
-        #   if time stamp used in filename, needs to be Windows compliant
+
+        #   if time stamp is used in file_name, needs to be Windows standards compliant
         if platform.system() == "Windows":
             time_str = "%Y-%m-%d_%H%M%S"
-    
+
         return datetime.now().strftime(time_str)
 
     @staticmethod
@@ -1715,7 +1714,23 @@ class PromptCatalog:
     def __init__(self):
 
         self.prompt_catalog = global_default_prompt_catalog
-        self.prompt_wrappers = ["alpaca", "human_bot", "chatgpt"]
+
+        # add <INST> for Llama2 Chat Wrapper
+        self.prompt_wrappers = ["alpaca", "human_bot", "chatgpt", "<INST>", "open_chat", "hf_chat", "chat_ml"]
+        self.prompt_wrapper_lookup = {
+
+            "human_bot": {"main_start": "<human>: ", "main_stop": "\n", "start_llm_response": "<bot>:"},
+            "<INST>": {"main_start": "<INST>", "main_stop": "</INST>", "start_llm_response": ""},
+            "hf_chat": {"system_start": "<|im_start|>system\n", "system_stop": "<|im_end|>\n",
+                        "main_start": "<|im_start|>user", "main_stop": "<|im_end|\n",
+                        "start_llm_response":"<|im_start|>assistant"},
+            "open_chat": {"main_start": "GPT4 User: ", "main_stop": "<|endofturn|>",
+                          "start_llm_response": "GPT4 Assistant:"},
+            "alpaca": {"main_start": "### Instruction: ", "main_stop": "\n",
+                       "start_llm_response": "### Response: "}
+
+        }
+
         self.prompt_list = self.list_all_prompts()
 
     def lookup_prompt(self, prompt_name):
@@ -1861,7 +1876,66 @@ class PromptCatalog:
         if prompt_wrapper == "alpaca":
             return self.wrap_alpaca_sample(text, separator)
 
+        if prompt_wrapper == "<INST>":
+            return self.wrap_llama2_chat_sample(text, separator)
+
+        if prompt_wrapper == "hf_chat":
+            return self.wrap_hf_chat_zephyr_sample(text, separator)
+
+        if prompt_wrapper == "open_chat":
+            return self.wrap_openchat_sample(text, separator)
+
+        if prompt_wrapper == "chat_ml":
+            return self.wrap_chat_ml_sample(text, separator,instruction)
+
         return output_text
+
+    def wrap_chat_ml_sample(self, text, separator,instruction):
+
+        if not instruction:
+            instruction = "You are a helpful assistant."
+
+        output_text = "<|im_start|>system\n" + instruction + "<|im_end|>\n" + \
+                      "<|im_start|>user" + text + "<|im_end|>\n" + \
+                      "<|im_start|>assistant"
+
+        return output_text
+
+    #   wip - create ability to customize template
+    def wrap_custom(self, text, wrapper_type, instruction=None):
+
+        prompt_out = ""
+
+        if wrapper_type in self.prompt_wrapper_lookup:
+
+            prompt_template = self.prompt_wrapper_lookup[wrapper_type]
+
+            if "system_start" in prompt_template:
+
+                prompt_out += prompt_template["system_start"]
+                if instruction:
+                    prompt_out += instruction
+                else:
+                    prompt_out += "You are a helpful assistant."
+
+                if "system_stop" in prompt_template:
+                    prompt_out += prompt_template["system_stop"]
+
+            if "main_start" in prompt_template:
+
+                prompt_out += prompt_template["main_start"]
+                prompt_out += text
+
+                if "main_stop" in prompt_template:
+                    prompt_out += prompt_template["main_stop"]
+
+            if "start_llm_response" in prompt_template:
+                prompt_out += prompt_template["start_llm_response"]
+
+        else:
+            prompt_out = text
+
+        return prompt_out
 
     def wrap_chatgpt_sample(self, text, instruction):
 
@@ -1877,10 +1951,24 @@ class PromptCatalog:
         content = user_separator + text + "\n" + response_separator
         return content
 
+    #   add support for Llama2 Chat wrapper
+    def wrap_llama2_chat_sample(self, text, separator):
+        content = "<INST> " + text + "</INST>"
+        return content
+
     def wrap_alpaca_sample(self, text, separator="\n"):
         content = "### Instruction: " + text + separator + "### Response: "
         return content
 
+    def wrap_openchat_sample(self, text, separator="\n"):
+        content = "GPT4 User: " + text + "<|endofturn|>" + "GPT4 Assistant:"
+        return content
+
+    def wrap_hf_chat_zephyr_sample (self, text, separator="\n"):
+        content = "<|system|>You are a helpful assistant.\n</s>" + \
+                  "<|user|>" + text + "\n</s>" + \
+                  "<|assistant|>"
+        return content
 
 #   * C Utility functions *
 # Load shared libraries based on current platform/architecture
