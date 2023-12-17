@@ -278,6 +278,13 @@ Information on ways to participate can be found in our [Contributors Guide](http
 <details>
   <summary><b>🚧 Change Log</b></summary>
 
+- **17 Dec 2023: llmware v0.1.12**
+  - dragon-deci-7b added to catalog - RAG-finetuned model on high-performance new 7B model base from Deci
+  - New GGUFGenerativeModel class for easy integration of GGUF Models
+  - Adding prebuilt llama_cpp / ctransformer shared libraries for Mac M1, Mac x86, Linux x86 and Windows
+  - 3 DRAGON models packaged as Q4_K_M GGUF models for CPU laptop use (dragon-mistral-7b, dragon-llama-7b, dragon-yi-6b)
+  - 4 leading open source chat models added to default catalog with Q4_K_M
+  
 - **8 Dec 2023: llmware v0.1.11**
   - New fast start examples for high volume Document Ingestion and Embeddings with Milvus.
   - New LLMWare 'Pop up' Inference Server model class and example script.
