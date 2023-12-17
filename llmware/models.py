@@ -38,6 +38,14 @@ import inspect
 import torch.utils.checkpoint
 from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss
 
+#   start - new imports for ctransformers
+from functools import partial
+import platform
+from ctypes import CDLL, c_bool, c_int, c_float, c_char_p, c_void_p, POINTER, Structure
+from pathlib import Path
+#   end - new imports
+
+
 from llmware.util import Utilities, PromptCatalog
 from llmware.configs import LLMWareConfig
 from llmware.resources import CloudBucketManager
@@ -191,16 +199,6 @@ global_model_repo_catalog_list = [
      "model_category": "generative-api", "model_location": "api", "is_trainable": "no",
      "context_window": 2048},
 
-    # HF embedding models
-    {"model_name": "HF-Embedding", "display_name": "HF-Embedding", "model_family": "HFEmbeddingModel",
-     "model_category": "semantic-hf", "model_location": "api", "is_trainable": "no",
-     "context_window": 2048},
-
-    # HF generative models
-    {"model_name": "HF-Generative", "display_name": "HF-Generative", "model_family": "HFGenerativeModel",
-     "model_category": "generative-hf", "model_location": "api", "is_trainable": "no",
-     "context_window": 2048},
-
     # base supporting models and components
     {"model_name": "bert", "display_name": "Bert", "model_family": "BaseModel", "model_category": "base",
      "is_trainable": "no","model_location": "llmware_repo"},
@@ -250,7 +248,7 @@ global_model_repo_catalog_list = [
      "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
      "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": ""},
-     
+
     # create dragon models
     {"model_name": "llmware/dragon-yi-6b-v0", "display_name": "Dragon-Yi-6B",
      "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
@@ -285,7 +283,66 @@ global_model_repo_catalog_list = [
     {"model_name": "llmware/dragon-llama-7b-v0", "display_name": "Dragon-Llama-7B",
      "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
      "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": ""}
+     "temperature": 0.3, "trailing_space": ""},
+
+    {"model_name": "llmware/dragon-deci-7b-v0", "display_name": "Dragon-Deci-7B",
+     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": ""},
+
+    # gguf models
+    {"model_name": "llmware/dragon-mistral-7b-gguf", "display_name": "Dragon-Mistral-7B-GGUF",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_api", "model_location": "llmware_repo",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "",
+     "gguf_file": "dragon-mistral-7b-q4_k_m.gguf",
+     "gguf_repo": "llmware/dragon-mistral-7b-v0"},
+
+    {"model_name": "llmware/dragon-llama-7b-gguf", "display_name": "Dragon-Llama-7B-GGUF",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_api", "model_location": "llmware_repo",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "",
+     "gguf_file": "dragon-llama-7b-q4_k_m.gguf",
+     "gguf_repo": "llmware/dragon-llama-7b-v0"
+     },
+
+    {"model_name": "llmware/dragon-yi-6b-gguf", "display_name": "Dragon-Yi-6B-GGUF",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_api", "model_location": "llmware_repo",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "\n",
+     "gguf_file": "dragon-yi-6b-q4_k_m.gguf",
+     "gguf_repo": "llmware/dragon-yi-6b-v0"
+     },
+
+    # selected top HF open source chat models - gguf
+    {"model_name": "TheBloke/Llama-2-7B-Chat-GGUF", "display_name": "Llama-2-7B-Chat-GGUF",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_api", "model_location": "llmware_repo",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "<INST>",
+     "temperature": 0.3, "trailing_space": "",
+     "gguf_file": "llama-2-7b-chat.Q4_K_M.gguf",
+     "gguf_repo": "llmware/bonchon"
+     },
+
+    {"model_name": "TheBloke/OpenHermes-2.5-Mistral-7B-GGUF", "display_name": "OpenHermes-Mistral-7B-GGUF",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_api", "model_location": "llmware_repo",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "chat_ml",
+     "temperature": 0.3, "trailing_space": "",
+     "gguf_file": "openhermes-2.5-mistral-7b.Q4_K_M.gguf",
+     "gguf_repo": "llmware/bonchon"},
+
+    {"model_name": "TheBloke/zephyr-7B-beta-GGUF", "display_name": "Zephyr-7B-GGUF",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_api", "model_location": "llmware_repo",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "hf_chat",
+     "temperature": 0.3, "trailing_space": "",
+     "gguf_file": "zephyr-7b-beta.Q4_K_M.gguf",
+     "gguf_repo": "llmware/bonchon"},
+
+    {"model_name": "TheBloke/Starling-LM-7B-alpha-GGUF", "display_name": "Berkeley-Starling-7B-GGUF",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_api", "model_location": "llmware_repo",
+     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "open_chat",
+     "temperature": 0.3, "trailing_space": "",
+     "gguf_file": "starling-lm-7b-alpha.Q4_K_M.gguf",
+     "gguf_repo": "llmware/bonchon"},
 
 ]
 
@@ -313,13 +370,16 @@ class ModelCatalog:
                                 # generative model classes
                                 "OpenAIGenModel", "ClaudeModel", "GoogleGenModel",
                                 "CohereGenModel", "JurassicModel", "AIBReadGPTModel",
-                                "HFGenerativeModel", "LLMWareModel",
+                                "HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
 
                                 # embedding model classes
                                 "LLMWareSemanticModel",
                                 "OpenAIEmbeddingModel", "CohereEmbeddingModel",
                                 "GoogleEmbeddingModel", "HFEmbeddingModel"
                              ]
+
+        self.open_source_model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
+                                          "LLMWareSemanticModel","HFEmbeddingModel"]
 
         self.global_model_list = global_model_repo_catalog_list
 
@@ -354,6 +414,27 @@ class ModelCatalog:
 
         return 0
 
+    def register_gguf_model(self, model_name, gguf_model_repo, gguf_model_file_name, prompt_wrapper=None,
+                            eos_token_id=0, display_name=None,trailing_space="", temperature=0.3,
+                            context_window=2048, instruction_following=False):
+
+        if not display_name:
+            display_name = model_name
+
+        new_model_card_dict = {"model_name": model_name, "display_name": display_name,
+                               "model_family": "GGUFGenerativeModel", "model_category": "generative_api",
+                               "model_location": "llmware_repo", "is_trainable": "no", "context_window": context_window,
+                               "instruction_following": instruction_following, "prompt_wrapper": prompt_wrapper,
+                               "temperature": temperature, "trailing_space": trailing_space,
+                               "eos_token_id": eos_token_id,
+                               "gguf_file": gguf_model_file_name,
+                               "gguf_repo": gguf_model_repo
+                               }
+
+        self.global_model_list.append(new_model_card_dict)
+
+        return new_model_card_dict
+
     def setup_custom_llmware_inference_server(self, uri_string, secret_key=None):
 
         #   Examples:
@@ -379,6 +460,8 @@ class ModelCatalog:
 
         #   if model not found, then return None, and downstream calling function responsible for handling
 
+        # print("update: lookup_model_card - ", model_card)
+
         return model_card
 
     def locate_and_retrieve_model_bits (self, model_card):
@@ -388,32 +471,45 @@ class ModelCatalog:
             # if not explicitly set up by user, then create folder directory structure
             LLMWareConfig.setup_llmware_workspace()
 
-        model_name = model_card["model_name"]
+        model_folder_name = model_card["model_name"]
+
+        if model_card["model_family"] == "GGUFGenerativeModel":
+            model_folder_name = model_folder_name.split("/")[-1]
 
         if not os.path.exists(LLMWareConfig.get_model_repo_path()):
             os.mkdir(LLMWareConfig.get_model_repo_path())
 
-        model_location = os.path.join(LLMWareConfig.get_model_repo_path(), model_name)
+        model_location = os.path.join(LLMWareConfig.get_model_repo_path(), model_folder_name)
 
         if os.path.exists(model_location):
             model_parts_in_folder = os.listdir(model_location)
             if len(model_parts_in_folder) > 0:
+
+                # print("update: found model parts - ", model_parts_in_folder)
+
                 return model_location
 
         logging.info("update: ModelCatalog - this model - %s - is not in local repo - %s, so pulling "
                         "from global repo - please note that this may take a little time to load "
-                        "for the first time.", model_name, LLMWareConfig.get_model_repo_path())
+                        "for the first time.", model_folder_name, LLMWareConfig.get_model_repo_path())
 
-        logging.info("update: ModelCatalog - pulling model from global repo - %s ", model_name)
+        logging.info("update: ModelCatalog - pulling model from global repo - %s ", model_folder_name)
 
-        CloudBucketManager().pull_single_model_from_llmware_public_repo(model_name)
+        if model_card["model_family"] != "GGUFGenerativeModel":
+
+            CloudBucketManager().pull_single_model_from_llmware_public_repo(model_folder_name)
+        else:
+            #   GGUF models pulled directly from HF repos
+            logging.info("update: pulling GGUF model from HF - %s - %s", model_location, model_card)
+
+            GGUFGenerativeModel().pull_model_from_hf(model_card, model_location)
 
         logging.info("update: ModelCatalog - done pulling model into local folder - %s ", model_location)
 
         if os.path.exists(model_location):
             return model_location
         
-        raise ModelNotFoundException(model_name)
+        raise ModelNotFoundException(model_folder_name)
 
     def _instantiate_model_class_from_string(self, model_class, model_name, model_card, api_key=None):
 
@@ -476,7 +572,7 @@ class ModelCatalog:
                                                                                       embedding_dims=embedding_dims,
                                                                                       api_key=api_key)
 
-            # placeholder for HF models
+            # HF models
             if model_class == "HFGenerativeModel":
                 my_model = HFGenerativeModel(model_name=model_name,api_key=api_key, trust_remote_code=True)
 
@@ -499,7 +595,24 @@ class ModelCatalog:
                 
                 if "trailing_space" in model_card:
                     my_model.trailing_space = model_card["trailing_space"]
-                    
+
+            if model_class == "GGUFGenerativeModel":
+
+                my_model = GGUFGenerativeModel(model_name=model_name, api_key=api_key, model_card=model_card)
+
+                if "prompt_wrapper" in model_card:
+                    my_model.prompt_wrapper = model_card["prompt_wrapper"]
+                else:
+                    my_model.prompt_wrapper = "human_bot"
+
+                if "temperature" in model_card:
+                    my_model.temperature = model_card["temperature"]
+                else:
+                    my_model.temperature = 0.3
+
+                if "trailing_space" in model_card:
+                    my_model.trailing_space = model_card["trailing_space"]
+
             if model_class == "HFEmbeddingModel": my_model = HFEmbeddingModel(model_name=model_name,
                                                                               api_key=api_key)
 
@@ -525,7 +638,7 @@ class ModelCatalog:
         # step 3- if physical model, then find the location on local server, and if not available, then pull from s3
         if model_card["model_location"] != "api":
             loading_directions = self.locate_and_retrieve_model_bits(model_card)
-            my_model = my_model.load_model_for_inference(loading_directions)
+            my_model = my_model.load_model_for_inference(loading_directions, model_card=model_card)
         else:
             # if api_key passed, save as environ variable
             # TODO - look at this
@@ -605,6 +718,17 @@ class ModelCatalog:
             loaded_model = ModelCatalog().load_model(selected_model=model_name)
 
         return loaded_model
+
+    def list_open_source_models(self):
+
+        open_source_models = []
+
+        for x in self.global_model_list:
+
+            if x["model_family"] in self.open_source_model_classes:
+                open_source_models.append(x)
+
+        return open_source_models
 
     def list_embedding_models(self):
 
@@ -1545,7 +1669,7 @@ class AIBReadGPTModel:
 
         return prompt_engineered
 
-    def load_model_for_inference(self, model_name=None, fp=None):
+    def load_model_for_inference(self, model_name=None, model_card=None, fp=None):
         # look up model_name in configs
         if model_name:
             self.model_name = model_name
@@ -1704,7 +1828,7 @@ class LLMWareModel:
 
         return prompt_engineered
 
-    def load_model_for_inference(self, model_name=None, fp=None):
+    def load_model_for_inference(self, model_name=None, model_card=None,fp=None):
         # look up model_name in configs
         if model_name:
             self.model_name = model_name
@@ -2542,6 +2666,628 @@ class HFGenerativeModel:
         return output_response
 
 
+class ConfigStruct(Structure):
+
+    _fields_ = [
+        ("context_length", c_int),
+        ("gpu_layers", c_int),
+        ("mmap", c_bool),
+        ("mlock", c_bool),
+    ]
+
+
+class GGUFGenerativeModel:
+
+    #   This implementation of GGUFGenerativeModel includes code derived, inspired, and modified from ctransformers
+    #   For more information on ctransformers: please see https://github.com/marella/ctransformers
+    #
+    #   ctransformers is a a Python and CPP wrapper on llama.cpp
+    #   note:  we have attempted to conform with the ctransformers interface specification, for easy portability to
+    #   integrate with llmware - over time, this interface specification may evolve
+    #
+    #   For more information on llama.cpp: please see https://github.com/ggerganov/llama.cpp - this is a pure C/C++
+    #   implementation of core LLM models for performance and portability, and easy integration of K-quantization
+    #
+    #   For more information on GGUF models available on HF: please see TheBloke @ https://huggingface.co/TheBloke
+
+    def __init__(self, model_name=None, model_card=None, api_key=None, prompt_wrapper=None, instruction_following=False,
+                 context_window=2048, use_gpu_if_available=True, config=None):
+
+        # defaults - "human_bot" & False
+        self.model_name = model_name
+        self.prompt_wrapper = prompt_wrapper
+        self.instruction_following = instruction_following
+        self.trailing_space = ""
+        self.separator = "\n"
+        self.eos_token_id = 0
+        self.max_total_len = 2048
+        self.max_input_len = int(0.5 * context_window)
+        self.llm_max_output_len = int(0.5 * context_window)
+        self.target_requested_output_tokens = 100
+        self.add_prompt_engineering = False
+        self.add_context = ""
+        self.temperature = 0.3
+        self.model_type = "gguf"
+
+        if model_card:
+
+            if "trailing_space" in model_card:
+                self.trailing_space = model_card["trailing_space"]
+
+            if "eos_token_id" in model_card:
+                self.eos_token_id = model_card["eos_token_id"]
+
+            if "context_window" in model_card:
+                self.max_total_len = model_card["context_window"]
+
+            if "temperature" in model_card:
+                self.temperature = model_card["temperature"]
+
+            if "prompt_wrapper" in model_card:
+                self.prompt_wrapper = model_card["prompt_wrapper"]
+
+        #   gguf specific attributes
+        self.gguf_file = None
+        self.gguf_repo = None
+        self.config = config
+        self._model_path = None
+        self._config = config
+        self._llm = None
+        self._lib = None
+        self._context = []
+
+        #   if (a) CUDA available and (b) use_gpu_if_available set to True (default)
+        #   note: this parameter is not currently used for GGUFGenerativeModels
+        self.use_gpu = torch.cuda.is_available() and use_gpu_if_available
+
+        # no api key expected or required
+        self.api_key = api_key
+
+        self.error_message = "\nUnable to identify and load GGUF Generative model."
+
+        #   note: default sampling parameters set to conform with ctransformers implementation
+
+        # sample
+        self.top_k = 40
+        self.top_p = 0.95
+        self.temperature = 0.3
+        self.repetition_penalty= 1.1
+        self.last_n_tokens= 64
+        self.seed = -1
+
+        # eval
+        self.batch_size= 8
+        self.threads= -1
+
+        # generate
+        self.max_new_tokens = 256
+        self.stop = None
+        self.stream = False
+        self.reset = True
+
+        # model
+        self.context_length = 2048
+        self.gpu_layers = 50
+        self.mmap = True
+        self.mlock = False
+
+        self.model_path = None
+
+        self._llm = None
+        self._lib = None
+        self._context = []
+
+    def pull_model_from_hf(self, model_card, local_model_repo_path):
+
+        from huggingface_hub import hf_hub_download
+
+        self.model_name = model_card["model_name"].split("/")[-1]
+
+        self.gguf_file = model_card["gguf_file"]     # e.g., "ggml-model-q4_k_m.gguf",
+        self.gguf_repo = model_card["gguf_repo"]     # e.g., "llmware/dragon-mistral-7b-v0-gguf"
+
+        # model_path = os.path.join(local_model_repo_path, self.model_name)
+
+        logging.info("update: pull_model_from_repo - %s - %s", local_model_repo_path, self.model_name)
+
+        if not os.path.exists(local_model_repo_path):
+            os.mkdir(local_model_repo_path)
+
+        downloader = hf_hub_download(self.gguf_repo, self.gguf_file, local_dir=local_model_repo_path)
+
+        return local_model_repo_path
+
+    def load_model_for_inference(self, file_loading_path, model_card=None):
+
+        if model_card:
+            self.model_name = model_card["model_name"].split("/")[-1]
+            self.gguf_file = model_card["gguf_file"]     # e.g., "ggml-model-q4_k_m.gguf",
+            self.gguf_repo = model_card["gguf_repo"]     # e.g., "llmware/dragon-mistral-7b-v0-gguf"
+
+        model_file = os.path.join(file_loading_path, self.gguf_file)
+
+        if not Path(model_file).is_file():
+            raise ValueError(f"Model path '{model_file}' doesn't exist.")
+
+        self.model_type = "gguf"
+
+        # self.gpu_layers = 50
+        config_struct = ConfigStruct(context_length=self.context_length, gpu_layers=self.gpu_layers,
+                                     mmap=self.mmap, mlock=self.mlock)
+
+        self._lib = self.load_library()
+        self._llm = self._lib.ctransformers_llm_create(model_file.encode(), self.model_type.encode(), config_struct)
+
+        if self._llm is None:
+            raise RuntimeError(
+                f"Failed to create LLM '{self.model_type}' from '{model_file}'.")
+
+        #   wip - over time, will support wider set of model architectures and types
+        # architecture = self.ctransformers_llm_architecture().decode()
+        # print("update: architecture - ", architecture)
+        # if architecture: self.model_type = architecture
+
+        return self
+
+    def __getattr__(self, name):
+
+        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
+        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
+
+        if name.startswith("ctransformers_llm_") and hasattr(self._lib, name):
+            return partial(getattr(self._lib, name), self._llm)
+        raise AttributeError(f"'LLM' object has no attribute '{name}'")
+
+    def tokenize(self, text, add_bos_token = None):
+
+        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
+        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
+
+        if add_bos_token is None:
+            add_bos_token = self.model_type == "llama"
+        tokens = (c_int * (len(text) + 1))()
+        n_tokens = self.ctransformers_llm_tokenize(text.encode(), add_bos_token, tokens)
+
+        return tokens[:n_tokens]
+
+    def detokenize(self, tokens, decode):
+
+        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
+        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
+
+        if isinstance(tokens, int):
+            tokens = [tokens]
+        texts = []
+        for token in tokens:
+            text = self.ctransformers_llm_detokenize(token)
+            texts.append(text)
+        texts = b"".join(texts)
+        if decode:
+            texts = texts.decode(errors="ignore")
+
+            if tokens[:1] == [self.bos_token_id] and texts[:1] == " ":
+                texts = texts[1:]
+
+        return texts
+
+    def eval(self, tokens):
+
+        """Evaluates a list of tokens.  Args:  tokens: The list of tokens to evaluate.  {params} """
+
+        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
+        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
+
+        # config = self.config
+        batch_size = self.batch_size
+        threads = self.threads
+
+        n_past = len(self._context)
+        n_tokens = len(tokens)
+
+        # if n_past + n_tokens > self.context_length:  no_action_taken_replacing_logger = 0
+
+        tokens = (c_int * n_tokens)(*tokens)
+        status = self.ctransformers_llm_batch_eval(tokens, n_tokens, n_past, batch_size, threads)
+
+        if not status:
+            raise RuntimeError("Failed to evaluate tokens.")
+        self._context.extend(tokens)
+
+    def sample(self):
+
+        """Samples a token from the model. Args: {params} Returns: The sampled token. """
+
+        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
+        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
+
+        # config = self.config
+        top_k = self.top_k
+        top_p = self.top_p
+        temperature = self.temperature
+        repetition_penalty = self.repetition_penalty
+        last_n_tokens = self.last_n_tokens
+        seed = self.seed
+
+        if last_n_tokens < 0:
+            last_n_tokens = self.context_length
+        last_tokens = self._context[-last_n_tokens:]
+        n_last = len(last_tokens)
+        last_tokens = (c_int * n_last)(*last_tokens)
+
+        return self.ctransformers_llm_sample(last_tokens, n_last, top_k, top_p, temperature,
+                                             repetition_penalty, seed)
+
+    def prepare_inputs_for_generation(self, tokens):
+
+        if not self.reset:
+            return tokens
+
+        # Keep at least one input token to evaluate the logits.
+        n = min(len(tokens) - 1, len(self._context))
+        l = 0
+        while l < n and tokens[l] == self._context[l]:
+            l += 1
+        # Remove input tokens that are evaluated in the past and update context.
+        tokens = tokens[l:]
+        self._context = self._context[:l]
+
+        return tokens
+
+    def generate(self, tokens):
+
+        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
+        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
+
+        tokens = self.prepare_inputs_for_generation(tokens)
+        self.eval(tokens)
+
+        while True:
+
+            token = self.sample()
+
+            self.eval([token])
+
+            if self.ctransformers_llm_is_eos_token(token):
+                break
+
+            yield token
+
+    def _stream(self, prompt):
+
+        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
+        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
+
+        # config = self.config
+        max_new_tokens = self.max_new_tokens
+        stop = []
+        if isinstance(stop, str):
+            stop = [stop]
+
+        tokens = self.tokenize(prompt)
+
+        stop_regex = re.compile("|".join(map(re.escape, stop)))
+        count = 0
+        text = ""
+        incomplete = b""
+        for token in self.generate(tokens):
+
+            # Handle incomplete UTF-8 multi-byte characters.
+            incomplete += self.detokenize([token], decode=False)
+
+            # complete, incomplete = utf8_split_incomplete(incomplete)
+
+            """Splits a sequence of UTF-8 encoded bytes into complete and incomplete bytes."""
+            i = len(incomplete)
+
+            while i > 0 and (incomplete[i - 1] & 0b10000000) != 0:
+                # while i > 0 and utf8_is_continuation_byte(seq[i - 1]):
+                i -= 1
+            complete = incomplete[:i]
+            incomplete = incomplete[i:]
+
+            text += complete.decode(errors="ignore")
+
+            # https://github.com/abetlen/llama-cpp-python/blob/
+            # 1a13d76c487df1c8560132d10bda62d6e2f4fa93/llama_cpp/llama.py#L686-L706
+            # Check if one of the stop sequences is part of the text.
+            # Note that the stop sequence may not always be at the end of text.
+            if stop:
+                match = stop_regex.search(text)
+                if match:
+                    text = text[: match.start()]
+                    break
+
+            # Avoid sending the longest suffix of text which is also a prefix
+            # of a stop sequence, as it can form a stop sequence with the text
+            # generated later.
+            longest = 0
+            for s in stop:
+                for i in range(len(s), 0, -1):
+                    if text.endswith(s[:i]):
+                        longest = max(i, longest)
+                        break
+
+            end = len(text) - longest
+            if end > 0:
+                yield text[:end]
+                text = text[end:]
+
+            count += 1
+            if count >= max_new_tokens:
+                break
+
+        if text:
+            yield text
+
+    def find_library(self):
+
+        #   current implementation support in core library - will expand/evaluate over time
+
+        lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "gguf")
+        system = platform.system()
+        lib_file = None
+
+        if platform.system() == "Windows":
+            lib_file = "lib_ctransformers.dll"
+        else:
+            machine = os.uname().machine.lower()
+
+            if system.lower() == "darwin":
+                if machine not in ['arm64', 'x86_64']:
+                    # default to arm64
+                    lib_file = "lib_ctransformers_mac_os_aarch64.dylib"
+                else:
+                    if machine == 'arm64':
+                        lib_file = "lib_ctransformers_mac_os_aarch64.dylib"
+                    else:
+                        machine = "lib_ctransformers_mac_os_x86_avx2.dylib"
+
+            if system.lower() == "linux":
+                if machine not in ['arm64', 'x86_64']:
+                    # default to x86
+                    lib_file = "lib_ctransformers_linux_x86_avx2.so"
+                else:
+                    if machine == 'x86_64':
+                        lib_file = "lib_ctransformers_linux_x86_avx2.so"
+                    else:
+
+                        # lib_file = "lib_ctransformer_linux_arm64.so"
+                        raise RuntimeError(f"No prebuilt llama.cpp lib for Linux Arm64 yet. "
+                                           f"Options: \n1. run on current prebuilt "
+                                           f"platforms - Mac Arch64, Mac x86, Linux x86, Windows; \n2. build lib "
+                                           f"from source - see instructions in repository.")
+
+        if not lib_file:
+            raise RuntimeError(f"Failed to find matching library for - '{system}'.")
+
+        path = os.path.join(lib_path, lib_file)
+
+        return path
+
+    def load_library(self):
+
+        c_int_p = POINTER(c_int)
+        c_float_p = POINTER(c_float)
+        llm_p = c_void_p
+
+        if os.environ.get("GGUF_CUSTOM_LIB_PATH"):
+            #   allows user to build from source and pass as lib to use
+            #   note: there are several prebuilt shared libraries available for llama.cpp
+
+            path = os.environ.get("GGUF_CUSTOM_LIB_PATH")
+
+            logging.info("update: custom gguf lib path - %s ", path)
+
+        else:
+            # default case
+            path = self.find_library()
+            # if "cuda" in path: self.load_cuda()
+
+        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
+        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
+
+        lib = CDLL(path)
+
+        lib.ctransformers_llm_create.argtypes = [c_char_p, c_char_p, ConfigStruct]
+        lib.ctransformers_llm_create.restype = llm_p
+
+        lib.ctransformers_llm_delete.argtypes = [llm_p]
+        lib.ctransformers_llm_delete.restype = None
+
+        lib.ctransformers_llm_tokenize.argtypes = [llm_p, c_char_p, c_bool, c_int_p]
+        lib.ctransformers_llm_tokenize.restype = c_int
+
+        lib.ctransformers_llm_detokenize.argtypes = [llm_p, c_int]
+        lib.ctransformers_llm_detokenize.restype = c_char_p
+
+        lib.ctransformers_llm_is_eos_token.argtypes = [llm_p, c_int]
+        lib.ctransformers_llm_is_eos_token.restype = c_bool
+
+        lib.ctransformers_llm_eos_token_id.argtypes = [llm_p]
+        lib.ctransformers_llm_eos_token_id.restype = c_int
+
+        lib.ctransformers_llm_bos_token_id.argtypes = [llm_p]
+        lib.ctransformers_llm_bos_token_id.restype = c_int
+
+        lib.ctransformers_llm_vocab_size.argtypes = [llm_p]
+        lib.ctransformers_llm_vocab_size.restype = c_int
+
+        lib.ctransformers_llm_context_length.argtypes = [llm_p]
+        lib.ctransformers_llm_context_length.restype = c_int
+
+        lib.ctransformers_llm_architecture.argtypes = [llm_p]
+        lib.ctransformers_llm_architecture.restype = c_char_p
+
+        lib.ctransformers_llm_batch_eval.argtypes = [llm_p, c_int_p, c_int, c_int, c_int, c_int]
+        lib.ctransformers_llm_batch_eval.restype = c_bool
+
+        lib.ctransformers_llm_logits_data.argtypes = [llm_p]
+        lib.ctransformers_llm_logits_data.restype = c_float_p
+        lib.ctransformers_llm_logits_size.argtypes = [llm_p]
+        lib.ctransformers_llm_logits_size.restype = c_int
+
+        lib.ctransformers_llm_embeddings_data.argtypes = [llm_p]
+        lib.ctransformers_llm_embeddings_data.restype = c_float_p
+        lib.ctransformers_llm_embeddings_size.argtypes = [llm_p]
+        lib.ctransformers_llm_embeddings_size.restype = c_int
+
+        lib.ctransformers_llm_sample.argtypes = [llm_p, c_int_p, c_int, c_int, c_float, c_float, c_float, c_int]
+        lib.ctransformers_llm_sample.restype = c_int
+
+        lib.ctransformers_llm_reset.argtypes = [llm_p]
+        lib.ctransformers_llm_reset.restype = None
+
+        return lib
+
+    def set_api_key(self, api_key, env_var="USER_MANAGED_HF_API_KEY"):
+
+        # set api_key
+        os.environ[env_var] = api_key
+        logging.info("update: added and stored HF api_key in environmental variable- %s", env_var)
+
+        return self
+
+    def _get_api_key(self, env_var="USER_MANAGED_HF_API_KEY"):
+
+        self.api_key = os.environ.get(env_var)
+
+        if not self.api_key:
+            logging.error("error: _get_api_key could not successfully retrieve value from: %s ", env_var)
+
+        return self.api_key
+
+    def token_counter(self, text_sample):
+        tokenizer = Utilities().get_default_tokenizer()
+        toks = tokenizer.encode(text_sample).ids
+        return len(toks)
+
+    def prompt_engineer(self, query, context, inference_dict):
+
+        # if loaded model was not pretrained on instruction_following, then skip any instructions
+        if not self.instruction_following:
+
+            if context:
+                output = context + "\n" + query
+            else:
+                output = query
+
+            # unlikely that there would be an 'instruct wrapping' on text, but allow for possibility
+            if self.prompt_wrapper:
+                output = PromptCatalog().apply_prompt_wrapper(output, self.prompt_wrapper,
+                                                              instruction=None)
+
+            return output
+
+        # move ahead to add instructions and prompt engineering
+
+        if not self.add_prompt_engineering:
+            if context:
+                selected_prompt = "default_with_context"
+            else:
+                selected_prompt = "default_no_context"
+        else:
+            selected_prompt = self.add_prompt_engineering
+
+        prompt_dict = PromptCatalog().build_core_prompt(prompt_name=selected_prompt,
+                                                        separator=self.separator,
+                                                        query=query,
+                                                        context=context,
+                                                        inference_dict=inference_dict)
+
+        if prompt_dict:
+            prompt_engineered = prompt_dict["core_prompt"]
+        else:
+            # default case
+            prompt_engineered = "Please read the following text: " + context + self.separator
+            prompt_engineered += "Based on this text, please answer the question: " + query + self.separator
+            prompt_engineered += "Please answer the question only with facts provided in the materials.  " \
+                                 "If the question can not be answered in the materials, then please " \
+                                 "respond 'Not Found.'"
+
+        #   final wrapping, based on model-specific instruct training format
+        #   --provides a final 'wrapper' around the core prompt text, based on model expectations
+
+        if self.prompt_wrapper:
+            prompt_engineered = PromptCatalog().apply_prompt_wrapper(prompt_engineered, self.prompt_wrapper,
+                                                                     instruction=None)
+
+        return prompt_engineered
+
+    def inference(self, prompt, add_context=None, add_prompt_engineering=None,api_key=None,inference_dict=None):
+
+        # first prepare the prompt
+
+        if add_context:
+            self.add_context = add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        text_prompt = prompt
+
+        if self.add_prompt_engineering:
+            prompt_enriched = self.prompt_engineer(prompt, self.add_context, inference_dict=inference_dict)
+            prompt_final = prompt_enriched
+
+            # text_prompt = prompt_final + "\n"
+
+            # most models perform better with no trailing space or line-break at the end of prompt
+            #   -- in most cases, the trailing space will be ""
+            #   -- yi model prefers a trailing "\n"
+            #   -- keep as parameterized option to maximize generation performance
+            #   -- can be passed either thru model_card or model config from HF
+
+            text_prompt = prompt_final + self.trailing_space
+
+        time_start = time.time()
+
+        text = self._stream(text_prompt)
+        output_str = "".join(text)
+
+        # post-processing clean-up - stop at endoftext
+        eot = output_str.find("<|endoftext|>")
+        if eot > -1:
+            output_str = output_str[:eot]
+
+        # new post-processing clean-up - stop at </s>
+        eots = output_str.find("</s>")
+        if eots > -1:
+            output_str = output_str[:eots]
+
+        # post-processing clean-up - start after bot wrapper
+        bot = output_str.find("<bot>:")
+        if bot > -1:
+            output_str = output_str[bot + len("<bot>:"):]
+
+        # new post-processing cleanup - skip repeating starting <s>
+        boss = output_str.find("<s>")
+        if boss > -1:
+            output_str = output_str[boss + len("<s>"):]
+
+        # end - post-processing
+
+        input_toks = self.token_counter(text_prompt)
+        output_toks = self.token_counter(output_str)
+
+        usage = {"input": input_toks,
+                 "output": output_toks,
+                 "total": input_toks + output_toks,
+                 "metric": "tokens",
+                 "processing_time": time.time() - time_start}
+
+        output_response = {"llm_response": output_str, "usage": usage}
+
+        return output_response
+
+
 class LLMWareSemanticModel:
 
     def __init__(self, model_name=None, model=None, embedding_dims=None, max_seq_length=150,api_key=None):
@@ -2605,7 +3351,7 @@ class LLMWareSemanticModel:
                     logging.error("error: could not identify model to run embedding - ", model_name)
                     raise ModelNotFoundException(model_name)
 
-    def load_model_for_inference(self,fp=None):
+    def load_model_for_inference(self,fp=None, model_card=None):
 
         if fp:
             self.model_repo_location = fp
