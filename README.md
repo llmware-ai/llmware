@@ -2,7 +2,7 @@
 ![Static Badge](https://img.shields.io/badge/python-3.9_%7C_3.10%7C_3.11-blue?color=blue)
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
 
-`llmware` is a unified, open, extensible framework for LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides a comprehensive set of tools that anyone can use – from beginner to the most sophisticated AI developer – to rapidly build industrial-grade enterprise LLM-based applications with specific focus on leveraging open source models, small specialized LLMs, and delivering end-to-end private cloud LLM-based applications. 
+`llmware` is a unified, open, extensible framework for LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides a comprehensive set of tools that anyone can use – from beginner to the most sophisticated AI developer – to rapidly build industrial-grade, knowledge-based enterprise LLM applications with specific focus on leveraging RAG-optimized open source small specialized models and connecting enterprise knowledge safely and securely to LLMs in private cloud. 
 
 ## 🎯  Key features
 `llmware` is an integrated framework comprised of four major components:
@@ -14,7 +14,7 @@
 - High-performance document parsers to rapidly ingest, text chunk and ingest common document types.
 - Comprehensive intuitive querying methods: semantic, text, and hybrid retrieval with integrated metadata.
 - Ranking and filtering strategies to enable semantic search and rapid retrieval of information.
-- Web scrapers, Wikipedia integration, and Yahoo Finance API integration as additional tools to assemble fact-sets for generation.
+- Web scrapers, Wikipedia integration, and Yahoo Finance API integration.
 </details>
 
 
@@ -22,19 +22,18 @@
 <summary><b><u>Prompt</u>: Simple, Unified Abstraction across 50+ Models</b></summary>  
 
   
-- Connect Models: Simple high-level interface with flexible Model Catalog and support for 50+ models out of the box.
+- Connect Models: Simple high-level interface with support for 50+ models out of the box.
 - Prompts with Sources: Powerful abstraction to easily package a wide range of materials into prompts.
-- Prompt Catalog: Dynamically configurable prompts to experiment with multiple models without any change in the code.
-- Post Processing: a full set of metadata and tools for evidence verification, classification of a response, and fact-checking.
+- Post Processing: tools for evidence verification, classification of a response, and fact-checking.
 - Human in the Loop: Ability to enable user ratings, feedback, and corrections of AI responses.
-- Auditability: A flexible state mechanism to capture, track, analyze and audit the LLM prompt lifecycle. 
+- Auditability: A flexible state mechanism to analyze and audit the LLM prompt lifecycle. 
 </details>
 
 <details>
 <summary><b><u>Vector Embeddings</u>:  swappable embedding models and vector databases</b></summary>
 
-- Industry Bert: provide out-of-the-box industry finetuned open source Sentence Transformers.
-- Wide Model Support: Custom trained HuggingFace, sentence transformer embedding models and support for leading commercial models.
+- Industry Bert: out-of-the-box industry finetuned open source Sentence Transformers.
+- Wide Model Support: Custom trained HuggingFace, sentence transformer embedding models and leading commercial models.
 - Mix-and-match among multiple options to find the right solution for any particular application.
 - Out-of-the-box support for 4 vector databases - Milvus, FAISS, Pinecone and Mongo Atlas.
 </details>
@@ -43,7 +42,7 @@
 <summary><b><u>Parsing and Text Chunking</u>: Scalable Ingestion </b></summary>
   
 - Integrated High-Speed Parsers for:  PDF, PowerPoint, Word, Excel, HTML, Text, WAV, AWS Transcribe transcripts.
-- A complete set of text-chunking tools to separate information and associated metadata to a consistent block format.
+- Text-chunking tools to separate information and associated metadata to a consistent block format.
 </details>
 
 #### 📚 Explore [additional llmware capabilities](https://github.com/llmware-ai/llmware/blob/main/examples/README.md) and 🎬 Check out these videos on how to quickly get started with RAG:
@@ -158,7 +157,7 @@ if __name__ == "__main__":
 
 To use LLMWare, you do not need to use any proprietary LLM - we would encourage you to experiment with [BLING](https://huggingface.co/llmware), [DRAGON](https://huggingface.co/llmware), [Industry-BERT](https://huggingface.co/llmware), the GGUF examples, along with bringing in your favorite models from HuggingFace and Sentence Transformers. 
 
-If you would like to use a proprietary model, you will need to provide your own API Keys.   API keys and secrets for models, aws, and pinecone can be set-up for use in environment variables or managed however you prefer. 
+If you would like to use a proprietary model, you will need to provide your own API Keys.   API keys and secrets for models, aws, and pinecone can be set-up for use in environment variables or passed directly to method calls. 
 
 ## 🔹 Alternate options for running MongoDB and Milvus
 
