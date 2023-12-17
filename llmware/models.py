@@ -3040,7 +3040,7 @@ class GGUFGenerativeModel:
                     if machine == 'arm64':
                         lib_file = "lib_ctransformers_mac_os_aarch64.dylib"
                     else:
-                        machine = "lib_ctransformers_mac_os_x86_avx2.dylib"
+                        lib_file = "lib_ctransformers_mac_os_x86_avx2.dylib"
 
             if system.lower() == "linux":
                 if machine not in ['arm64', 'x86_64']:
