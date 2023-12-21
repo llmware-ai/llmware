@@ -60,6 +60,7 @@ class Library:
 
         # default library card elements
         self.default_library_card = ["library_name", "embedding_status", "embedding_model", "embedding_db",
+                                     "embedded_blocks", "embedding_dims", "time_stamp",
                                      "knowledge_graph", "unique_doc_id", "documents", "blocks", "images", "pages",
                                      "tables"]
 
@@ -139,7 +140,8 @@ class Library:
                              #  track embedding status - each embedding tracked as new dict in list
                              #  --by default, when library created, no embedding in place
 
-                             "embedding": [{"embedding_status": "no", "embedding_model": "none", "embedding_db": "none"}],
+                             "embedding": [{"embedding_status": "no", "embedding_model": "none", "embedding_db": "none",
+                                            "embedded_blocks":0, "embedding_dims":0, "time_stamp": "NA"}],
 
                              # knowledge graph
                              "knowledge_graph": "no",
@@ -253,21 +255,24 @@ class Library:
 
         return library_card
 
-    def update_embedding_status (self, status_message, embedding_model, embedding_db):
-
-        # sets three parameters for embedding -
-        #   "embedding_status", e.g., is embedding completed for library
-        #   "embedding_model", e.g., what is the embedding model used to create the embedding
-        #   "embedding_db":, e.g., Milvus, FAISS, Pinecone
+    def update_embedding_status (self, status_message, embedding_model, embedding_db,
+                                 embedded_blocks=0, embedding_dims=0,time_stamp="NA",delete_record=False):
 
         #   special handling for updating "embedding" in update_library_card
-        #   -- will append this new embedding dict to the end of the embedding list
+        #   -- append/insert this new embedding dict to the end of the embedding list
+
+        if status_message == "delete":
+            delete_record = True
 
         update_dict = {"embedding": {"embedding_status": status_message,
                                      "embedding_model": embedding_model,
-                                     "embedding_db": embedding_db}}
+                                     "embedding_db": embedding_db,
+                                     "embedding_dims": embedding_dims,
+                                     "embedded_blocks": embedded_blocks,
+                                     "time_stamp": time_stamp}}
 
-        updater = LibraryCatalog(self).update_library_card(self.library_name, update_dict)
+        updater = LibraryCatalog(self).update_library_card(self.library_name, update_dict,
+                                                           delete_record=delete_record)
 
         return True
 
@@ -288,12 +293,6 @@ class Library:
         else:
             logging.warning("warning: could not identify embedding record in library card - %s ", library_card)
             embedding_record = None
-
-        """
-        embedding_record = {"embedding_status": library_card["embedding_status"],
-                            "embedding_model": library_card["embedding_model"],
-                            "embedding_db": library_card["embedding_db"]}
-        """
 
         return embedding_record
 
@@ -465,8 +464,10 @@ class Library:
         return files_copied
 
     def generate_knowledge_graph(self):
+
         kg = Graph(library=self).build_graph()
         self.set_knowledge_graph_status("yes")
+
         return 0
 
     def install_new_embedding (self, embedding_model_name=None, vector_db="milvus",
@@ -539,6 +540,7 @@ class Library:
         return success_code
 
     def update_block (self, doc_id, block_id, key, new_value):
+
         completed = CollectionWriter(self.collection).update_block(doc_id, block_id,key,new_value,self.default_keys)
         return completed
 
@@ -598,6 +600,31 @@ class Library:
         return self
 
     def get_all_library_cards(self, account_name='llmware'):
+
         library_cards = LibraryCatalog(account_name=account_name).all_library_cards()
         return library_cards
 
+    def delete_installed_embedding(self, embedding_model_name, vector_db, vector_db_api_key=None):
+
+        # insert safety check - confirm that this is valid combination with installed embedding
+        lib_card = LibraryCatalog(self).get_library_card(self.library_name)
+        embedding_list = lib_card["embedding"]
+        found_match = False
+        embedding_dims = 0
+
+        for entries in embedding_list:
+            if entries["embedding_model"] == embedding_model_name and entries["embedding_db"] == vector_db:
+                found_match = True
+                embedding_dims = entries["embedding_dims"]
+
+                logging.info("update: library - delete_installed_embedding request - found matching"
+                             "embedding record - %s", entries)
+                break
+
+        if found_match:
+            EmbeddingHandler(self).delete_index(vector_db,embedding_model_name, embedding_dims)
+        else:
+            # update exception
+            raise LibraryNotFoundException(embedding_model_name, vector_db)
+
+        return 1
