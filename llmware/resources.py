@@ -584,7 +584,7 @@ class LibraryCatalog:
         registry_id = self.library_card_collection.insert_one(new_library_card).inserted_id
         return 0
 
-    def update_library_card(self, library_name, update_dict, account_name="llmware"):
+    def update_library_card(self, library_name, update_dict, account_name="llmware", delete_record=False):
 
         f = {"library_name": library_name}
         new_values = {"$set": update_dict}
@@ -602,13 +602,47 @@ class LibraryCatalog:
             lib_card = self.get_library_card(library_name)
             embedding_list = lib_card["embedding"]
 
+            # special flag to identify where to 'merge' and update an existing embedding record
+            merged_embedding_update = False
+            inserted_list = []
+
             if len(embedding_list) > 0:
                 # if the last row is a "no" embedding, then remove it
                 if embedding_list[-1]["embedding_status"] == "no":
                     del embedding_list[-1]
 
-            embedding_list.append(update_dict["embedding"])
-            embedding_update_dict = {"embedding": embedding_list}
+                for emb_records in embedding_list:
+
+                    if emb_records["embedding_model"] == update_dict["embedding"]["embedding_model"] and \
+                            emb_records["embedding_db"] == update_dict["embedding"]["embedding_db"]:
+
+                        if not delete_record:
+                            inserted_list.append(update_dict["embedding"])
+                        else:
+                            pass
+
+                        merged_embedding_update = True
+
+                        # catch potential error
+
+                        if not delete_record:
+                            if "embedded_blocks" in emb_records and "embedded_blocks" in update_dict["embedding"]:
+
+                                if emb_records["embedded_blocks"] > update_dict["embedding"]["embedded_blocks"]:
+
+                                    logging.warning("warning: may be issue with embedding - mis-alignment in "
+                                                    "embedding block count - %s > %s ", emb_records["embedded_blocks"],
+                                                    update_dict["embedding"]["embedded_blocks"])
+
+                    else:
+                        inserted_list.append(emb_records)
+
+            if not merged_embedding_update:
+                embedding_list.append(update_dict["embedding"])
+                embedding_update_dict = {"embedding": embedding_list}
+            else:
+                embedding_update_dict = {"embedding": inserted_list}
+
             self.library_card_collection.update_one(f, {"$set": embedding_update_dict})
 
         return 1
