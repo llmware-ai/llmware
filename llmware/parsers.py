@@ -90,7 +90,13 @@ class Parser:
             os.mkdir(self.parser_folder)
 
         # create tmp workspace for parser
-        parser_tmp_work_folder = os.path.join(LLMWareConfig.get_tmp_path(), "parser_tmp" + os.sep)
+        tmp_path = LLMWareConfig.get_tmp_path()
+        parser_tmp_work_folder = os.path.join(tmp_path, "parser_tmp" + os.sep)
+
+        # if tmp path not in place, explicitly create
+        if not os.path.exists(tmp_path):
+            os.mkdir(tmp_path)
+            os.chmod(tmp_path, 0o777)
 
         # if tmp workspace folder already exists, then delete - start fresh
         if os.path.exists(parser_tmp_work_folder):

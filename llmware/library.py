@@ -79,6 +79,18 @@ class Library:
             # if not explicitly set up by user, then create folder directory structure
             LLMWareConfig.setup_llmware_workspace()
 
+        # add checks for /tmp and /accounts in place
+        library_path = LLMWareConfig.get_library_path()
+        tmp_path = LLMWareConfig.get_tmp_path()
+
+        if not os.path.exists(library_path):
+            os.mkdir(library_path)
+            os.chmod(library_path, 0o777)
+
+        if not os.path.exists(tmp_path):
+            os.mkdir(tmp_path)
+            os.chmod(tmp_path, 0o777)
+
         # check if collection datastore is connected
         if not check_db_uri(timeout_secs=3):
             raise CollectionDatabaseNotFoundException(LLMWareConfig.get_config("collection_db_uri"))

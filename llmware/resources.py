@@ -801,6 +801,11 @@ class PromptState:
         self.prompt_path = LLMWareConfig.get_prompt_path()
         self.output_path = LLMWareConfig.get_prompt_path()
 
+        # edge case - if llmware main path exists, but prompt path not created or deleted
+        if not os.path.exists(self.prompt_path):
+            os.mkdir(self.prompt_path)
+            os.chmod(self.prompt_path, 0o777)
+
         # prompt state written to files
         self.prompt_collection = None
         self.write_to_db = False
@@ -1150,11 +1155,16 @@ class QueryState:
         self.query_path = LLMWareConfig.get_query_path()
         self.output_path = LLMWareConfig.get_query_path()
 
-        # check for llmware path & create if not already set up
+        #   check for llmware path & create if not already set up
         if not os.path.exists(LLMWareConfig.get_llmware_path()):
 
             # if not explicitly set up by user, then create folder directory structure
             LLMWareConfig.setup_llmware_workspace()
+
+        #   if llmware main path exists, but query_path not created or deleted
+        if not os.path.exists(self.query_path):
+            os.mkdir(self.query_path)
+            os.chmod(self.query_path, 0o777)
 
     def get_query_state_fn_from_id(self, prompt_id):
         fn = self.query_state_base_name + str(prompt_id) + self.query_state_format
