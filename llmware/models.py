@@ -58,293 +58,373 @@ global_model_repo_catalog_list = [
 
     # embedding models
     {"model_name": 'mini-lm-sbert', "display_name": "Sentence_Transformers (MPNet-Base)", "model_family": "LLMWareSemanticModel",
-     "model_category": "embedding", "model_location": "llmware_repo", "is_trainable": "yes", "embedding_dims": 384},
+     "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 384, "context_window":512,
+     "link": "","custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": 'industry-bert-insurance', "display_name": "Insurance_LLMWare_Accelerator", "model_family": "LLMWareSemanticModel",
-     "model_category": "embedding", "model_location": "llmware_repo", "is_trainable": "yes", "embedding_dims": 768},
+     "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window":512,
+     "link": "https://huggingface.co/llmware/industry-bert-insurance-v0.1", "custom_model_files":[],
+     "custom_model_repo": ""},
 
     {"model_name": 'industry-bert-contracts', "display_name": "Contracts_LLMWare_Accelerator", "model_family": "LLMWareSemanticModel",
-     "model_category": "embedding", "model_location": "llmware_repo", "is_trainable": "yes", "embedding_dims": 768},
+     "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window":512,
+     "link": "https://huggingface.co/llmware/industry-bert-contracts-v0.1", "custom_model_files":[],
+     "custom_model_repo": ""},
 
     {"model_name": 'industry-bert-asset-management', "display_name": "Asset_Management_LLMWare_Accelerator",
-     "model_family": "LLMWareSemanticModel",
-     "model_category": "embedding", "model_location": "llmware_repo", "is_trainable": "yes", "embedding_dims": 768},
+     "model_family": "LLMWareSemanticModel", "model_category": "embedding", "model_location": "llmware_repo",
+     "embedding_dims": 768, "context_window":512,
+     "link": "https://huggingface.co/llmware/industry-bert-asset-management-v0.1", "custom_model_files":[],
+     "custom_model_repo": ""},
 
     {"model_name": 'industry-bert-sec', "display_name": "SEC_LLMWare_Accelerator", "model_family": "LLMWareSemanticModel",
-     "model_category": "embedding", "model_location": "llmware_repo", "is_trainable": "yes", "embedding_dims": 768},
+     "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window":512,
+     "link": "https://huggingface.co/llmware/industry-bert-sec-v0.1", "custom_model_files": [], "custom_model_repo": ""},
 
     # add open ai embeddings
     {"model_name": 'text-embedding-ada-002', "display_name": "OpenAI-Embedding", "model_family": "OpenAIEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "embedding_dims": 1536},
+     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 1536},
 
     # add cohere embeddings
     {"model_name": 'medium', "display_name": "Cohere-Medium-Embedding", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "is_trainable": "no","context_window": 2048,
-     "embedding_dims": 4096},
+     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 4096},
 
     {"model_name": 'xlarge', "display_name": "Cohere-XLarge-Embedding", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "embedding_dims": 4096},
+     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 4096},
 
     # insert new cohere embedding model - v3 - announced first week of November 2023
     {"model_name": 'embed-english-v3.0', "display_name": "Cohere-English-v3", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "embedding_dims": 1024},
+     "model_category": "embedding", "model_location": "api",  "context_window": 2048, "embedding_dims": 1024},
 
     {"model_name": 'embed-multilingual-v3.0', "display_name": "Cohere-Multi-Lingual-v3", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "embedding_dims": 1024},
+     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 1024},
 
     {"model_name": 'embed-english-light-v3.0', "display_name": "Cohere-English-v3", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "embedding_dims": 384},
+     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 384},
 
-    {"model_name": 'embed-multilingual-light-v3.0', "display_name": "Cohere-English-v3", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "embedding_dims": 384},
+    {"model_name": 'embed-multilingual-light-v3.0', "display_name": "Cohere-English-v3",
+     "model_family": "CohereEmbeddingModel", "model_category": "embedding", "model_location": "api",
+     "context_window": 2048, "embedding_dims": 384},
 
     {"model_name": 'embed-english-v2.0', "display_name": "Cohere-English-v3",
-     "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "embedding_dims": 4096},
+     "model_family": "CohereEmbeddingModel", "model_category": "embedding", "model_location": "api",
+     "context_window": 2048, "embedding_dims": 4096},
 
     {"model_name": 'embed-english-light-v2.0', "display_name": "Cohere-English-v3",
-     "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "embedding_dims": 1024},
+     "model_family": "CohereEmbeddingModel", "model_category": "embedding", "model_location": "api",
+     "context_window": 2048, "embedding_dims": 1024},
 
     {"model_name": 'embed-multilingual-v2.0', "display_name": "Cohere-English-v3",
-     "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "embedding_dims": 768},
+     "model_family": "CohereEmbeddingModel", "model_category": "embedding", "model_location": "api",
+     "context_window": 2048, "embedding_dims": 768},
     # end - new cohere embeddings
 
-    # add google embeddings
-    # textembedding-gecko@001
+    # add google embeddings - textembedding-gecko@001
     {"model_name": 'textembedding-gecko@latest', "display_name": "Google-Embedding", "model_family": "GoogleEmbeddingModel",
-     "model_category": "embedding","model_location": "api", "is_trainable": "no", "context_window": 4000,
-     "embedding_dims": 768},
+     "model_category": "embedding","model_location": "api", "context_window": 4000, "embedding_dims": 768},
 
     # generative-api models
     {"model_name": 'claude-v1', "display_name": "Anthropic Claude-v1", "model_family": "ClaudeModel",
-     "model_category": "generative-api", "model_location": "api", "is_trainable": "no",
-     "context_window": 8000},
+     "model_category": "generative-api", "model_location": "api",  "context_window": 8000},
     {"model_name": 'claude-instant-v1', "display_name": "Anthropic Claude-Instant-v1", "model_family": "ClaudeModel",
-     "model_category": "generative-api","model_location": "api", "is_trainable": "no",
-     "context_window": 8000},
+     "model_category": "generative-api","model_location": "api", "context_window": 8000},
     {"model_name": 'command-medium-nightly', "display_name": "Cohere Command Medium", "model_family": "CohereGenModel",
-     "model_category": "generative-api","model_location": "api", "is_trainable": "no",
-     "context_window": 2048},
+     "model_category": "generative-api","model_location": "api", "context_window": 2048},
     {"model_name": 'command-xlarge-nightly', "display_name": "Cohere Command XLarge", "model_family": "CohereGenModel",
-     "model_category": "generative-api","model_location": "api", "is_trainable": "no",
-     "context_window": 2048},
+     "model_category": "generative-api","model_location": "api", "context_window": 2048},
 
     {"model_name": 'summarize-xlarge', "display_name": "Cohere Summarize Xlarge", "model_family": "CohereGenModel",
-     "model_category":"generative-api","model_location": "api", "is_trainable": "no",
-     "context_window": 2048},
+     "model_category":"generative-api","model_location": "api", "context_window": 2048},
     {"model_name": 'summarize-medium', "display_name": "Cohere Summarize Medium", "model_family": "CohereGenModel",
-     "model_category":"generative-api","model_location": "api", "is_trainable": "no",
-     "context_window": 2048},
+     "model_category":"generative-api","model_location": "api", "context_window": 2048},
     {"model_name": 'j2-jumbo-instruct', "display_name": "Jurassic-2-Jumbo-Instruct", "model_family": "JurassicModel",
-     "model_category":"generative-api", "model_location": "api", "is_trainable": "no",
-     "context_window": 2048},
+     "model_category":"generative-api", "model_location": "api", "context_window": 2048},
     {"model_name": 'j2-grande-instruct', "display_name": "Jurassic-2-Grande-Instruct", "model_family": "JurassicModel",
-     "model_category":"generative-api","model_location": "api", "is_trainable": "no",
-     "context_window": 2048},
+     "model_category":"generative-api","model_location": "api", "context_window": 2048},
     {"model_name": 'text-bison@001', "display_name": "Google Palm", "model_family": "GoogleGenModel",
-     "model_category": "generative-api","model_location": "api", "is_trainable": "no",
-     "context_window": 8192},
+     "model_category": "generative-api","model_location": "api", "context_window": 8192},
     {"model_name": 'chat-bison@001', "display_name": "Google Chat", "model_family": "GoogleGenModel",
-     "model_category": "generative-api","model_location": "api", "is_trainable": "no",
-     "context_window": 8192},
+     "model_category": "generative-api","model_location": "api", "context_window": 8192},
     {"model_name": 'text-davinci-003', "display_name": "GPT3-Davinci", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "is_trainable": "no",
-     "context_window": 4096},
+     "model_category": "generative-api","model_location": "api", "context_window": 4096},
     {"model_name": 'text-curie-001', "display_name": "GPT3-Curie", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "is_trainable": "no",
-     "context_window": 2048},
+     "model_category": "generative-api","model_location": "api", "context_window": 2048},
     {"model_name": 'text-babbage-001', "display_name": "GPT3-Babbage", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "is_trainable": "no",
-     "context_window": 2048},
+     "model_category": "generative-api","model_location": "api", "context_window": 2048},
     {"model_name": 'text-ada-001', "display_name": "GPT3-Ada", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "is_trainable": "no",
-     "context_window": 2048},
+     "model_category": "generative-api","model_location": "api", "context_window": 2048},
     {"model_name": "gpt-3.5-turbo", "display_name": "ChatGPT", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "is_trainable": "no",
-     "context_window": 4000},
+     "model_category": "generative-api","model_location": "api", "context_window": 4000},
 
     # gpt-4 add
     {"model_name": "gpt-4", "display_name": "GPT-4", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api", "model_location": "api", "is_trainable": "no",
-     "context_window": 8000},
+     "model_category": "generative-api", "model_location": "api", "context_window": 8000},
 
     # gpt-3.5-turbo-instruct
     {"model_name": "gpt-3.5-turbo-instruct", "display_name": "GPT-3.5-Instruct", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api", "model_location": "api", "is_trainable": "no",
-     "context_window": 4000},
+     "model_category": "generative-api", "model_location": "api", "context_window": 4000},
 
     # new gpt-4 models announced in November 2023
     {"model_name": "gpt-4-1106-preview", "display_name": "GPT-4-Turbo", "model_family": "OpenAIGenModel",
-     "model_category": "generative_api", "model_location": "api", "is_trainable": "no",
-     "context_window": 128000},
+     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
 
     {"model_name": "gpt-3.5-turbo-1106", "display_name": "GPT-3.5-Turbo", "model_family": "OpenAIGenModel",
-     "model_category": "generative_api", "model_location": "api", "is_trainable": "no",
-     "context_window": 16385},
+     "model_category": "generative-api", "model_location": "api", "context_window": 16385},
     # end - gpt-4 model update
 
     # generative AIB models - aib-read-gpt - "main model"
     {"model_name": "aib-read-gpt", "display_name": "AIB-READ-GPT", "model_family": "AIBReadGPTModel",
-     "model_category": "generative-api", "model_location": "api", "is_trainable": "no",
-     "context_window": 2048},
+     "model_category": "generative-api", "model_location": "api", "context_window": 2048},
 
     # base supporting models and components
     {"model_name": "bert", "display_name": "Bert", "model_family": "BaseModel", "model_category": "base",
-     "is_trainable": "no","model_location": "llmware_repo"},
+     "model_location": "llmware_repo"},
     {"model_name": "roberta", "display_name": "Roberta", "model_family": "BaseModel", "model_category": "base",
-     "is_trainable": "no","model_location": "llmware_repo"},
+     "model_location": "llmware_repo"},
     {"model_name": "gpt2", "display_name": "GPT-2", "model_family": "BaseModel", "model_category": "base",
-     "is_trainable": "no","model_location": "llmware_repo"},
+     "model_location": "llmware_repo"},
 
     # add api-based llmware custom model
-    {"model_name": "llmware-inference-server", "display_name": "LLMWare-GPT", "model_family": "LLMWareModel", "model_category":
-     "generative_api", "model_location": "api", "is_trainable": "no", "context_window": 2048},
+    {"model_name": "llmware-inference-server", "display_name": "LLMWare-GPT", "model_family": "LLMWareModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 2048},
 
     # core llmware bling open source models available in catalog directly
     {"model_name": "llmware/bling-1.4b-0.1", "display_name": "Bling-Pythia-1.4B", "model_family": "HFGenerativeModel",
-     "model_category": "generative_api", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space":""},
+     "model_category": "generative_local", "model_location": "hf_repo", "context_window": 2048,
+     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space":"",
+     "link": "https://huggingface.co/llmware/bling-1.4b-0.1",
+     "custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": "llmware/bling-1b-0.1", "display_name": "Bling-Pythia-1.0B", "model_family": "HFGenerativeModel",
-     "model_category": "generative_api", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space": ""},
+     "model_category": "generative_local", "model_location": "hf_repo", "context_window": 2048,
+     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space": "",
+     "link": "https://huggingface.co/llmware/bling-1b-0.1",
+     "custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": "llmware/bling-falcon-1b-0.1", "display_name": "Bling-Falcon-1.3B", "model_family": "HFGenerativeModel",
-     "model_category": "generative_api", "model_location": "api", "is_trainable": "no", "context_window": 2048,
-     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space": ""},
+     "model_category": "generative_local", "model_location": "hf_repo", "context_window": 2048,
+     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space": "",
+     "link": "https://huggingface.co/llmware/bling-falcon-1b-0.1",
+     "custom_model_files": [], "custom_model_repo": ""
+     },
 
     {"model_name": "llmware/bling-sheared-llama-1.3b-0.1", "display_name": "Bling-Sheared-LLama-1.3B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": ""},
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-sheared-llama-1.3b-0.1",
+     "custom_model_files": [], "custom_model_repo": ""
+     },
 
     {"model_name": "llmware/bling-red-pajamas-3b-0.1", "display_name": "Bling-Pythia-1.4B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": ""},
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-red-pajamas-3b-0.1",
+     "custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": "llmware/bling-sheared-llama-2.7b-0.1", "display_name": "Bling-Sheared-Llama-2.7B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": ""},
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-sheared-llama-2.7b-0.1",
+     "custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": "llmware/bling-stable-lm-3b-4e1t-v0", "display_name": "Bling-Stable-LM-3B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": ""},
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-stable-lm-3b-4e1t-v0",
+     "custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": "llmware/bling-cerebras-1.3b-0.1", "display_name": "Bling-Cerebras-1.3B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": ""},
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-cerebras-1.3b-0.1",
+     "custom_model_files": [], "custom_model_repo": ""},
 
     # create dragon models
     {"model_name": "llmware/dragon-yi-6b-v0", "display_name": "Dragon-Yi-6B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "\n"},
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "\n", "link": "https://huggingface.co/llmware/dragon-yi-6b-v0",
+     "custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": "llmware/dragon-stablelm-7b-v0", "display_name": "Dragon-StableLM-7B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": ""},
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-stablelm-7b-v0",
+     "custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": "llmware/dragon-mistral-7b-v0", "display_name": "Dragon-Mistral-7B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": ""},
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-mistral-7b-v0",
+     "custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": "llmware/dragon-red-pajama-7b-v0", "display_name": "Dragon-Red-Pajama-7B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": ""},
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-red-pajama-7b-v0",
+     "custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": "llmware/dragon-deci-6b-v0", "display_name": "Dragon-Deci-6B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": ""},
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-deci-6b-v0",
+     "custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": "llmware/dragon-falcon-7b-v0", "display_name": "Dragon-Falcon-7B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": ""},
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-falcon-7b-v0",
+     "custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": "llmware/dragon-llama-7b-v0", "display_name": "Dragon-Llama-7B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": ""},
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-llama-7b-v0",
+     "custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": "llmware/dragon-deci-7b-v0", "display_name": "Dragon-Deci-7B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_api", "model_location": "api",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": ""},
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-deci-7b-v0",
+     "custom_model_files": [], "custom_model_repo": ""},
 
     # gguf models
     {"model_name": "llmware/dragon-mistral-7b-gguf", "display_name": "Dragon-Mistral-7B-GGUF",
-     "model_family": "GGUFGenerativeModel", "model_category": "generative_api", "model_location": "llmware_repo",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "dragon-mistral-7b-q4_k_m.gguf",
-     "gguf_repo": "llmware/dragon-mistral-7b-v0"},
+     "gguf_repo": "llmware/dragon-mistral-7b-v0",
+     "link": "https://huggingface.co/llmware/dragon-mistral-7b-v0",
+     "custom_model_files": ["dragon-mistral-7b-q4_k_m.gguf"], "custom_model_repo": "llmware/dragon-mistral-7b-v0"},
 
     {"model_name": "llmware/dragon-llama-7b-gguf", "display_name": "Dragon-Llama-7B-GGUF",
-     "model_family": "GGUFGenerativeModel", "model_category": "generative_api", "model_location": "llmware_repo",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "dragon-llama-7b-q4_k_m.gguf",
-     "gguf_repo": "llmware/dragon-llama-7b-v0"
-     },
+     "gguf_repo": "llmware/dragon-llama-7b-v0",
+     "link": "https://huggingface.co/llmware/dragon-llama-7b-v0",
+     "custom_model_files": ["dragon-llama-7b-q4_k_m.gguf"], "custom_model_repo": "llmware/dragon-llama-7b-v0"},
 
     {"model_name": "llmware/dragon-yi-6b-gguf", "display_name": "Dragon-Yi-6B-GGUF",
-     "model_family": "GGUFGenerativeModel", "model_category": "generative_api", "model_location": "llmware_repo",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+    "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "\n",
      "gguf_file": "dragon-yi-6b-q4_k_m.gguf",
-     "gguf_repo": "llmware/dragon-yi-6b-v0"
-     },
+     "gguf_repo": "llmware/dragon-yi-6b-v0",
+     "link": "https://huggingface.co/llmware/dragon-yi-6b-v0",
+     "custom_model_files": ["dragon-yi-6b-q4_k_m.gguf"], "custom_model_repo": "llmware/dragon-yi-6b-v0"},
 
     # selected top HF open source chat models - gguf
     {"model_name": "TheBloke/Llama-2-7B-Chat-GGUF", "display_name": "Llama-2-7B-Chat-GGUF",
-     "model_family": "GGUFGenerativeModel", "model_category": "generative_api", "model_location": "llmware_repo",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "<INST>",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "<INST>",
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "llama-2-7b-chat.Q4_K_M.gguf",
-     "gguf_repo": "llmware/bonchon"
-     },
+     "gguf_repo": "llmware/bonchon",
+     "link": "https://huggingface.co/llmware/bonchon",
+     "custom_model_files": ["llama-2-7b-chat.Q4_K_M.gguf"], "custom_model_repo": "llmware/bonchon"},
 
     {"model_name": "TheBloke/OpenHermes-2.5-Mistral-7B-GGUF", "display_name": "OpenHermes-Mistral-7B-GGUF",
-     "model_family": "GGUFGenerativeModel", "model_category": "generative_api", "model_location": "llmware_repo",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "chat_ml",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "chat_ml",
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "openhermes-2.5-mistral-7b.Q4_K_M.gguf",
-     "gguf_repo": "llmware/bonchon"},
+     "gguf_repo": "llmware/bonchon",
+     "link": "https://huggingface.co/llmware/bonchon",
+     "custom_model_files": ["openhermes-2.5-mistral-7b.Q4_K_M.gguf"], "custom_model_repo": "llmware/bonchon"},
 
     {"model_name": "TheBloke/zephyr-7B-beta-GGUF", "display_name": "Zephyr-7B-GGUF",
-     "model_family": "GGUFGenerativeModel", "model_category": "generative_api", "model_location": "llmware_repo",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "hf_chat",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "hf_chat",
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "zephyr-7b-beta.Q4_K_M.gguf",
-     "gguf_repo": "llmware/bonchon"},
+     "gguf_repo": "llmware/bonchon",
+     "link": "https://huggingface.co/llmware/bonchon",
+     "custom_model_files": ["zephyr-7b-beta.Q4_K_M.gguf"], "custom_model_repo": "llmware/bonchon"},
 
     {"model_name": "TheBloke/Starling-LM-7B-alpha-GGUF", "display_name": "Berkeley-Starling-7B-GGUF",
-     "model_family": "GGUFGenerativeModel", "model_category": "generative_api", "model_location": "llmware_repo",
-     "is_trainable": "no", "context_window": 2048, "instruction_following": False, "prompt_wrapper": "open_chat",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "open_chat",
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "starling-lm-7b-alpha.Q4_K_M.gguf",
-     "gguf_repo": "llmware/bonchon"},
-
+     "gguf_repo": "llmware/bonchon",
+     "link": "https://huggingface.co/llmware/bonchon",
+     "custom_model_files": ["starling-lm-7b-alpha.Q4_K_M.gguf"], "custom_model_repo": "llmware/bonchon"
+     }
 ]
+
+
+# simple wrapper class around global_model_repo_catalog_list for easier dynamic updating
+class ModelRegistry:
+
+    registered_models = global_model_repo_catalog_list
+    model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
+                     "LLMWareSemanticModel", "HFEmbeddingModel",
+                     "OpenAIGenModel", "ClaudeModel", "GoogleGenModel",
+                     "CohereGenModel", "JurassicModel", "AIBReadGPTModel",
+                     "OpenAIEmbeddingModel", "CohereEmbeddingModel","GoogleEmbeddingModel"]
+
+    @classmethod
+    def get_model_list(cls):
+        return cls.registered_models
+
+    @classmethod
+    def add_model_list(cls,new_model):
+        cls.registered_models.append(new_model)
+        return cls.registered_models
+
+    def delete_model(cls, model_name):
+
+        model_found=False
+
+        for i, models in enumerate(cls.registered_models):
+            if models["model_name"] == model_name:
+                del cls.registered_models[i]
+                model_found = True
+                break
+
+        if not model_found:
+            raise ModelNotFoundException(model_name)
+
+    @classmethod
+    def add_new_model(cls, model_card_dict):
+        # validate keys
+        if "model_family" not in model_card_dict:
+            # error - could not add new model card
+            raise ModelNotFoundException("no-model-family-identified")
+        else:
+            if model_card_dict["model_family"] not in cls.model_classes:
+                # error
+                raise ModelNotFoundException("model-family-not-recognized")
+
+            else:
+                cls.registered_models.append(model_card_dict)
+
+        return 0
+
+    @classmethod
+    def add_gguf_model(cls, model_name, gguf_model_repo, gguf_model_file_name, prompt_wrapper=None,
+                            eos_token_id=0, display_name=None, trailing_space="", temperature=0.3,
+                            context_window=2048, instruction_following=False):
+
+        if not display_name:
+            display_name = model_name
+
+        new_model_card_dict = {"model_name": model_name, "display_name": display_name,
+                               "model_family": "GGUFGenerativeModel", "model_category": "generative-api",
+                               "model_location": "llmware_repo", "is_trainable": "no", "context_window": context_window,
+                               "instruction_following": instruction_following, "prompt_wrapper": prompt_wrapper,
+                               "temperature": temperature, "trailing_space": trailing_space,
+                               "eos_token_id": eos_token_id,
+                               "gguf_file": gguf_model_file_name,
+                               "gguf_repo": gguf_model_repo
+                               }
+
+        cls.registered_models.append(new_model_card_dict)
+
+        return cls.registered_models
 
 
 def build_json_models_manifest(manifest_dict, fp, fn="llmware_supported_models_manifest.json"):
@@ -381,7 +461,8 @@ class ModelCatalog:
         self.open_source_model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
                                           "LLMWareSemanticModel","HFEmbeddingModel"]
 
-        self.global_model_list = global_model_repo_catalog_list
+        # self.global_model_list = global_model_repo_catalog_list
+        self.global_model_list = ModelRegistry().get_model_list()
 
         self.account_name = None
         self.library_name= None
@@ -403,13 +484,6 @@ class ModelCatalog:
                 raise ModelNotFoundException("model-family-not-recognized")
 
             else:
-
-                # format of new model card registered in model catalog
-                """
-                model_card = {"model_name": "llmware", "display_name": "LLMWare-GPT", "model_family": "LLMwareModel", "model_category":
-                    "generative_api", "model_location": "api", "is_trainable": "no", "context_window": 2048}
-                """
-
                 self.global_model_list.append(model_card_dict)
 
         return 0
@@ -422,13 +496,14 @@ class ModelCatalog:
             display_name = model_name
 
         new_model_card_dict = {"model_name": model_name, "display_name": display_name,
-                               "model_family": "GGUFGenerativeModel", "model_category": "generative_api",
-                               "model_location": "llmware_repo", "is_trainable": "no", "context_window": context_window,
+                               "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
+                               "model_location": "llmware_repo", "context_window": context_window,
                                "instruction_following": instruction_following, "prompt_wrapper": prompt_wrapper,
                                "temperature": temperature, "trailing_space": trailing_space,
                                "eos_token_id": eos_token_id,
                                "gguf_file": gguf_model_file_name,
-                               "gguf_repo": gguf_model_repo
+                               "gguf_repo": gguf_model_repo,
+                               "link": "", "custom_model_files": [], "custom_model_repo":""
                                }
 
         self.global_model_list.append(new_model_card_dict)
@@ -570,11 +645,13 @@ class ModelCatalog:
 
             if model_class == "LLMWareSemanticModel": my_model = LLMWareSemanticModel(model_name=model_name,
                                                                                       embedding_dims=embedding_dims,
-                                                                                      api_key=api_key)
+                                                                                      api_key=api_key,
+                                                                                      model_card=model_card)
 
             # HF models
             if model_class == "HFGenerativeModel":
-                my_model = HFGenerativeModel(model_name=model_name,api_key=api_key, trust_remote_code=True)
+                my_model = HFGenerativeModel(model_name=model_name,api_key=api_key, trust_remote_code=True,
+                                             model_card=model_card)
 
                 # set specific parameters associated with custom models
 
@@ -614,7 +691,8 @@ class ModelCatalog:
                     my_model.trailing_space = model_card["trailing_space"]
 
             if model_class == "HFEmbeddingModel": my_model = HFEmbeddingModel(model_name=model_name,
-                                                                              api_key=api_key)
+                                                                              api_key=api_key,
+                                                                              model_card=model_card)
 
         return my_model
 
@@ -636,7 +714,7 @@ class ModelCatalog:
             raise ModelNotFoundException(selected_model)
 
         # step 3- if physical model, then find the location on local server, and if not available, then pull from s3
-        if model_card["model_location"] != "api":
+        if model_card["model_location"] == "llmware_repo":
             loading_directions = self.locate_and_retrieve_model_bits(model_card)
             my_model = my_model.load_model_for_inference(loading_directions, model_card=model_card)
         else:
@@ -698,6 +776,7 @@ class ModelCatalog:
 
         # if user passed a 'loaded model' object, then apply directly
         if model:
+
             # first, check for 'from_hf' flag and load as HuggingFace model
             if from_hf:
                 loaded_model = ModelCatalog().load_hf_embedding_model(model,tokenizer)
@@ -706,7 +785,7 @@ class ModelCatalog:
                 if from_sentence_transformers:
                     loaded_model = ModelCatalog().load_sentence_transformer_model(model,model_name)
 
-            if not model:
+            if not loaded_model:
                 logging.error("error: ModelCatalog load_embedding_model could not identify the "
                               "passed model - if model is from HuggingFace, then mark optional "
                               "'from_hf' flag to True.  If model is from Sentence Transformers, "
@@ -751,6 +830,18 @@ class ModelCatalog:
         gen_models = sorted(gen_models, key=lambda x: x["model_name"], reverse=False)
 
         return gen_models
+
+    def list_generative_local_models(self):
+
+        gen_local_models = []
+
+        for x in self.global_model_list:
+            if x["model_category"] == "generative_local":
+                gen_local_models.append(x)
+
+        gen_local_models = sorted(gen_local_models, key=lambda x:x["model_name"], reverse=False)
+
+        return gen_local_models
 
     def list_all_models(self):
 
@@ -2169,7 +2260,7 @@ class GoogleEmbeddingModel:
 
 class HFEmbeddingModel:
 
-    def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None,
+    def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None, model_card=None,
                  embedding_dims=None):
 
         # pull in expected hf input
@@ -2262,7 +2353,7 @@ class HFGenerativeModel:
     #       1.  directly passing a previously loaded HF model object and tokenizer object
     #       2.  passing a model_name only, which will then create the model and tokenizer
 
-    def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None,
+    def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None, model_card=None,
                  prompt_wrapper=None, instruction_following=False, context_window=2048,
                  use_gpu_if_available=True, trust_remote_code=False):
 
@@ -3290,7 +3381,8 @@ class GGUFGenerativeModel:
 
 class LLMWareSemanticModel:
 
-    def __init__(self, model_name=None, model=None, embedding_dims=None, max_seq_length=150,api_key=None):
+    def __init__(self, model_name=None, model=None, embedding_dims=None, max_seq_length=150,
+                 model_card=None, api_key=None):
 
         self.model_name = model_name
         self.error_message = "\nUnable to process LLMWare Semantic Model. Please try again later"
@@ -3350,6 +3442,26 @@ class LLMWareSemanticModel:
                 except:
                     logging.error("error: could not identify model to run embedding - ", model_name)
                     raise ModelNotFoundException(model_name)
+
+        if model_card and not model:
+
+            if "model_location" in model_card:
+                if model_card["model_location"] == "st_repo":
+                    # try to pull the model and instantiate directly from Sentence Transformers
+                    try:
+                        from sentence_transformers import SentenceTransformer
+                    except:
+                        raise DependencyNotInstalledException("sentence_transformer")
+
+                    try:
+                        self.model = SentenceTransformer(model_card["model_name"])
+                    except:
+                        raise ModelNotFoundException(model_card["model_name"])
+
+                    if "embedding_dims" in model_card:
+                        self.embedding_dims = model_card["embedding_dims"]
+                    else:
+                        self.embedding_dims = self.model[1].word_embedding_dimension
 
     def load_model_for_inference(self,fp=None, model_card=None):
 
