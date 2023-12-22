@@ -2,7 +2,7 @@
 ![Static Badge](https://img.shields.io/badge/python-3.9_%7C_3.10%7C_3.11-blue?color=blue)
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
 
-`llmware` is a unified, open, extensible framework for LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides a comprehensive set of tools that anyone can use – from beginner to the most sophisticated AI developer – to rapidly build industrial-grade, knowledge-based enterprise LLM applications with specific focus on leveraging RAG-optimized open source small specialized models and connecting enterprise knowledge safely and securely to LLMs in private cloud. 
+`llmware` is a unified framework for developing LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides an integrated set of tools that anyone can use – from beginner to the most sophisticated AI developer – to rapidly build industrial-grade, knowledge-based enterprise LLM applications with specific focus on making it easy to integrate open source small specialized models and connecting enterprise knowledge safely and securely to LLMs in private cloud. 
 
 ## 🎯  Key features
 `llmware` is an integrated framework comprised of four major components:
@@ -35,7 +35,7 @@
 - Industry Bert: out-of-the-box industry finetuned open source Sentence Transformers.
 - Wide Model Support: Custom trained HuggingFace, sentence transformer embedding models and leading commercial models.
 - Mix-and-match among multiple options to find the right solution for any particular application.
-- Out-of-the-box support for 4 vector databases - Milvus, FAISS, Pinecone and Mongo Atlas.
+- Out-of-the-box support for 7 vector databases - Milvus, Postgres (PG Vector), Redis, FAISS, Qdrant, Pinecone and Mongo Atlas.
 </details>
   
 <details>
@@ -243,17 +243,30 @@ At the top level of the llmware repository run the following command:
 pip install .
 ```
 
-## ✨  Getting help or sharing your ideas with the community
+## ✨  Roadmap - Getting help and sharing your ideas with the community
 Questions and discussions are welcome in our [github discussions](https://github.com/llmware-ai/llmware/discussions).
 
-Interested in contributing to llmware? We welcome involvement from the community to extend and enhance the framework!  
-- 💡 What's your favorite model or is there one you'd like to check out in your experiments? 
-- 💡 Have you had success with a different embedding databases?
-- 💡 Is there a prompt that shines in a RAG workflow?
+Interested in contributing to llmware? We welcome collaboration.  Our roadmap is focused primarily on the following areas: 
+
+- 💡 Making it easy to deploy fine-tuned open source models to build state-of-the-art RAG workflows
+- 💡 Private cloud - keeping documents, data pipelines, data stores, and models safe and secure  
+- 💡 Model quantization, especially GGUF, and democratizing the game-changing use of 7B CPU-based LLMs
+- 💡 Developing small specialized RAG optimized LLMs between 1B-7B parameters
+- 💡 Industry-specific LLMs, embedding models and processes to support core knowledge-based use cases
+- 💡 Enterprise scalability - containerization, worker deployments and Kubernetes
+- 💡 Integration of SQL and other scale enterprise data sources
+
+Like our models, we aspire for llmware to be "small, but mighty" - easy to use and get started, but packing a powerful punch!
 
 Information on ways to participate can be found in our [Contributors Guide](https://github.com/llmware-ai/llmware/blob/main/CONTRIBUTING.md#contributing-to-llmware).  As with all aspects of this project, contributing is governed by our [Code of Conduct](https://github.com/llmware-ai/llmware/blob/main/CODE_OF_CONDUCT.md).
 
 ## 📣  Release notes and Change Log
+
+**Latest Updates - 22 Dec 2023: llmware v0.1.13**
+  - Added 3 new vector databases - Postgres (PG Vector), Redis, and Qdrant
+  - Improved support for integrating sentence transformers directly in the model catalog
+  - Improvements in the model catalog attributes, including discovery and customization
+  - Multiple new Examples in Models & Embeddings, including GGUF, Vector database, and model catalog
 
 **Latest Updates - 17 Dec 2023: llmware v0.1.12**
   - dragon-deci-7b added to catalog - RAG-finetuned model on high-performance new 7B model base from Deci
@@ -269,9 +282,12 @@ Information on ways to participate can be found in our [Contributors Guide](http
 
 **Supported Vector Databases:**
 - Milvus
+- Postgres (PG Vector)
+- Redis
 - FAISS
 - Pinecone
 - MongoDB Atlas Vector Search
+- Qdrant
 
 **Prereqs:**  
 - All Platforms: [Python v3.9 - 3.11](https://www.python.org/about/gettingstarted/)
@@ -285,6 +301,12 @@ Information on ways to participate can be found in our [Contributors Guide](http
 
 <details>
   <summary><b>🚧 Change Log</b></summary>
+
+**Latest Updates - 22 Dec 2023: llmware v0.1.13**
+  - Added 3 new vector databases - Postgres (PG Vector), Redis, and Qdrant
+  - Improved support for integrating sentence transformers directly in the model catalog
+  - Improvements in the model catalog attributes
+  - Multiple new Examples in Models & Embeddings, including GGUF, Vector database, and model catalog
 
 - **17 Dec 2023: llmware v0.1.12**
   - dragon-deci-7b added to catalog - RAG-finetuned model on high-performance new 7B model base from Deci
