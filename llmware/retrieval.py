@@ -33,7 +33,7 @@ class Query:
 
     def __init__(self, library, embedding_model=None, tokenizer=None, vector_db_api_key=None,
                  query_id=None, from_hf=False, from_sentence_transformer=False,embedding_model_name=None,
-                 save_history=True, query_mode=None):
+                 save_history=True, query_mode=None, vector_db=None):
 
         # load user profile & instantiate core library assets linked to profile
 
@@ -100,18 +100,43 @@ class Query:
 
                 if emb["embedding_model"] == embedding_model_name:
 
-                    if emb["embedding_status"] == "yes":
-                        self.embedding_db = emb["embedding_db"]
-                        self.search_mode = "semantic"
-                        matched_lib_model = True
+                    # if no vector_db name passed, then select based only on embedding_model
+                    if not vector_db:
+                        if emb["embedding_status"] == "yes":
+                            self.embedding_db = emb["embedding_db"]
+                            self.search_mode = "semantic"
+                            matched_lib_model = True
+                            break
+                    else:
+                        # confirm match of pair - embedding_model + vector_db
+                        if emb["embedding_db"] == vector_db:
+                            if emb["embedding_status"] == "yes":
+                                self.embedding_db = emb["embedding_db"]
+                                self.search_mode = "semantic"
+                                matched_lib_model = True
+                                break
+
         else:
             if len(embedding_record) > 0:
-                last_emb_record = embedding_record[-1]
-                if last_emb_record["embedding_status"] == "yes":
-                    self.embedding_db = last_emb_record["embedding_db"]
-                    self.search_mode = "semantic"
-                    self.embedding_model_name = last_emb_record["embedding_model"]
-                    matched_lib_model = True
+
+                if not vector_db:
+                    last_emb_record = embedding_record[-1]
+                    if last_emb_record["embedding_status"] == "yes":
+                        self.embedding_db = last_emb_record["embedding_db"]
+                        self.search_mode = "semantic"
+                        self.embedding_model_name = last_emb_record["embedding_model"]
+                        matched_lib_model = True
+                else:
+                    # look for match to passed vector_db and take most recent embedding
+                    embedding_record.reverse()
+                    for embs in embedding_record:
+                        if embs["embedding_db"] == vector_db:
+                            if embs["embedding_status"] == "yes":
+                                self.embedding_db = vector_db
+                                self.search_mode = "semantic"
+                                self.embedding_model_name = embs["embedding_model"]
+                                matched_lib_model = True
+                                break
 
         if matched_lib_model:
 
@@ -146,6 +171,12 @@ class Query:
 
         if query_mode:
             self.search_mode = query_mode
+
+        #   confirm that 'query_history' path exists
+        query_history_path = LLMWareConfig().get_query_path()
+        if not os.path.exists(query_history_path):
+            os.mkdir(query_history_path)
+            os.chmod(query_history_path, 0o777)
 
     def load_embedding_model(self):
 
