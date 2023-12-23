@@ -1855,7 +1855,7 @@ class Parser:
         if not os.path.exists(os.path.join(fp, fn)):
             raise FilePathDoesNotExistException(os.path.join(fp,fn))
 
-        output = None
+        output = []
 
         ext = fn.split(".")[-1].lower()
 
@@ -1873,7 +1873,11 @@ class Parser:
 
         # no history saved by the individual parsers, as it will be saved below
         if save_history:
-            ParserState().save_parser_output(self.parser_job_id, output)
+            if output:
+                ParserState().save_parser_output(self.parser_job_id, output)
+
+        if not output:
+            logging.warning("No content parsed from document - %s ", fn)
 
         return output
 
