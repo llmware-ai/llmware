@@ -26,7 +26,7 @@ def end_to_end_rag(model_name, vector_db="faiss"):
     os.environ["TOKENIZERS_PARALLELISM"] = "false" # Avoid a HuggingFace tokenizer warning
     query_results = Query(library).semantic_query("Termination", result_count=20)
 
-    # Create a new prompter using the GPT-4 and add the query_results captured above
+    # Create a new prompter and add the query_results captured above
     prompt_text = "Summarize the termination provisions"
     print (f"\n > Prompting LLM with '{prompt_text}'")
     prompter = Prompt().load_model(model_name)
@@ -49,17 +49,18 @@ if __name__ == "__main__":
 
     model_name = "llmware/bling-1b-0.1"
 
-    # Update this value with your own API Key, either by setting the env var or editing it directly here:
-    #   e.g., openai_api_key = os.environ.get("OPENAI_API_KEY", "")
+    #   To use an API key based model, 
+    #   (1) update the model name, e.g., model_name = "gpt-4"
+    #   (2) set API key in environment variable, e.g., os.environ["USER_MANAGED_OPENAI_API_KEY"] = "<your-key>"
 
+    #   to update the vector_db, please change the name below, and review the Embedding examples for configuration, if required
+    
     end_to_end_rag(model_name, vector_db="faiss")
 
 # **********************************************************************************************************
 # ************************************** SAMPLE OUTPUT *****************************************************
 # **********************************************************************************************************
 '''
-> python examples/rag_with_openai.py
-
  > Creating library 'Agreements'...
 
  > Generating vector embeddings using embedding model: 'industry-bert-contracts'...
@@ -75,6 +76,6 @@ if __name__ == "__main__":
 - If notice is given, the executive is allowed to seek other employment during the notice period.
 
  > Generating CSV report...
-File: /Users/turnham/llmware_data/prompt_history/interaction_report_Fri Sep 29 12:07:42 2023.csv
+File: /Users/.../llmware_data/prompt_history/interaction_report_Fri Dec 8 10:13:51 2023.csv
 
 '''
