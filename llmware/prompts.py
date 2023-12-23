@@ -30,6 +30,7 @@ from llmware.parsers import Parser
 from llmware.retrieval import Query
 from llmware.library import Library
 from llmware.exceptions import LibraryObjectNotFoundException, PromptNotInCatalogException, DependencyNotInstalledException
+from llmware.configs import LLMWareConfig
 
 
 class Prompt:
@@ -144,6 +145,18 @@ class Prompt:
         self.query_results = None
 
         self.model_catalog = ModelCatalog()
+
+        # check for llmware path & create if not already set up
+        if not os.path.exists(LLMWareConfig.get_llmware_path()):
+            # if not explicitly set up by user, then create folder directory structure
+            LLMWareConfig.setup_llmware_workspace()
+
+        self.prompt_path = LLMWareConfig.get_prompt_path()
+
+        # edge case - if llmware main path exists, but prompt path not created or deleted
+        if not os.path.exists(self.prompt_path):
+            os.mkdir(self.prompt_path)
+            os.chmod(self.prompt_path, 0o777)
 
     # changes in importing huggingface models
     def load_model(self, gen_model,api_key=None, from_hf=False, trust_remote_code=False):
@@ -276,6 +289,8 @@ class Prompt:
         sources = Sources(self).package_source(query_results,aggregate_source=True)
 
         # enables use of 'prompt_with_sources'
+        if not sources["text_batch"]:
+            logging.warning("No source added in .add_source_new_query.")
 
         return sources
 
@@ -287,6 +302,10 @@ class Prompt:
         #       sources = prompter.add_source_query_results(query_results["results"])
 
         sources = Sources(self).package_source(query_results,aggregate_source=True)
+
+        # enables use of 'prompt_with_sources'
+        if not sources["text_batch"]:
+            logging.warning("No source added in .add_source_query_results.")
 
         return sources
 
@@ -301,6 +320,10 @@ class Prompt:
 
         sources = Sources(self).package_source(query_results,aggregate_source=True)
 
+        # enables use of 'prompt_with_sources'
+        if not sources["text_batch"]:
+            logging.warning("No source added in .add_source_library.")
+
         return sources
 
     def add_source_wikipedia(self, topic, article_count=3, query=None):
@@ -309,13 +332,18 @@ class Prompt:
         output = Parser().parse_wiki([topic],write_to_db=False,target_results=article_count)
 
         if query:
-            output = Utilities().fast_search_dicts(query, output, remove_stop_words=True)
+            if output:
+                output = Utilities().fast_search_dicts(query, output, remove_stop_words=True)
 
         for i, entries in enumerate(output):
             logging.info("update: source entries - %s - %s", i, entries)
 
         # step 2 - package wiki article results as source, loaded to prompt, and packaged as 'llm context'
         sources = Sources(self).package_source(output,aggregate_source=True)
+
+        # enables use of 'prompt_with_sources'
+        if not sources["text_batch"]:
+            logging.warning("No source added in .add_source_wikipedia.")
 
         return sources
 
@@ -343,6 +371,10 @@ class Prompt:
 
         # step 2 - package as source
         sources = Sources(self).package_source([results], aggregate_source=True)
+
+        # enables use of 'prompt_with_sources'
+        if not sources["text_batch"]:
+            logging.warning("No source added in .add_source_yahoo_finance.")
 
         return sources
 
@@ -374,6 +406,10 @@ class Prompt:
         else:
             raise LibraryObjectNotFoundException
 
+        # enables use of 'prompt_with_sources'
+        if not sources["text_batch"]:
+            logging.warning("No source added in .add_source_knowledge_graph.")
+
         return sources
 
     def add_source_website(self, url, query=None):
@@ -382,14 +418,16 @@ class Prompt:
         output = Parser().parse_website(url,write_to_db=False,max_links=3)
 
         if query:
-            output = Utilities().fast_search_dicts(query, output, remove_stop_words=True)
+            if output:
+                output = Utilities().fast_search_dicts(query, output, remove_stop_words=True)
 
-        """
-        for i, entry in enumerate(output):
-            logging.info("update: website parse - %s - %s", i, entry)
-        """
+        if not output: output = []
 
         sources = Sources(self).package_source(output, aggregate_source=True)
+
+        # enables use of 'prompt_with_sources'
+        if not sources["text_batch"]:
+            logging.warning("No source added in .add_source_website.")
 
         return sources
 
@@ -401,15 +439,15 @@ class Prompt:
 
         # run in memory filtering to sub-select from document only items matching query
         if query:
-            output = Utilities().fast_search_dicts(query, output, remove_stop_words=True)
+            if output:
+                output = Utilities().fast_search_dicts(query, output, remove_stop_words=True)
 
-        """
-        for i, entry in enumerate(output):
-            print("update: results - ", i, len(entry["text"]),entry)
-            # logging.info("update: parsing output - %s - %s ", i, entry)
-        """
+        if not output: output = []
 
         sources = Sources(self).package_source(output, aggregate_source=True)
+
+        if not sources["text_batch"]:
+            logging.warning("No source added in .add_source_document.")
 
         return sources
 
@@ -427,6 +465,10 @@ class Prompt:
 
         sources = Sources(self).package_source(interaction_source, aggregate_source=True)
 
+        # enables use of 'prompt_with_sources'
+        if not sources["text_batch"]:
+            logging.warning("No source added in .add_source_last_interaction_step.")
+
         return sources
 
     def review_sources_summary(self):
@@ -436,10 +478,30 @@ class Prompt:
 
         source_summary_output = []
         for i, sources in enumerate(self.source_materials):
-            new_entry = {"batch_id": sources["batch_id"], "batch_stats": sources["batch_stats"]}
+
+            # add biblio to output
+            new_entry = {"batch_id": sources["batch_id"], "batch_stats": sources["batch_stats"],
+                         "biblio": sources["biblio"]}
+
             source_summary_output.append(new_entry)
 
         return source_summary_output
+
+    def verify_source_materials_attached(self):
+
+        # returns True if text present in source materials, else False
+
+        source_materials_attached = False
+
+        if len(self.source_materials) > 0:
+
+            for sources in self.source_materials:
+                if "text" in sources:
+                    if len(sources["text"]) > 0:
+                        source_materials_attached = True
+                        break
+
+        return source_materials_attached
 
     def prompt_with_source(self, prompt, prompt_name=None, source_id_list=None, first_source_only=True,
                            max_output=None, temperature=None):
@@ -467,9 +529,19 @@ class Prompt:
             self.temperature = temperature
             
         #   this method assumes a 'closed context' with set of preloaded sources into the prompt
-        if len(self.source_materials) == 0:
-            logging.error("error:  to use prompt_with_source, there must be a loaded source - try '.add_sources' first")
-            return [{}]
+        # if len(self.source_materials) == 0:
+        if not self.verify_source_materials_attached():
+
+            logging.warning("No source materials attached to the Prompt. "
+                            "Running prompt_with_source inference without source may lead to unexpected results.")
+
+            response_dict = self.prompt_main(prompt,prompt_name=self.prompt_type,context="",
+                                             register_trx=False,temperature=temperature)
+
+            # by default - prompt_with_source returns a list of response dictionaries
+            return [response_dict]
+            # logging.error("error:  to use prompt_with_source, there must be a loaded source - try '.add_sources' first")
+            # return [{}]
 
         #   this is the 'default' and will use the first batch of source material only
         if first_source_only:
@@ -1080,7 +1152,9 @@ class Sources:
         samples_per_batch = []
         sample_counter = 0
         doc_sources = {}
+
         doc_sources_per_batch = {}
+
         biblio_per_batch = []
         batches = []
         meta = []
@@ -1112,6 +1186,11 @@ class Sources:
                 batch_stats = self.prompt.source_materials[-1]["batch_stats"]
                 batch_id = len(self.prompt.source_materials) - 1
 
+                # experiment
+                doc_sources_per_batch = self.prompt.source_materials[-1]["biblio"]
+
+                # end - experiment
+
                 # 'pop' the last entry 'in-progress' off the list
                 self.prompt.source_materials = self.prompt.source_materials[:-1]
 
@@ -1135,6 +1214,8 @@ class Sources:
 
         for x in range(0, len(samples)):
 
+            # print("update: doc_sources_per_batch - ", x, doc_sources_per_batch)
+
             t = self.token_counter(samples[x]["text"])
 
             if "file_source" in samples[x]:
@@ -1145,8 +1226,11 @@ class Sources:
             if "page_num" in samples[x]:
                 page_num = samples[x]["page_num"]
             else:
-                # if can not retrieve from metadata, then set as default - page 1
-                page_num = 1
+                if "master_index" in samples[x]:
+                    page_num = samples[x]["master_index"]
+                else:
+                    # if can not retrieve from metadata, then set as default - page 1
+                    page_num = 1
 
             # keep aggregating text batch up to the size of the target context_window for selected model
             if (t + token_counter) < self.prompt.context_window_size:
@@ -1190,7 +1274,7 @@ class Sources:
 
                 biblio_per_batch.append(doc_sources_per_batch)
 
-                doc_sources_per_batch = {}
+                # doc_sources_per_batch = {}
 
                 if "file_source" in samples[x]:
                     doc_filename = samples[x]["file_source"]
@@ -1200,26 +1284,38 @@ class Sources:
                 if "page_num" in samples[x]:
                     page_num = samples[x]["page_num"]
                 else:
-                    page_num = 1
+                    # adding check for master_index
+                    if "master_index" in samples[x]:
+                        page_num = samples[x]["master_index"]
+                    else:
+                        # if no page_num identified, then default is page 1
+                        page_num = 1
 
-                doc_sources_per_batch.update({doc_filename: [page_num]})
+                # doc_sources_per_batch.update({doc_filename: [page_num]})
+                biblio = doc_sources_per_batch
+
+                # reset
+                doc_sources_per_batch = {}
 
                 batches.append(current_batch)
                 meta.append(batch_metadata)
 
                 if add_to_prompt:
-                    new_batch_dict = {"batch_id": batches, "text": current_batch, "metadata": batch_metadata,
-                                      "biblio": doc_sources_per_batch, "batch_stats":
+                    # corrected batch_id counter
+                    new_batch_dict = {"batch_id": batch_id, "text": current_batch, "metadata": batch_metadata,
+                                      "biblio": biblio, "batch_stats":
                                           {"tokens": token_counter,
                                            "chars": len(current_batch),
                                            "samples": len(batch_metadata)}}
 
                     self.prompt.source_materials.append(new_batch_dict)
 
+                    batch_id += 1
+
                 # reset current_batch -> current snippet
                 current_batch = samples[x]["text"]
                 token_counter = t
-                new_source = {"batch_source_num": 0,
+                new_source = {"batch_source_id": 0,
                               "evidence_start_char": 0,
                               "evidence_stop_char": len(samples[x]["text"]),
                               "source_name": source_fn,
@@ -1229,17 +1325,29 @@ class Sources:
                 batch_metadata = [new_source]
                 char_counter = len(samples[x]["text"])
 
+                # insert change - dec 23
+                if doc_filename not in doc_sources_per_batch:
+                    doc_sources_per_batch.update({doc_filename: [page_num]})
+                else:
+                    if page_num not in doc_sources_per_batch[doc_filename]:
+                        doc_sources_per_batch[doc_filename].append(page_num)
+                # end - insert change
+
         if len(current_batch) > 0:
+
             batches.append(current_batch)
             meta.append(batch_metadata)
 
             if add_to_prompt:
-                new_batch_dict = {"batch_id": batches, "text": current_batch, "metadata": batch_metadata,
+                # change batch_id from batches -> len(batches)
+                new_batch_dict = {"batch_id": batch_id, "text": current_batch, "metadata": batch_metadata,
                                   "biblio": doc_sources_per_batch, "batch_stats": {"tokens": token_counter,
                                                                                    "chars": len(current_batch),
                                                                                     "samples": len(batch_metadata)}}
 
                 self.prompt.source_materials.append(new_batch_dict)
+
+                # batch_id += 1
 
             # add new stats for last batch
             tokens_per_batch.append(token_counter)
@@ -1588,10 +1696,15 @@ class QualityCheck:
 
             for tok in ai_tokens:
                 for i, etoks in enumerate(evidence_tokens_tmp):
-                    if tok.lower() == etoks.lower():
-                        match += 1
-                        ev_match_tokens.append(i)
-                        break
+
+                    # \n left by tokenization
+                    etoks = etoks.strip()
+
+                    if etoks:
+                        if tok.lower() == etoks.lower():
+                            match += 1
+                            ev_match_tokens.append(i)
+                            break
 
             match_score = match / ai_token_len
 
