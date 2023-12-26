@@ -8,8 +8,10 @@
     
     (B) Installing Redis - 
     
-    If you need help installing Redis, there are many great online sources and communities, e.g.,:
+    If you need help installing Redis, please see the official redis implementation docs (or many widely available tutorials), e.g.,:
         -- https://redis.io/docs/install/install-redis/
+        -- for a fast development install with docker-compose:
+             -- please see docker-compose-redis-stack.yaml in the llmware repository
 
     (C) Configurations - 
         -- set os.environ variables to 'automatically' pass in installing embedding
