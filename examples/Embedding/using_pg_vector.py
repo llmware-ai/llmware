@@ -3,9 +3,10 @@
 
 """ (A) Python Dependencies - 
 
-    As a first step, you should pip install two key dependencies not included in the llmware package:
-    1.  pip3 install psycopg
-    2.  pip3 install pgvector
+    As a first step, you should pip install three Postgres dependencies not included in the llmware package:
+    1.  pip3 install psycopg-binary
+    2.  pip3 install psycopg
+    3.  pip3 install pgvector
     
     (B) Installing Postgres - 
     
@@ -15,14 +16,15 @@
         -- Linux - https://www.postgresqltutorial.com/postgresql-getting-started/install-postgresql-linux/
         -- Windows - https://www.postgresqltutorial.com/postgresql-getting-started/install-postgresql/
         -- Docker - https://www.docker.com/blog/how-to-use-the-postgres-docker-official-image/
+        -- please also see the docker-compose-ankane.yml script provided in the llmware script repository
         
     (C) Configurations - 
     
         -- set os.environ variables to 'automatically' pass in installing embedding
         -- os.environ["USER_MANAGED_PG_HOST"] = "localhost"
         -- os.environ["USER_MANAGED_PG_PORT"] = 5432
-        -- os.environ["USER_MANAGED_PG_DB_NAME"] = "<DB that exists on Database>"
-        -- os.environ["USER_MANAGED_PG_USER_NAME"] = optional 
+        -- os.environ["USER_MANAGED_PG_DB_NAME"] = "postgres"      # by default
+        -- os.environ["USER_MANAGED_PG_USER_NAME"] = "postgres"    # by default
         -- os.environ["USER_MANAGED_PG_PW"] = optional
         
 """
@@ -34,6 +36,9 @@ from llmware.setup import Setup
 from llmware.library import Library
 from llmware.retrieval import Query
 
+#  example default postgres install with database = postgres & user = postgres
+os.environ["USER_MANAGED_PG_DB_NAME"] = "postgres"
+os.environ["USER_MANAGED_PG_USER_NAME"] = "postgres"
 
 def build_lib (library_name, folder="Agreements"):
 
