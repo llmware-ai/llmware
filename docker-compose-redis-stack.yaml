@@ -1,0 +1,16 @@
+
+
+version: '3.5'
+
+services:
+
+  redis:
+    image: redis/redis-stack-server:latest
+    container_name: redis-standalone
+    ports:
+      - 6379:6379
+    restart: always
+    environment:
+      - "REDIS_ARGS=--enable-debug-command yes --enable-module-command yes"
+    volumes:
+      - ./data
