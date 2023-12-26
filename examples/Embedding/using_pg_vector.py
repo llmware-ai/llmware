@@ -16,7 +16,7 @@
         -- Linux - https://www.postgresqltutorial.com/postgresql-getting-started/install-postgresql-linux/
         -- Windows - https://www.postgresqltutorial.com/postgresql-getting-started/install-postgresql/
         -- Docker - https://www.docker.com/blog/how-to-use-the-postgres-docker-official-image/
-        -- please also see the docker-compose-ankane.yml script provided in the llmware script repository
+        -- please also see the docker-compose-ankane.yaml script provided in the llmware script repository
         
     (C) Configurations - 
     
