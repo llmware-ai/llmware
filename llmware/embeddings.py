@@ -1359,11 +1359,13 @@ class EmbeddingPGVector:
         #   Connect to postgres
         postgres_host = os.environ.get("USER_MANAGED_PG_HOST","localhost")
         postgres_port = os.environ.get("USER_MANAGED_PG_PORT", 5432)
-        postgres_db_name = os.environ.get("USER_MANAGED_PG_DB_NAME", self.library.account_name)
-        postgres_user_name = os.environ.get("USER_MANAGED_PG_USER_NAME")
+        postgres_db_name = os.environ.get("USER_MANAGED_PG_DB_NAME", "postgres")
+        postgres_user_name = os.environ.get("USER_MANAGED_PG_USER_NAME", "postgres")
         # postgres_full_schema = os.environ.get("USER_MANAGED_PG_FULL_SCHEMA", full_schema)
-        postgres_pw = ""
-
+        
+        #   default is no password unless user sets in os environ variable
+        postgres_pw = os.environ.get("USER_MANAGED_PG_PW", "")
+        
         #   determines whether to use 'skinny' schema or 'full' schema
         #   --note:  in future releases, we will be building out more support for PostGres
         self.full_schema = full_schema
