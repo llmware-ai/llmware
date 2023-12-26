@@ -1208,9 +1208,15 @@ class Query:
 
             if entry["added_to_collection"]:
 
-                time_str="%a %b %d %H:%M:%S %Y"
+                try:
+                    # First try Linux format
+                    time_str = "%a %b %d %H:%M:%S %Y"
+                    doc_date = datetime.strptime(entry["added_to_collection"], time_str)
 
-                doc_date = datetime.strptime(entry["added_to_collection"], time_str)
+                except ValueError:
+                    # If it fails, try Windows format
+                    time_str = "%m/%d/%y %H:%M:%S"
+                    doc_date = datetime.strptime(entry["added_to_collection"], time_str)
 
                 time_accept = self._time_window_filter(first_date,last_date,doc_date)
 
