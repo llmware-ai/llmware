@@ -715,21 +715,19 @@ class Query:
 
         return results_dict
 
-    def dual_pass_query (self, query, result_count=20, primary="text", safety_check=True,results_only=True):
+    def dual_pass_query(self, query, result_count=20, primary="text", safety_check=True, results_only=True):
 
         # safety check
         if safety_check and result_count > 100:
-
             logging.warning("warning: Query().dual_pass_query runs a comparison of output rankings using semantic "
                             "and text.  This particular implementation is not optimized for sample lists longer "
                             "than ~100 X 100.  To remove this warning, there are two options - (1) set the "
                             "safety_check to False in the method declaration, or (2) keep sample count below 100.")
-
             result_count = 100
 
         # run dual pass - text + semantic
-        retrieval_dict_text = self.text_query(query, result_count=result_count,results_only=True)
-        retrieval_dict_semantic = self.semantic_query(query, result_count=result_count,results_only=True)
+        retrieval_dict_text = self.text_query(query, result_count=result_count, results_only=True)
+        retrieval_dict_semantic = self.semantic_query(query, result_count=result_count, results_only=True)
 
         if primary == "text":
             first_list = retrieval_dict_text
@@ -744,28 +742,30 @@ class Query:
         matched_second_list = []
 
         # this is the time intensive "n-squared" loop - probably OK up to 100+
-
         for i, entry in enumerate(first_list):
             match = -1
             for j, entry2 in enumerate(second_list):
                 if entry["_id"] == entry2["_id"]:
+                    entry["match_status"] = "matched"  # Tagging as matched
                     confirming_list.append(entry)
                     match = 1
                     matched_second_list.append(entry2["_id"])
                     break
             if match == -1:
+                entry["match_status"] = "primary_only"  # Tagging as primary only
                 primary_only.append(entry)
 
         for k, entry2 in enumerate(second_list):
             if entry2["_id"] not in matched_second_list:
+                entry2["match_status"] = "secondary_only"  # Tagging as secondary only
                 secondary_only.append(entry2)
 
         # assemble merged top results
         merged_results = []
         merged_results += confirming_list
 
-        select_primary = min(len(primary_only),5)
-        select_secondary = min(len(secondary_only),5)
+        select_primary = min(len(primary_only), 5)
+        select_secondary = min(len(secondary_only), 5)
 
         merged_results += primary_only[0:select_primary]
         merged_results += secondary_only[0:select_secondary]
@@ -780,15 +780,16 @@ class Query:
                 doc_fn_list.append(qr["file_source"])
 
         retrieval_dict = {"results": merged_results,
-                          "text_results": retrieval_dict_semantic,
-                          "semantic_results": retrieval_dict_semantic,
-                          "doc_ID": doc_id_list,
-                          "file_source": doc_fn_list}
+                        "text_results": retrieval_dict_text,
+                        "semantic_results": retrieval_dict_semantic,
+                        "doc_ID": doc_id_list,
+                        "file_source": doc_fn_list}
 
         if results_only:
             return merged_results
 
         return retrieval_dict
+
 
     def augment_qr (self, query_result, query_topic, augment_query="semantic"):
 
@@ -1207,9 +1208,15 @@ class Query:
 
             if entry["added_to_collection"]:
 
-                time_str="%a %b %d %H:%M:%S %Y"
+                try:
+                    # First try Linux format
+                    time_str = "%a %b %d %H:%M:%S %Y"
+                    doc_date = datetime.strptime(entry["added_to_collection"], time_str)
 
-                doc_date = datetime.strptime(entry["added_to_collection"], time_str)
+                except ValueError:
+                    # If it fails, try Windows format
+                    time_str = "%m/%d/%y %H:%M:%S"
+                    doc_date = datetime.strptime(entry["added_to_collection"], time_str)
 
                 time_accept = self._time_window_filter(first_date,last_date,doc_date)
 
