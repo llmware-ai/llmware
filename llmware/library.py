@@ -352,7 +352,7 @@ class Library:
         target_path = os.path.join(LLMWareConfig.get_input_path(), file_name)
 
         shutil.copyfile(file_path,target_path)
-        self.add_files()
+        return self.add_files()
 
     # main method for adding file - pass local filepath and appropriate parsers will be called
     def add_files (self, input_folder_path=None):
