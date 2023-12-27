@@ -897,7 +897,8 @@ class Prompt:
 
             for i, entries in enumerate(response):
                 # print("update: summaries - ", i, entries)
-                output_text += entries["llm_response"] + "\n"
+                if "llm_response" in entries:
+                    output_text += entries["llm_response"] + "\n"
 
             return output_text
 
@@ -941,7 +942,8 @@ class Prompt:
 
             for i, entries in enumerate(response):
                 # print("update: summaries - ", i, entries)
-                output_text += entries["llm_response"] + "\n"
+                if "llm_response" in entries:
+                    output_text += entries["llm_response"] + "\n"
 
             return output_text
 
