@@ -79,7 +79,8 @@ def rag (library_name):
             response = prompter.prompt_with_source(query, prompt_name="default_with_context", temperature=0.3)
 
             for resp in response:
-                print("\nupdate: llm answer - ", resp["llm_response"])
+                if "llm_response" in resp:
+                    print("\nupdate: llm answer - ", resp["llm_response"])
 
             # start fresh for next document
             prompter.clear_source_materials()
