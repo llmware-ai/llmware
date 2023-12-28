@@ -60,11 +60,6 @@ class RunTests():
         Logger().log("")
         return command_output
 
-try:
-    subprocess.run(['bash', 'source set-env.sh'], check=True)
-    print(f"Shell script 'set-env.sh' executed successfully.")
-except subprocess.CalledProcessError as e:
-    print(f"Error running shell script: {e}")
 test_runner = RunTests()
 test_runner.update_llmware_install()
 test_runner.clean_the_environment()
