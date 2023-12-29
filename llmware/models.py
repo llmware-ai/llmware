@@ -361,7 +361,7 @@ class ModelRegistry:
 
     registered_models = global_model_repo_catalog_list
     model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
-                     "LLMWareSemanticModel", "HFEmbeddingModel",
+                     "LLMWareSemanticModel", "HFEmbeddingModel", "OpenChatModel",
                      "OpenAIGenModel", "ClaudeModel", "GoogleGenModel",
                      "CohereGenModel", "JurassicModel", "AIBReadGPTModel",
                      "OpenAIEmbeddingModel", "CohereEmbeddingModel","GoogleEmbeddingModel"]
@@ -406,15 +406,15 @@ class ModelRegistry:
 
     @classmethod
     def add_gguf_model(cls, model_name, gguf_model_repo, gguf_model_file_name, prompt_wrapper=None,
-                            eos_token_id=0, display_name=None, trailing_space="", temperature=0.3,
-                            context_window=2048, instruction_following=False):
+                       eos_token_id=0, display_name=None, trailing_space="", temperature=0.3,
+                       context_window=2048, instruction_following=False):
 
         if not display_name:
             display_name = model_name
 
         new_model_card_dict = {"model_name": model_name, "display_name": display_name,
-                               "model_family": "GGUFGenerativeModel", "model_category": "generative-api",
-                               "model_location": "llmware_repo", "is_trainable": "no", "context_window": context_window,
+                               "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
+                               "model_location": "llmware_repo", "context_window": context_window,
                                "instruction_following": instruction_following, "prompt_wrapper": prompt_wrapper,
                                "temperature": temperature, "trailing_space": trailing_space,
                                "eos_token_id": eos_token_id,
@@ -425,6 +425,26 @@ class ModelRegistry:
         cls.registered_models.append(new_model_card_dict)
 
         return cls.registered_models
+
+    def add_open_chat_model(cls, model_name, api_base=None, model_type="chat", display_name=None,
+                            context_window=4096, instruction_following=True, prompt_wrapper="",
+                            temperature=0.5):
+
+        if not display_name:
+            display_name = model_name
+
+        new_model_card_dict = {"model_name": model_name, "model_type": model_type, "prompt_wrapper": prompt_wrapper,
+                               "display_name": display_name,
+                               "model_family": "OpenChatModel", "model_category": "generative-api",
+                               "model_location": "api", "context_window": context_window,
+                               "instruction_following": instruction_following,
+                               "temperature": temperature, "trailing_space": "",
+                               "api_base": api_base
+                               }
+
+        cls.registered_models.append(new_model_card_dict)
+
+        return 0
 
 
 def build_json_models_manifest(manifest_dict, fp, fn="llmware_supported_models_manifest.json"):
@@ -451,6 +471,7 @@ class ModelCatalog:
                                 "OpenAIGenModel", "ClaudeModel", "GoogleGenModel",
                                 "CohereGenModel", "JurassicModel", "AIBReadGPTModel",
                                 "HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
+                                "OpenChatModel",
 
                                 # embedding model classes
                                 "LLMWareSemanticModel",
@@ -459,7 +480,7 @@ class ModelCatalog:
                              ]
 
         self.open_source_model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
-                                          "LLMWareSemanticModel","HFEmbeddingModel"]
+                                          "LLMWareSemanticModel","HFEmbeddingModel", "OpenChatModel"]
 
         # self.global_model_list = global_model_repo_catalog_list
         self.global_model_list = ModelRegistry().get_model_list()
@@ -618,6 +639,10 @@ class ModelCatalog:
             if model_class == "GoogleGenModel": my_model = GoogleGenModel(model_name=model_name,
                                                                           context_window=context_window,
                                                                           api_key=api_key)
+
+            if model_class == "OpenChatModel": my_model = OpenChatModel(model_name=model_name,
+                                                                        context_window=context_window,
+                                                                        api_key=api_key, model_card=model_card)
 
             # stub for READ GPT provided -> will add other 3rd party models too
             if model_class == "AIBReadGPTModel": my_model = AIBReadGPTModel(model_name=model_name,api_key=api_key)
@@ -878,6 +903,236 @@ class ModelCatalog:
         return my_model
 
 
+#   follows the OpenAI chat prompt format, and is 'drop in' replacement for any compatible inference server
+
+class OpenChatModel:
+
+    def __init__(self, model_name=None,  model_card=None, context_window=4000,prompt_wrapper=None, api_key="not_used"):
+
+        #   expected to take config parameters from model card
+        self.api_key = api_key
+        self.model_name = model_name
+        self.model_card = model_card
+
+        #   by default, will use the 'chat' open interface, but alternative is 'completion' api
+        self.model_type = "chat"
+
+        #   assume that prompt_wrapper is set in the model card configuration
+        self.prompt_wrapper = prompt_wrapper
+
+        #   this is the key parameter that needs to be configured to pass to open chat inference server
+        self.api_base = ""
+
+        if self.model_card:
+
+            if "model_type" in self.model_card:
+                self.model_type = self.model_card["model_type"]
+
+            if "api_base" in self.model_card:
+                self.api_base = self.model_card["api_base"]
+
+            if "prompt_wrapper" in self.model_card:
+                self.prompt_wrapper = self.model_card["prompt_wrapper"]
+
+        self.error_message = "\nUnable to connect to OpenChat Model. Please try again later."
+
+        self.separator = "\n"
+
+        # assume input (50%) + output (50%)
+        self.max_total_len = context_window
+        self.max_input_len = int(context_window * 0.5)
+        self.llm_max_output_len = int(context_window * 0.5)
+
+        # inference settings
+        self.temperature = 0.7
+        self.target_requested_output_tokens = 100
+        self.add_prompt_engineering = False
+        self.add_context = ""
+
+    def set_api_key (self, api_key, env_var="USER_MANAGED_OPEN_CHAT_API_KEY"):
+
+        # set api_key
+        os.environ[env_var] = api_key
+        logging.info("update: added and stored OpenChat api_key in environmental variable- %s", env_var)
+
+        return self
+
+    def _get_api_key (self, env_var="USER_MANAGED_OPEN_CHAT_API_KEY"):
+
+        #   not expected to use api_key - so may be empty - handled in inference separately
+        self.api_key = os.environ.get(env_var)
+
+        return self.api_key
+
+    def token_counter(self, text_sample):
+
+        #   open ai recommends using the open source gpt2 tokenizer to count tokens
+        tokenizer = Utilities().get_default_tokenizer
+        toks = tokenizer.encode(text_sample).ids
+
+        return len(toks)
+
+    def prompt_engineer_chat(self, query, context, inference_dict=None):
+
+        if not self.add_prompt_engineering:
+            if context:
+                selected_prompt = "default_with_context"
+            else:
+                selected_prompt = "default_no_context"
+        else:
+            selected_prompt = self.add_prompt_engineering
+
+        prompt_dict = PromptCatalog().build_core_prompt(prompt_name=selected_prompt,
+                                                        separator=self.separator,
+                                                        query=query, context=context,
+                                                        inference_dict=inference_dict)
+
+        system_message = prompt_dict["prompt_card"]["system_message"]
+        if not system_message:
+            system_message = "You are a helpful assistant."
+
+        core_prompt = prompt_dict["core_prompt"]
+
+        #   final wrapping, based on model-specific instruct training format
+        #   --provides a final 'wrapper' around the core prompt text, based on model expectations
+
+        if self.prompt_wrapper:
+            core_prompt = PromptCatalog().apply_prompt_wrapper(core_prompt, self.prompt_wrapper, instruction=None)
+
+        messages = [
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": core_prompt}
+            ]
+
+        return messages
+
+    def prompt_engineer_completion (self, query, context, inference_dict=None):
+
+        if not self.add_prompt_engineering:
+            if context:
+                selected_prompt = "default_with_context"
+            else:
+                selected_prompt = "default_no_context"
+
+        else:
+            selected_prompt = self.add_prompt_engineering
+
+        prompt_dict = PromptCatalog().build_core_prompt(prompt_name=selected_prompt,
+                                                        separator=self.separator,
+                                                        query=query, context=context,
+                                                        inference_dict=inference_dict)
+
+        core_prompt = prompt_dict["core_prompt"]
+
+        #   final wrapping, based on model-specific instruct training format
+        #   --provides a final 'wrapper' around the core prompt text, based on model expectations
+
+        if self.prompt_wrapper:
+            core_prompt = PromptCatalog().apply_prompt_wrapper(core_prompt, self.prompt_wrapper, instruction=None)
+
+        return core_prompt
+
+    def inference(self, prompt, add_context=None, add_prompt_engineering=None, inference_dict=None,
+                  api_key=None):
+
+        if add_context:
+            self.add_context = add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        # api_key
+        if api_key:
+            self.api_key = api_key
+
+        if not self.api_key:
+            self.api_key = self._get_api_key()
+
+        # expect that .api_base will route to local open chat inference server
+        #   -- assumed that *** api_key likely not used ***
+        if not self.api_key:
+            openai.api_key = "not-used"
+        else:
+            openai.api_key = self.api_key
+
+        # default case - pass the prompt received without change
+        prompt_enriched = prompt
+
+        usage = {}
+        time_start = time.time()
+
+        # save current state of openai.api_base
+        openai_api_base_entering_state = openai.api_base
+
+        # set api_base based on configs
+        openai.api_base = self.api_base
+
+        try:
+
+            if self.model_type == "chat":
+
+                messages = self.prompt_engineer_chat(prompt_enriched, self.add_context, inference_dict)
+
+                response = openai.ChatCompletion.create(model=self.model_name,messages=messages,
+                                                        max_tokens=self.target_requested_output_tokens)
+
+                text_out = response["choices"][0]["message"]["content"]
+
+                usage = {"input": response["usage"]["prompt_tokens"],
+                         "output": response["usage"]["completion_tokens"],
+                         "total": response["usage"]["total_tokens"],
+                         "metric": "tokens",
+                         "processing_time": time.time() - time_start}
+
+            else:
+
+                # traditional completion 'instruct gpt' models
+
+                prompt_enriched = self.prompt_engineer_completion(prompt_enriched,
+                                                                  self.add_context,
+                                                                  inference_dict=inference_dict)
+
+                prompt_final = prompt_enriched
+
+                text_prompt = prompt_final + self.separator
+
+                response = openai.Completion.create(model=self.model_name, prompt=text_prompt,
+                                                    temperature=self.temperature,
+                                                    max_tokens=self.target_requested_output_tokens)
+
+                text_out = response["choices"][0]["text"]
+                # openai response "usage" dict - {"completion_tokens" | "prompt_tokens" | total_tokens"}
+
+                usage = {"input": response["usage"]["prompt_tokens"],
+                         "output": response["usage"]["completion_tokens"],
+                         "total": response["usage"]["total_tokens"],
+                         "metric": "tokens",
+                         "processing_time": time.time() - time_start}
+
+        except Exception as e:
+
+            text_out = "/***ERROR***/"
+            usage = {"input":0, "output":0, "total":0, "metric": "tokens",
+                     "processing_time": time.time() - time_start}
+
+            logging.error("error: Open Chat model inference produced error - %s ", e)
+
+        # reset openai.api_base
+        openai.api_base = openai_api_base_entering_state
+
+        output_response = {"llm_response": text_out, "usage": usage}
+
+        return output_response
+
+
 class OpenAIGenModel:
 
     def __init__(self, model_name=None, api_key=None, context_window=4000):
@@ -1003,6 +1258,10 @@ class OpenAIGenModel:
         # default case - pass the prompt received without change
         prompt_enriched = prompt
 
+        # set as default openai base
+        openai_api_base_entering_state = openai.api_base
+        openai.api_base = "https://api.openai.com/v1"
+
         usage = {}
         time_start = time.time()
 
@@ -1059,6 +1318,9 @@ class OpenAIGenModel:
 
             # raise LLMInferenceResponseException(e)
             logging.error("error: OpenAI model inference produced error - %s ", e)
+
+        # reset openai api_base
+        openai.api_base = openai_api_base_entering_state
 
         # will look to capture usage metadata
         #   "usage" = {"completion_tokens", "prompt_tokens", "total_tokens"}
@@ -2054,6 +2316,10 @@ class OpenAIEmbeddingModel:
             text_prompt = [text_sample]
             input_len = 1
 
+        # set as default openai base
+        openai_api_base_entering_state = openai.api_base
+        openai.api_base = "https://api.openai.com/v1"
+
         openai.api_key = self.api_key
         response = openai.Embedding.create(model=model, input=text_prompt)
 
@@ -2071,6 +2337,10 @@ class OpenAIEmbeddingModel:
 
         # embedding = np.array(embedding)
         # embedding_2d = np.expand_dims(embedding, 0)
+
+        # reset global environment variable to state before the inference
+        #   --in most cases, this will be the same, but allows for overloaded use of this var with OpenChat
+        openai.api_base = openai_api_base_entering_state
 
         return embedding
 
