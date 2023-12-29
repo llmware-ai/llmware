@@ -70,7 +70,9 @@ class Status:
 
     # Kick off a thread that will poll and print the status
     def tail_embedding_status(self, library_name, model_name, poll_seconds=0.2):
-        Thread(target = self._tail_embedding_status, args = (library_name, model_name, poll_seconds)).start()
+        thread = Thread(target = self._tail_embedding_status, args = (library_name, model_name, poll_seconds))
+        thread.daemon=True
+        thread.start()
 
     def _tail_embedding_status(self, library_name, model_name, poll_seconds=0.2):
         current_summary = ""

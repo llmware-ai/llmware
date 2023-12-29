@@ -42,7 +42,7 @@ class RunTests():
         Logger().log("Resetting Milvus (deleting all collections)")
         from llmware.configs import LLMWareConfig
         from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection
-        connections.connect("default", host="localhost" , port=19530)
+        connections.connect("default", host=os.environ.get('MILVUS_HOST','localhost') , port=19530)
         for collection in utility.list_collections():
             utility.drop_collection(collection)
 
