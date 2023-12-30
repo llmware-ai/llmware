@@ -352,7 +352,7 @@ def hello_world_questions():
 
 
 # this is the main script to be run
-def bling_meets_llmware_hello_world (model_name, from_hf=False):
+def bling_meets_llmware_hello_world (model_name):
 
     t0 = time.time()
     test_list = hello_world_questions()
@@ -361,7 +361,7 @@ def bling_meets_llmware_hello_world (model_name, from_hf=False):
     # Note: Some newer models use local custom code in their HF repos which is not trusted by default
     #  For now, you can pass in a dummy api_key and we'll set the right config to trust that code
     #  This will likely be changing in the future
-    prompter = Prompt().load_model(model_name, from_hf=from_hf, api_key="dummy_not_used_by_hf")
+    prompter = Prompt().load_model(model_name)
 
     t1 = time.time()
     print(f"\n > Model {model_name} load time: {t1-t0} seconds")
@@ -386,8 +386,9 @@ def bling_meets_llmware_hello_world (model_name, from_hf=False):
 
 if __name__ == "__main__":
 
-    # list of 8 available 'rag-instruct' bling models on HuggingFace
+    # list of 'rag-instruct' laptop-ready bling models on HuggingFace
     model_list = ["llmware/bling-1b-0.1",
+                  "llmware/bling-tiny-llama-v0",
                   "llmware/bling-1.4b-0.1",
                   "llmware/bling-falcon-1b-0.1",
                   "llmware/bling-cerebras-1.3b-0.1",
@@ -397,5 +398,6 @@ if __name__ == "__main__":
                   "llmware/bling-stable-lm-3b-4e1t-v0"
                   ]
 
-    bling_meets_llmware_hello_world(model_list[0], from_hf=True)
+    #   try the newest bling model - 'tiny-llama'
+    bling_meets_llmware_hello_world(model_list[1])
 

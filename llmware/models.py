@@ -239,6 +239,12 @@ global_model_repo_catalog_list = [
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-cerebras-1.3b-0.1",
      "custom_model_files": [], "custom_model_repo": ""},
 
+    {"model_name": "llmware/bling-tiny-llama-v0", "display_name": "Bling-Tiny-Llama-v0",
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-tiny-llama-v0",
+     "custom_model_files": [], "custom_model_repo": ""},
+
     # create dragon models
     {"model_name": "llmware/dragon-yi-6b-v0", "display_name": "Dragon-Yi-6B",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
