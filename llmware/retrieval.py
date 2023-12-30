@@ -575,7 +575,7 @@ class Query:
         return qr_dict
 
         # basic semantic query
-    def semantic_query (self, query, result_count=20, embedding_distance_threshold=None, results_only=True):
+    def semantic_query(self, query, result_count=20, embedding_distance_threshold=None, custom_filter=None, results_only=True):
 
         if not embedding_distance_threshold:
             embedding_distance_threshold = self.semantic_distance_threshold
@@ -603,25 +603,30 @@ class Query:
 
         qr_raw = []
 
-        # may need to conform the output structure of semantic_block_results
+        # Collecting semantic results
         for i, blocks in enumerate(semantic_block_results):
-
-            # assume that each block has at least two components:  [0] core mongo block, and [1] distance metric
             if blocks[1] < embedding_distance_threshold:
+                block_data = blocks[0]
+                block_data["distance"] = blocks[1]
+                block_data["semantic"] = "semantic"
+                block_data["score"] = 0.0
+                qr_raw.append(block_data)
 
-                blocks[0]["distance"] = blocks[1]
-                blocks[0]["semantic"] = "semantic"
-                blocks[0]["score"] = 0.0
+        # Applying custom filter if provided
+        if custom_filter:
+            qr_raw = self.apply_custom_filter(qr_raw, custom_filter)
 
-                qr_raw.append(blocks[0])
+        # Processing results
+        results_dict = self._cursor_to_qr(query, qr_raw, result_count=result_count)
 
-        # pick up with boilerplate
-        results_dict = self._cursor_to_qr (query, qr_raw,result_count=result_count)
+        return results_dict["results"] if results_only else results_dict
 
-        if results_only:
-            return results_dict["results"]
-
-        return results_dict
+    def apply_custom_filter(self, results, custom_filter):
+        filtered_results = []
+        for result in results:
+            if all(result.get(key) == value for key, value in custom_filter.items()):
+                filtered_results.append(result)
+        return filtered_results
 
     # basic semantic query
     def semantic_query_with_document_filter(self, query, filter_dict, embedding_distance_threshold=None,
@@ -715,8 +720,8 @@ class Query:
 
         return results_dict
 
-    def dual_pass_query(self, query, result_count=20, primary="text", safety_check=True, results_only=True):
-
+    def dual_pass_query(self, query, result_count=20, primary="text", safety_check=True, custom_filter=None, results_only=True):
+        
         # safety check
         if safety_check and result_count > 100:
             logging.warning("warning: Query().dual_pass_query runs a comparison of output rankings using semantic "
@@ -726,8 +731,14 @@ class Query:
             result_count = 100
 
         # run dual pass - text + semantic
-        retrieval_dict_text = self.text_query(query, result_count=result_count, results_only=True)
-        retrieval_dict_semantic = self.semantic_query(query, result_count=result_count, results_only=True)
+        # Choose appropriate text query method based on custom_filter
+        if custom_filter:
+            retrieval_dict_text = self.text_query_with_custom_filter(query, custom_filter, result_count=result_count, results_only=True)
+        else:
+            retrieval_dict_text = self.text_query(query, result_count=result_count, results_only=True)
+
+        # Semantic query with custom filter
+        retrieval_dict_semantic = self.semantic_query(query, result_count=result_count, custom_filter=custom_filter, results_only=True)
 
         if primary == "text":
             first_list = retrieval_dict_text
