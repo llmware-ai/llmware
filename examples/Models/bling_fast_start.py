@@ -358,9 +358,7 @@ def bling_meets_llmware_hello_world (model_name):
     test_list = hello_world_questions()
 
     print(f"\n > Loading Model: {model_name}...")
-    # Note: Some newer models use local custom code in their HF repos which is not trusted by default
-    #  For now, you can pass in a dummy api_key and we'll set the right config to trust that code
-    #  This will likely be changing in the future
+
     prompter = Prompt().load_model(model_name)
 
     t1 = time.time()
