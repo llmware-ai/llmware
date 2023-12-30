@@ -484,7 +484,7 @@ class Library:
 
     def install_new_embedding (self, embedding_model_name=None, vector_db="milvus",
                                from_hf= False, from_sentence_transformer=False, model=None, tokenizer=None, model_api_key=None,
-                               vector_db_api_key=None, batch_size=500):
+                               vector_db_api_key=None, batch_size=500, embedding_db_name=None):
 
         embeddings = None
         my_model = None
@@ -514,7 +514,8 @@ class Library:
             return -1
 
         # step 2 - pass loaded embedding model to EmbeddingHandler, which will route to the appropriate resource
-        embeddings = EmbeddingHandler(self).create_new_embedding(vector_db, my_model, batch_size=batch_size)
+        embeddings = EmbeddingHandler(self).create_new_embedding(vector_db, my_model, batch_size=batch_size,
+                                                                 embedding_db_name=embedding_db_name)
 
         if not embeddings:
             logging.warning("warning: no embeddings created")
