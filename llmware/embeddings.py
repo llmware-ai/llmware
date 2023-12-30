@@ -187,7 +187,8 @@ class EmbeddingMilvus:
         # Connect to milvus
         connections.connect(self.milvus_alias,
                             host=LLMWareConfig.get_config("milvus_host"),
-                            port=LLMWareConfig.get_config("milvus_port"))
+                            port=LLMWareConfig.get_config("milvus_port"),
+                            db_name=LLMWareConfig.get_config("milvus_db"))
         
         # look up model card
         if not model and not model_name:
