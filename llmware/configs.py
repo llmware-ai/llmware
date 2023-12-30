@@ -45,6 +45,7 @@ class LLMWareConfig:
              "collection_db": "mongo",
              "milvus_host": os.environ.get("MILVUS_HOST","localhost"),
              "milvus_port": int(os.environ.get("MILVUS_PORT",19530)),
+             "milvus_db": os.environ.get("MILVUS_DB", "default"),
              "debug_mode": 0,
              "llmware_sample_files_bucket": "llmware-sample-docs",
              "llmware_public_models_bucket": "llmware-public-models",
