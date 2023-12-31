@@ -79,9 +79,9 @@ class EmbeddingHandler:
         self.library = library
    
     # Create a new embedding. 
-    def create_new_embedding(self, embedding_db, model, doc_ids=None, batch_size=500, embedding_db_name=None ):
+    def create_new_embedding(self, embedding_db, model, doc_ids=None, batch_size=500):
 
-        embedding_class = self._load_embedding_db(embedding_db, model=model, embedding_db_name=embedding_db_name)
+        embedding_class = self._load_embedding_db(embedding_db, model=model)
         embedding_status = embedding_class.create_new_embedding(doc_ids, batch_size)
 
         if embedding_status:
@@ -111,14 +111,14 @@ class EmbeddingHandler:
         if len(query_vector) == 1:
             query_vector = query_vector[0]
 
-        embedding_class = self._load_embedding_db(embedding_db, model=model, embedding_db_name=None)
+        embedding_class = self._load_embedding_db(embedding_db, model=model)
         return embedding_class.search_index(query_vector,sample_count=sample_count)
 
     # Delete a specific index (for a given model)
     def delete_index(self, embedding_db, model_name, embedding_dims):
 
         embedding_class = self._load_embedding_db(embedding_db, model_name=model_name,
-                                                  embedding_dims=embedding_dims,  embedding_db_name=None)
+                                                  embedding_dims=embedding_dims)
         embedding_class.delete_index()
         self.library.update_embedding_status("delete", model_name, embedding_db,
                                              embedded_blocks=0, delete_record=True)
@@ -126,14 +126,14 @@ class EmbeddingHandler:
         return 0
 
     # Load the appropriate embedding class and update the class variables
-    def _load_embedding_db(self, embedding_db, model=None, model_name=None, embedding_dims=None, embedding_db_name=None):
+    def _load_embedding_db(self, embedding_db, model=None, model_name=None, embedding_dims=None):
 
         if not embedding_db in self.supported_embedding_dbs:
             raise UnsupportedEmbeddingDatabaseException(embedding_db)
          
         if embedding_db == "milvus": 
             return EmbeddingMilvus(self.library, model=model, model_name=model_name,
-                                   embedding_dims=embedding_dims, db_name=embedding_db_name)
+                                   embedding_dims=embedding_dims)
 
         if embedding_db == "faiss": 
             return EmbeddingFAISS(self.library, model=model, model_name=model_name,
@@ -179,13 +179,13 @@ class EmbeddingHandler:
 
 class EmbeddingMilvus:
 
-    def __init__(self, library, model=None, model_name=None, embedding_dims=None, db_name=None):
+    def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.library = library
-        self.db_name = 'default' if db_name is None else db_name
+        self.milvus_alias = "default"
 
         # Connect to milvus
-        connections.connect(db_name=self.db_name,
+        connections.connect(self.milvus_alias,
                             host=LLMWareConfig.get_config("milvus_host"),
                             port=LLMWareConfig.get_config("milvus_port"),
                             db_name=LLMWareConfig.get_config("milvus_db"))
