@@ -1,7 +1,9 @@
 # llmware
 ![Static Badge](https://img.shields.io/badge/python-3.9_%7C_3.10%7C_3.11-blue?color=blue)
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
-
+<a href="https://discord.gg/MhZn5Nc39h>"
+        <img src="https://img.shields.io/static/v1?label=Chat%20on&message=Discord&color=blue&logo=Discord&style=flat-square" alt="Discord"></a>  
+        
 `llmware` is a unified framework for developing LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides an integrated set of tools that anyone can use – from beginner to the most sophisticated AI developer – to rapidly build industrial-grade, knowledge-based enterprise LLM applications with specific focus on making it easy to integrate open source small specialized models and connecting enterprise knowledge safely and securely to LLMs in private cloud. 
 
 [Find us on Discord](https://discord.gg/MhZn5Nc39h)
