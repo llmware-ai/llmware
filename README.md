@@ -1,10 +1,10 @@
 # llmware
 ![Static Badge](https://img.shields.io/badge/python-3.9_%7C_3.10%7C_3.11-blue?color=blue)
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
+[![discord](https://img.shields.io/badge/Chat%20on-Discord-blue?logo=discord&logoColor=white)](https://discord.gg/MhZn5Nc39h)   
 
 `llmware` is a unified framework for developing LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides an integrated set of tools that anyone can use – from beginner to the most sophisticated AI developer – to rapidly build industrial-grade, knowledge-based enterprise LLM applications with specific focus on making it easy to integrate open source small specialized models and connecting enterprise knowledge safely and securely to LLMs in private cloud. 
 
-[Find us on Discord](https://discord.gg/MhZn5Nc39h)
 
 ## 🎯  Key features
 `llmware` is an integrated framework comprised of four major components:
@@ -83,7 +83,7 @@ docker compose up -d
 ```
 Not ready to install MongoDB or Milvus?  Check out what you can do without them in our [examples section](https://github.com/llmware-ai/llmware/blob/main/examples/README.md#using-llmware-without-mongodb-or-an-embedding-database).
 
-See [Running MongoDB and Milvus](#%EF%B8%8F-alternate-options-for-running-mongodb-and-milvus) for other options to get up and running with these optional dependencies.
+See [Running MongoDB and Milvus](#%EF%B8%8F-alternate-options-for-running-mongodb-and-milvus) for other options to get up and running with these optional dependencies.  
 
 ### 3. 🔥 Start coding - Quick Start for RAG 🔥 
 ```python
@@ -264,6 +264,12 @@ Information on ways to participate can be found in our [Contributors Guide](http
 
 ## 📣  Release notes and Change Log
 
+**Latest Updates - 30 Dec 2023: llmware v0.1.14**
+  - Added support for Open Chat inference servers (compatible with OpenAI API)
+  - Improved capabilities for multiple embedding models and vector DB configurations
+  - Added docker-compose install scripts for PGVector and Redis vector databases
+  - Added 'bling-tiny-llama' to model catalog
+    
 **Latest Updates - 22 Dec 2023: llmware v0.1.13**
   - Added 3 new vector databases - Postgres (PG Vector), Redis, and Qdrant
   - Improved support for integrating sentence transformers directly in the model catalog
@@ -298,12 +304,15 @@ Information on ways to participate can be found in our [Contributors Guide](http
 **Optional:**
 - [Docker](https://docs.docker.com/get-docker/) 
 
-**Known issues:**
-- A segmentation fault can occur when parsing if the native package for mongo-c-driver is 1.25 or above.  To address this issue, install the latest version of llmware or downgrade mongo-c-driver to v1.24.4.
-
 <details>
   <summary><b>🚧 Change Log</b></summary>
 
+**Latest Updates - 30 Dec 2023: llmware v0.1.14**
+  - Added support for Open Chat inference servers (compatible with OpenAI API)
+  - Improved capabilities for multiple embedding models and vector DB configurations
+  - Added docker-compose install scripts for PGVector and Redis vector databases
+  - Added 'bling-tiny-llama' to model catalog
+         
 **Latest Updates - 22 Dec 2023: llmware v0.1.13**
   - Added 3 new vector databases - Postgres (PG Vector), Redis, and Qdrant
   - Improved support for integrating sentence transformers directly in the model catalog
