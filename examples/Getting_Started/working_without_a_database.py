@@ -321,7 +321,7 @@ if __name__ == "__main__":
     #   for the last set of examples, we would recommend using OpenAI, Anthropic or Google models for best results
 
     #   feel free to replace with any other model
-    model_name = "gpt-3.5.-turbo"
+    model_name = "gpt-3.5-turbo"
 
     #   shows the various prompt instructions in the prompt catalog and how to use
     try_all_prompt_instructions(model_name)
