@@ -3,7 +3,7 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
 [![discord](https://img.shields.io/badge/Chat%20on-Discord-blue?logo=discord&logoColor=white)](https://discord.gg/MhZn5Nc39h)   
 
-`llmware` is a unified framework for developing LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides an integrated set of tools that anyone can use – from beginner to the most sophisticated AI developer – to rapidly build industrial-grade, knowledge-based enterprise LLM applications with specific focus on making it easy to integrate open source small specialized models and connecting enterprise knowledge safely and securely to LLMs in private cloud. 
+`llmware` is a unified framework for developing LLM-based application patterns including Retrieval Augmented Generation (RAG). This project provides an integrated set of tools that anyone can use – from a beginner to the most sophisticated AI developer – to rapidly build industrial-grade, knowledge-based enterprise LLM applications with specific focus on making it easy to integrate open source small specialized models and connecting enterprise knowledge safely and securely to LLMs in private cloud. 
 
 
 ## 🎯  Key features
@@ -43,7 +43,7 @@
 <details>
 <summary><b><u>Parsing and Text Chunking</u>: Scalable Ingestion </b></summary>
   
-- Integrated High-Speed Parsers for:  PDF, PowerPoint, Word, Excel, HTML, Text, WAV, AWS Transcribe transcripts.
+- Integrated High-Speed Parsers for:  PDF, PowerPoint, Word, Excel, HTML, Text, WAV, and AWS Transcribe transcripts.
 - Text-chunking tools to separate information and associated metadata to a consistent block format.
 </details>
 
