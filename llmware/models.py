@@ -1090,11 +1090,32 @@ class OpenChatModel:
                 response = openai.ChatCompletion.create(model=self.model_name,messages=messages,
                                                         max_tokens=self.target_requested_output_tokens)
 
+                """ assume 'minimal' api output conformance with OpenAI """
+
                 text_out = response["choices"][0]["message"]["content"]
 
-                usage = {"input": response["usage"]["prompt_tokens"],
-                         "output": response["usage"]["completion_tokens"],
-                         "total": response["usage"]["total_tokens"],
+                """ note: some openchat api do not support providing usage output consistent with OpenAI API """
+
+                pt = 0
+                ct = 0
+                tt = 0
+
+                """ best effort to gather usage data if conforms with OpenAI """
+
+                if "usage" in response:
+
+                    if "prompt_tokens" in response["usage"]:
+                        pt = response["usage"]["prompt_tokens"]
+
+                    if "completion_tokens" in response["usage"]:
+                        ct = response["usage"]["completion_tokens"]
+
+                    if "total_tokens" in response["usage"]:
+                        tt = response["usage"]["total_tokens"]
+
+                usage = {"input": pt,
+                         "output": ct,
+                         "total": tt,
                          "metric": "tokens",
                          "processing_time": time.time() - time_start}
 
@@ -1114,12 +1135,32 @@ class OpenChatModel:
                                                     temperature=self.temperature,
                                                     max_tokens=self.target_requested_output_tokens)
 
-                text_out = response["choices"][0]["text"]
-                # openai response "usage" dict - {"completion_tokens" | "prompt_tokens" | total_tokens"}
+                """ assume 'minimal' api output conformance with OpenAI """
 
-                usage = {"input": response["usage"]["prompt_tokens"],
-                         "output": response["usage"]["completion_tokens"],
-                         "total": response["usage"]["total_tokens"],
+                text_out = response["choices"][0]["text"]
+
+                """ note: some openchat api do not support providing usage output consistent with OpenAI API """
+
+                pt = 0
+                ct = 0
+                tt = 0
+
+                """ best effort to gather usage data if conforms with OpenAI API """
+
+                if "usage" in response:
+
+                    if "prompt_tokens" in response["usage"]:
+                        pt = response["usage"]["prompt_tokens"]
+
+                    if "completion_tokens" in response["usage"]:
+                        ct = response["usage"]["completion_tokens"]
+
+                    if "total_tokens" in response["usage"]:
+                        tt = response["usage"]["total_tokens"]
+
+                usage = {"input": pt,
+                         "output": ct,
+                         "total": tt,
                          "metric": "tokens",
                          "processing_time": time.time() - time_start}
 
