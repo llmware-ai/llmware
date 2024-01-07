@@ -283,7 +283,7 @@ class Query:
 
         return query_state_dict
 
-    def query(self, query, query_type="text", result_count=20, results_only=True):
+    def query(self, query, query_type="text", result_count=20, results_only=True, partition_names=None):
 
         output_result = {"results": [], "doc_ID": [], "file_source": []}
 
@@ -304,7 +304,7 @@ class Query:
             if self.search_mode == "text" or not self.embedding_model:
                 output_result = self.text_query(query, result_count=result_count,results_only=results_only)
             else:
-                output_result = self.semantic_query(query, result_count=result_count,results_only=results_only)
+                output_result = self.semantic_query(query, result_count=result_count,results_only=results_only, partition_names=partition_names)
 
         return output_result
 
@@ -575,7 +575,7 @@ class Query:
         return qr_dict
 
         # basic semantic query
-    def semantic_query(self, query, result_count=20, embedding_distance_threshold=None, custom_filter=None, results_only=True):
+    def semantic_query(self, query, result_count=20, embedding_distance_threshold=None, custom_filter=None, results_only=True, partition_names=None):
 
         if not embedding_distance_threshold:
             embedding_distance_threshold = self.semantic_distance_threshold
@@ -593,7 +593,8 @@ class Query:
             semantic_block_results = self.embeddings.search_index(self.query_embedding,
                                                                   embedding_db=self.embedding_db,
                                                                   model=self.embedding_model,
-                                                                  sample_count=result_count)
+                                                                  sample_count=result_count,
+                                                                  partition_names=partition_names)
 
         else:
             logging.error("error: Query - embedding record does not indicate embedding db - %s "
@@ -630,7 +631,7 @@ class Query:
 
     # basic semantic query
     def semantic_query_with_document_filter(self, query, filter_dict, embedding_distance_threshold=None,
-                                            result_count=100, results_only=True):
+                                            result_count=100, results_only=True, partition_names=None):
 
         #   checks for filter to offer option to do semantic query in specific doc, page or content range
         if not embedding_distance_threshold:
@@ -650,7 +651,8 @@ class Query:
             semantic_block_results = self.embeddings.search_index(self.query_embedding,
                                                                   embedding_db=self.embedding_db,
                                                                   model=self.embedding_model,
-                                                                  sample_count=result_count)
+                                                                  sample_count=result_count,
+                                                                  partition_names=partition_names)
 
         else:
             logging.error("error: Query - embedding record does not indicate embedding db- %s and/or "
@@ -678,7 +680,7 @@ class Query:
 
         return result_output
 
-    def similar_blocks_embedding(self, block, result_count=20, embedding_distance_threshold=10, results_only=True):
+    def similar_blocks_embedding(self, block, result_count=20, embedding_distance_threshold=10, results_only=True, partition_names=None):
 
         # will use embedding to find similar blocks from a given block
         # confirm that embedding model exists, or catch and raise error
@@ -691,7 +693,8 @@ class Query:
             semantic_block_results = self.embeddings.search_index(self.query_embedding,
                                                                   embedding_db=self.embedding_db,
                                                                   model=self.embedding_model,
-                                                                  sample_count=result_count)
+                                                                  sample_count=result_count,
+                                                                  partition_names=partition_names)
 
         else:
             logging.error("error: Query - embedding record does not indicate embedding db- %s and/or "
@@ -720,7 +723,8 @@ class Query:
 
         return results_dict
 
-    def dual_pass_query(self, query, result_count=20, primary="text", safety_check=True, custom_filter=None, results_only=True):
+    def dual_pass_query(self, query, result_count=20, primary="text", safety_check=True, custom_filter=None,
+                        results_only=True, partition_names=None):
         
         # safety check
         if safety_check and result_count > 100:
@@ -738,7 +742,8 @@ class Query:
             retrieval_dict_text = self.text_query(query, result_count=result_count, results_only=True)
 
         # Semantic query with custom filter
-        retrieval_dict_semantic = self.semantic_query(query, result_count=result_count, custom_filter=custom_filter, results_only=True)
+        retrieval_dict_semantic = self.semantic_query(query, result_count=result_count, custom_filter=custom_filter, results_only=True,
+                                                      partition_names=partition_names)
 
         if primary == "text":
             first_list = retrieval_dict_text
@@ -850,7 +855,7 @@ class Query:
         return reranked_qr
 
     def document_filter (self, filter_topic, query_mode="text", result_count=30,
-                         exact_mode = False, exhaust_full_cursor=True):
+                         exact_mode = False, exhaust_full_cursor=True, partition_names=None):
 
         result_dict = None
 
@@ -866,7 +871,7 @@ class Query:
                                           exhaust_full_cursor=exhaust_full_cursor,results_only=False)
 
         if query_mode == "semantic":
-            result_dict = self.semantic_query(filter_topic,result_count=result_count, results_only=False)
+            result_dict = self.semantic_query(filter_topic,result_count=result_count, results_only=False, partition_names=partition_names)
 
         if query_mode == "hybrid":
             result_dict = self.dual_pass_query(filter_topic)

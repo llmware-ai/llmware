@@ -103,7 +103,8 @@ class EmbeddingHandler:
         return embedding_status
    
     # Search the vector space
-    def search_index(self, query_vector, embedding_db, model, sample_count=10):
+    # partition_names is only used for Milvus
+    def search_index(self, query_vector, embedding_db, model, sample_count=10, partition_names=None):
 
         # Need to normalize the query_vector.  Sometimes it comes in as [[1.1,2.1,3.1]] (from Transformers) and sometimes as [1.1,2.1,3.1]
         # We'll make sure it's the latter and then each Embedding Class will deal with it how it needs to
@@ -112,7 +113,10 @@ class EmbeddingHandler:
             query_vector = query_vector[0]
 
         embedding_class = self._load_embedding_db(embedding_db, model=model)
-        return embedding_class.search_index(query_vector,sample_count=sample_count)
+        if isinstance(embedding_class, EmbeddingMilvus):
+            return embedding_class.search_index(query_vector, sample_count=sample_count, partition_names=partition_names)
+        else:
+            return embedding_class.search_index(query_vector,sample_count=sample_count)
 
     # Delete a specific index (for a given model)
     def delete_index(self, embedding_db, model_name, embedding_dims):
@@ -313,7 +317,7 @@ class EmbeddingMilvus:
 
         return embedding_summary
 
-    def search_index(self, query_embedding_vector, sample_count=10):
+    def search_index(self, query_embedding_vector, sample_count=10,  partition_names=None):
 
         self.collection.load()
 
@@ -326,6 +330,7 @@ class EmbeddingMilvus:
             anns_field="embedding_vector",
             param=search_params,
             limit=sample_count,
+            partition_names=partition_names,
             output_fields=["block_mongo_id"]
         )
 
