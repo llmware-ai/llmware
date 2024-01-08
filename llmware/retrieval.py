@@ -1439,24 +1439,23 @@ class Query:
 
         return output
 
-    def expand_text_result_after (self, block, window_size=400):
-
+    def expand_text_result_after(self, block, window_size=400):
         block_id = block["block_ID"] + 1
         doc_id = block["doc_ID"]
 
         after_text = ""
         post_blocks = []
 
-        while len(after_text) < window_size and block_id >= 0:
-
+        while len(after_text) < window_size:
             after_block = self.block_lookup(block_id, doc_id)
+            if not after_block:
+                break  # Break if no block is found
 
-            if after_block:
-                after_text += after_block["text"]
-                post_blocks.append(after_block)
+            after_text += after_block["text"]
+            post_blocks.append(after_block)
+            block_id += 1  # Increment block_id for next iteration
 
         output = {"expanded_text": after_text, "results": post_blocks}
-
         return output
 
     def generate_csv_report(self):
