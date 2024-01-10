@@ -58,7 +58,8 @@ except:
     pass
 
 
-from llmware.configs import LLMWareConfig
+from llmware.configs import LLMWareConfig, MilvusConfig, PostgresConfig, MongoConfig,\
+    PineconeConfig, RedisConfig, QdrantConfig
 from llmware.exceptions import UnsupportedEmbeddingDatabaseException, EmbeddingModelNotFoundException
 from llmware.resources import CollectionRetrieval, CollectionWriter
 from llmware.status import Status
@@ -72,9 +73,12 @@ class EmbeddingHandler:
 
     def __init__(self, library):
 
-        #   note: pg_vector == postgres
+        self.supported_embedding_dbs = LLMWareConfig().get_supported_vector_db()
+
+        """
         self.supported_embedding_dbs = ["milvus", "faiss", "pinecone", "mongo_atlas", "redis",
                                         "pg_vector", "postgres", "qdrant"]
+        """
 
         self.library = library
    
@@ -92,8 +96,8 @@ class EmbeddingHandler:
                         embedded_blocks = embedding_status["embedded_blocks"]
                     else:
                         embedded_blocks = -1
-                        logging.warning("update: embedding_handler - unable to determine if embeddings have been properly "
-                                    "counted and captured.   Please check if databases connected.")
+                        logging.warning("update: embedding_handler - unable to determine if embeddings have "
+                                        "been properly counted and captured.   Please check if databases connected.")
 
                     self.library.update_embedding_status("yes", model.model_name, embedding_db,
                                                          embedded_blocks=embedded_blocks,
@@ -186,10 +190,10 @@ class EmbeddingMilvus:
 
         # Connect to milvus
         connections.connect(self.milvus_alias,
-                            host=LLMWareConfig.get_config("milvus_host"),
-                            port=LLMWareConfig.get_config("milvus_port"),
-                            db_name=LLMWareConfig.get_config("milvus_db"))
-        
+                            host=MilvusConfig.get_config("host"),
+                            port=MilvusConfig.get_config("port"),
+                            db_name=MilvusConfig.get_config("db_name"))
+
         # look up model card
         if not model and not model_name:
             raise EmbeddingModelNotFoundException("no-model-or-model-name-provided")
@@ -355,6 +359,7 @@ class EmbeddingMilvus:
 
         return 1
 
+
 class EmbeddingFAISS:
 
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
@@ -495,13 +500,14 @@ class EmbeddingFAISS:
             block_cursor = CollectionWriter(self.library.collection).update_many_records_custom({}, {
                 "$unset": {self.mongo_key: ""}})
 
+
 class EmbeddingPinecone:
 
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
-        #   use environ variables to set api keys for pinecone
-        self.api_key = os.environ.get("USER_MANAGED_PINECONE_API_KEY")
-        self.environment = os.environ.get("USER_MANAGED_PINECONE_ENVIRONMENT")
+        #   use Pinecone Config to set api keys for pinecone
+        self.api_key = PineconeConfig().get_config("pinecone_api_key")
+        self.environment = PineconeConfig().get_config("pinecone_environment")
 
         self.library = library
 
@@ -662,9 +668,9 @@ class EmbeddingMongoAtlas:
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
         
         # Use a specified Mongo Atlas connection string if supplied.
-        # Otherwise fallback to the the Mongo DB connection string 
-        self.connection_uri = os.environ.get("MONGO_ATLAS_CONNECTION_URI",
-                                             LLMWareConfig.get_config("collection_db_uri"))
+        # Otherwise fallback to the the Mongo DB connection string
+
+        self.connection_uri = MongoConfig().get_config("atlas_db_uri")
 
         self.library = library
 
@@ -908,8 +914,8 @@ class EmbeddingRedis:
         self.library = library
 
         # Connect to redis - use "localhost" & 6379 by default
-        redis_host = os.environ.get("USER_MANAGED_REDIS_HOST","localhost")
-        redis_port = os.environ.get("USER_MANAGED_REDIS_PORT", 6379)
+        redis_host = RedisConfig().get_config("host")
+        redis_port = RedisConfig().get_config("port")
 
         self.r = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
 
@@ -1133,8 +1139,8 @@ class EmbeddingQdrant:
         self.library = library
 
         # Connect to Qdrant - by default - "localhost" and port = 6333
-        qdrant_host = os.environ.get("USER_MANAGED_QDRANT_HOST", "localhost")
-        qdrant_port = os.environ.get("USER_MANAGED_QDRANT_PORT", 6333)
+        qdrant_host = QdrantConfig().get_config("host")
+        qdrant_port = QdrantConfig().get_config("port")
 
         self.qclient = QdrantClient(qdrant_host, port=qdrant_port)
 
@@ -1321,7 +1327,7 @@ class EmbeddingQdrant:
 
 class EmbeddingPGVector:
 
-    def __init__(self, library, model=None, model_name=None, embedding_dims=None, full_schema=False):
+    def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.library = library
 
@@ -1357,19 +1363,17 @@ class EmbeddingPGVector:
         model_safe_path = re.sub("[@ ]", "", self.model_name).lower()
         self.mongo_key = "embedding_pg_vector_" + model_safe_path
 
-        #   Connect to postgres
-        postgres_host = os.environ.get("USER_MANAGED_PG_HOST","localhost")
-        postgres_port = os.environ.get("USER_MANAGED_PG_PORT", 5432)
-        postgres_db_name = os.environ.get("USER_MANAGED_PG_DB_NAME", "postgres")
-        postgres_user_name = os.environ.get("USER_MANAGED_PG_USER_NAME", "postgres")
-        # postgres_full_schema = os.environ.get("USER_MANAGED_PG_FULL_SCHEMA", full_schema)
-        
-        #   default is no password unless user sets in os environ variable
-        postgres_pw = os.environ.get("USER_MANAGED_PG_PW", "")
-        
+        #   Connect to postgres - by default: localhost | port 5432 | db_name = user_name = postgres
+        postgres_host = PostgresConfig().get_config("host")
+        postgres_port = PostgresConfig().get_config("port")
+        postgres_db_name = PostgresConfig().get_config("db_name")
+        postgres_user_name = PostgresConfig().get_config("user_name")
+        postgres_pw = PostgresConfig().get_config("pw")
+        postgres_schema = PostgresConfig().get_config("pgvector_schema")
+
         #   determines whether to use 'skinny' schema or 'full' schema
-        #   --note:  in future releases, we will be building out more support for PostGres
-        self.full_schema = full_schema
+        #   --note:  in future releases, we will be building out more support for Postgres
+        self.full_schema = postgres_schema
 
         #   Session connection
 
@@ -1381,7 +1385,7 @@ class EmbeddingPGVector:
         self.conn.execute('CREATE EXTENSION IF NOT EXISTS vector')
         register_vector(self.conn)
 
-        if not self.full_schema:
+        if self.full_schema == "vector_only":
 
             table_create = (f"CREATE TABLE IF NOT EXISTS {self.collection_name} "
                             f"(id bigserial PRIMARY KEY, "
@@ -1472,7 +1476,7 @@ class EmbeddingPGVector:
                 doc_ids.append(int(block["doc_ID"]))
                 sentences.append(text_search)
 
-                if not self.full_schema:
+                if self.full_schema == "vector_only":
 
                     obj = {"block_mongo_id": str(block["_id"]),
                            "block_doc_id": int(block["doc_ID"]),
@@ -1497,7 +1501,7 @@ class EmbeddingPGVector:
 
                 for i, embedding in enumerate(vectors):
 
-                    if not self.full_schema:
+                    if self.full_schema == "vector_only":
 
                         insert_command=(f"INSERT INTO {self.collection_name} (text, embedding, block_mongo_id,"
                                         f"block_doc_id) VALUES (%s, %s, %s, %s)")
