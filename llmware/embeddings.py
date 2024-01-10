@@ -57,6 +57,12 @@ try:
 except:
     pass
 
+#   optional import of neo4j - not in project requirements
+try:
+    from neo4j import GraphDatabase
+except:
+    pass
+
 
 from llmware.configs import LLMWareConfig
 from llmware.exceptions import UnsupportedEmbeddingDatabaseException, EmbeddingModelNotFoundException
@@ -1649,3 +1655,75 @@ class EmbeddingPGVector:
             "$unset": {self.mongo_key: ""}})
 
         return 0
+
+
+class EmbeddingNeo4j:
+
+    def __init__(self, library, model=None, model_name=None, embedding_dims=None):
+
+        # look up model card
+        if not model and not model_name:
+            raise EmbeddingModelNotFoundException("no-model-or-model-name-provided")
+
+
+        self.library = library
+        self.model = model
+        self.model_name = model_name
+        self.embedding_dims = embedding_dims
+
+        # if model passed (not None), then use model name
+        if self.model:
+            self.model_name = self.model.model_name
+            self.embedding_dims = model.embedding_dims
+
+        # user and password names are taken from environmen variables
+        # Names for user and password are taken from the link below
+        # https://neo4j.com/docs/operations-manual/current/tools/neo4j-admin/upload-to-aura/#_options
+        uri = os.environ.get('NEO4J_URI')
+        user = os.environ.get('NEO4J_USERNAME')
+        password = os.environ.get('NEO4J_PASSWORD')
+        database = os.environ.get('NEO4J_DATABASE')
+
+
+        # Connect to Neo4J and verify connection.
+        # Code taken from the code below
+        # https://github.com/langchain-ai/langchain/blob/master/libs/community/langchain_community/vectorstores/neo4j_vector.py#L165C9-L177C14
+        try:
+            self.driver = GraphDatabase.driver(uri, auth=(user, password))
+            self.driver.verify_connectivity()
+        except neo4j.exceptions.ServiceUnavailable:
+            raise ValueError(
+                "Could not connect to Neo4j database. "
+                "Please ensure that the url is correct and that Neo4j is up and running.")
+        except neo4j.exceptions.AuthError:
+            raise ValueError(
+                "Could not connect to Neo4j database. "
+                "Please ensure that the username and password are correct.")
+        except:
+            raise ImportError(
+                "Exception - could not connect to Neo4j - please check:"
+                "1.  Neo4j python package is installed, e.g,. 'pip install neo4j', and"
+                "2.  That Neo4j is up and running.")
+
+
+        # We create the database only if it does not exist.
+        self.driver.execute_query(query='CREATE DATABASE $database IF NOT EXISTS',
+                                  parameters_={'database': database})
+
+        # Create the vector search index.
+        self.driver.execute_query(
+            query='CALL '
+                  'db.index.vector.createNodeIndex('
+                      'index_name=$index_name, '
+                      'label=$label, '
+                      'propertyKey=$propertyKey, '
+                      'vectorDimension=toInteger($vectorDimension), '
+                      'vectorSimilarityFunction="euclidean"'
+                  ')',
+            parameters_={
+                    'index_name': 'vectorIndex',
+                    'label': 'Chunk',
+                    'propertyKey': 'embedding',
+                    'vectorDimension': int(self.model.embedding_dims)
+            },
+            database_=database)

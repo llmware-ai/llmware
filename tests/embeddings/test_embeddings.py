@@ -27,6 +27,14 @@ def test_milvus_embedding_and_query():
     assert len(results) > 0
     library.delete_library(confirm_delete=True)
 
+def test_node4j_embedding_and_query():
+    sample_files_path = Setup().load_sample_files()
+    library = Library().create_new_library("test_embedding_node4j")
+    library.add_files(os.path.join(sample_files_path,"SmallLibrary"))
+    results = generic_embedding_and_query(library, "node4j")
+    assert len(results) > 0
+    library.delete_library(confirm_delete=True)
+
 def test_faiss_embedding_and_query():
     sample_files_path = Setup().load_sample_files()
     library = Library().create_new_library("test_embedding_faiss")
