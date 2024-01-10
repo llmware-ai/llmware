@@ -59,6 +59,7 @@ except:
 
 #   optional import of neo4j - not in project requirements
 try:
+    import neo4j
     from neo4j import GraphDatabase
 except:
     pass
