@@ -1727,3 +1727,77 @@ class EmbeddingNeo4j:
                     'vectorDimension': int(self.model.embedding_dims)
             },
             database_=database)
+
+    def create_new_embedding(self, doc_ids=None, batch_size=500):
+        if doc_ids:
+            num_of_blocks = self.library.collection.count_documents({"doc_ID": {"$in": doc_ids}})
+            all_blocks_cursor = CollectionRetrieval(self.library.collection).filter_by_key_value_range("doc_ID", doc_ids)
+        else:
+            num_of_blocks = self.library.collection.count_documents({self.mongo_key: {"$exists": False }})
+            all_blocks_cursor = CollectionRetrieval\
+                (self.library.collection).custom_filter({self.mongo_key: {"$exists": False }})
+
+        # Initialize a new status
+        status = Status(self.library.account_name)
+        status.new_embedding_status(self.library.library_name, self.model_name, num_of_blocks)
+
+
+        embeddings_created = 0
+        current_index = 0
+        finished = False
+
+        all_blocks_iter = iter(all_blocks_cursor)
+        while not finished:
+            block_ids, doc_ids, sentences = [], [], []
+
+            # Build the next batch
+            for i in range(batch_size):
+                block = next(all_blocks_iter, None)
+                if not block:
+                    finished = True
+                    break
+
+                text_search = block["text_search"].strip()
+                if not text_search or len(text_search) < 1:
+                    continue
+
+                block_ids.append(str(block["_id"]))
+                doc_ids.append(int(block["doc_ID"]))
+            sentences.append(text_search)
+
+        if len(sentences) > 0:
+            # Process the batch
+            vectors = self.model.embedding(sentences)
+            data = [block_ids, doc_ids, vectors]
+            self.collection.insert(data)
+
+            # Insert into Neo4J
+            insert_query = (
+                "UNWIND $data AS row "
+                "CALL { WITH row "
+                "MERGE (c:Chunk {{id: row.doc_id, block_id: row.block_id}}) "
+                "WITH c, row "
+                "CALL db.create.setVectorProperty(c, 'embedding', row.vector) "
+            )
+
+            parameters = {
+                "data": [
+                    {"block_id": block_id, "doc_id": doc_id, "embedding": vector}
+                    for block_id, doc_id, vector id in zip(
+                        block_ids, doc_ids, vectors
+                    )
+                ]
+            }
+
+            self.driver.execute_query(query=insert_query, parameters_=parameters)
+
+            # Update statistics
+            embeddings_created += len(sentences)
+            status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
+
+                print(f"update: embedding_handler - Neo4j - "
+                       "Embeddings Created: {embeddings_created} of {num_of_blocks}")
+
+
+        embedding_summary = {"embeddings_created": embeddings_created}
+        return embedding_summary
