@@ -18,7 +18,8 @@
 import os
 import platform
 
-from llmware.exceptions import HomePathDoesNotExistException
+from llmware.exceptions import HomePathDoesNotExistException, ConfigKeyException, \
+    UnsupportedEmbeddingDatabaseException, UnsupportedCollectionDatabaseException
 
 
 class LLMWareConfig:
@@ -39,13 +40,27 @@ class LLMWareConfig:
            "prompt_path_name": "prompt_history" + os.sep,
            "tmp_path_name": "tmp" + os.sep}
 
+    # note: two alias for postgres vector db - "postgres" and "pg_vector" are the same
+    _supported = {"vector_db": ["milvus", "pg_vector", "postgres", "redis", "pinecone",
+                                "faiss", "qdrant", "mongo_atlas"],
+
+                  # coming soon - more options!
+                  "collection_db": ["mongo"],
+                  "table_db": []}
+
     _conf = {"collection_db_uri": os.environ.get("COLLECTION_DB_URI", "mongodb://localhost:27017/"),
+
              "collection_db_username": "", # Not used for now
              "collection_db_password": "", # Not used for now
+
              "collection_db": "mongo",
+             "vector_db": "milvus",
+
+             # note: Milvus configs moving to separate MilvusConfig object - these options will be removed
              "milvus_host": os.environ.get("MILVUS_HOST","localhost"),
              "milvus_port": int(os.environ.get("MILVUS_PORT",19530)),
              "milvus_db": os.environ.get("MILVUS_DB", "default"),
+
              "debug_mode": 0,
              "llmware_sample_files_bucket": "llmware-sample-docs",
              "llmware_public_models_bucket": "llmware-public-models",
@@ -56,7 +71,7 @@ class LLMWareConfig:
     def get_config(cls,name):
         if name in cls._conf:
             return cls._conf[name]
-        raise "Key not found in configs"
+        raise ConfigKeyException(name)
 
     @classmethod
     def set_config(cls,name, value):
@@ -78,7 +93,7 @@ class LLMWareConfig:
     def get_fp_name(cls,file_path):
         if file_path in cls._fp:
             return cls._fp[file_path]
-        raise "File path not found in configs"
+        raise ConfigKeyException(file_path)
 
     @classmethod
     def set_fp_name(cls,file_path, new_value):
@@ -189,4 +204,269 @@ class LLMWareConfig:
         os.mkdir(new_account_path)
 
         return 0
+
+    @classmethod
+    def get_active_db(cls):
+
+        """ Returns the current selected default database for Library text collections """
+
+        return cls._conf["collection_db"]
+
+    @classmethod
+    def set_active_db(cls, new_db):
+
+        """ Sets the default database for Library text collections """
+
+        if new_db in cls._supported["collection_db"]:
+            cls._conf["collection_db"] = new_db
+        else:
+            raise UnsupportedCollectionDatabaseException(new_db)
+
+    @classmethod
+    def get_vector_db(cls):
+
+        """ Gets the default vector database selection """
+
+        return cls._conf["vector_db"]
+
+    @classmethod
+    def set_vector_db(cls, vector_db_name):
+
+        """ Sets the default vector database """
+
+        if vector_db_name in cls._supported["vector_db"]:
+            cls._conf["vector_db"] = vector_db_name
+        else:
+            raise UnsupportedEmbeddingDatabaseException(vector_db_name)
+
+    @classmethod
+    def get_supported_vector_db(cls):
+        return cls._supported["vector_db"]
+
+    @classmethod
+    def get_supported_collection_db(cls):
+        return cls._supported["collection_db"]
+
+
+class MilvusConfig:
+
+    """Configuration object for Milvus"""
+
+    _conf = {"host": os.environ.get("MILVUS_HOST", "localhost"),
+             "port": os.environ.get("MILVUS_PORT", 19530),
+             "db_name": os.environ.get("MILVUS_DB", "default"),
+             "partitions": []}
+
+    @classmethod
+    def get_config(cls, name):
+
+        """ Gets current Milvus config by key name,
+        e.g. MilvusConfig().get_config("port") returns 19530 """
+
+        if name in cls._conf:
+            return cls._conf[name]
+        raise ConfigKeyException(name)
+
+    @classmethod
+    def set_config(cls, name, value):
+
+        """ Sets Milvus config by key name,
+        e.g., MilvusConfig().set_config("port", 8080) sets port = 8080 """
+
+        cls._conf[name] = value
+
+
+class MongoConfig:
+
+    """Configuration object for MongoDB"""
+
+    _conf = {"db_uri": os.environ.get("COLLECTION_DB_URI", "mongodb://localhost:27017/"),
+             "user_name": "",
+             "pw": "",
+             "atlas_db_uri": "",
+             "db_name":""}
+
+    @classmethod
+    def get_config(cls, name):
+        if name in cls._conf:
+            return cls._conf[name]
+        raise ConfigKeyException(name)
+
+    @classmethod
+    def set_config(cls, name, value):
+        cls._conf[name] = value
+
+    @classmethod
+    def get_uri_string(cls):
+        return cls._conf["db_uri"]
+
+    @classmethod
+    def get_db_configs(cls):
+        configs = {}
+        for keys, values in cls._conf.items():
+            configs.update({keys:values})
+        return configs
+
+    @classmethod
+    def get_user_name(cls):
+        return cls._conf["user_name"]
+
+    @classmethod
+    def get_db_pw(cls):
+        return cls._conf["pw"]
+
+
+class PostgresConfig:
+
+    """Configuration object for Postgres DB"""
+
+    _conf = {"host": os.environ.get("USER_MANAGED_PG_HOST", "localhost"),
+             "port": os.environ.get("USER_MANAGED_PG_PORT", 5432),
+             "db_name": os.environ.get("USER_MANAGED_PG_DB_NAME", "postgres"),
+             "user_name": os.environ.get("USER_MANAGED_PG_USER_NAME", "postgres"),
+             "pw": os.environ.get("USER_MANAGED_PG_PW", ""),
+
+             # to create full copy, set "postgres_schema" to "full"
+             "pgvector_schema": "vector_only"}
+
+    @classmethod
+    def get_config(cls, name):
+        if name in cls._conf:
+            return cls._conf[name]
+        raise ConfigKeyException(name)
+
+    @classmethod
+    def set_config(cls, name, value):
+        cls._conf[name] = value
+
+    @classmethod
+    def get_uri_string(cls):
+
+        port = cls._conf["port"]
+        host = cls._conf["host"]
+        db_name = cls._conf["db_name"]
+        input_collection_db_path = f"postgresql://postgres@{host}:{port}/{db_name}"
+        return input_collection_db_path
+
+    @classmethod
+    def get_db_configs(cls):
+        configs = {}
+        for keys, values in cls._conf.items():
+            configs.update({keys:values})
+        return configs
+
+    @classmethod
+    def get_user_name(cls):
+        return cls._conf["user_name"]
+
+    @classmethod
+    def get_db_pw(cls):
+        return cls._conf["pw"]
+
+
+class RedisConfig:
+
+    """Configuration object for Redis"""
+
+    _conf = {"host": os.environ.get("USER_MANAGED_REDIS_HOST", "localhost"),
+             "port": os.environ.get("USER_MANAGED_REDIS_PORT", 6379),
+             "user_name": "",
+             "pw": "",
+             "db_name": ""}
+
+    @classmethod
+    def get_config(cls, name):
+        if name in cls._conf:
+            return cls._conf[name]
+        raise ConfigKeyException(name)
+
+    @classmethod
+    def set_config(cls, name, value):
+        cls._conf[name] = value
+
+
+class PineconeConfig:
+
+    """Configuration object for Pinecone"""
+
+    _conf = {"pincone_api_key": os.environ.get("USER_MANAGED_PINECONE_API_KEY"),
+             "pinecone_environment": os.environ.get("USER_MANAGED_PINECONE_ENVIRONMENT")}
+
+    @classmethod
+    def get_config(cls, name):
+        if name in cls._conf:
+            return cls._conf[name]
+        raise ConfigKeyException(name)
+
+    @classmethod
+    def set_config(cls, name, value):
+        cls._conf[name] = value
+
+
+class SQLiteConfig:
+
+    """ Configuration object for SQLite - note: SQLite integration coming soon! """
+
+    _conf = {"host": os.environ.get("USER_MANAGED_SQLITE_HOST", "localhost"),
+             "port": os.environ.get("USER_MANAGED_SQLITE_PORT", 6333),
+             "sqlite_db_folder_path": LLMWareConfig().get_library_path(),
+             "user_name": "",
+             "pw": "",
+             "db_name": "sqlite_llmware.db"}
+
+    @classmethod
+    def get_config(cls, name):
+        if name in cls._conf:
+            return cls._conf[name]
+        raise ConfigKeyException(name)
+
+    @classmethod
+    def set_config(cls, name, value):
+
+        """ Sets the configs for SQLite - e.g., to create a new 'database' -
+        SQLiteConfig().set_config("db_name": "my_new_db_name.db") """
+
+        cls._conf[name] = value
+
+    @classmethod
+    def get_uri_string (cls):
+
+        """For SQLite the URI string is the local file with full absolute path"""
+
+        db_file = os.path.join(cls._conf["sqlite_db_folder_path"], cls._conf["db_name"])
+
+        return db_file
+
+    @classmethod
+    def get_db_configs(cls):
+        configs = {}
+        for keys, values in cls._conf.items():
+            configs.update({keys:values})
+        return configs
+
+    @classmethod
+    def get_user_name(cls):
+        return cls._conf["user_name"]
+
+    @classmethod
+    def get_db_pw(cls):
+        return cls._conf["pw"]
+
+
+class QdrantConfig:
+
+    """Configuration object for Qdrant"""
+
+    _conf = {"host": os.environ.get("USER_MANAGED_QDRANT_HOST", "localhost"),
+             "port": os.environ.get("USER_MANAGED_QDRANT_PORT", 6333)}
+
+    @classmethod
+    def get_config(cls, name):
+        if name in cls._conf:
+            return cls._conf[name]
+        raise ConfigKeyException(name)
+
+    @classmethod
+    def set_config(cls, name, value):
+        cls._conf[name] = value
 
