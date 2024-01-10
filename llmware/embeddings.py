@@ -1787,7 +1787,7 @@ class EmbeddingNeo4j:
             parameters = {
                 "data": [
                     {"block_id": block_id, "doc_id": doc_id, "embedding": vector}
-                    for block_id, doc_id, vector id in zip(
+                    for block_id, doc_id, vector in zip(
                         block_ids, doc_ids, vectors
                     )
                 ]
