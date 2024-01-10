@@ -1801,3 +1801,27 @@ class EmbeddingNeo4j:
 
         embedding_summary = {"embeddings_created": embeddings_created}
         return embedding_summary
+
+        def search_index(self, query_embedding_vector, sample_count=10):
+            block_list = []
+
+            search_query = 'CALL db.index.vector.queryNodes("vectorIndex" , $sample_count, $query_embedding_vector) '
+                           'YIELD node, score '
+
+            parameters = {'sample_count': sample_count, 'query_embedding_vector': query_embedding_vector}
+
+            results = self.driver.execute_query(query=search_query, parameters_=parameters)
+
+            for result in results:
+                block_id = result['block_id']
+                block_cursor = CollectionRetrieval(self.library.collection).filter_by_key("_id", ObjectId(block_id))
+
+                try:
+                    block = block_cursor.next()
+                    distance = result['score']
+                    block_list.append((block, distance))
+                except StopIteration:
+                    # No blocks found
+                    continue
+
+            return block_list
