@@ -1710,14 +1710,13 @@ class EmbeddingNeo4j:
                 "1.  Neo4j python package is installed, e.g,. 'pip install neo4j', and"
                 "2.  That Neo4j is up and running.")
 
-
         # We create the database only if it does not exist.
-        self.driver.execute_query(query='CREATE DATABASE $database IF NOT EXISTS',
+        self.driver.execute_query(query_='CREATE DATABASE $database IF NOT EXISTS',
                                   parameters_={'database': database})
 
         # Create the vector search index.
         self.driver.execute_query(
-            query='CALL '
+            query_='CALL '
                   'db.index.vector.createNodeIndex('
                       'index_name=$index_name, '
                       'label=$label, '
@@ -1794,7 +1793,7 @@ class EmbeddingNeo4j:
                 ]
             }
 
-            self.driver.execute_query(query=insert_query, parameters_=parameters)
+            self.driver.execute_query(query_=insert_query, parameters_=parameters)
 
             # Update statistics
             embeddings_created += len(sentences)
@@ -1815,7 +1814,7 @@ class EmbeddingNeo4j:
 
         parameters = {'sample_count': sample_count, 'query_embedding_vector': query_embedding_vector}
 
-        results = self.driver.execute_query(query=search_query, parameters_=parameters)
+        results = self.driver.execute_query(query_=search_query, parameters_=parameters)
 
         for result in results:
             block_id = result['block_id']
