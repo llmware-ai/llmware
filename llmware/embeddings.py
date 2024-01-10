@@ -1799,8 +1799,8 @@ class EmbeddingNeo4j:
             embeddings_created += len(sentences)
             status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
 
-                print(f"update: embedding_handler - Neo4j - "
-                       "Embeddings Created: {embeddings_created} of {num_of_blocks}")
+            print(f"update: embedding_handler - Neo4j - "
+                   "Embeddings Created: {embeddings_created} of {num_of_blocks}")
 
 
         embedding_summary = {"embeddings_created": embeddings_created}
