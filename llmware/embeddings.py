@@ -1825,3 +1825,13 @@ class EmbeddingNeo4j:
                     continue
 
             return block_list
+
+        def delete_index(self, index_name):
+            try:
+                self.driver.execute_query(f"DROP INDEX $index_name", {'index_name': index_name})
+            except DatabaseError: # Index did not exist yet
+                pass
+
+            # Delete mongo fields
+            block_cursor = CollectionWriter(self.library.collection).update_many_records_custom({}, {
+                "$unset": {self.mongo_key: ""}})
