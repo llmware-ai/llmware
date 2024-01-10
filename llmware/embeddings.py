@@ -80,7 +80,7 @@ class EmbeddingHandler:
 
         #   note: pg_vector == postgres
         self.supported_embedding_dbs = ["milvus", "faiss", "pinecone", "mongo_atlas", "redis",
-                                        "pg_vector", "postgres", "qdrant"]
+                                        "pg_vector", "postgres", "qdrant", "neo4j"]
 
         self.library = library
    
@@ -165,6 +165,10 @@ class EmbeddingHandler:
         if embedding_db in ["pg_vector", "postgres"]:
             return EmbeddingPGVector(self.library,model=model, model_name=model_name,
                                      embedding_dims=embedding_dims)
+
+        if embedding_db == "neo4j":
+            return EmbeddingNeo4j(self.library, model=model, model_name=model_name,
+                                   embedding_dims=embedding_dims)
 
     def generate_index_name(self, account_name, library_name, model_name, max_component_length=19):
 
