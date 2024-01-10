@@ -1809,7 +1809,7 @@ class EmbeddingNeo4j:
     def search_index(self, query_embedding_vector, sample_count=10):
         block_list = []
 
-        search_query = 'CALL db.index.vector.queryNodes("vectorIndex" , $sample_count, $query_embedding_vector) '
+        search_query = 'CALL db.index.vector.queryNodes("vectorIndex" , $sample_count, $query_embedding_vector) '\
                        'YIELD node, score '
 
         parameters = {'sample_count': sample_count, 'query_embedding_vector': query_embedding_vector}
