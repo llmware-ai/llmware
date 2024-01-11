@@ -1767,7 +1767,6 @@ class EmbeddingNeo4j:
             # Process the batch
             vectors = self.model.embedding(sentences)
             data = [block_ids, doc_ids, vectors]
-            self.collection.insert(data)
 
             # Insert into Neo4J
             insert_query = (
