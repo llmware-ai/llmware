@@ -1774,19 +1774,20 @@ class EmbeddingNeo4j:
                 "CALL "
                 "{ " 
                 "WITH row "
-                "MERGE (c:Chunk {{id: row.doc_id, block_id: row.block_id}}) "
+                "MERGE (c:Chunk {id: row.doc_id, block_id: row.block_id}) "
                 "WITH c, row "
-                "CALL db.create.setVectorProperty(c, 'embedding', row.vector) "
+                "CALL db.create.setVectorProperty(c, 'embedding', row.embedding) "
                 "YIELD node "
+                "SET c.sentence = row.sentence "
                 "} "
                 "IN TRANSACTIONS OF 1000 ROWS"
             )
 
             parameters = {
                 "data": [
-                    {"block_id": block_id, "doc_id": doc_id, "embedding": vector}
-                    for block_id, doc_id, vector in zip(
-                        block_ids, doc_ids, vectors
+                    {"block_id": block_id, "doc_id": doc_id, "sentence": sentences, "embedding": vector}
+                    for block_id, doc_id, sentence, vector in zip(
+                        block_ids, doc_ids, sentences, vectors
                     )
                 ]
             }
