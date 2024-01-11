@@ -1713,7 +1713,7 @@ class EmbeddingNeo4j:
         self.driver.execute_query(
             query_='CALL '
                   'db.index.vector.createNodeIndex('
-                      'index_name=$index_name, '
+                      'indexName=$index_name, '
                       'label=$label, '
                       'propertyKey=$propertyKey, '
                       'vectorDimension=toInteger($vectorDimension), '
