@@ -1709,10 +1709,6 @@ class EmbeddingNeo4j:
             # This is usefull for debugging when some other error occurs.
             raise 
 
-        # We create the database only if it does not exist.
-        self.driver.execute_query(query_='CREATE DATABASE $database IF NOT EXISTS',
-                                  parameters_={'database': database})
-
         # Create the vector search index.
         self.driver.execute_query(
             query_='CALL '
@@ -1728,8 +1724,7 @@ class EmbeddingNeo4j:
                     'label': 'Chunk',
                     'propertyKey': 'embedding',
                     'vectorDimension': int(self.model.embedding_dims)
-            },
-            database_=database)
+            })
 
     def create_new_embedding(self, doc_ids=None, batch_size=500):
         if doc_ids:
