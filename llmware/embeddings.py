@@ -1713,14 +1713,14 @@ class EmbeddingNeo4j:
         self.driver.execute_query(
             query_='CALL '
                   'db.index.vector.createNodeIndex('
-                      'indexName=$index_name, '
-                      'label=$label, '
-                      'propertyKey=$propertyKey, '
-                      'vectorDimension=toInteger($vectorDimension), '
-                      'vectorSimilarityFunction="euclidean"'
+                      '$indexName, '
+                      '$label, '
+                      '$propertyKey, '
+                      'toInteger($vectorDimension), '
+                      '"euclidean"'
                   ')',
             parameters_={
-                    'index_name': 'vectorIndex',
+                    'indexName': 'vectorIndex',
                     'label': 'Chunk',
                     'propertyKey': 'embedding',
                     'vectorDimension': int(self.model.embedding_dims)
