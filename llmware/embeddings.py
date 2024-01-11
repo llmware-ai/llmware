@@ -1704,11 +1704,10 @@ class EmbeddingNeo4j:
             raise ValueError(
                 "Could not connect to Neo4j database. "
                 "Please ensure that the username and password are correct.")
-        except:
-            raise ImportError(
-                "Exception - could not connect to Neo4j - please check:"
-                "1.  Neo4j python package is installed, e.g,. 'pip install neo4j', and"
-                "2.  That Neo4j is up and running.")
+        except Exception as err:
+            # We raise here any other excpetion that happend.
+            # This is usefull for debugging when some other error occurs.
+            raise 
 
         # We create the database only if it does not exist.
         self.driver.execute_query(query_='CREATE DATABASE $database IF NOT EXISTS',
