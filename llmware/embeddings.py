@@ -1771,10 +1771,15 @@ class EmbeddingNeo4j:
             # Insert into Neo4J
             insert_query = (
                 "UNWIND $data AS row "
-                "CALL { WITH row "
+                "CALL "
+                "{ " 
+                "WITH row "
                 "MERGE (c:Chunk {{id: row.doc_id, block_id: row.block_id}}) "
                 "WITH c, row "
                 "CALL db.create.setVectorProperty(c, 'embedding', row.vector) "
+                "YIELD node "
+                "} "
+                "IN TRANSACTIONS OF 1000 ROWS"
             )
 
             parameters = {
