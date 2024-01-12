@@ -730,7 +730,7 @@ class Query:
                             "safety_check to False in the method declaration, or (2) keep sample count below 100.")
             result_count = 100
 
-        # following keys are required for dual pass query to work
+        # following keys are required for dual pass query to work, add them if user has omitted them
         keys_to_check = ['_id', 'doc_ID']
         for key in keys_to_check:
             if key not in self.query_result_return_keys:
