@@ -86,6 +86,9 @@ Not ready to install MongoDB or Milvus?  Check out what you can do without them 
 See [Running MongoDB and Milvus](#%EF%B8%8F-alternate-options-for-running-mongodb-and-milvus) for other options to get up and running with these optional dependencies.  
 
 ### 3. 🔥 Start coding - Quick Start for RAG 🔥 
+
+[![Open llmware quickstart in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/llmware-ai/llmware/blob/main/examples/Getting_Started/quickstart_rag_colab.ipynb)
+
 ```python
 # This example illustrates a simple contract analysis
 # using a small RAG-optimized LLM running locally
