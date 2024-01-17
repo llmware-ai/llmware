@@ -1815,7 +1815,14 @@ class EmbeddingNeo4j:
                    "Embeddings Created: {embeddings_created} of {num_of_blocks}")
 
 
-        embedding_summary = {"embeddings_created": embeddings_created}
+        embedding_summary = {
+            "embeddings_created": embeddings_created,
+            "embedded_blocks": embedded_blocks,
+            "embedding_dims": self.embedding_dims,
+            "time_stamp": Utilities().get_current_time_now()
+        }
+        logging.info(f'update: EmbeddingHandler - Neo4j - embedding_summary - {embedding_summary}')
+
         return embedding_summary
 
     def search_index(self, query_embedding_vector, sample_count=10):
