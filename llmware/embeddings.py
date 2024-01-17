@@ -1739,6 +1739,11 @@ class EmbeddingNeo4j:
                     'vectorDimension': int(self.model.embedding_dims)
             })
 
+
+        # will leave "-" and "_" in file path, but remove "@" and " "
+        model_safe_path = re.sub("[@ ]", "", self.model_name).lower()
+        self.mongo_key = "embedding_neo4j_" + model_safe_path
+
     def create_new_embedding(self, doc_ids=None, batch_size=500):
         if doc_ids:
             num_of_blocks = self.library.collection.count_documents({"doc_ID": {"$in": doc_ids}})
@@ -1814,6 +1819,8 @@ class EmbeddingNeo4j:
             print(f"update: embedding_handler - Neo4j - "
                    "Embeddings Created: {embeddings_created} of {num_of_blocks}")
 
+
+        embedded_blocks = self.library.collection.count_documents({self.mongo_key: {"$exists": True}})
 
         embedding_summary = {
             "embeddings_created": embeddings_created,
