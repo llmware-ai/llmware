@@ -520,13 +520,13 @@ if __name__ == "__main__":
 
 ## 🔥 What's New? 🔥
 
--**Fast start with no db installation** - SQLite (text collection) and FAISS (vector file database) - example to configure - example [code](examples/Getting_Started/configure_db.py))  
+-**Fast start with no db installation** - SQLite (text collection) and FAISS (vector file database) - example [code](examples/Getting_Started/configure_db.py))  
 
 -**Postgres integration** as option for text collection with PGVector support ([code](examples/Embedding/using_pg_vector.py))  
 
 -**GGUF support** - check out examples - GGUF ([code](examples/Models/using_gguf.py)) and Videos  [video](https://www.youtube.com/watch?v=ZJyQIZNJ45E)  
 
--**OpenChat API integration** - OpenChat ([code](examples/Models/using_open_chat.py))  
+-**OpenChat API integration** - OpenChat ([code](examples/Models/using-open-chat.py))  
 
 
 ## 🌱 Getting Started
@@ -538,14 +538,14 @@ if __name__ == "__main__":
 
 | Example     |  Detail      |
 |-------------|--------------|
-| 1.   Getting Started ([code](Getting_Started/getting_started_with_rag.py) / [video](https://www.youtube.com/watch?v=0naqpH93eEU)) | End-to-end Basic RAG Recipe illustrating key LLMWare classes. |
-| 2.   Prompts ([code](Prompts/llm_prompts.py)) | Prompt LLMs with various sources, explore the out-of-the-box Prompt Catalog, and use different prompt styles.|
-| 3.   Retrieval ([code](Retrieval/semantic_retrieval.py)) | Explore the breadth of retrieval capabilities and persisting, loading and saving retrieval history.|
-| 4.   Embedding ([code](Embedding/embeddings_fast_start.py)) | Simple access to multiple embedding models and vector DBs (“mix and match”). 
-| 5.   Parsing ([code](Parsing/parse_documents.py)) | Ingest at scale into library and ‘at runtime' into any Prompt.
-| 6.   Prompts With Sources ([code](Prompts/prompt_with_sources.py)) | Attach wide range of knowledge sources directly into Prompts.
-| 7.   BLING models ([code](Models/bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU))   | Explore `llmware`'s BLING model series ("Best Little Instruction-following No-GPU-required").  See how they perform in common RAG scenarios - question-answering, key-value extraction, and basic summarization.   |
-| 8.   RAG with BLING ([code](RAG/contract_analysis_on_laptop_with_bling_models.py) / [video](https://www.youtube.com/watch?v=8aV5p3tErP0)) | Using contract analysis as an example, experiment with RAG for complex document analysis and text extraction using `llmware`'s BLING ~1B parameter GPT model running on your laptop.   |
+| 1.   Getting Started ([code](examples/Getting_Started/getting_started_with_rag.py) / [video](https://www.youtube.com/watch?v=0naqpH93eEU)) | End-to-end Basic RAG Recipe illustrating key LLMWare classes. |
+| 2.   Prompts ([code](examplesPrompts/llm_prompts.py)) | Prompt LLMs with various sources, explore the out-of-the-box Prompt Catalog, and use different prompt styles.|
+| 3.   Retrieval ([code](examples/Retrieval/semantic_retrieval.py)) | Explore the breadth of retrieval capabilities and persisting, loading and saving retrieval history.|
+| 4.   Embedding ([code](examples/Embedding/embeddings_fast_start.py)) | Simple access to multiple embedding models and vector DBs (“mix and match”). 
+| 5.   Parsing ([code](examples/Parsing/parse_documents.py)) | Ingest at scale into library and ‘at runtime' into any Prompt.
+| 6.   Prompts With Sources ([code](examples/Prompts/prompt_with_sources.py)) | Attach wide range of knowledge sources directly into Prompts.
+| 7.   BLING models ([code](examples/Models/bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU))   | Explore `llmware`'s BLING model series ("Best Little Instruction-following No-GPU-required").  See how they perform in common RAG scenarios - question-answering, key-value extraction, and basic summarization.   |
+| 8.   RAG with BLING ([code](examples/RAG/contract_analysis_on_laptop_with_bling_models.py) / [video](https://www.youtube.com/watch?v=8aV5p3tErP0)) | Using contract analysis as an example, experiment with RAG for complex document analysis and text extraction using `llmware`'s BLING ~1B parameter GPT model running on your laptop.   |
 | 9.   DRAGON RAG benchmark testing with huggingface ([code](Models/dragon_rag_benchmark_tests_huggingface.py)) | Run RAG instruct benchmark tests against the `llmware` DRAGON models to find the best one for your RAG workflow.  This example uses basic Transformer APIs. |
 | 10.  DRAGON RAG benchmark testing with llmware ([code](Models/dragon_rag_benchmark_tests_llmware.py)) | Run RAG instruct benchmark tests against the `llmware` DRAGON models to find the best one for your RAG workflow. This example uses the llmware Prompt API which provides additional capabilities such as evidence/fact checking |
 | 11.  Fact Checking ([code](Prompts/fact_checking.py))  | Explore the full set of evidence methods in this example script that analyzes a set of contracts. |
