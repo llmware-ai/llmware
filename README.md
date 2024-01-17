@@ -520,11 +520,11 @@ if __name__ == "__main__":
 
 ## 🔥 What's New? 🔥
 
--**Fast start with no db installation** - SQLite (text collection) and FAISS (vector file database) - example [code](examples/Getting_Started/configure_db.py))  
+-**Fast start with no db installation** - SQLite (text collection) and FAISS (vector file database) - [code](examples/Getting_Started/configure_db.py))  
 
 -**Postgres integration** as option for text collection with PGVector support ([code](examples/Embedding/using_pg_vector.py))  
 
--**GGUF support** - check out examples - GGUF ([code](examples/Models/using_gguf.py)) and Videos  [video](https://www.youtube.com/watch?v=ZJyQIZNJ45E)  
+-**GGUF support** - check out examples - GGUF ([code](examples/Models/using_gguf.py)) and Videos [video](https://www.youtube.com/watch?v=ZJyQIZNJ45E)  
 
 -**OpenChat API integration** - OpenChat ([code](examples/Models/using-open-chat.py))  
 
@@ -539,20 +539,20 @@ if __name__ == "__main__":
 | Example     |  Detail      |
 |-------------|--------------|
 | 1.   Getting Started ([code](examples/Getting_Started/getting_started_with_rag.py) / [video](https://www.youtube.com/watch?v=0naqpH93eEU)) | End-to-end Basic RAG Recipe illustrating key LLMWare classes. |
-| 2.   Prompts ([code](examplesPrompts/llm_prompts.py)) | Prompt LLMs with various sources, explore the out-of-the-box Prompt Catalog, and use different prompt styles.|
+| 2.   Prompts ([code](examples/Prompts/llm_prompts.py)) | Prompt LLMs with various sources, explore the out-of-the-box Prompt Catalog, and use different prompt styles.|
 | 3.   Retrieval ([code](examples/Retrieval/semantic_retrieval.py)) | Explore the breadth of retrieval capabilities and persisting, loading and saving retrieval history.|
 | 4.   Embedding ([code](examples/Embedding/embeddings_fast_start.py)) | Simple access to multiple embedding models and vector DBs (“mix and match”). 
 | 5.   Parsing ([code](examples/Parsing/parse_documents.py)) | Ingest at scale into library and ‘at runtime' into any Prompt.
 | 6.   Prompts With Sources ([code](examples/Prompts/prompt_with_sources.py)) | Attach wide range of knowledge sources directly into Prompts.
 | 7.   BLING models ([code](examples/Models/bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU))   | Explore `llmware`'s BLING model series ("Best Little Instruction-following No-GPU-required").  See how they perform in common RAG scenarios - question-answering, key-value extraction, and basic summarization.   |
 | 8.   RAG with BLING ([code](examples/RAG/contract_analysis_on_laptop_with_bling_models.py) / [video](https://www.youtube.com/watch?v=8aV5p3tErP0)) | Using contract analysis as an example, experiment with RAG for complex document analysis and text extraction using `llmware`'s BLING ~1B parameter GPT model running on your laptop.   |
-| 9.   DRAGON RAG benchmark testing with huggingface ([code](Models/dragon_rag_benchmark_tests_huggingface.py)) | Run RAG instruct benchmark tests against the `llmware` DRAGON models to find the best one for your RAG workflow.  This example uses basic Transformer APIs. |
-| 10.  DRAGON RAG benchmark testing with llmware ([code](Models/dragon_rag_benchmark_tests_llmware.py)) | Run RAG instruct benchmark tests against the `llmware` DRAGON models to find the best one for your RAG workflow. This example uses the llmware Prompt API which provides additional capabilities such as evidence/fact checking |
-| 11.  Fact Checking ([code](Prompts/fact_checking.py))  | Explore the full set of evidence methods in this example script that analyzes a set of contracts. |
-| 12.  Working with Prompts ([code](Getting_Started/working_with_prompts.py)) |  Inspection of Prompt history which is useful in AI Audit scenarios.|
-| 13.  Hugging Face Integration ([code](Models/huggingface_integration.py)) | How to bring your favorite HF model into llmware seamlessly.  Customize a generative model with weights from a custom fine-tuned model. |
-| 14.  Working with Datasets ([code](Datasets/working_with_datasets.py)) | Dataset generation streamlined for fine-tuning generative and embedding models and formats such as Alpaca, ChatGPT, Human-Bot.  |
-| 15.  Working without Databases ([code](Getting_Started/working_without_a_database.py) / [video](https://www.youtube.com/watch?v=tAGz6yR14lw))| Parse, Prompt and generate Datasets from Prompt history without installing MongoDB or a vector database.|  
+| 9.   DRAGON RAG benchmark testing with huggingface ([code](examples/Models/dragon_rag_benchmark_tests_huggingface.py)) | Run RAG instruct benchmark tests against the `llmware` DRAGON models to find the best one for your RAG workflow.  This example uses basic Transformer APIs. |
+| 10.  DRAGON RAG benchmark testing with llmware ([code](examples/Models/dragon_rag_benchmark_tests_llmware.py)) | Run RAG instruct benchmark tests against the `llmware` DRAGON models to find the best one for your RAG workflow. This example uses the llmware Prompt API which provides additional capabilities such as evidence/fact checking |
+| 11.  Fact Checking ([code](examples/Prompts/fact_checking.py))  | Explore the full set of evidence methods in this example script that analyzes a set of contracts. |
+| 12.  Working with Prompts ([code](examples/Getting_Started/working_with_prompts.py)) |  Inspection of Prompt history which is useful in AI Audit scenarios.|
+| 13.  Hugging Face Integration ([code](examples/Models/huggingface_integration.py)) | How to bring your favorite HF model into llmware seamlessly.  Customize a generative model with weights from a custom fine-tuned model. |
+| 14.  Working with Datasets ([code](examples/Datasets/working_with_datasets.py)) | Dataset generation streamlined for fine-tuning generative and embedding models and formats such as Alpaca, ChatGPT, Human-Bot.  |
+| 15.  Working without Databases ([code](examples/Getting_Started/working_without_a_database.py) / [video](https://www.youtube.com/watch?v=tAGz6yR14lw))| Parse, Prompt and generate Datasets from Prompt history without installing MongoDB or a vector database.|  
 
 Check out:  [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md)  
 
