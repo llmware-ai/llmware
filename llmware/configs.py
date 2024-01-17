@@ -18,14 +18,16 @@
 import os
 import platform
 
-from llmware.exceptions import HomePathDoesNotExistException, ConfigKeyException, \
-    UnsupportedEmbeddingDatabaseException, UnsupportedCollectionDatabaseException
+from llmware.exceptions import HomePathDoesNotExistException, UnsupportedEmbeddingDatabaseException, \
+    UnsupportedCollectionDatabaseException, UnsupportedTableDatabaseException, ConfigKeyException
 
 
 class LLMWareConfig:
 
-    # initial setting will pull from environ variables - future updates must be set directly
+    """LLMWare global configuration object - use set/get to update """
+
     if platform.system() == "Windows":
+
         _base_fp = {"home_path": os.environ.get("USERPROFILE"),
                     "llmware_path_name": "llmware_data" + os.sep}
     else:
@@ -41,99 +43,111 @@ class LLMWareConfig:
            "tmp_path_name": "tmp" + os.sep}
 
     # note: two alias for postgres vector db - "postgres" and "pg_vector" are the same
-    _supported = {"vector_db": ["milvus", "pg_vector", "postgres", "redis", "pinecone",
-                                "faiss", "qdrant", "mongo_atlas"],
+    _supported = {"vector_db": ["milvus", "pg_vector", "postgres", "redis", "pinecone", "faiss", "qdrant", "mongo_atlas"],
+                  "collection_db": ["mongo", "postgres", "sqlite"],
+                  "table_db": ["postgres", "sqlite"]}
 
-                  # coming soon - more options!
-                  "collection_db": ["mongo"],
-                  "table_db": []}
-
-    _conf = {"collection_db_uri": os.environ.get("COLLECTION_DB_URI", "mongodb://localhost:27017/"),
-
-             "collection_db_username": "", # Not used for now
-             "collection_db_password": "", # Not used for now
-
-             "collection_db": "mongo",
+    _conf = {"collection_db": "mongo",
              "vector_db": "milvus",
-
-             # note: Milvus configs moving to separate MilvusConfig object - these options will be removed
-             "milvus_host": os.environ.get("MILVUS_HOST","localhost"),
-             "milvus_port": int(os.environ.get("MILVUS_PORT",19530)),
-             "milvus_db": os.environ.get("MILVUS_DB", "default"),
-
+             "table_db": "sqlite",
              "debug_mode": 0,
              "llmware_sample_files_bucket": "llmware-sample-docs",
              "llmware_public_models_bucket": "llmware-public-models",
              "shared_lib_path": os.path.join(os.path.dirname(os.path.realpath(__file__)), "lib")
+
+             # "collection_db_uri": os.environ.get("COLLECTION_DB_URI", "mongodb://localhost:27017/"),
+             # "collection_db_username": "", # Not used for now
+             # "collection_db_password": "", # Not used for now
+             # "milvus_host": os.environ.get("MILVUS_HOST","localhost"),
+             # "milvus_port": int(os.environ.get("MILVUS_PORT",19530)),
+             # "milvus_db": os.environ.get("MILVUS_DB", "default"),
+
              }
 
     @classmethod
     def get_config(cls,name):
+        """Get config value by key"""
+
         if name in cls._conf:
             return cls._conf[name]
         raise ConfigKeyException(name)
 
     @classmethod
     def set_config(cls,name, value):
+        """Set config value by key"""
         cls._conf[name] = value
 
     @classmethod
     def get_home(cls):
+        """Get home directory path"""
         return cls._base_fp["home_path"]
 
     @classmethod
     def set_home(cls, new_value):
+        """Set home directory path"""
         cls._base_fp["home_path"] = new_value
 
     @classmethod
     def set_llmware_path_name(cls, new_value):
+        """Set main path name for llmware data path"""
         cls._base_fp["llmware_path_name"] = new_value
 
     @classmethod
     def get_fp_name(cls,file_path):
+        """Get file path from configs"""
         if file_path in cls._fp:
             return cls._fp[file_path]
         raise ConfigKeyException(file_path)
 
     @classmethod
     def set_fp_name(cls,file_path, new_value):
+        """Set file path in configs"""
         if file_path in cls._fp:
             cls._fp.update({file_path, new_value})
 
     @classmethod
     def get_llmware_path(cls):
+        """Get llmware absolute folder directory path"""
         return os.path.join(cls._base_fp["home_path"], cls._base_fp["llmware_path_name"])
 
     @classmethod
     def get_library_path(cls):
+        """Get library absolute folder directory path"""
         return os.path.join(cls._base_fp["home_path"], cls._base_fp["llmware_path_name"], cls._fp["library_path_name"])
 
     @classmethod
     def get_model_repo_path(cls):
+        """Get model repo absolute folder directory path"""
         return os.path.join(cls._base_fp["home_path"],cls._base_fp["llmware_path_name"], cls._fp["model_repo_path_name"])
 
     @classmethod
     def get_input_path(cls):
+        """Get input absolute folder directory path"""
         return os.path.join(cls._base_fp["home_path"], cls._base_fp["llmware_path_name"], cls._fp["input_path_name"])
 
     @classmethod
     def get_parser_path(cls):
+        """Get parser absolute folder directory path"""
         return os.path.join(cls._base_fp["home_path"],cls._base_fp["llmware_path_name"], cls._fp["parser_path_name"])
 
     @classmethod
     def get_query_path(cls):
+        """Get query absolute folder directory path"""
         return os.path.join(cls._base_fp["home_path"],cls._base_fp["llmware_path_name"], cls._fp["query_path_name"])
 
     @classmethod
     def get_prompt_path(cls):
+        """Get prompt absolute folder directory path"""
         return os.path.join(cls._base_fp["home_path"], cls._base_fp["llmware_path_name"],cls._fp["prompt_path_name"])
 
     @classmethod
     def get_tmp_path(cls):
+        """Get tmp absolute folder directory path"""
         return os.path.join(cls._base_fp["home_path"], cls._base_fp["llmware_path_name"],cls._fp["tmp_path_name"])
 
     @classmethod
     def get_path(cls, name):
+        """Get absolute folder path by name"""
 
         if name+"_name" in cls._fp:
             return os.path.join(cls._base_fp["home_path"], cls._base_fp["llmware_path_name"],
@@ -142,7 +156,72 @@ class LLMWareConfig:
         raise HomePathDoesNotExistException(name)
 
     @classmethod
+    def get_active_db(cls):
+
+        """ Returns the current selected default database for Library text collections """
+
+        return cls._conf["collection_db"]
+
+    @classmethod
+    def set_active_db(cls, new_db):
+
+        """ Sets the default database for Library text collections """
+
+        if new_db in cls._supported["collection_db"]:
+            cls._conf["collection_db"] = new_db
+        else:
+            raise UnsupportedCollectionDatabaseException(new_db)
+
+    @classmethod
+    def get_vector_db(cls):
+
+        """ Gets the default vector database selection """
+
+        return cls._conf["vector_db"]
+
+    @classmethod
+    def set_vector_db(cls, vector_db_name):
+
+        """ Sets the default vector database """
+
+        if vector_db_name in cls._supported["vector_db"]:
+            cls._conf["vector_db"] = vector_db_name
+        else:
+            raise UnsupportedEmbeddingDatabaseException(vector_db_name)
+
+    @classmethod
+    def get_table_db(cls):
+
+        """ Gets the default table (SQL) database """
+
+        return cls._conf["table_db"]
+
+    @classmethod
+    def set_table_db(cls, table_db_name):
+
+        """ Sets the default table (SQL) database """
+
+        if table_db_name in cls._supported["table_db"]:
+            cls._conf["table_db"] = table_db_name
+        else:
+            raise UnsupportedTableDatabaseException(table_db_name)
+
+    @classmethod
+    def get_supported_vector_db(cls):
+        return cls._supported["vector_db"]
+
+    @classmethod
+    def get_supported_collection_db(cls):
+        return cls._supported["collection_db"]
+
+    @classmethod
+    def get_supported_table_db(cls):
+        return cls._supported["table_db"]
+
+    @classmethod
     def setup_llmware_workspace (cls):
+
+        """Set up llmware main working folder directory"""
 
         # create file structure - configured through use of env variable ["HOME"]
         home_path = cls._base_fp["home_path"]
@@ -196,8 +275,10 @@ class LLMWareConfig:
     @classmethod
     def create_new_account(cls, account_name):
 
-        #   will set up a secondary account file structure
-        #   no management of account permissions in llmware- assumed to be handled in calling application
+        """Sets up a new secondary account file structure"""
+
+        #   Useful in deploying llmware in multi-account and multi-user applications
+        #   note: assumes account user permissions to be implemented in calling application
 
         library_path = cls.get_library_path()
         new_account_path = os.path.join(library_path, account_name)
@@ -206,46 +287,64 @@ class LLMWareConfig:
         return 0
 
     @classmethod
-    def get_active_db(cls):
+    def get_db_uri_string(cls):
 
-        """ Returns the current selected default database for Library text collections """
+        """ Retrieves the db_uri_string for the current active default text collection database """
 
-        return cls._conf["collection_db"]
+        active_db = cls.get_active_db()
 
-    @classmethod
-    def set_active_db(cls, new_db):
+        uri_string = None
 
-        """ Sets the default database for Library text collections """
+        if active_db == "mongo": uri_string = MongoConfig.get_uri_string()
+        if active_db == "postgres": uri_string = PostgresConfig.get_uri_string()
+        if active_db == "sqlite": uri_string = SQLiteConfig.get_uri_string()
 
-        if new_db in cls._supported["collection_db"]:
-            cls._conf["collection_db"] = new_db
-        else:
-            raise UnsupportedCollectionDatabaseException(new_db)
+        return uri_string
 
     @classmethod
-    def get_vector_db(cls):
+    def get_db_configs(cls):
 
-        """ Gets the default vector database selection """
+        """ Gets the db configs for the selected default text collection database """
 
-        return cls._conf["vector_db"]
+        active_db = cls.get_active_db()
 
-    @classmethod
-    def set_vector_db(cls, vector_db_name):
+        configs = {}
 
-        """ Sets the default vector database """
+        if active_db == "mongo": configs = MongoConfig.get_db_configs()
+        if active_db == "postgres": configs = PostgresConfig.get_db_configs()
+        if active_db == "sqlite": configs = SQLiteConfig.get_db_configs()
 
-        if vector_db_name in cls._supported["vector_db"]:
-            cls._conf["vector_db"] = vector_db_name
-        else:
-            raise UnsupportedEmbeddingDatabaseException(vector_db_name)
+        return configs
 
     @classmethod
-    def get_supported_vector_db(cls):
-        return cls._supported["vector_db"]
+    def get_db_user_name(cls):
+
+        """ Get the db user name for the default db """
+
+        active_db = cls.get_active_db()
+
+        user_name = ""
+
+        if active_db == "mongo": user_name = MongoConfig.get_user_name()
+        if active_db == "postgres": user_name = PostgresConfig.get_user_name()
+        if active_db == "sqlite": user_name = SQLiteConfig.get_user_name()
+
+        return user_name
 
     @classmethod
-    def get_supported_collection_db(cls):
-        return cls._supported["collection_db"]
+    def get_db_pw(cls):
+
+        """ Get the db password for the default db """
+
+        active_db = cls.get_active_db()
+
+        pw = ""
+
+        if active_db == "mongo": pw = MongoConfig.get_db_pw()
+        if active_db == "postgres": pw = PostgresConfig.get_db_pw()
+        if active_db == "sqlite": pw = SQLiteConfig.get_db_pw()
+
+        return pw
 
 
 class MilvusConfig:
@@ -259,25 +358,16 @@ class MilvusConfig:
 
     @classmethod
     def get_config(cls, name):
-
-        """ Gets current Milvus config by key name,
-        e.g. MilvusConfig().get_config("port") returns 19530 """
-
         if name in cls._conf:
             return cls._conf[name]
-        raise ConfigKeyException(name)
+        raise "Key not found in configs"
 
     @classmethod
     def set_config(cls, name, value):
-
-        """ Sets Milvus config by key name,
-        e.g., MilvusConfig().set_config("port", 8080) sets port = 8080 """
-
         cls._conf[name] = value
 
 
 class MongoConfig:
-
     """Configuration object for MongoDB"""
 
     _conf = {"db_uri": os.environ.get("COLLECTION_DB_URI", "mongodb://localhost:27017/"),
@@ -325,7 +415,6 @@ class PostgresConfig:
              "db_name": os.environ.get("USER_MANAGED_PG_DB_NAME", "postgres"),
              "user_name": os.environ.get("USER_MANAGED_PG_USER_NAME", "postgres"),
              "pw": os.environ.get("USER_MANAGED_PG_PW", ""),
-
              # to create full copy, set "postgres_schema" to "full"
              "pgvector_schema": "vector_only"}
 
@@ -345,7 +434,11 @@ class PostgresConfig:
         port = cls._conf["port"]
         host = cls._conf["host"]
         db_name = cls._conf["db_name"]
+
+        # canonical simple format of postgres uri string
         input_collection_db_path = f"postgresql://postgres@{host}:{port}/{db_name}"
+        # print("update: postgres get_uri_string - ", input_collection_db_path)
+
         return input_collection_db_path
 
     @classmethod
@@ -405,7 +498,7 @@ class PineconeConfig:
 
 class SQLiteConfig:
 
-    """ Configuration object for SQLite - note: SQLite integration coming soon! """
+    """Configuration object for SQLite"""
 
     _conf = {"host": os.environ.get("USER_MANAGED_SQLITE_HOST", "localhost"),
              "port": os.environ.get("USER_MANAGED_SQLITE_PORT", 6333),
@@ -422,19 +515,12 @@ class SQLiteConfig:
 
     @classmethod
     def set_config(cls, name, value):
-
-        """ Sets the configs for SQLite - e.g., to create a new 'database' -
-        SQLiteConfig().set_config("db_name": "my_new_db_name.db") """
-
         cls._conf[name] = value
 
     @classmethod
     def get_uri_string (cls):
-
         """For SQLite the URI string is the local file with full absolute path"""
-
         db_file = os.path.join(cls._conf["sqlite_db_folder_path"], cls._conf["db_name"])
-
         return db_file
 
     @classmethod
@@ -469,4 +555,113 @@ class QdrantConfig:
     @classmethod
     def set_config(cls, name, value):
         cls._conf[name] = value
+
+
+class AWSS3Config:
+
+    """Configuration object for AWS S3"""
+
+    _conf = {"access_key": os.environ.get("USER_MANAGED_S3_ACCESS_KEY", ""),
+             "secret_key": os.environ.get("USER_MANAGED_S#_SECRET_KEY", "")}
+
+    @classmethod
+    def get_config(cls, name):
+        if name in cls._conf:
+            return cls._conf[name]
+        raise ConfigKeyException(name)
+
+    @classmethod
+    def set_config(cls, name, value):
+        cls._conf[name] = value
+
+
+class LLMWareTableSchema:
+
+    #   notes:
+    #   1.  bigserial type for Postgres
+    #   2.  "text" and "table" replaced with "text_block" and "table_block" in SQL DB for safety / reserved
+
+    _block = {"_id": "bigserial",
+              "block_ID": "integer",
+              "doc_ID": "integer",
+              "content_type": "text",
+              "file_type": "text",
+              "master_index": "integer",
+              "master_index2": "integer",
+              "coords_x": "integer",
+              "coords_y": "integer",
+              "coords_cx": "integer",
+              "coords_cy": "integer",
+              "author_or_speaker": "text",
+              "added_to_collection": "text",
+              "file_source": "text",
+              "table_block": "text",
+              "modified_date": "text",
+              "created_date": "text",
+              "creator_tool": "text",
+              "external_files": "text",
+              "text_block": "text",
+              "header_text": "text",
+              "text_search": "text",
+              "user_tags": "text",
+              "special_field1": "text",
+              "special_field2": "text",
+              "special_field3": "text",
+              "graph_status": "text",
+              "dialog": "text",
+              "embedding_flags": "jsonb",
+              "PRIMARY KEY": "(_id)"}
+
+    _library_card = {"library_name": "text",
+                     "embedding": "json",
+                     "knowledge_graph": "text",
+                     "unique_doc_id": "integer",
+                     "documents": "integer",
+                     "blocks": "integer",
+                     "images": "integer",
+                     "pages": "integer",
+                     "tables": "integer",
+                     "account_name": "text",
+                     "PRIMARY KEY": "(library_name)"}
+
+    #   used for basic tests of db connectivity and access
+    _simple_test = {"library_name": "text",
+                    "hello_number": "integer"}
+
+    _status = {"key": "text",
+               "summary": "text",
+               "start_time": "text",
+               "end_time": "text",
+               "total": "integer",
+               "current": "integer",
+               "units": "text",
+               "PRIMARY KEY": "(key)"}
+
+    _parser_record = {"_id": "bigserial",
+                      "job_id": "text",
+                      "parser_type": "text",
+                      "library_name": "text",
+                      "account_name": "text",
+                      "file_name": "text",
+                      "message": "text",
+                      "ocr_flag": "text",
+                      "fail_flag": "text",
+                      "time_stamp": "text",
+                      "PRIMARY KEY": "(_id)"}
+
+    @classmethod
+    def get_block_schema(cls):
+        return cls._block
+
+    @classmethod
+    def get_library_card_schema(cls):
+        return cls._library_card
+
+    @classmethod
+    def get_status_schema(cls):
+        return cls._status
+
+    @classmethod
+    def get_parser_table_schema(cls):
+        return cls._parser_record
 
