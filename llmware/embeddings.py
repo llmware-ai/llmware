@@ -1713,7 +1713,7 @@ class EmbeddingNeo4j:
         neo4j_version = self._query('call dbms.components() '
                                     'yield name, versions, edition '
                                     'unwind versions as version '
-                                    'return version')
+                                    'return version')[0]['version']
 
         neo4j_version = tuple(map(int, neo4j_version.split('.')))
 
