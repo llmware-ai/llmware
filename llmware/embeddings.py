@@ -1710,8 +1710,8 @@ class EmbeddingNeo4j:
             raise 
 
         # Create the vector search index.
-        self.driver.execute_query(
-            query_='CALL '
+        self._query(
+            query='CALL '
                   'db.index.vector.createNodeIndex('
                       '$indexName, '
                       '$label, '
@@ -1719,7 +1719,7 @@ class EmbeddingNeo4j:
                       'toInteger($vectorDimension), '
                       '"euclidean"'
                   ')',
-            parameters_={
+            parameters={
                     'indexName': 'vectorIndex',
                     'label': 'Chunk',
                     'propertyKey': 'embedding',
@@ -1792,7 +1792,7 @@ class EmbeddingNeo4j:
                 ]
             }
 
-            self.driver.execute_query(query_=insert_query, parameters_=parameters)
+            self._query(query=insert_query, parameters=parameters)
 
             # Update statistics
             embeddings_created += len(sentences)
@@ -1813,7 +1813,7 @@ class EmbeddingNeo4j:
 
         parameters = {'sample_count': sample_count, 'query_embedding_vector': query_embedding_vector}
 
-        results = self.driver.execute_query(query_=search_query, parameters_=parameters)
+        results = self._query(query=search_query, parameters=parameters)
 
         for result in results:
             block_id = result['block_id']
@@ -1831,10 +1831,22 @@ class EmbeddingNeo4j:
 
     def delete_index(self, index_name):
         try:
-            self.driver.execute_query(f"DROP INDEX $index_name", {'index_name': index_name})
+            self._query(f"DROP INDEX $index_name", {'index_name': index_name})
         except DatabaseError: # Index did not exist yet
             pass
 
         # Delete mongo fields
         block_cursor = CollectionWriter(self.library.collection).update_many_records_custom({}, {
             "$unset": {self.mongo_key: ""}})
+
+    def _query(query, parameters=None):
+        from neo4j.exceptions import CypherSyntaxError
+
+        parameters = parameters or {}
+
+        with self.driver.session(database='neo4j') as session:
+            try:
+                data = session.run(query, parameters)
+                return [d.data() for d in data]
+            except CypherSyntaxError as e:
+                raise ValueError(f'Cypher Statement is not valid\n{e}')
