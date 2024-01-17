@@ -520,9 +520,9 @@ if __name__ == "__main__":
 
 ## 🔥 What's New? 🔥
 
--**Fast start with no db installation** - SQLite (text collection) + FAISS (vector file database) - (fast start example [code](examples/Getting_Started/fast_start_db.py))  
+-**Fast start with no db installation** - SQLite (text collection) and FAISS (vector file database) - example to configure - example [code](examples/Getting_Started/configure_db.py))  
 
--**Postgres integration** as option for text collection with PGVector support ([code](examples/Embedding/using_pgvector.py))  
+-**Postgres integration** as option for text collection with PGVector support ([code](examples/Embedding/using_pg_vector.py))  
 
 -**GGUF support** - check out examples - GGUF ([code](examples/Models/using_gguf.py)) and Videos  [video](https://www.youtube.com/watch?v=ZJyQIZNJ45E)  
 
