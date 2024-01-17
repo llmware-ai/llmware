@@ -1723,7 +1723,8 @@ class EmbeddingNeo4j:
 
 
         # If the index does not exist, then we create the vector search index.
-        neo4j_indexes = self._query('SHOW INDEXES yield name')[0]['name']
+        neo4j_indexes = self._query('SHOW INDEXES yield name')
+        neo4j_indexes = [neo4j_index['name'] for neo4j_index in neo4j_indexes]
         if 'vectorIndex' not in neo4j_indexes:
             self._query(
                 query='CALL '
