@@ -1666,19 +1666,6 @@ class EmbeddingNeo4j:
 
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
-        # Make sure that the Neo4j version supports vector indexing.
-        neo4j_version = self._query('call dbms.components() '
-                                    'yield name, versions, edition '
-                                    'unwind versions as version '
-                                    'return version')
-
-        neo4j_version = tuple(map(int, neo4j_version.split('.')))
-
-        target_version = (5, 11, 0)
-        if neo4j_version < target_version:
-            raise ValueError('Vector indexing requires a Neo4j version >= 5.11.0')
-
-
         # look up model card
         if not model and not model_name:
             raise EmbeddingModelNotFoundException("no-model-or-model-name-provided")
@@ -1721,6 +1708,19 @@ class EmbeddingNeo4j:
             # We raise here any other excpetion that happend.
             # This is usefull for debugging when some other error occurs.
             raise 
+
+        # Make sure that the Neo4j version supports vector indexing.
+        neo4j_version = self._query('call dbms.components() '
+                                    'yield name, versions, edition '
+                                    'unwind versions as version '
+                                    'return version')
+
+        neo4j_version = tuple(map(int, neo4j_version.split('.')))
+
+        target_version = (5, 11, 0)
+        if neo4j_version < target_version:
+            raise ValueError('Vector indexing requires a Neo4j version >= 5.11.0')
+
 
         # Create the vector search index.
         self._query(
