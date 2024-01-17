@@ -1722,22 +1722,24 @@ class EmbeddingNeo4j:
             raise ValueError('Vector indexing requires a Neo4j version >= 5.11.0')
 
 
-        # Create the vector search index.
-        self._query(
-            query='CALL '
-                  'db.index.vector.createNodeIndex('
-                      '$indexName, '
-                      '$label, '
-                      '$propertyKey, '
-                      'toInteger($vectorDimension), '
-                      '"euclidean"'
-                  ')',
-            parameters={
-                    'indexName': 'vectorIndex',
-                    'label': 'Chunk',
-                    'propertyKey': 'embedding',
-                    'vectorDimension': int(self.model.embedding_dims)
-            })
+        # If the index does not exist, then we create the vector search index.
+        neo4j_indexes = self._query('SHOW INDEXES yield name')[0]['name']
+        if 'vectorIndex' not in neo4j_indexes:
+            self._query(
+                query='CALL '
+                      'db.index.vector.createNodeIndex('
+                          '$indexName, '
+                          '$label, '
+                          '$propertyKey, '
+                          'toInteger($vectorDimension), '
+                          '"euclidean"'
+                      ')',
+                parameters={
+                        'indexName': 'vectorIndex',
+                        'label': 'Chunk',
+                        'propertyKey': 'embedding',
+                        'vectorDimension': int(self.model.embedding_dims)
+                })
 
 
         # will leave "-" and "_" in file path, but remove "@" and " "
