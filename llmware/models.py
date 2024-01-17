@@ -21,22 +21,22 @@ import os
 import re
 import requests
 import tempfile
-import traceback
+# import traceback
 import ast
 from collections import OrderedDict
 from tqdm.auto import trange
 import time
 
 import torch
-from torch.utils.data import Dataset
-import torch.nn.functional as F
+# from torch.utils.data import Dataset
+# import torch.nn.functional as F
 from torch import Tensor, nn
 from tqdm.autonotebook import trange
 import math
-import inspect
+# import inspect
 
 import torch.utils.checkpoint
-from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss
+# from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss
 
 #   start - new imports for ctransformers
 from functools import partial
@@ -49,10 +49,12 @@ from pathlib import Path
 from llmware.util import Utilities, PromptCatalog
 from llmware.configs import LLMWareConfig
 from llmware.resources import CloudBucketManager
-from llmware.exceptions import ModelNotFoundException, LLMInferenceResponseException, DependencyNotInstalledException
+from llmware.exceptions import (ModelNotFoundException, LLMInferenceResponseException, DependencyNotInstalledException,
+                                ModuleNotFoundException)
 
 # api model imports
 import openai, anthropic, ai21, cohere
+
 
 global_model_repo_catalog_list = [
 
@@ -362,8 +364,9 @@ global_model_repo_catalog_list = [
 ]
 
 
-# simple wrapper class around global_model_repo_catalog_list for easier dynamic updating
 class ModelRegistry:
+
+    """ ModelRegistry class is wrapper class around the global_model_repo_catalog_list for easy dynamic updating """
 
     registered_models = global_model_repo_catalog_list
     model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
@@ -374,14 +377,22 @@ class ModelRegistry:
 
     @classmethod
     def get_model_list(cls):
+
+        """ List current view of registered models """
+
         return cls.registered_models
 
     @classmethod
     def add_model_list(cls,new_model):
+
+        """ Adds a model to the registered list - assumes that dictionary entry is properly formed """
+
         cls.registered_models.append(new_model)
         return cls.registered_models
 
     def delete_model(cls, model_name):
+
+        """ Removes model from Model Registry list """
 
         model_found=False
 
@@ -396,6 +407,9 @@ class ModelRegistry:
 
     @classmethod
     def add_new_model(cls, model_card_dict):
+
+        """ Add new model with model card dictionary and some basic validation of main keys """
+
         # validate keys
         if "model_family" not in model_card_dict:
             # error - could not add new model card
@@ -414,6 +428,16 @@ class ModelRegistry:
     def add_gguf_model(cls, model_name, gguf_model_repo, gguf_model_file_name, prompt_wrapper=None,
                        eos_token_id=0, display_name=None, trailing_space="", temperature=0.3,
                        context_window=2048, instruction_following=False):
+
+        """ Add any GGUF model from Huggingface into the Model Registry, e.g.,
+
+            your_model_name = "my_gguf_model_1"
+            hf_repo_name = "TheBloke/model_name"
+            model_file = "abc.gguf"
+
+            ModelRegistry().add_gguf_model(your_model_name, hf_repo_name, model_file, prompt_wrapper="open_chat")
+
+        """
 
         if not display_name:
             display_name = model_name
@@ -436,6 +460,23 @@ class ModelRegistry:
                             context_window=4096, instruction_following=True, prompt_wrapper="",
                             temperature=0.5):
 
+        """ Add any open chat model into Model Registry, e.g.,
+
+         ModelRegistry().add_open_chat_model("my_open_chat_model1",
+                                            api_base="http://localhost:1234/v1",
+                                            prompt_wrapper="<INST>",
+                                            model_type="chat")
+
+         To invoke the model:
+
+         my_open_chat_model = ModelCatalog().load_model("my_open_chat_model1")
+
+         Or from a prompt:
+
+         prompter = Prompt().load_model("my_open_chat_model1")
+
+         """
+
         if not display_name:
             display_name = model_name
 
@@ -455,6 +496,8 @@ class ModelRegistry:
 
 def build_json_models_manifest(manifest_dict, fp, fn="llmware_supported_models_manifest.json"):
 
+    """ Utility method to export global model list to json file """
+
     json_dict = json.dumps(manifest_dict,indent=1)
     with open(os.path.join(fp,fn), "w", encoding='utf-8') as outfile:
         outfile.write(json_dict)
@@ -464,7 +507,9 @@ def build_json_models_manifest(manifest_dict, fp, fn="llmware_supported_models_m
 
 class ModelCatalog:
 
-    #   ModelCatalog responsible for model lookup of (1) Model Card, and (2) Finding Model Class
+    """ ModelCatalog is the main class responsible for model lookup of (1) Model Card and (2) Finding Model Class.
+    In most cases, ModelCatalog is the interface for all facets of interacting with the model classes.
+    """
 
     def __init__(self):
 
@@ -495,10 +540,14 @@ class ModelCatalog:
         self.library_name= None
 
     def pull_latest_manifest(self):
+        """ Not implemented currently """
         # will add to check manifest in global repo and make available for pull down
         return 0
 
     def register_new_model_card(self, model_card_dict):
+
+        """ Registers a new model card directly in the model catalog - this is an alternative to adding in the
+        Model Registry where a custom model catalog object is instantiated. """
 
         # validate keys
         if "model_family" not in model_card_dict:
@@ -518,6 +567,8 @@ class ModelCatalog:
     def register_gguf_model(self, model_name, gguf_model_repo, gguf_model_file_name, prompt_wrapper=None,
                             eos_token_id=0, display_name=None,trailing_space="", temperature=0.3,
                             context_window=2048, instruction_following=False):
+
+        """ Registers a new GGUF model in model catalog - alternative to adding directly in the ModelRegistry """
 
         if not display_name:
             display_name = model_name
@@ -539,6 +590,8 @@ class ModelCatalog:
 
     def setup_custom_llmware_inference_server(self, uri_string, secret_key=None):
 
+        """ Sets up and registers a custom llmware inference server """
+
         #   Examples:
         #       os.environ["LLMWARE_GPT_URI"] = "http://111.111.1.111:8080"
         #       os.environ["USER_MANAGED_LLMWARE_GPT_API_KEY"] = "demo-pass-test-key"
@@ -550,6 +603,8 @@ class ModelCatalog:
         return 1
 
     def lookup_model_card (self, selected_model_name):
+
+        """ Looks up a model card by model name - the model card has the key configuration and lookup information """
 
         model_card = None
 
@@ -567,6 +622,9 @@ class ModelCatalog:
         return model_card
 
     def locate_and_retrieve_model_bits (self, model_card):
+
+        """ For models requiring instantiation locally, this utility method retrieves the model bits using the
+        instructions provided in the model card entry. """
 
         # check for llmware path & create if not already set up
         if not os.path.exists(LLMWareConfig.get_llmware_path()):
@@ -614,6 +672,8 @@ class ModelCatalog:
         raise ModelNotFoundException(model_folder_name)
 
     def _instantiate_model_class_from_string(self, model_class, model_name, model_card, api_key=None):
+
+        """ Internal utility method to instantiate model classes from strings. """
 
         # by default - if model not found - return None
         my_model = None
@@ -727,8 +787,11 @@ class ModelCatalog:
 
         return my_model
 
-    # completes all preparatory steps, and returns 'ready-for-inference' model
     def load_model (self, selected_model, api_key=None):
+
+        """ Main method for loading and fully instantiating a model based solely on the model's name """
+
+        # completes all preparatory steps, and returns 'ready-for-inference' model
 
         # step 1- lookup model card from the catalog
         model_card = self.lookup_model_card(selected_model)
@@ -762,6 +825,8 @@ class ModelCatalog:
 
     def add_api_key (self, selected_model_name, api_key):
 
+        """ Convenience method to apply an api_key to a pass to a model """
+
         # step 1- lookup model card from the catalog
         model_card = self.lookup_model_card(selected_model_name)
 
@@ -778,30 +843,37 @@ class ModelCatalog:
 
         return self
 
-    # enables passing of a 'loaded' sentence transformer model
     def load_sentence_transformer_model(self,model, model_name):
+
+        """ Loads a sentence transformer model """
+
         model = LLMWareSemanticModel(model=model,model_name=model_name)
         return model
 
-    # integrate hf model passed
     def load_hf_embedding_model(self, model, tokenizer):
+
+        """ Loads and integrates a Huggingface embedding model """
+
         model = HFEmbeddingModel(model, tokenizer)
         return model
 
-    #   integrate pretrained decoder-based hf 'causal' model
-    #   Provide options to control model preprocessing prompt behavior
     def load_hf_generative_model(self, model,tokenizer,prompt_wrapper=None,
                                  instruction_following=False):
+
+        """ Loads and integrates a Huggingface generative decoder-based 'causal' model with limited options
+        to control model preprocessing prompt behavior """
 
         model = HFGenerativeModel(model, tokenizer, prompt_wrapper=prompt_wrapper,
                                   instruction_following=instruction_following)
 
         return model
 
-    # master handler to be used by any calling function, especially Retrieval / Query
     def load_embedding_model (self, model_name=None,
                               model=None, tokenizer=None,from_hf=False,
                               from_sentence_transformers=False):
+
+        """ Loads embedding model by name -
+        main handler used by any calling function to instantiate embedding model. """
 
         loaded_model = None
 
@@ -831,6 +903,8 @@ class ModelCatalog:
 
     def list_open_source_models(self):
 
+        """ Lists the open source models in the ModelCatalog. """
+
         open_source_models = []
 
         for x in self.global_model_list:
@@ -842,6 +916,8 @@ class ModelCatalog:
 
     def list_embedding_models(self):
 
+        """ Lists the embedding models in the ModelCatalog. """
+
         embedding_models = []
 
         for x in self.global_model_list:
@@ -851,6 +927,8 @@ class ModelCatalog:
         return embedding_models
 
     def list_generative_models(self):
+
+        """ Lists the generative models in the ModelCatalog. """
 
         gen_models = []
 
@@ -864,6 +942,8 @@ class ModelCatalog:
 
     def list_generative_local_models(self):
 
+        """ Lists the generative local models in the ModelCatalog. """
+
         gen_local_models = []
 
         for x in self.global_model_list:
@@ -876,6 +956,8 @@ class ModelCatalog:
 
     def list_all_models(self):
 
+        """ Lists all models in the ModelCatalog. """
+
         all_models = []
         for x in self.global_model_list:
             all_models.append(x)
@@ -885,6 +967,9 @@ class ModelCatalog:
         return all_models
 
     def model_lookup(self,model_name):
+
+        """ Looks up model by model_name. """
+
         my_model = None
 
         for models in self.global_model_list:
@@ -895,6 +980,8 @@ class ModelCatalog:
         return my_model
 
     def get_model_by_name(self, model_name, api_key=None):
+
+        """ Gets and instantiates model by name. """
 
         my_model = None
 
@@ -909,9 +996,10 @@ class ModelCatalog:
         return my_model
 
 
-#   follows the OpenAI chat prompt format, and is 'drop in' replacement for any compatible inference server
-
 class OpenChatModel:
+
+    """ OpenChatModel class implements the OpenAI prompt API and is intended for use with OpenChat compatible
+    inference servers """
 
     def __init__(self, model_name=None,  model_card=None, context_window=4000,prompt_wrapper=None, api_key="not_used"):
 
@@ -1182,6 +1270,8 @@ class OpenChatModel:
 
 class OpenAIGenModel:
 
+    """ OpenAIGenModel class implements the OpenAI API for its generative decoder models. """
+
     def __init__(self, model_name=None, api_key=None, context_window=4000):
 
         self.api_key = api_key
@@ -1379,6 +1469,8 @@ class OpenAIGenModel:
 
 class ClaudeModel:
 
+    """ ClaudeModel class implements the Anthropic Claude API for calling Anthropic models. """
+
     def __init__(self, model_name=None, api_key=None, context_window=8000):
 
         self.api_key = api_key
@@ -1524,6 +1616,9 @@ class ClaudeModel:
 
 
 class GoogleGenModel:
+
+    """ GoogleGenModel class implements the Google Vertex API for Google's generative models.
+    Note: to use GoogleModels does require a separate import of Google SDKs - vertexai and google.cloud.platform """
 
     def __init__(self, model_name=None, api_key=None, context_window=8192):
 
@@ -1693,6 +1788,8 @@ class GoogleGenModel:
 
 class JurassicModel:
 
+    """ JurassicModel class implements the AI21 Jurassic API. """
+
     def __init__(self, model_name=None, api_key=None, context_window=2048):
 
         self.api_key = api_key
@@ -1842,6 +1939,8 @@ class JurassicModel:
 
 
 class CohereGenModel:
+
+    """ CohereGenModel class implements the API for Cohere's generative models. """
 
     def __init__(self, model_name=None, api_key=None, context_window=2048):
 
@@ -2006,6 +2105,8 @@ class CohereGenModel:
 
 class AIBReadGPTModel:
 
+    """ AIBReadGPT implements the AIB Bloks API for the READ GPT model. """
+
     def __init__(self, model_name=None, api_key=None, context_window=2048):
 
         self.api_key = api_key
@@ -2165,6 +2266,8 @@ class AIBReadGPTModel:
 
 class LLMWareModel:
 
+    """LLMWareModel class implements the API for LLMWare generative models. """
+
     def __init__(self, model_name=None, api_key=None, context_window=2048):
 
         self.api_key = api_key
@@ -2309,6 +2412,8 @@ class LLMWareModel:
 
 class OpenAIEmbeddingModel:
 
+    """ OpenaIEmbeddingModel class implements the OpenAI API for embedding models, specifically text-ada. """
+
     def __init__(self, model_name=None, api_key=None, embedding_dims=None):
 
         # must have elements for embedding model
@@ -2394,6 +2499,8 @@ class OpenAIEmbeddingModel:
 
 class CohereEmbeddingModel:
 
+    """ CohereEmbeddingModel implements the Cohere API for embedding models. """
+
     def __init__(self, model_name = None, api_key=None, embedding_dims=None):
 
         self.api_key = api_key
@@ -2463,6 +2570,9 @@ class CohereEmbeddingModel:
 
 
 class GoogleEmbeddingModel:
+
+    """ GoogleEmbeddingModel implements the Google API for text embedding models.  Note: to use Google models
+    requires a separate install of the Google SDKs, e.g., vertexai and google.cloud.platform """
 
     def __init__(self, model_name=None, api_key=None, embedding_dims=None):
 
@@ -2577,6 +2687,8 @@ class GoogleEmbeddingModel:
 
 class HFEmbeddingModel:
 
+    """HFEmbeddingModel class implements the API for HuggingFace embedding models. """
+
     def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None, model_card=None,
                  embedding_dims=None):
 
@@ -2665,6 +2777,9 @@ class HFEmbeddingModel:
 
 
 class HFGenerativeModel:
+
+    """ HFGenerativeModel class implements the HuggingFace generative model API, and is used generally for
+     models in HuggingFace repositories, e.g., Dragon, Bling, etc. """
 
     #   support instantiating HF model in two different ways:
     #       1.  directly passing a previously loaded HF model object and tokenizer object
@@ -3076,6 +3191,8 @@ class HFGenerativeModel:
 
 class ConfigStruct(Structure):
 
+    """Utility method for managing ctypes/cpp interaction in GGUFGenerativeModel"""
+
     _fields_ = [
         ("context_length", c_int),
         ("gpu_layers", c_int),
@@ -3085,6 +3202,8 @@ class ConfigStruct(Structure):
 
 
 class GGUFGenerativeModel:
+
+    """ GGUFGenerativeModel implements interface into llama.cpp """
 
     #   This implementation of GGUFGenerativeModel includes code derived, inspired, and modified from ctransformers
     #   For more information on ctransformers: please see https://github.com/marella/ctransformers
@@ -3494,7 +3613,10 @@ class GGUFGenerativeModel:
         #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
         #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
 
-        lib = CDLL(path)
+        try:
+            lib = CDLL(path)
+        except:
+            raise ModuleNotFoundException("GGUF-Implementation")
 
         lib.ctransformers_llm_create.argtypes = [c_char_p, c_char_p, ConfigStruct]
         lib.ctransformers_llm_create.restype = llm_p
@@ -3698,6 +3820,9 @@ class GGUFGenerativeModel:
 
 class LLMWareSemanticModel:
 
+    """ LLMWareSemanticModel class implements the LLMWareSemanticModel API, which is based on the SentenceTransformer
+    architecture. """
+
     def __init__(self, model_name=None, model=None, embedding_dims=None, max_seq_length=150,
                  model_card=None, api_key=None):
 
@@ -3835,6 +3960,8 @@ class LLMWareSemanticModel:
 
 class STransformer (nn.Sequential):
 
+    """STransformer class is simplified implementation of Sentence Transformers. """
+
     def __init__(self, model_path, max_seq_length=150, model_size="standard",
                  torch_dtype=torch.float32):
 
@@ -3941,6 +4068,8 @@ class STransformer (nn.Sequential):
 
 class Transformer (nn.Module):
 
+    """ Transformer is simplified implementation of wrapper utility class used to assemble Sentence Transformers. """
+
     def __init__(self, model_path, max_seq_length=150, do_lower_case= False, model_size="standard"):
         super().__init__()
 
@@ -4010,6 +4139,8 @@ class Transformer (nn.Module):
 
 
 class Pooling(nn.Module):
+
+    """Pooling is a component of the Sentence Transformer architecture. """
 
     def __init__(self, word_embedding_dimension):
 
@@ -4515,6 +4646,8 @@ def prune_linear_layer(layer, index, dim= 0):
 
 
 class LLMWareInferenceServer:
+
+    """ LLMWare Inference Server class implements the server-side lightweight inference server. """
 
     def __init__(self, model_name, model_catalog=None, hf_api_key=None, secret_api_key=None, home_path=None,
                  port=8080):
