@@ -41,17 +41,142 @@ import uuid
 from wikipediaapi import Wikipedia, ExtractFormat
 import yfinance
 
-from llmware.resources import CollectionRetrieval, CollectionWriter, PromptState, CloudBucketManager
+from llmware.resources import CollectionRetrieval, PromptState, CloudBucketManager
 from llmware.configs import LLMWareConfig
 from llmware.exceptions import ModelNotFoundException, DependencyNotInstalledException, \
-    FilePathDoesNotExistException, LibraryObjectNotFoundException, DatasetTypeNotFoundException
+    FilePathDoesNotExistException, LibraryObjectNotFoundException, DatasetTypeNotFoundException, \
+    ModuleNotFoundException
 
 
 class Utilities:
 
+    """ Utility functions used throughout LLMWare """
+
     def __init__(self, library=None):
         self.start = 0
         self.library = library
+
+    def get_module_graph_functions(self):
+
+        #   * C Utility functions *
+        # Load shared libraries based on current platform/architecture
+
+        # Best ways we've found to detect machine architecture
+        if platform.system() == "Windows":
+            system = "windows"
+            machine = "x86_64"
+            file_ext = ".dll"
+        else:
+            system = platform.system().lower()
+            machine = os.uname().machine.lower()
+            file_ext = ".so"
+
+        # Default to known architectures if we encounter an unknown one
+        if system == 'darwin' and machine not in ['arm64', 'x86_64']:
+            machine = 'arm64'
+        if system == 'linux' and machine not in ['aarch64', 'x86_64']:
+            machine = 'x86_64'
+
+        # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
+        machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
+
+        # replace for local testing:  file_ext -> .dylib
+        _path_graph = os.path.join(machine_dependent_lib_path, "llmware", "libgraph_llmware" + file_ext)
+
+        _mod_utility = None
+
+        try:
+            _mod_utility = cdll.LoadLibrary(_path_graph)
+        except:
+            logging.warning("warning: Module 'Graph Processor' could not be loaded from path - \n %s.\n",
+                            _path_graph)
+
+        if not _mod_utility:
+            raise ModuleNotFoundException("Graph Processor")
+
+        return _mod_utility
+
+    def get_module_pdf_parser(self):
+
+        # Best ways we've found to detect machine architecture
+        if platform.system() == "Windows":
+            system = "windows"
+            machine = "x86_64"
+            file_ext = ".dll"
+        else:
+            system = platform.system().lower()
+            machine = os.uname().machine.lower()
+            file_ext = ".so"
+
+        # Default to known architectures if we encounter an unknown one
+        if system == 'darwin' and machine not in ['arm64', 'x86_64']:
+            machine = 'arm64'
+        if system == 'linux' and machine not in ['aarch64', 'x86_64']:
+            machine = 'x86_64'
+
+        # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
+        machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
+
+        # shift to file_ext
+        _path_pdf = os.path.join(machine_dependent_lib_path, "llmware", "libpdf_llmware" + file_ext)
+
+        _mod_pdf = None
+
+        try:
+            # attempt to load the shared library with ctypes
+            _mod_pdf = cdll.LoadLibrary(_path_pdf)
+
+        except:
+            # catch error, if possible
+            logging.warning("warning: Module 'PDF Parser' could not be loaded from path - \n %s.\n",
+                            _path_pdf)
+
+        #   if no module loaded, then raise exception
+        if not _mod_pdf:
+            raise ModuleNotFoundException("PDF Parser")
+
+        return _mod_pdf
+
+    def get_module_office_parser(self):
+
+        # Best ways we've found to detect machine architecture
+        if platform.system() == "Windows":
+            system = "windows"
+            machine = "x86_64"
+            file_ext = ".dll"
+        else:
+            system = platform.system().lower()
+            machine = os.uname().machine.lower()
+            file_ext = ".so"
+
+        # Default to known architectures if we encounter an unknown one
+        if system == 'darwin' and machine not in ['arm64', 'x86_64']:
+            machine = 'arm64'
+        if system == 'linux' and machine not in ['aarch64', 'x86_64']:
+            machine = 'x86_64'
+
+        # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
+        machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
+
+        _path_office = os.path.join(machine_dependent_lib_path, "llmware", "liboffice_llmware" + file_ext)
+
+        _mod = None
+
+        try:
+            # attempt to load the shared library with ctypes
+            _mod = cdll.LoadLibrary(_path_office)
+
+        except:
+
+            # catch the error, if possible
+            logging.warning("warning: Module 'Office Parser' could not be loaded from path - \n %s.\n",
+                            _path_office)
+
+        # if no module loaded, then raise exception
+        if not _mod:
+            raise ModuleNotFoundException("Office Parser")
+
+        return _mod
 
     def get_default_tokenizer(self):
 
@@ -381,127 +506,6 @@ class Utilities:
 
         return clean_out
 
-    def get_sentences(self,lib, key_term, block_cursor):
-
-        output = []
-        sentences_only = []
-
-        abbrevs = "^Mr^Mrs^Ms^Jr^Sr"
-        regex_string = '((?=([^"]*"[^"]*")*[^"]*$)(?<=[^\d' + abbrevs + '])[.!?])'
-
-        for block in block_cursor:
-            text_block_tmp = block["text"]
-
-            # need to check if previous_block and/or next_block in results
-            previous_block = self.get_cursor_previous_block(lib, block["doc_ID"],block["block_ID"],block["master_index"])
-            next_block = self.get_cursor_next_block(lib, block["doc_ID"],block["block_ID"],block["master_index"])
-
-            if previous_block:
-                previous_text = previous_block["text"]
-                # regex - split on .!? unless inside a "
-                last_sentence = list(re.split(regex_string, previous_text))[-1]
-                text_block_tmp = last_sentence + " " + text_block_tmp
-
-            if next_block:
-                next_text = next_block["text"]
-                # regex - split on .!? unless inside a "
-                first_sentence = list(re.split(regex_string, next_text))[0]
-
-                text_block_tmp = text_block_tmp + " " + first_sentence
-
-            sentences = re.split(regex_string,text_block_tmp)
-
-            leftover = ""
-
-            for x in range(0,len(sentences)):
-
-                if sentences[x]:
-                    working_sentence = leftover + sentences[x]
-                    leftover = ""
-                    # if shorter than 10 chars, bundle with the next full sentence
-                    #   -- need more sophisticated regex to avoid splitting on 'Section 2.3' etc
-
-                    if len(working_sentence) > 10:
-
-                        matches_found = self.find_match(key_term, working_sentence)
-                        if matches_found:
-
-                            if working_sentence not in sentences_only:
-
-                                if (x+1) < len(sentences):
-                                    if sentences[x+1]:
-                                        if len(sentences[x+1]) <= 10:
-                                            working_sentence += " " + sentences[x+1]
-
-                                new_row = {"sentence": working_sentence, "matches": matches_found, "block": block}
-                                output.append(new_row)
-                                sentences_only.append(working_sentence)
-                                leftover = ""
-
-        return output, sentences_only
-
-    def get_sentences_fast_cap(self,lib, key_term_list, block_cursor,top_k=20):
-
-        output = []
-        sentences_only = []
-
-        abbrevs = "^Mr^Mrs^Ms^Jr^Sr"
-        regex_string = '((?=([^"]*"[^"]*")*[^"]*$)(?<=[^\d' + abbrevs + '])[.!?])'
-
-        for block in block_cursor:
-            text_block_tmp = block["text"]
-
-            # need to check if previous_block and/or next_block in results
-            previous_block = self.get_cursor_previous_block(lib, block["doc_ID"],block["block_ID"],block["master_index"])
-            next_block = self.get_cursor_next_block(lib, block["doc_ID"],block["block_ID"],block["master_index"])
-
-            if previous_block:
-                previous_text = previous_block["text"]
-                last_sentence = list(re.split(regex_string, previous_text))[-1]
-                text_block_tmp = last_sentence + " " + text_block_tmp
-
-            if next_block:
-                next_text = next_block["text"]
-                first_sentence = list(re.split(regex_string, next_text))[0]
-
-                text_block_tmp = text_block_tmp + " " + first_sentence
-
-            sentences = re.split(regex_string,text_block_tmp)
-
-            leftover = ""
-
-            for x in range(0,len(sentences)):
-
-                if sentences[x]:
-                    working_sentence = leftover + sentences[x]
-                    leftover = ""
-                    # if shorter than 10 chars, bundle with the next full sentence
-                    #   -- need more sophisticated regex to avoid splitting on 'Section 2.3' etc
-
-                    if len(working_sentence) > 10:
-
-                        matches_found = []
-                        for kt in key_term_list:
-                            matches_found.append(self.find_match(kt, working_sentence))
-
-                        if matches_found:
-
-                            if working_sentence not in sentences_only:
-
-                                if (x+1) < len(sentences):
-                                    if sentences[x+1]:
-                                        if len(sentences[x+1]) <= 10:
-                                            working_sentence += " " + sentences[x+1]
-
-                                new_row = {"sentence": working_sentence, "matches": matches_found, "block": block}
-                                output.append(new_row)
-                                sentences_only.append(working_sentence)
-                                leftover = ""
-                                if len(output) >= top_k:
-                                    break
-
-        return output, sentences_only
-
     def sentence_splitter(self, sentence, key_word, marker_list):
 
         text = []
@@ -652,14 +656,6 @@ class Utilities:
 
         return answer
 
-    def get_cursor_next_block(self, lib,doc_id, block_id, selected_page):
-        next_block = CollectionRetrieval(lib.collection).get_cursor_by_block(doc_id, block_id+1, selected_page)
-        return next_block
-
-    def get_cursor_previous_block(self,lib, doc_id, block_id, selected_page):
-        previous_block = CollectionRetrieval(lib.collection).get_cursor_by_block(doc_id,block_id-1, selected_page)
-        return previous_block
-
     def split_context_row (self, context_row):
 
         entries_list = []
@@ -781,6 +777,8 @@ class Utilities:
 
 class CorpTokenizer:
 
+    """ Simple Custom 'Whole-word' Tokenizer implementation """
+
     def __init__(self, lower_case=True, remove_punctuation=True, remove_stop_words=True,
                  remove_numbers=True, one_letter_removal=False):
 
@@ -826,6 +824,8 @@ class CorpTokenizer:
 
 class XlTable:
 
+    """ XLTable class for handling and processing XL tables. """
+
     def __init__(self, xl_table_block, account, library):
 
         self.table = xl_table_block["table"]
@@ -869,7 +869,8 @@ class XlTable:
 
         else:
             key_dict = {"file_source": self.file_source, "master_index": self.sheet_num, "coords_y": 0}
-            results = CollectionRetrieval(self.library.collection).filter_by_key_dict(key_dict)
+            results = CollectionRetrieval(self.library.library_name,
+                                          account_name=self.library.account_name).filter_by_key_dict(key_dict)
 
             if results:
                 first_batch = list(results)
@@ -1270,6 +1271,8 @@ class XlTable:
 
 class WikiKnowledgeBase:
 
+    """ WikiKnowledgeBase implements Wikipedia API """
+
     def __init__(self):
 
         # importing here to suppress log warnings produced by urllib3
@@ -1333,6 +1336,8 @@ class WikiKnowledgeBase:
 
 
 class TextChunker:
+
+    """ Text Chunker - input is a big chunk of text and output is a chunked set of smaller text chunks. """
 
     # simple class that can be inserted for OCR, Text or HTML
     # class expects to be passed a big chunk of text, e.g., output from OCR or full read of text file
@@ -1711,6 +1716,8 @@ global_default_prompt_catalog = [
 
 class PromptCatalog:
 
+    """ PromptCatalog manages prompt styles and prompt wrappers. """
+
     def __init__(self):
 
         self.prompt_catalog = global_default_prompt_catalog
@@ -1970,62 +1977,11 @@ class PromptCatalog:
                   "<|assistant|>"
         return content
 
-#   * C Utility functions *
-# Load shared libraries based on current platform/architecture
-
-# Best ways we've found to detect machine architecture
-if platform.system() == "Windows":
-    system = "windows"
-    machine = "x86_64"
-    file_ext = ".dll"
-else:
-    system = platform.system().lower()
-    machine = os.uname().machine.lower()
-    file_ext = ".so"
-
-# Default to known architectures if we encounter an unknown one
-if system == 'darwin' and machine not in ['arm64','x86_64']:
-    machine = 'arm64'
-if system == 'linux' and machine not in ['aarch64','x86_64']:
-    machine = 'x86_64'
-
-# Constuct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
-machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
-
-_path_graph  = os.path.join(machine_dependent_lib_path, "llmware", "libgraph_llmware" + file_ext)
-
-_mod_utility = cdll.LoadLibrary(_path_graph)
-
-#   *  End - C Utility functions *
-
-"""
-#   * C Utility functions * 
-# Load shared libraries based on current platform/architecture
-
-system = platform.system().lower()
-machine = sysconfig.get_platform().split("-")[-1].lower()
-_path_graph = None
-
-
-if system == "darwin" and machine == "x86_64":
-    _path_graph  = os.path.join(LLMWareConfig.get_config("shared_lib_path"),  "darwin", "x86_64", "libgraph_llmware.dylib")
-
-if system == "darwin" and machine in ["universal2", "arm64"]:
-    _path_graph  = os.path.join(LLMWareConfig.get_config("shared_lib_path"),  "darwin", "arm64", "libgraph_llmware.dylib")
-
-if system == "linux" and machine == "x86_64":
-    _path_graph  = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "x86_64", "libgraph_llmware.so")
-
-if system == "linux" and machine == "aarch64":
-    _path_graph  = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "aarch64", "libgraph_llmware.so")
-
-_mod_utility = cdll.LoadLibrary(_path_graph)
-
-#   *  End - C Utility functions *
-"""
-
 
 class Graph:
+
+    """Graph is a set of NLP statistical functions that generate statistical relationships between key words and
+    concepts in a library. """
 
     def __init__(self, library):
 
@@ -2054,6 +2010,9 @@ class Graph:
 
         # create stop words txt file in nlp path
         self.stop_words = Utilities().load_stop_words_list(self.library.nlp_path)
+
+        # load graph c modules - note: if any issues loading module, will be captured in get_module_graph_functions()
+        self._mod_utility = Utilities().get_module_graph_functions()
 
     # new method - used to track 'counter' inside the bow files for incremental read/write/analysis
     def bow_locator(self):
@@ -2179,7 +2138,8 @@ class Graph:
         account_name = create_string_buffer(input_account_name.encode('ascii', 'ignore'))
         library_name = create_string_buffer(input_library_name.encode('ascii', 'ignore'))
 
-        input_db_path = LLMWareConfig.get_config("collection_db_uri")
+        input_db_path = LLMWareConfig.get_db_uri_string()
+        # input_db_path = MongoConfig.get_config("collection_db_uri")
 
         db_path_c = create_string_buffer(input_db_path.encode('ascii', 'ignore'))
 
@@ -2193,8 +2153,24 @@ class Graph:
         input_text_field = "text"
         text_field_c = create_string_buffer(input_text_field.encode('ascii', 'ignore'))
 
-        teh = _mod_utility.text_extract_main_handler
-        teh.argtypes = (c_char_p, c_char_p, c_int, c_char_p, c_char_p, c_char_p, c_char_p, c_int, c_int)
+        # int text_extract_main_handler(char * input_account_name, char * input_library_name,
+        # char * db, int new_bow, char * db_uri_string,
+        # char * input_stop_words_fp, char * input_bow_fp,
+        # char * input_text_field, int bow_index, int bow_len)
+
+        db = LLMWareConfig().get_active_db()
+        db_c = create_string_buffer(db.encode('ascii','ignore'))
+
+        print("update: graph_builder - python - db, db_uri - ", db_c, input_db_path)
+
+        # new signature
+        teh = self._mod_utility.text_extract_main_handler
+        teh.argtypes = (c_char_p, c_char_p, c_char_p, c_int, c_char_p, c_char_p, c_char_p, c_char_p, c_int, c_int)
+
+        # old
+        # teh.argtypes = (c_char_p, c_char_p, c_int, c_char_p, c_char_p, c_char_p, c_char_p, c_int, c_int)
+        # end - current code
+
         teh.restype = c_int
 
         # note: key input - is there an existing bow already to build off ('a'), or start new ('w') ?
@@ -2215,8 +2191,14 @@ class Graph:
         logging.info("update: Graph() bow_builder - calling on text_extract handler - bow vars - %s - %s ", bow_index_current,
                      bow_len_remainder_only)
 
+        # int text_extract_main_handler(char * input_account_name, char * input_library_name,
+        # char * db, int new_bow, char * db_uri_string,
+        # char * input_stop_words_fp, char * input_bow_fp,
+        # char * input_text_field, int bow_index, int bow_len)
+
         bow_count = teh(account_name,
                         library_name,
+                        db_c,
                         new_bow_c,
                         db_path_c,
                         stop_words_c,
@@ -2430,7 +2412,7 @@ class Graph:
 
         logging.info("update: build_graph_raw: bow len - %s %s: ", bow_count, bow_len_remainder)
 
-        graph_handler = _mod_utility.graph_builder
+        graph_handler = self._mod_utility.graph_builder
 
         graph_handler.argtypes = (c_char_p,
                                   c_char_p,
@@ -3013,7 +2995,8 @@ class Graph:
                     bid = int(block_scores_list[x][0][len("block_id="):])
 
                     filter_dict = {"doc_ID": int(doc_id), "block_ID": bid}
-                    blok_qr = CollectionRetrieval(self.library.collection).filter_by_key_dict(filter_dict)
+                    blok_qr = CollectionRetrieval(self.library_name,
+                                                  account_name=self.account_name).filter_by_key_dict(filter_dict)
                     if blok_qr:
                         bloks_out += blok_qr[0]["text"] + "\n"
 
@@ -3266,6 +3249,9 @@ class Graph:
 
 
 class Datasets:
+
+    """Datasets class implements a set of data packaging tools to create 'model-ready' datasets using a variety of
+    packaging strategies automatically derived from artifacts across llmware. """
 
     def __init__(self, library=None, ds_folder=None, validation_split=0.1, testing_split=0.1, tokenizer=None):
 
@@ -3609,14 +3595,15 @@ class Datasets:
                 filter_list = ["text", "table"]
 
                 if self.library:
-                    results = CollectionRetrieval(self.library.collection).filter_by_key_value_range("content_type",filter_list)
+                    results = CollectionRetrieval(self.library_name,
+                                                  account_name=self.account_name).filter_by_key_value_range("content_type",filter_list)
                 else:
                     raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
 
             else:
 
                 if self.library:
-                    results = CollectionRetrieval(self.library.collection).\
+                    results = CollectionRetrieval(self.library_name,account_name=self.account_name).\
                         text_search_with_key_value_dict_filter(query, filter_dict)
                 else:
                     raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
@@ -3817,7 +3804,7 @@ class Datasets:
             filter_list = ["text", "table"]
 
             if self.library:
-                results = CollectionRetrieval(self.library.collection).\
+                results = CollectionRetrieval(self.library_name, account_name=self.account_name).\
                     filter_by_key_value_range("content_type", filter_list)
             else:
                 raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
@@ -3976,7 +3963,7 @@ class Datasets:
             filter_list = ["text"]  # includes only text - should tables be excluded ?
 
             if self.library:
-                results = CollectionRetrieval(self.library.collection).\
+                results = CollectionRetrieval(self.library_name, account_name=self.account_name).\
                     filter_by_key_value_range("content_type", filter_list)
             else:
                 raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
@@ -4130,7 +4117,7 @@ class Datasets:
         if not qr:
 
             if self.library:
-                dialogs = CollectionRetrieval(self.library.collection).filter_by_key("dialog", "true")
+                dialogs = CollectionRetrieval(self.library_name,account_name=self.account_name).filter_by_key("dialog", "true")
             else:
                 raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
 
@@ -4490,7 +4477,8 @@ class Datasets:
                 filter_list = ["image"]
 
                 if self.library:
-                    results = CollectionRetrieval(self.library.collection).filter_by_key_value_range("content_type",
+                    results = CollectionRetrieval(self.library_name,
+                                                  account_name=self.account_name).filter_by_key_value_range("content_type",
                                                                                                  filter_list)
                 else:
                     raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
@@ -4500,7 +4488,7 @@ class Datasets:
                 filter_dict.update({"content_type": "image"})
 
                 if self.library:
-                    results = CollectionRetrieval(self.library.collection). \
+                    results = CollectionRetrieval(self.library_name, account_name=self.account_name). \
                         text_search_with_key_value_dict_filter(query, filter_dict)
                 else:
                     raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
@@ -4635,14 +4623,16 @@ class Datasets:
                 filter_list = ["text", "table"]
 
                 if self.library:
-                    results = CollectionRetrieval(self.library.collection).filter_by_key_value_range("content_type",
+                    results = CollectionRetrieval(self.library.library_name,
+                                                  account_name=self.library.account_name).filter_by_key_value_range("content_type",
                                                                                                  filter_list)
                 else:
                     raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
             else:
 
                 if self.library:
-                    results = CollectionRetrieval(self.library.collection).\
+                    results = CollectionRetrieval(self.library.library_name,
+                                                  account_name=self.library.account_name).\
                         text_search_with_key_value_dict_filter(query, filter_dict)
                 else:
                     raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
@@ -5107,6 +5097,8 @@ class Datasets:
 # simple API wrapper around popular Yahoo Finance - used in Prompt to pull in real-time info
 
 class YFinance:
+
+    """ YFinance class implements the Yahoo Finance API. """
 
     def __init__(self, ticker=None):
 
