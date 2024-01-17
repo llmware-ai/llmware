@@ -1852,7 +1852,7 @@ class EmbeddingNeo4j:
         block_cursor = CollectionWriter(self.library.collection).update_many_records_custom({}, {
             "$unset": {self.mongo_key: ""}})
 
-    def _query(query, parameters=None):
+    def _query(self, query, parameters=None):
         from neo4j.exceptions import CypherSyntaxError
 
         parameters = parameters or {}
