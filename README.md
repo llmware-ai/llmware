@@ -520,13 +520,13 @@ if __name__ == "__main__":
 
 ## 🔥 What's New? 🔥
 
--**Fast start with no db installation** - SQLite (text collection) and FAISS (vector file database) - [code](examples/Getting_Started/configure_db.py))  
+-**Fast start with no db installation** - SQLite (text collection) and FAISS (vector file database) - [example](examples/Getting_Started/configure_db.py) 
 
--**Postgres integration** as option for text collection with PGVector support ([code](examples/Embedding/using_pg_vector.py))  
+-**Postgres integration** as option for text collection with PGVector support ([example](examples/Embedding/using_pg_vector.py))  
 
--**GGUF support** - check out examples - GGUF ([code](examples/Models/using_gguf.py)) and Videos [video](https://www.youtube.com/watch?v=ZJyQIZNJ45E)  
+-**GGUF support** - check out examples - GGUF ([example](examples/Models/using_gguf.py)) and Videos [video](https://www.youtube.com/watch?v=ZJyQIZNJ45E)  
 
--**OpenChat API integration** - OpenChat ([code](examples/Models/using-open-chat.py))  
+-**OpenChat API integration** - OpenChat ([example](examples/Models/using-open-chat-models.py))  
 
 
 ## 🌱 Getting Started
