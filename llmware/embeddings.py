@@ -1846,7 +1846,7 @@ class EmbeddingNeo4j:
         results = self._query(query=search_query, parameters=parameters)
 
         for result in results:
-            block_id = result['block_id']
+            block_id = result['node']['block_id']
             block_cursor = CollectionRetrieval(self.library.collection).filter_by_key("_id", ObjectId(block_id))
 
             try:
