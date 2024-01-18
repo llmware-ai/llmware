@@ -85,6 +85,9 @@ class CollectionRetrieval:
         """lookup returns a list of dictionary entries - generally a list of 1 entry for 'lookup'"""
         return self._retriever.lookup(key,value)
 
+    def embedding_key_lookup(self, key, value):
+        return self._retriever.embedding_key_lookup(key,value)
+
     def get_whole_collection(self):
         """Retrieves whole collection, e.g., filter {} or SELECT * FROM {table}- will return a Cursor object"""
         return self._retriever.get_whole_collection()
@@ -559,10 +562,19 @@ class MongoRetrieval:
 
         # special handling for reserved id in Mongo
         if key == "_id":
-            value = ObjectId(value)
+
+            try:
+                value = ObjectId(value)
+            except:
+                logging.info("update: mongo lookup - could not find _id into ObjectID - %s", value)
+                value = value
 
         target = list(self.collection.find({key:value}))
+
         return target
+
+    def embedding_key_lookup(self, key, value):
+        return self.lookup(key,value)
 
     def get_whole_collection(self):
 
@@ -881,6 +893,28 @@ class PGRetrieval:
 
         sql_query = f"SELECT * FROM {self.library_name} WHERE {key} = '{value}';"
         results = list(self.conn.cursor().execute(sql_query))
+
+        if results:
+            if len(results) >= 1:
+                output = self.unpack(results)
+
+        self.conn.close()
+
+        return output
+
+    def embedding_key_lookup(self, key, value):
+
+        # lookup in json dictionary - special sql command
+        output = []
+        value = str(value)
+
+        # print("update: embedding_key_lookup - ", key, value)
+
+        sql_query= f"SELECT * FROM {self.library_name} WHERE embedding_flags->>'{key}' = '{value}'"
+
+        results = list(self.conn.cursor().execute(sql_query))
+
+        # print("update: lookup results - ", results)
 
         if results:
             if len(results) >= 1:
@@ -1862,6 +1896,27 @@ class SQLiteRetrieval:
 
         return output
 
+    def embedding_key_lookup(self, key, value):
+
+        output = {}
+
+        value = str(value)
+
+        # print("update: embedding_key_lookup - ", key, value)
+
+        # lookup embedding_flag = value and value in special_field1
+        sql_command = (f"SELECT rowid, * FROM {self.library_name} WHERE embedding_flags = '{key}' AND "
+                       f"special_field1 = '{value}'")
+
+        results = list(self.conn.cursor().execute(sql_command))
+
+        # print("results: ", results)
+
+        if len(results) > 0:
+            output = self.unpack(results)
+
+        return output
+
     def get_whole_collection(self):
 
         """Returns whole collection - as a Cursor object"""
@@ -2617,12 +2672,15 @@ class SQLiteWriter:
 
         """SQLite implementation saves new embedding flag in column and replaces any previous values"""
 
+        # the embedding key name is saved in embedding_flags, and the index is saved in special_field1
+
         insert_array = ()
 
         insert_array += (embedding_key,)
+        value=str(value)
 
         sql_command = f"UPDATE {self.library_name} " \
-                      f"SET embedding_flags = '{embedding_key}'  " \
+                      f"SET embedding_flags = '{embedding_key}', special_field1 = '{value}' " \
                       f"WHERE rowid = {_id}"
 
         self.conn.cursor().execute(sql_command)

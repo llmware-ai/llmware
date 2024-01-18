@@ -276,12 +276,22 @@ class _EmbeddingUtils:
 
         return current_index
 
-    def lookup_text_index(self, _id):
+    def lookup_text_index(self, _id, key="_id"):
 
         """Returns a single block entry from text index collection with lookup by _id - returns a list, not a cursor"""
 
         cr = CollectionRetrieval(self.library_name, account_name=self.account_name)
-        block_cursor = cr.lookup("_id", _id)
+        block_cursor = cr.lookup(key, _id)
+
+        return block_cursor
+
+    def lookup_embedding_flag(self, key, value):
+
+        """ Used to look up an embedding flag in text collection index """
+
+        # used specifically by FAISS index - which uses the embedding flag value as lookup
+        cr = CollectionRetrieval(self.library_name, account_name=self.account_name)
+        block_cursor = cr.embedding_key_lookup(key,value)
 
         return block_cursor
 
@@ -548,6 +558,7 @@ class EmbeddingFAISS:
                 if not text_search or len(text_search) < 1:
                     continue
                 block_ids.append(str(block["_id"]))
+
                 sentences.append(text_search)
             
             if len(sentences) > 0:
@@ -586,9 +597,15 @@ class EmbeddingFAISS:
 
         block_list = []
         for i, index in enumerate(index_list[0]):
+
             index_int = int(index.item())
 
-            block_result_list = self.utils.lookup_text_index(index_int)
+            #   FAISS is unique in that it requires a 'reverse lookup' to match the FAISS index in the
+            #   text collection
+
+            block_result_list = self.utils.lookup_embedding_flag(self.collection_key,index_int)
+
+            # block_result_list = self.utils.lookup_text_index(index_int, key=self.collection_key)
 
             for block in block_result_list:
                 block_list.append((block, distance_list[0][i]))
