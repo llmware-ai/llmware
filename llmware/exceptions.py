@@ -190,3 +190,11 @@ class ModuleNotFoundException(LLMWareException):
                    f"at main Github repository at:  https://www.github.com/llmware-ai/llmware.git.")
 
         super().__init__(message)
+
+
+class ModelCardNotRegisteredException(LLMWareException):
+
+    def __init__(self, config_key):
+        message = (f"'{config_key}' is missing key attributes and fails validation to be registered as a model.")
+        super().__init__(message)
+
