@@ -11,7 +11,7 @@
 """
 
 
-from llmware.models import ModelRegistry, ModelCatalog
+from llmware.models import ModelCatalog
 from llmware.prompts import Prompt
 
 
@@ -26,10 +26,10 @@ from llmware.prompts import Prompt
 #                           human_bot   ->  Dragon models
 #       model_type      =   "chat" (alternative:  "completion")
 
-ModelRegistry().add_open_chat_model("my_open_chat_model1",
-                                    api_base="http://localhost:1234/v1",
-                                    prompt_wrapper="<INST>",
-                                    model_type="chat")
+ModelCatalog().register_open_chat_model("my_open_chat_model1",
+                                        api_base="http://localhost:1234/v1",
+                                        prompt_wrapper="<INST>",
+                                        model_type="chat")
 
 #   once registered, you can invoke like any other model in llmware
 
@@ -39,10 +39,10 @@ response = prompter.prompt_main("What is the future of AI?")
 
 #   you can (optionally) register multiple open chat models with different api_base and model attributes
 
-ModelRegistry().add_open_chat_model("my_open_chat_model2",
-                                    api_base="http://localhost:5678/v1",
-                                    prompt_wrapper="hf_chat",
-                                    model_type="chat")
+ModelCatalog().register_open_chat_model("my_open_chat_model2",
+                                        api_base="http://localhost:5678/v1",
+                                        prompt_wrapper="hf_chat",
+                                        model_type="chat")
 
 
 #   you can also alternate with open ai models - which will 'revert' to the default openai api_base
