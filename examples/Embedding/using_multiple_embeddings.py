@@ -24,7 +24,7 @@ import os
 from llmware.setup import Setup
 from llmware.library import Library
 from llmware.retrieval import Query
-from llmware.models import ModelRegistry, ModelCatalog
+from llmware.models import ModelCatalog
 
 os.environ["USER_MANAGED_OPENAI_API_KEY"] = "<INSERT YOUR OPEN API KEY HERE>"
 
@@ -88,10 +88,8 @@ def multiple_embeddings_same_db_same_lib(document_folder=None,sample_query=None,
     # for the last embedding, we will register a popular open source sentence transformer model to use
     #   -- see "using_sentence_transformer.py" for more details
 
-    ModelRegistry().add_model_list({"model_name": "all-mpnet-base-v2", "model_category": "embedding",
-                                    "embedding_dims": 768, "context_window": 384,
-                                    "model_family": "LLMWareSemanticModel",
-                                    "display_name": "SBERT-MPNET", "model_location": "st_repo"})
+    ModelCatalog().register_sentence_transformer_model(model_name="all-mpnet-base-v2",
+                                                       embedding_dims=768, context_window=384)
 
     # use directly now as an embedding model
     print(f"\nupdate: Embedding #4 - all-mpnet-base-v2 - {vector_db}")

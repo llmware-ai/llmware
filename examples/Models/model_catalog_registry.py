@@ -1,7 +1,7 @@
 
 """This example illustrates the basic capabilities of the Model Catalog and how to use"""
 
-from llmware.models import ModelCatalog, ModelRegistry
+from llmware.models import ModelCatalog
 from llmware.prompts import Prompt
 
 # 1 - to list all of the models registered by default in llmware
@@ -22,9 +22,14 @@ for i, models in enumerate(gl_mc):
 
 # 3 - to add models to the catalog, e.g., sentence transformer
 
+ModelCatalog().register_sentence_transformer_model("all-MiniLM-L6-v2", embedding_dims=384,
+                                                   context_window=256)
+
+"""
 ModelRegistry().add_model_list({"model_name": "all-MiniLM-L6-v2", "model_category": "embedding",
                                 "embedding_dims":384, "context_window":256, "model_family": "LLMWareSemanticModel",
                                 "display_name": "MiniLM", "model_location": "st_repo"})
+"""
 
 # to confirm that model was added
 model_card = ModelCatalog().lookup_model_card("all-MiniLM-L6-v2")
@@ -39,7 +44,7 @@ for i, models in enumerate(emb_models):
     print("update: embedding models - ", i, models)
 
 # 5 - to delete model from catalog
-ModelRegistry().delete_model("gpt-3.5-turbo")
+ModelCatalog().delete_model_card("gpt-3.5-turbo")
 
 # 6 - to load any model in the catalog
 new_model = ModelCatalog().load_model("all-MiniLM-L6-v2")

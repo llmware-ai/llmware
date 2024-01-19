@@ -9,7 +9,7 @@ import os
 from llmware.setup import Setup
 from llmware.library import Library
 from llmware.retrieval import Query
-from llmware.models import ModelCatalog, ModelRegistry
+from llmware.models import ModelCatalog
 
 
 def build_lib (library_name, folder="Agreements"):
@@ -39,7 +39,7 @@ def build_lib (library_name, folder="Agreements"):
 
 print("update: Step 1- starting here- building library- parsing PDFs into text chunks")
 
-lib = build_lib("st_embedding_0")
+lib = build_lib("st_embedding_0_454")
 
 #   register a model from the sentence transformers library/repository
 
@@ -58,12 +58,17 @@ sentence_transformer_pretrained_model_name = "all-MiniLM-L6-v2"
 embedding_dims = 384
 context_window = 256
 
-ModelRegistry().add_model_list({"model_name": sentence_transformer_pretrained_model_name,
+ModelCatalog().register_sentence_transformer_model(model_name=sentence_transformer_pretrained_model_name,
+                                                   embedding_dims=embedding_dims, context_window=context_window)
+
+"""
+ModelCatalog().add_model_list({"model_name": sentence_transformer_pretrained_model_name,
                                 "embedding_dims":embedding_dims,
                                 "context_window":context_window,
                                 "model_category": "embedding",
                                 "model_family": "LLMWareSemanticModel",
                                 "display_name": "MySentenceTransformer", "model_location": "st_repo"})
+"""
 
 # to confirm that model has been added to the catalog
 mc = ModelCatalog().list_all_models()

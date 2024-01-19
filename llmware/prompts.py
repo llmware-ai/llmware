@@ -23,9 +23,9 @@ import logging
 import os
 import torch
 
-from llmware.util import Utilities, CorpTokenizer, PromptCatalog, YFinance, Graph
+from llmware.util import Utilities, CorpTokenizer, YFinance, Graph
 from llmware.resources import PromptState
-from llmware.models import ModelCatalog
+from llmware.models import ModelCatalog, PromptCatalog
 from llmware.parsers import Parser
 from llmware.retrieval import Query
 from llmware.library import Library
