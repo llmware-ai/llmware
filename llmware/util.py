@@ -1379,7 +1379,7 @@ class TextChunker:
                 if len(self.chunks) > 0:
                     self.chunks[-1] += chunk
                 else:
-                    self.chunks += chunk
+                    self.chunks.append(chunk)
 
             else:
                 # general case - create next chunk
