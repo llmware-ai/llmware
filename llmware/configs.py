@@ -543,11 +543,28 @@ class QdrantConfig:
 
     """Configuration object for Qdrant"""
 
-    _conf = {"host": os.environ.get("USER_MANAGED_QDRANT_HOST", "localhost"),
-             "port": os.environ.get("USER_MANAGED_QDRANT_PORT", 6333)}
+    _conf = {
+        "location": os.environ.get("USER_MANAGED_QDRANT_LOCATION", None),
+        "host": os.environ.get("USER_MANAGED_QDRANT_HOST", None),
+        "url": os.environ.get("USER_MANAGED_QDRANT_URL", None),
+        "path": os.environ.get("USER_MANAGED_QDRANT_PATH", None),
+        "port": os.environ.get("USER_MANAGED_QDRANT_PORT", 6333),
+        "grpc_port": os.environ.get("USER_MANAGED_QDRANT_GRPC_PORT", 6334),
+        "https": os.environ.get("USER_MANAGED_QDRANT_HTTPS", None),
+        "api_key": os.environ.get("USER_MANAGED_QDRANT_API_KEY", None),
+        "prefix": os.environ.get("USER_MANAGED_QDRANT_PREFIX", None),
+        "timeout": os.environ.get("USER_MANAGED_QDRANT_TIMEOUT", None),
+        "prefer_grpc": os.environ.get("USER_MANAGED_QDRANT_PREFER_GRPC", False),
+        "force_disable_check_same_thread": os.environ.get(
+            "USER_MANAGED_QDRANT_FORCE_DISABLE_CHECK_SAME_THREAD", False
+        ),
+    }
 
     @classmethod
-    def get_config(cls, name):
+    def get_config(cls, name: str | None = None):
+        if not name:
+            return cls._conf
+
         if name in cls._conf:
             return cls._conf[name]
         raise ConfigKeyException(name)
