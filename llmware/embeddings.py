@@ -29,7 +29,7 @@ from pymongo import MongoClient
 try:
     from pgvector.psycopg import register_vector
     import psycopg
-except:
+except ImportError:
     pass
 
 #   optional imports of redis - not in project requirements
@@ -39,20 +39,20 @@ try:
     from redis.commands.search.indexDefinition import IndexDefinition, IndexType
     from redis.commands.search.query import Query
     from redis.commands.search.field import VectorField
-except:
+except ImportError:
     pass
 
 #   optional imports of qdrant - not in project requirements
 try:
     from qdrant_client import QdrantClient
     from qdrant_client.http.models import Distance, VectorParams, PointStruct
-except:
+except ImportError:
     pass
 
 #   optional import of pinecone - not in project requirements
 try:
     import pinecone
-except:
+except ImportError:
     pass
 
 
@@ -1204,10 +1204,7 @@ class EmbeddingQdrant:
         self.library_name = library.library_name
         self.account_name = library.account_name
 
-        qdrant_host = QdrantConfig().get_config("host")
-        qdrant_port = QdrantConfig().get_config("port")
-
-        self.qclient = QdrantClient(qdrant_host, port=qdrant_port)
+        self.qclient = QdrantClient(**QdrantConfig.get_config())
 
         # look up model card
         self.model = model
@@ -1303,7 +1300,7 @@ class EmbeddingQdrant:
                     points_batch.append(ps)
 
                 #   upsert a batch of points
-                operation_info = self.qclient.upsert(collection_name=self.collection_name, wait=True,
+                self.qclient.upsert(collection_name=self.collection_name, wait=True,
                                                      points=points_batch)
 
                 points_batch = []

@@ -10,6 +10,7 @@ from llmware.retrieval import Query
 from llmware.setup import Setup
 from llmware.configs import LLMWareConfig
 from llmware.resources import CloudBucketManager
+from tests.embeddings.utils import qdrant_installed
 
 def test_unsupported_embedding_db():
     embedding_db = "milvusXYZ"  # Bad Embedding DB Name
@@ -31,6 +32,16 @@ def test_faiss_embedding_and_query():
     library = Library().create_new_library("test_embedding_faiss")
     library.add_files(os.path.join(sample_files_path,"SmallLibrary"))
     results = generic_embedding_and_query(library, "faiss")
+    assert len(results) > 0
+    library.delete_library(confirm_delete=True)
+
+@pytest.mark.skipif(not qdrant_installed(), reason="Qdrant client is not installed")
+def test_qdrant_embedding_and_query():
+    os.environ["USER_MANAGED_QDRANT_LOCATION"] = ":memory:"
+    sample_files_path = Setup().load_sample_files()
+    library = Library().create_new_library("test_embedding_qdrant")
+    library.add_files(os.path.join(sample_files_path,"SmallLibrary"))
+    results = generic_embedding_and_query(library, "qdrant")
     assert len(results) > 0
     library.delete_library(confirm_delete=True)
 
