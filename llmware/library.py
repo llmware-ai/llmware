@@ -315,7 +315,7 @@ class Library:
                                      "time_stamp": time_stamp}}
 
         updater = LibraryCatalog(self).update_library_card(self.library_name, update_dict,
-                                                           delete_record=delete_record)
+                                                           delete_record=delete_record, account_name=self.account_name)
 
         return True
 
@@ -360,7 +360,7 @@ class Library:
         """ Updates the knowledge graph status on the library card after creating a knowledge graph """
 
         update_dict = {"knowledge_graph": status_message}
-        updater = LibraryCatalog(self).update_library_card(self.library_name,update_dict)
+        updater = LibraryCatalog(self).update_library_card(self.library_name,update_dict, account_name=self.account_name)
 
         return True
 
@@ -870,6 +870,6 @@ class LibraryCatalog:
         """ Updates graph status on library card """
 
         update_dict = {"graph_status": "true"}
-        self.update_library_card(self.library_name,update_dict)
+        self.update_library_card(self.library_name,update_dict, account_name=self.account_name )
 
         return 0
