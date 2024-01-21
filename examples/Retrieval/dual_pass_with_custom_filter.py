@@ -70,7 +70,8 @@ def perform_dual_pass_query(library, query_text, result_count=20, primary="text"
     return dual_pass_results
 
 if __name__ == "__main__":
-    library_name = "UN-Resolutions-500"
+    
+    library_name = "un_resolutions500"     
     query_text = "what weapons will cause an arms race?"  # Replace with your query text
 
     # Custom filter definition
