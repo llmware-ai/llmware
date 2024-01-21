@@ -1408,7 +1408,7 @@ class OpenAIGenModel:
         prompt_enriched = prompt
 
         # set as default openai base
-        openai_api_base_entering_state = openai.api_base
+        openai_api_base_entering_state = openai.api_type
         openai.api_base = "https://api.openai.com/v1"
 
         usage = {}
