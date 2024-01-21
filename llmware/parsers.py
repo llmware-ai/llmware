@@ -1501,13 +1501,12 @@ class Parser:
 
                 output_by_page = ImageParser(self).process_pdf_by_ocr(input_fp, file)
 
-                for i, pages in enumerate(output_by_page):
-                    for j, blocks in enumerate(pages):
+                for j, blocks in enumerate(output_by_page):
 
                         if write_to_db_on == 1:
-                            new_output, new_blocks, _ = self._write_output_to_db(blocks,doc_fn,page_num=(j+1))
+                            new_output, new_blocks, _ = self._write_output_to_db(blocks, doc_fn, page_num=(j+1))
                         else:
-                            new_output, new_blocks, _ = self._write_output_to_dict(blocks,doc_fn,page_num=(j+1))
+                            new_output, new_blocks, _ = self._write_output_to_dict(blocks, doc_fn, page_num=(j+1))
 
                         output += new_output
                         blocks_added += new_blocks
