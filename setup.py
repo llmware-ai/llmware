@@ -75,5 +75,10 @@ setup(
         'word2number==1.1',
         'Wikipedia-API==0.6.0',
         'yfinance==0.2.28'
-    ]
+    ],
+    extras_require={
+        'pinecone': ['pinecone-client==3.0.0'],
+        'qdrant': ['qdrant-client==1.7.0'],
+        'redis': ['redis==5.0.1'],
+    },
 )
