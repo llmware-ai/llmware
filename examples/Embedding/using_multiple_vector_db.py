@@ -20,7 +20,7 @@ import os
 from llmware.setup import Setup
 from llmware.library import Library
 from llmware.retrieval import Query
-from llmware.models import ModelRegistry, ModelCatalog
+from llmware.models import ModelCatalog
 
 os.environ["USER_MANAGED_OPENAI_API_KEY"] = "<INSERT YOUR OPEN AI KEY HERE>"
 
@@ -85,10 +85,8 @@ def multiple_embeddings_and_multiple_vector_dbs(document_folder=None,sample_quer
 
     # for the last embedding, we will register a pretrained sentence transformer model to use
     #   -- see "using_sentence_transformer.py" for more details
-    ModelRegistry().add_model_list({"model_name": "all-MiniLM-L6-v2", "model_category": "embedding",
-                                    "embedding_dims": 384, "context_window": 256,
-                                    "model_family": "LLMWareSemanticModel",
-                                    "display_name": "MiniLM", "model_location": "st_repo"})
+    ModelCatalog().register_sentence_transformer_model(model_name= "all-MiniLM-L6-v2",
+                                                       embedding_dims=384, context_window=256)
 
     # use directly now as an embedding model
     print("\nupdate: Embedding #6 - all-MiniLM-L6-v2 - REDIS")

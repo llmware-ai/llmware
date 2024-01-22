@@ -13,7 +13,6 @@
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
 
-
 import logging
 import json
 import numpy as np
@@ -21,367 +20,146 @@ import os
 import re
 import requests
 import tempfile
-import traceback
 import ast
 from collections import OrderedDict
 from tqdm.auto import trange
 import time
 
 import torch
-from torch.utils.data import Dataset
-import torch.nn.functional as F
 from torch import Tensor, nn
 from tqdm.autonotebook import trange
 import math
-import inspect
 
 import torch.utils.checkpoint
-from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss
 
-#   start - new imports for ctransformers
+#   start - imports for ctransformers
 from functools import partial
 import platform
 from ctypes import CDLL, c_bool, c_int, c_float, c_char_p, c_void_p, POINTER, Structure
 from pathlib import Path
-#   end - new imports
+#   end - imports for ctransformers
 
 
-from llmware.util import Utilities, PromptCatalog
+from llmware.util import Utilities
 from llmware.configs import LLMWareConfig
 from llmware.resources import CloudBucketManager
-from llmware.exceptions import ModelNotFoundException, LLMInferenceResponseException, DependencyNotInstalledException
+from llmware.exceptions import (ModelNotFoundException, DependencyNotInstalledException, ModuleNotFoundException,
+                                ModelCardNotRegisteredException)
+
+from llmware.model_configs import (global_model_repo_catalog_list, global_model_finetuning_prompt_wrappers_lookup,
+                                   global_default_prompt_catalog)
+
 
 # api model imports
 import openai, anthropic, ai21, cohere
 
-global_model_repo_catalog_list = [
 
-    # embedding models
-    {"model_name": 'mini-lm-sbert', "display_name": "Sentence_Transformers (MPNet-Base)", "model_family": "LLMWareSemanticModel",
-     "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 384, "context_window":512,
-     "link": "","custom_model_files": [], "custom_model_repo": ""},
+class _ModelRegistry:
 
-    {"model_name": 'industry-bert-insurance', "display_name": "Insurance_LLMWare_Accelerator", "model_family": "LLMWareSemanticModel",
-     "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window":512,
-     "link": "https://huggingface.co/llmware/industry-bert-insurance-v0.1", "custom_model_files":[],
-     "custom_model_repo": ""},
+    """ ModelRegistry class is wrapper class around the global_model_repo_catalog_list for easy dynamic updating """
 
-    {"model_name": 'industry-bert-contracts', "display_name": "Contracts_LLMWare_Accelerator", "model_family": "LLMWareSemanticModel",
-     "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window":512,
-     "link": "https://huggingface.co/llmware/industry-bert-contracts-v0.1", "custom_model_files":[],
-     "custom_model_repo": ""},
+    #   notes:
+    #   --held out as internal global cls to keep options to adapt implementation over time
+    #   --shifted to internal class - not to be directly accessed -> make changes through ModelCatalog
 
-    {"model_name": 'industry-bert-asset-management', "display_name": "Asset_Management_LLMWare_Accelerator",
-     "model_family": "LLMWareSemanticModel", "model_category": "embedding", "model_location": "llmware_repo",
-     "embedding_dims": 768, "context_window":512,
-     "link": "https://huggingface.co/llmware/industry-bert-asset-management-v0.1", "custom_model_files":[],
-     "custom_model_repo": ""},
-
-    {"model_name": 'industry-bert-sec', "display_name": "SEC_LLMWare_Accelerator", "model_family": "LLMWareSemanticModel",
-     "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window":512,
-     "link": "https://huggingface.co/llmware/industry-bert-sec-v0.1", "custom_model_files": [], "custom_model_repo": ""},
-
-    # add open ai embeddings
-    {"model_name": 'text-embedding-ada-002', "display_name": "OpenAI-Embedding", "model_family": "OpenAIEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 1536},
-
-    # add cohere embeddings
-    {"model_name": 'medium', "display_name": "Cohere-Medium-Embedding", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 4096},
-
-    {"model_name": 'xlarge', "display_name": "Cohere-XLarge-Embedding", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 4096},
-
-    # insert new cohere embedding model - v3 - announced first week of November 2023
-    {"model_name": 'embed-english-v3.0', "display_name": "Cohere-English-v3", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api",  "context_window": 2048, "embedding_dims": 1024},
-
-    {"model_name": 'embed-multilingual-v3.0', "display_name": "Cohere-Multi-Lingual-v3", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 1024},
-
-    {"model_name": 'embed-english-light-v3.0', "display_name": "Cohere-English-v3", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 384},
-
-    {"model_name": 'embed-multilingual-light-v3.0', "display_name": "Cohere-English-v3",
-     "model_family": "CohereEmbeddingModel", "model_category": "embedding", "model_location": "api",
-     "context_window": 2048, "embedding_dims": 384},
-
-    {"model_name": 'embed-english-v2.0', "display_name": "Cohere-English-v3",
-     "model_family": "CohereEmbeddingModel", "model_category": "embedding", "model_location": "api",
-     "context_window": 2048, "embedding_dims": 4096},
-
-    {"model_name": 'embed-english-light-v2.0', "display_name": "Cohere-English-v3",
-     "model_family": "CohereEmbeddingModel", "model_category": "embedding", "model_location": "api",
-     "context_window": 2048, "embedding_dims": 1024},
-
-    {"model_name": 'embed-multilingual-v2.0', "display_name": "Cohere-English-v3",
-     "model_family": "CohereEmbeddingModel", "model_category": "embedding", "model_location": "api",
-     "context_window": 2048, "embedding_dims": 768},
-    # end - new cohere embeddings
-
-    # add google embeddings - textembedding-gecko@001
-    {"model_name": 'textembedding-gecko@latest', "display_name": "Google-Embedding", "model_family": "GoogleEmbeddingModel",
-     "model_category": "embedding","model_location": "api", "context_window": 4000, "embedding_dims": 768},
-
-    # generative-api models
-    {"model_name": 'claude-v1', "display_name": "Anthropic Claude-v1", "model_family": "ClaudeModel",
-     "model_category": "generative-api", "model_location": "api",  "context_window": 8000},
-    {"model_name": 'claude-instant-v1', "display_name": "Anthropic Claude-Instant-v1", "model_family": "ClaudeModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 8000},
-    {"model_name": 'command-medium-nightly', "display_name": "Cohere Command Medium", "model_family": "CohereGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": 'command-xlarge-nightly', "display_name": "Cohere Command XLarge", "model_family": "CohereGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 2048},
-
-    {"model_name": 'summarize-xlarge', "display_name": "Cohere Summarize Xlarge", "model_family": "CohereGenModel",
-     "model_category":"generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": 'summarize-medium', "display_name": "Cohere Summarize Medium", "model_family": "CohereGenModel",
-     "model_category":"generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": 'j2-jumbo-instruct', "display_name": "Jurassic-2-Jumbo-Instruct", "model_family": "JurassicModel",
-     "model_category":"generative-api", "model_location": "api", "context_window": 2048},
-    {"model_name": 'j2-grande-instruct', "display_name": "Jurassic-2-Grande-Instruct", "model_family": "JurassicModel",
-     "model_category":"generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": 'text-bison@001', "display_name": "Google Palm", "model_family": "GoogleGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 8192},
-    {"model_name": 'chat-bison@001', "display_name": "Google Chat", "model_family": "GoogleGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 8192},
-    {"model_name": 'text-davinci-003', "display_name": "GPT3-Davinci", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 4096},
-    {"model_name": 'text-curie-001', "display_name": "GPT3-Curie", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": 'text-babbage-001', "display_name": "GPT3-Babbage", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": 'text-ada-001', "display_name": "GPT3-Ada", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": "gpt-3.5-turbo", "display_name": "ChatGPT", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 4000},
-
-    # gpt-4 add
-    {"model_name": "gpt-4", "display_name": "GPT-4", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 8000},
-
-    # gpt-3.5-turbo-instruct
-    {"model_name": "gpt-3.5-turbo-instruct", "display_name": "GPT-3.5-Instruct", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 4000},
-
-    # new gpt-4 models announced in November 2023
-    {"model_name": "gpt-4-1106-preview", "display_name": "GPT-4-Turbo", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
-
-    {"model_name": "gpt-3.5-turbo-1106", "display_name": "GPT-3.5-Turbo", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 16385},
-    # end - gpt-4 model update
-
-    # generative AIB models - aib-read-gpt - "main model"
-    {"model_name": "aib-read-gpt", "display_name": "AIB-READ-GPT", "model_family": "AIBReadGPTModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 2048},
-
-    # base supporting models and components
-    {"model_name": "bert", "display_name": "Bert", "model_family": "BaseModel", "model_category": "base",
-     "model_location": "llmware_repo"},
-    {"model_name": "roberta", "display_name": "Roberta", "model_family": "BaseModel", "model_category": "base",
-     "model_location": "llmware_repo"},
-    {"model_name": "gpt2", "display_name": "GPT-2", "model_family": "BaseModel", "model_category": "base",
-     "model_location": "llmware_repo"},
-
-    # add api-based llmware custom model
-    {"model_name": "llmware-inference-server", "display_name": "LLMWare-GPT", "model_family": "LLMWareModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 2048},
-
-    # core llmware bling open source models available in catalog directly
-    {"model_name": "llmware/bling-1.4b-0.1", "display_name": "Bling-Pythia-1.4B", "model_family": "HFGenerativeModel",
-     "model_category": "generative_local", "model_location": "hf_repo", "context_window": 2048,
-     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space":"",
-     "link": "https://huggingface.co/llmware/bling-1.4b-0.1",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    {"model_name": "llmware/bling-1b-0.1", "display_name": "Bling-Pythia-1.0B", "model_family": "HFGenerativeModel",
-     "model_category": "generative_local", "model_location": "hf_repo", "context_window": 2048,
-     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space": "",
-     "link": "https://huggingface.co/llmware/bling-1b-0.1",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    {"model_name": "llmware/bling-falcon-1b-0.1", "display_name": "Bling-Falcon-1.3B", "model_family": "HFGenerativeModel",
-     "model_category": "generative_local", "model_location": "hf_repo", "context_window": 2048,
-     "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space": "",
-     "link": "https://huggingface.co/llmware/bling-falcon-1b-0.1",
-     "custom_model_files": [], "custom_model_repo": ""
-     },
-
-    {"model_name": "llmware/bling-sheared-llama-1.3b-0.1", "display_name": "Bling-Sheared-LLama-1.3B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-sheared-llama-1.3b-0.1",
-     "custom_model_files": [], "custom_model_repo": ""
-     },
-
-    {"model_name": "llmware/bling-red-pajamas-3b-0.1", "display_name": "Bling-Pythia-1.4B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-red-pajamas-3b-0.1",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    {"model_name": "llmware/bling-sheared-llama-2.7b-0.1", "display_name": "Bling-Sheared-Llama-2.7B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-sheared-llama-2.7b-0.1",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    {"model_name": "llmware/bling-stable-lm-3b-4e1t-v0", "display_name": "Bling-Stable-LM-3B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-stable-lm-3b-4e1t-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    {"model_name": "llmware/bling-cerebras-1.3b-0.1", "display_name": "Bling-Cerebras-1.3B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-cerebras-1.3b-0.1",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    {"model_name": "llmware/bling-tiny-llama-v0", "display_name": "Bling-Tiny-Llama-v0",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-tiny-llama-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    # create dragon models
-    {"model_name": "llmware/dragon-yi-6b-v0", "display_name": "Dragon-Yi-6B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "\n", "link": "https://huggingface.co/llmware/dragon-yi-6b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    {"model_name": "llmware/dragon-stablelm-7b-v0", "display_name": "Dragon-StableLM-7B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-stablelm-7b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    {"model_name": "llmware/dragon-mistral-7b-v0", "display_name": "Dragon-Mistral-7B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-mistral-7b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    {"model_name": "llmware/dragon-red-pajama-7b-v0", "display_name": "Dragon-Red-Pajama-7B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-red-pajama-7b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    {"model_name": "llmware/dragon-deci-6b-v0", "display_name": "Dragon-Deci-6B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-deci-6b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    {"model_name": "llmware/dragon-falcon-7b-v0", "display_name": "Dragon-Falcon-7B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-falcon-7b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    {"model_name": "llmware/dragon-llama-7b-v0", "display_name": "Dragon-Llama-7B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-llama-7b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    {"model_name": "llmware/dragon-deci-7b-v0", "display_name": "Dragon-Deci-7B",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-deci-7b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
-
-    # gguf models
-    {"model_name": "llmware/dragon-mistral-7b-gguf", "display_name": "Dragon-Mistral-7B-GGUF",
-     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "",
-     "gguf_file": "dragon-mistral-7b-q4_k_m.gguf",
-     "gguf_repo": "llmware/dragon-mistral-7b-v0",
-     "link": "https://huggingface.co/llmware/dragon-mistral-7b-v0",
-     "custom_model_files": ["dragon-mistral-7b-q4_k_m.gguf"], "custom_model_repo": "llmware/dragon-mistral-7b-v0"},
-
-    {"model_name": "llmware/dragon-llama-7b-gguf", "display_name": "Dragon-Llama-7B-GGUF",
-     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "",
-     "gguf_file": "dragon-llama-7b-q4_k_m.gguf",
-     "gguf_repo": "llmware/dragon-llama-7b-v0",
-     "link": "https://huggingface.co/llmware/dragon-llama-7b-v0",
-     "custom_model_files": ["dragon-llama-7b-q4_k_m.gguf"], "custom_model_repo": "llmware/dragon-llama-7b-v0"},
-
-    {"model_name": "llmware/dragon-yi-6b-gguf", "display_name": "Dragon-Yi-6B-GGUF",
-     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-    "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "\n",
-     "gguf_file": "dragon-yi-6b-q4_k_m.gguf",
-     "gguf_repo": "llmware/dragon-yi-6b-v0",
-     "link": "https://huggingface.co/llmware/dragon-yi-6b-v0",
-     "custom_model_files": ["dragon-yi-6b-q4_k_m.gguf"], "custom_model_repo": "llmware/dragon-yi-6b-v0"},
-
-    # selected top HF open source chat models - gguf
-    {"model_name": "TheBloke/Llama-2-7B-Chat-GGUF", "display_name": "Llama-2-7B-Chat-GGUF",
-     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "<INST>",
-     "temperature": 0.3, "trailing_space": "",
-     "gguf_file": "llama-2-7b-chat.Q4_K_M.gguf",
-     "gguf_repo": "llmware/bonchon",
-     "link": "https://huggingface.co/llmware/bonchon",
-     "custom_model_files": ["llama-2-7b-chat.Q4_K_M.gguf"], "custom_model_repo": "llmware/bonchon"},
-
-    {"model_name": "TheBloke/OpenHermes-2.5-Mistral-7B-GGUF", "display_name": "OpenHermes-Mistral-7B-GGUF",
-     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "chat_ml",
-     "temperature": 0.3, "trailing_space": "",
-     "gguf_file": "openhermes-2.5-mistral-7b.Q4_K_M.gguf",
-     "gguf_repo": "llmware/bonchon",
-     "link": "https://huggingface.co/llmware/bonchon",
-     "custom_model_files": ["openhermes-2.5-mistral-7b.Q4_K_M.gguf"], "custom_model_repo": "llmware/bonchon"},
-
-    {"model_name": "TheBloke/zephyr-7B-beta-GGUF", "display_name": "Zephyr-7B-GGUF",
-     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "hf_chat",
-     "temperature": 0.3, "trailing_space": "",
-     "gguf_file": "zephyr-7b-beta.Q4_K_M.gguf",
-     "gguf_repo": "llmware/bonchon",
-     "link": "https://huggingface.co/llmware/bonchon",
-     "custom_model_files": ["zephyr-7b-beta.Q4_K_M.gguf"], "custom_model_repo": "llmware/bonchon"},
-
-    {"model_name": "TheBloke/Starling-LM-7B-alpha-GGUF", "display_name": "Berkeley-Starling-7B-GGUF",
-     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "open_chat",
-     "temperature": 0.3, "trailing_space": "",
-     "gguf_file": "starling-lm-7b-alpha.Q4_K_M.gguf",
-     "gguf_repo": "llmware/bonchon",
-     "link": "https://huggingface.co/llmware/bonchon",
-     "custom_model_files": ["starling-lm-7b-alpha.Q4_K_M.gguf"], "custom_model_repo": "llmware/bonchon"
-     }
-]
-
-
-# simple wrapper class around global_model_repo_catalog_list for easier dynamic updating
-class ModelRegistry:
-
+    #   pulls default model list from model_configs.py
     registered_models = global_model_repo_catalog_list
+
     model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
                      "LLMWareSemanticModel", "HFEmbeddingModel", "OpenChatModel",
                      "OpenAIGenModel", "ClaudeModel", "GoogleGenModel",
                      "CohereGenModel", "JurassicModel", "AIBReadGPTModel",
                      "OpenAIEmbeddingModel", "CohereEmbeddingModel","GoogleEmbeddingModel"]
 
+    #   model card validation for registering new model - required attributes
+    min_required_fields = ["model_name", "model_family", "model_category"]
+
+    #   most fine-tuned models require a specific prompt wrapping that was used in the fine-tuning process
+    #   we are treating these "prompt_wrappers" as core attributes of the model
+    prompt_wrappers = ["alpaca", "human_bot", "chatgpt", "<INST>", "open_chat", "hf_chat", "chat_ml"]
+    registered_wrappers = global_model_finetuning_prompt_wrappers_lookup
+
     @classmethod
     def get_model_list(cls):
+        """ List current view of registered models """
         return cls.registered_models
 
     @classmethod
-    def add_model_list(cls,new_model):
-        cls.registered_models.append(new_model)
-        return cls.registered_models
+    def get_wrapper_list(cls):
+        """ List current registered wrapper formats """
+        return cls.registered_wrappers
+
+    @classmethod
+    def add_wrapper(cls, wrapper_name, wrapper_dict):
+
+        """ Adds a new prompter wrapper to the registered list """
+
+        cls.registered_wrappers.update({wrapper_name:wrapper_dict})
+        cls.prompt_wrappers.append(wrapper_name)
+
+        return wrapper_dict
+
+    @classmethod
+    def validate(cls, model_card_dict):
+
+        """ Provides minimal validation of structure of a new model card """
+
+        for keys in cls.min_required_fields:
+            if keys not in model_card_dict:
+                return False
+
+        if "model_family" not in model_card_dict:
+            return False
+
+        if model_card_dict["model_family"] not in cls.model_classes:
+            return False
+
+        if "prompt_wrapper" in model_card_dict:
+
+            pwrap = model_card_dict["prompt_wrapper"]
+            if pwrap not in cls.get_wrapper_list():
+
+                # permits registering of new model card but issues warning
+
+                print(f"update: this prompt wrapper - {pwrap} - is not registered which may lead to unpredictable "
+                      f"results in inference - you should register this prompt format for better results.")
+
+        return True
+
+    @classmethod
+    def add_model(cls, model_card_dict):
+
+        """ Adds a model to the registry """
+
+        if cls.validate(model_card_dict):
+            cls.registered_models.append(model_card_dict)
+        else:
+            raise ModelCardNotRegisteredException("New-Model-Card-Missing-Keys")
+
+        return model_card_dict
+
+    @classmethod
+    def update_model(cls, model_name_lookup, new_model_card_dict):
+
+        """ Updates model in the registry """
+
+        if not cls.validate(new_model_card_dict):
+            raise ModelCardNotRegisteredException("New-Model-Card-Missing-Keys")
+
+        updated=False
+
+        for i, models in enumerate(cls.registered_models):
+            if models["model_name"] == model_name_lookup:
+                del cls.registered_models[i]
+                cls.registered_models.append(new_model_card_dict)
+                updated = True
+                break
+
+        return updated
 
     def delete_model(cls, model_name):
+
+        """ Removes model from Model Registry list """
 
         model_found=False
 
@@ -394,77 +172,14 @@ class ModelRegistry:
         if not model_found:
             raise ModelNotFoundException(model_name)
 
-    @classmethod
-    def add_new_model(cls, model_card_dict):
-        # validate keys
-        if "model_family" not in model_card_dict:
-            # error - could not add new model card
-            raise ModelNotFoundException("no-model-family-identified")
-        else:
-            if model_card_dict["model_family"] not in cls.model_classes:
-                # error
-                raise ModelNotFoundException("model-family-not-recognized")
-
-            else:
-                cls.registered_models.append(model_card_dict)
-
-        return 0
-
-    @classmethod
-    def add_gguf_model(cls, model_name, gguf_model_repo, gguf_model_file_name, prompt_wrapper=None,
-                       eos_token_id=0, display_name=None, trailing_space="", temperature=0.3,
-                       context_window=2048, instruction_following=False):
-
-        if not display_name:
-            display_name = model_name
-
-        new_model_card_dict = {"model_name": model_name, "display_name": display_name,
-                               "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
-                               "model_location": "llmware_repo", "context_window": context_window,
-                               "instruction_following": instruction_following, "prompt_wrapper": prompt_wrapper,
-                               "temperature": temperature, "trailing_space": trailing_space,
-                               "eos_token_id": eos_token_id,
-                               "gguf_file": gguf_model_file_name,
-                               "gguf_repo": gguf_model_repo
-                               }
-
-        cls.registered_models.append(new_model_card_dict)
-
-        return cls.registered_models
-
-    def add_open_chat_model(cls, model_name, api_base=None, model_type="chat", display_name=None,
-                            context_window=4096, instruction_following=True, prompt_wrapper="",
-                            temperature=0.5):
-
-        if not display_name:
-            display_name = model_name
-
-        new_model_card_dict = {"model_name": model_name, "model_type": model_type, "prompt_wrapper": prompt_wrapper,
-                               "display_name": display_name,
-                               "model_family": "OpenChatModel", "model_category": "generative-api",
-                               "model_location": "api", "context_window": context_window,
-                               "instruction_following": instruction_following,
-                               "temperature": temperature, "trailing_space": "",
-                               "api_base": api_base
-                               }
-
-        cls.registered_models.append(new_model_card_dict)
-
-        return 0
-
-
-def build_json_models_manifest(manifest_dict, fp, fn="llmware_supported_models_manifest.json"):
-
-    json_dict = json.dumps(manifest_dict,indent=1)
-    with open(os.path.join(fp,fn), "w", encoding='utf-8') as outfile:
-        outfile.write(json_dict)
-
-    return 0
+        return model_found
 
 
 class ModelCatalog:
 
-    #   ModelCatalog responsible for model lookup of (1) Model Card, and (2) Finding Model Class
+    """ ModelCatalog is the main class responsible for model lookup of (1) Model Card and (2) Finding Model Class.
+    In most cases, ModelCatalog is the interface for all facets of interacting with the model classes.
+    """
 
     def __init__(self):
 
@@ -488,36 +203,102 @@ class ModelCatalog:
         self.open_source_model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
                                           "LLMWareSemanticModel","HFEmbeddingModel", "OpenChatModel"]
 
-        # self.global_model_list = global_model_repo_catalog_list
-        self.global_model_list = ModelRegistry().get_model_list()
+        self.global_model_list = _ModelRegistry().get_model_list()
 
         self.account_name = None
         self.library_name= None
 
     def pull_latest_manifest(self):
+        """ Not implemented currently """
         # will add to check manifest in global repo and make available for pull down
+        return 0
+
+    def save_model_registry(self, fp, fn="llmware_supported_models_manifest.json"):
+
+        """ Utility method to export global model list to json file """
+
+        json_dict = json.dumps(self.global_model_list, indent=1)
+        with open(os.path.join(fp, fn), "w", encoding='utf-8') as outfile:
+            outfile.write(json_dict)
+
         return 0
 
     def register_new_model_card(self, model_card_dict):
 
-        # validate keys
-        if "model_family" not in model_card_dict:
-            # error - could not add new model card
-            raise ModelNotFoundException("no-model-family-identified")
+        """ Registers a new model card directly in the model catalog """
 
-        else:
-            if model_card_dict["model_family"] not in self.model_classes:
-                # error
-                raise ModelNotFoundException("model-family-not-recognized")
-
-            else:
-                self.global_model_list.append(model_card_dict)
+        # register new model
+        _ModelRegistry().add_model(model_card_dict)
+        # self.global_model_list.append(model_card_dict)
 
         return 0
+
+    def delete_model_card(self, model_name):
+
+        """ Removes a model card from the registry """
+
+        _ModelRegistry().delete_model(model_name)
+
+        return 0
+
+    def register_new_finetune_wrapper(self, name, main_start="", main_stop="", llm_start="",
+                                      system_start="", system_stop=""):
+
+        new_dict = {"main_start": main_start, "main_stop": main_stop, "start_llm_response": llm_start,
+                    "system_start": system_start, "system_stop": system_stop}
+
+        _ModelRegistry().add_wrapper(name, new_dict)
+
+        return 0
+
+    def get_list_registered_finetune_wrappers(self):
+        return _ModelRegistry().get_wrapper_list()
+
+    def register_new_hf_generative_model(self, hf_model_name=None, context_window=2048, prompt_wrapper="<INST>",
+                                         display_name=None, temperature=0.3, trailing_space="", link=""):
+
+        if not display_name:
+            display_name = hf_model_name
+
+        model_card = {"model_name": hf_model_name,
+                      "context_window": context_window,
+                      "prompt_wrapper": prompt_wrapper,
+
+                      "display_name": display_name, "temperature": temperature, "trailing_space": trailing_space,
+                      "model_family": "HFGenerativeModel", "model_category": "generative_local",
+                      "model_location": "hf_repo", "instruction_following": False,
+                      "link": link,
+                      "custom_model_files": [], "custom_model_repo": ""}
+
+        _ModelRegistry().add_model(model_card)
+
+        return model_card
+
+    def register_sentence_transformer_model(self, model_name, embedding_dims, context_window,
+                                            display_name=None, link=""):
+
+        if not display_name:
+            display_name = model_name
+
+        new_model_card_dict = {"model_name": model_name, "context_window": context_window,
+                               "embedding_dims": embedding_dims,
+
+                               # pre-populated parameters for sentence transformer
+                               "model_family": "LLMWareSemanticModel", "model_category": "embedding",
+                               "display_name": display_name, "link": link,
+                               "model_location": "st_repo",
+                               "custom_model_files": [], "custom_model_repo":""
+                               }
+
+        _ModelRegistry().add_model(new_model_card_dict)
+
+        return new_model_card_dict
 
     def register_gguf_model(self, model_name, gguf_model_repo, gguf_model_file_name, prompt_wrapper=None,
                             eos_token_id=0, display_name=None,trailing_space="", temperature=0.3,
                             context_window=2048, instruction_following=False):
+
+        """ Registers a new GGUF model in model catalog - alternative to adding directly in the ModelRegistry """
 
         if not display_name:
             display_name = model_name
@@ -533,11 +314,51 @@ class ModelCatalog:
                                "link": "", "custom_model_files": [], "custom_model_repo":""
                                }
 
-        self.global_model_list.append(new_model_card_dict)
+        _ModelRegistry().add_model(new_model_card_dict)
+        # self.global_model_list.append(new_model_card_dict)
 
         return new_model_card_dict
 
+    def register_open_chat_model(cls, model_name, api_base=None, model_type="chat", display_name=None,
+                            context_window=4096, instruction_following=True, prompt_wrapper="",
+                            temperature=0.5):
+
+        """ Add any open chat model into Model Registry, e.g.,
+
+         _ModelRegistry().add_open_chat_model("my_open_chat_model1",
+                                            api_base="http://localhost:1234/v1",
+                                            prompt_wrapper="<INST>",
+                                            model_type="chat")
+
+         To invoke the model:
+
+         my_open_chat_model = ModelCatalog().load_model("my_open_chat_model1")
+
+         Or from a prompt:
+
+         prompter = Prompt().load_model("my_open_chat_model1")
+
+         """
+
+        if not display_name:
+            display_name = model_name
+
+        new_model_card_dict = {"model_name": model_name, "model_type": model_type, "prompt_wrapper": prompt_wrapper,
+                               "display_name": display_name,
+                               "model_family": "OpenChatModel", "model_category": "generative-api",
+                               "model_location": "api", "context_window": context_window,
+                               "instruction_following": instruction_following,
+                               "temperature": temperature, "trailing_space": "",
+                               "api_base": api_base
+                               }
+
+        _ModelRegistry().add_model(new_model_card_dict)
+
+        return 0
+
     def setup_custom_llmware_inference_server(self, uri_string, secret_key=None):
+
+        """ Sets up and registers a custom llmware inference server """
 
         #   Examples:
         #       os.environ["LLMWARE_GPT_URI"] = "http://111.111.1.111:8080"
@@ -550,6 +371,8 @@ class ModelCatalog:
         return 1
 
     def lookup_model_card (self, selected_model_name):
+
+        """ Looks up a model card by model name - the model card has the key configuration and lookup information """
 
         model_card = None
 
@@ -567,6 +390,9 @@ class ModelCatalog:
         return model_card
 
     def locate_and_retrieve_model_bits (self, model_card):
+
+        """ For models requiring instantiation locally, this utility method retrieves the model bits using the
+        instructions provided in the model card entry. """
 
         # check for llmware path & create if not already set up
         if not os.path.exists(LLMWareConfig.get_llmware_path()):
@@ -614,6 +440,8 @@ class ModelCatalog:
         raise ModelNotFoundException(model_folder_name)
 
     def _instantiate_model_class_from_string(self, model_class, model_name, model_card, api_key=None):
+
+        """ Internal utility method to instantiate model classes from strings. """
 
         # by default - if model not found - return None
         my_model = None
@@ -727,8 +555,11 @@ class ModelCatalog:
 
         return my_model
 
-    # completes all preparatory steps, and returns 'ready-for-inference' model
     def load_model (self, selected_model, api_key=None):
+
+        """ Main method for loading and fully instantiating a model based solely on the model's name """
+
+        # completes all preparatory steps, and returns 'ready-for-inference' model
 
         # step 1- lookup model card from the catalog
         model_card = self.lookup_model_card(selected_model)
@@ -762,6 +593,8 @@ class ModelCatalog:
 
     def add_api_key (self, selected_model_name, api_key):
 
+        """ Convenience method to apply an api_key to a pass to a model """
+
         # step 1- lookup model card from the catalog
         model_card = self.lookup_model_card(selected_model_name)
 
@@ -778,30 +611,37 @@ class ModelCatalog:
 
         return self
 
-    # enables passing of a 'loaded' sentence transformer model
     def load_sentence_transformer_model(self,model, model_name):
+
+        """ Loads a sentence transformer model """
+
         model = LLMWareSemanticModel(model=model,model_name=model_name)
         return model
 
-    # integrate hf model passed
     def load_hf_embedding_model(self, model, tokenizer):
+
+        """ Loads and integrates a Huggingface embedding model """
+
         model = HFEmbeddingModel(model, tokenizer)
         return model
 
-    #   integrate pretrained decoder-based hf 'causal' model
-    #   Provide options to control model preprocessing prompt behavior
     def load_hf_generative_model(self, model,tokenizer,prompt_wrapper=None,
                                  instruction_following=False):
+
+        """ Loads and integrates a Huggingface generative decoder-based 'causal' model with limited options
+        to control model preprocessing prompt behavior """
 
         model = HFGenerativeModel(model, tokenizer, prompt_wrapper=prompt_wrapper,
                                   instruction_following=instruction_following)
 
         return model
 
-    # master handler to be used by any calling function, especially Retrieval / Query
     def load_embedding_model (self, model_name=None,
                               model=None, tokenizer=None,from_hf=False,
                               from_sentence_transformers=False):
+
+        """ Loads embedding model by name -
+        main handler used by any calling function to instantiate embedding model. """
 
         loaded_model = None
 
@@ -831,6 +671,8 @@ class ModelCatalog:
 
     def list_open_source_models(self):
 
+        """ Lists the open source models in the ModelCatalog. """
+
         open_source_models = []
 
         for x in self.global_model_list:
@@ -842,6 +684,8 @@ class ModelCatalog:
 
     def list_embedding_models(self):
 
+        """ Lists the embedding models in the ModelCatalog. """
+
         embedding_models = []
 
         for x in self.global_model_list:
@@ -851,6 +695,8 @@ class ModelCatalog:
         return embedding_models
 
     def list_generative_models(self):
+
+        """ Lists the generative models in the ModelCatalog. """
 
         gen_models = []
 
@@ -864,6 +710,8 @@ class ModelCatalog:
 
     def list_generative_local_models(self):
 
+        """ Lists the generative local models in the ModelCatalog. """
+
         gen_local_models = []
 
         for x in self.global_model_list:
@@ -876,6 +724,8 @@ class ModelCatalog:
 
     def list_all_models(self):
 
+        """ Lists all models in the ModelCatalog. """
+
         all_models = []
         for x in self.global_model_list:
             all_models.append(x)
@@ -885,6 +735,9 @@ class ModelCatalog:
         return all_models
 
     def model_lookup(self,model_name):
+
+        """ Looks up model by model_name. """
+
         my_model = None
 
         for models in self.global_model_list:
@@ -895,6 +748,8 @@ class ModelCatalog:
         return my_model
 
     def get_model_by_name(self, model_name, api_key=None):
+
+        """ Gets and instantiates model by name. """
 
         my_model = None
 
@@ -909,9 +764,254 @@ class ModelCatalog:
         return my_model
 
 
-#   follows the OpenAI chat prompt format, and is 'drop in' replacement for any compatible inference server
+class PromptCatalog:
+    """ PromptCatalog manages prompt styles and prompt wrappers. """
+
+    def __init__(self):
+
+        self.prompt_catalog = global_default_prompt_catalog
+        self.prompt_wrappers = _ModelRegistry().prompt_wrappers
+        self.prompt_wrapper_lookup = _ModelRegistry().get_wrapper_list()
+
+        self.prompt_list = self.list_all_prompts()
+
+    def lookup_prompt(self, prompt_name):
+
+        for prompts in self.prompt_catalog:
+            if prompts["prompt_name"] == prompt_name:
+                return prompts
+
+        return None
+
+    def get_all_prompts(self):
+        return self.prompt_catalog
+
+    def list_all_prompts(self):
+        prompt_list = []
+        for prompt in self.prompt_catalog:
+            if "prompt_name" in prompt:
+                prompt_list.append(prompt["prompt_name"])
+        return prompt_list
+
+    def parse_instruction_for_user_vars(self, prompt_card, inference_dict=None):
+
+        # if no user vars key in prompt_card, then return instruction unchanged
+
+        if "user_vars" not in prompt_card:
+            return prompt_card["instruction"]
+
+        if not prompt_card["user_vars"]:
+            return prompt_card["instruction"]
+
+        # if no inference_dict, then define as empty dictionary
+        if not inference_dict:
+            inference_dict = {}
+
+        # in this case, will 'parameterize' and dynamically update instruction
+        tokens = prompt_card["instruction"].split(" ")
+        updated_instruction = ""
+
+        for i, t in enumerate(tokens):
+
+            if t.startswith("{{") and t.endswith("}}"):
+
+                t_core = t[2:-2]
+
+                # if value found for key in the inference dict, then apply as true 'user_vars'
+                if t_core in inference_dict:
+                    new_inserted_token = inference_dict[t_core]
+                    updated_instruction += str(new_inserted_token) + " "
+                else:
+                    # apply default value found in the prompt card as back-up
+                    if t_core in prompt_card["user_vars"]:
+                        new_inserted_token = prompt_card["user_vars"][t_core]
+                        updated_instruction += str(new_inserted_token) + " "
+
+            else:
+                updated_instruction += t + " "
+
+        logging.info(f"update: prompt catalog - constructed dynamic instruction - {updated_instruction}")
+
+        return updated_instruction.strip()
+
+    def build_core_prompt(self, prompt_card=None, prompt_name=None, separator="\n", query=None, context=None,
+                          inference_dict=None):
+
+        if not context:  context = ""
+        if not query: query = ""
+
+        if not prompt_card and not prompt_name:
+            # error - returning query
+            logging.error("error: no prompt selected in PromptCatalog().build_core_prompt")
+            prompt_dict = {"core_prompt": context + "\n" + query, "prompt_card": {}}
+            return prompt_dict
+
+        if not prompt_card:
+            prompt_card = PromptCatalog().lookup_prompt(prompt_name)
+
+        logging.info(f"update: prompt_card - {prompt_card}")
+
+        core_prompt = ""
+
+        if prompt_card:
+            for keys in prompt_card["run_order"]:
+
+                if keys == "instruction":
+                    # special handler
+                    instruction = self.parse_instruction_for_user_vars(prompt_card, inference_dict=inference_dict)
+                    core_prompt += instruction + separator
+                else:
+                    if not keys.startswith("$"):
+                        core_prompt += prompt_card[keys] + separator
+                    else:
+                        if keys == "$query":
+                            core_prompt += query + separator
+                        if keys == "$context":
+                            core_prompt += context + separator
+
+        # update instruction, if user_vars accepted in instruction
+        """
+        if "instruction" in prompt_card:
+            prompt_card["instruction"] = self.parse_instruction_for_user_vars(prompt_card,inference_dict=inference_dict)
+            print("update: prompt_card instruction - ", prompt_card)
+            core_prompt += prompt_card["instruction"]
+        """
+
+        prompt_dict = {"core_prompt": core_prompt, "prompt_card": prompt_card}
+
+        # print("update - core prompt built - ", core_prompt)
+
+        logging.info(f"update: prompt created - {prompt_dict}")
+
+        return prompt_dict
+
+    def add_custom_prompt_card(self, prompt_name, run_order_list, prompt_dict, prompt_description=None):
+
+        new_prompt_card = {"prompt_name": prompt_name,
+                           "prompt_description": prompt_description,
+                           "run_order": run_order_list}
+
+        for keys, values in prompt_dict.items():
+            new_prompt_card.update({keys: values})
+
+        self.prompt_catalog.append(new_prompt_card)
+
+        return new_prompt_card
+
+    def apply_prompt_wrapper(self, text, prompt_wrapper, separator="\n", instruction=None):
+
+        output_text = text
+
+        if prompt_wrapper not in self.prompt_wrappers:
+            logging.info("update: selected wrapper - %s - could not be identified -"
+                         "returning text prompt without any special format wrapping", prompt_wrapper)
+
+            return output_text
+
+        if prompt_wrapper == "chatgpt":
+            return self.wrap_chatgpt_sample(text, instruction)
+
+        else:
+            wrapped_prompt = self.wrap_custom(text, prompt_wrapper, instruction=instruction)
+            # print("update: wrapped prompt - ", wrapped_prompt)
+            return wrapped_prompt
+
+    #   deprecated - replaced by wrap_custom builder function
+    def wrap_chat_ml_sample(self, text, separator, instruction):
+
+        if not instruction:
+            instruction = "You are a helpful assistant."
+
+        output_text = "<|im_start|>system\n" + instruction + "<|im_end|>\n" + \
+                      "<|im_start|>user" + text + "<|im_end|>\n" + \
+                      "<|im_start|>assistant"
+
+        return output_text
+
+    #   wip - create ability to customize template
+    def wrap_custom(self, text, wrapper_type, instruction=None):
+
+        # print("update: wrapper_type - ", wrapper_type)
+
+        prompt_out = ""
+
+        if wrapper_type in self.prompt_wrapper_lookup:
+
+            prompt_template = self.prompt_wrapper_lookup[wrapper_type]
+
+            # print("update: found prompt template - ", prompt_template)
+
+            if "system_start" in prompt_template:
+
+                if prompt_template["system_start"] != "":
+
+                    prompt_out += prompt_template["system_start"]
+                    if instruction:
+                        prompt_out += instruction
+                    else:
+                        prompt_out += "You are a helpful assistant."
+
+                    if "system_stop" in prompt_template:
+                        prompt_out += prompt_template["system_stop"]
+
+            if "main_start" in prompt_template:
+
+                prompt_out += prompt_template["main_start"]
+                prompt_out += text
+
+                if "main_stop" in prompt_template:
+                    prompt_out += prompt_template["main_stop"]
+
+            if "start_llm_response" in prompt_template:
+                prompt_out += prompt_template["start_llm_response"]
+
+        else:
+            prompt_out = text
+
+        return prompt_out
+
+    def wrap_chatgpt_sample(self, text, instruction):
+
+        if not instruction:
+            instruction = "You are a helpful assistant."
+
+        new_sample = [{"role": "system", "content": instruction},
+                      {"role": "user", "content": text}]
+
+        return new_sample
+
+    # deprecated - replaced by wrap_custom builder function
+    def wrap_human_bot_sample(self, text, user_separator="<human>: ", response_separator="<bot>:"):
+        content = user_separator + text + "\n" + response_separator
+        return content
+
+    #   deprecated
+    def wrap_llama2_chat_sample(self, text, separator):
+        content = "<INST> " + text + "</INST>"
+        return content
+
+    #   deprecated
+    def wrap_alpaca_sample(self, text, separator="\n"):
+        content = "### Instruction: " + text + separator + "### Response: "
+        return content
+
+    #   deprecated
+    def wrap_openchat_sample(self, text, separator="\n"):
+        content = "GPT4 User: " + text + "<|endofturn|>" + "GPT4 Assistant:"
+        return content
+
+    #   deprecated
+    def wrap_hf_chat_zephyr_sample(self, text, separator="\n"):
+        content = "<|system|>You are a helpful assistant.\n</s>" + \
+                  "<|user|>" + text + "\n</s>" + \
+                  "<|assistant|>"
+        return content
+
 
 class OpenChatModel:
+
+    """ OpenChatModel class implements the OpenAI prompt API and is intended for use with OpenChat compatible
+    inference servers """
 
     def __init__(self, model_name=None,  model_card=None, context_window=4000,prompt_wrapper=None, api_key="not_used"):
 
@@ -1182,6 +1282,8 @@ class OpenChatModel:
 
 class OpenAIGenModel:
 
+    """ OpenAIGenModel class implements the OpenAI API for its generative decoder models. """
+
     def __init__(self, model_name=None, api_key=None, context_window=4000):
 
         self.api_key = api_key
@@ -1379,6 +1481,8 @@ class OpenAIGenModel:
 
 class ClaudeModel:
 
+    """ ClaudeModel class implements the Anthropic Claude API for calling Anthropic models. """
+
     def __init__(self, model_name=None, api_key=None, context_window=8000):
 
         self.api_key = api_key
@@ -1524,6 +1628,9 @@ class ClaudeModel:
 
 
 class GoogleGenModel:
+
+    """ GoogleGenModel class implements the Google Vertex API for Google's generative models.
+    Note: to use GoogleModels does require a separate import of Google SDKs - vertexai and google.cloud.platform """
 
     def __init__(self, model_name=None, api_key=None, context_window=8192):
 
@@ -1693,6 +1800,8 @@ class GoogleGenModel:
 
 class JurassicModel:
 
+    """ JurassicModel class implements the AI21 Jurassic API. """
+
     def __init__(self, model_name=None, api_key=None, context_window=2048):
 
         self.api_key = api_key
@@ -1842,6 +1951,8 @@ class JurassicModel:
 
 
 class CohereGenModel:
+
+    """ CohereGenModel class implements the API for Cohere's generative models. """
 
     def __init__(self, model_name=None, api_key=None, context_window=2048):
 
@@ -2006,6 +2117,8 @@ class CohereGenModel:
 
 class AIBReadGPTModel:
 
+    """ AIBReadGPT implements the AIB Bloks API for the READ GPT model. """
+
     def __init__(self, model_name=None, api_key=None, context_window=2048):
 
         self.api_key = api_key
@@ -2165,6 +2278,8 @@ class AIBReadGPTModel:
 
 class LLMWareModel:
 
+    """LLMWareModel class implements the API for LLMWare generative models. """
+
     def __init__(self, model_name=None, api_key=None, context_window=2048):
 
         self.api_key = api_key
@@ -2309,6 +2424,8 @@ class LLMWareModel:
 
 class OpenAIEmbeddingModel:
 
+    """ OpenaIEmbeddingModel class implements the OpenAI API for embedding models, specifically text-ada. """
+
     def __init__(self, model_name=None, api_key=None, embedding_dims=None):
 
         # must have elements for embedding model
@@ -2394,6 +2511,8 @@ class OpenAIEmbeddingModel:
 
 class CohereEmbeddingModel:
 
+    """ CohereEmbeddingModel implements the Cohere API for embedding models. """
+
     def __init__(self, model_name = None, api_key=None, embedding_dims=None):
 
         self.api_key = api_key
@@ -2463,6 +2582,9 @@ class CohereEmbeddingModel:
 
 
 class GoogleEmbeddingModel:
+
+    """ GoogleEmbeddingModel implements the Google API for text embedding models.  Note: to use Google models
+    requires a separate install of the Google SDKs, e.g., vertexai and google.cloud.platform """
 
     def __init__(self, model_name=None, api_key=None, embedding_dims=None):
 
@@ -2577,6 +2699,8 @@ class GoogleEmbeddingModel:
 
 class HFEmbeddingModel:
 
+    """HFEmbeddingModel class implements the API for HuggingFace embedding models. """
+
     def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None, model_card=None,
                  embedding_dims=None):
 
@@ -2665,6 +2789,9 @@ class HFEmbeddingModel:
 
 
 class HFGenerativeModel:
+
+    """ HFGenerativeModel class implements the HuggingFace generative model API, and is used generally for
+     models in HuggingFace repositories, e.g., Dragon, Bling, etc. """
 
     #   support instantiating HF model in two different ways:
     #       1.  directly passing a previously loaded HF model object and tokenizer object
@@ -3076,6 +3203,8 @@ class HFGenerativeModel:
 
 class ConfigStruct(Structure):
 
+    """Utility method for managing ctypes/cpp interaction in GGUFGenerativeModel"""
+
     _fields_ = [
         ("context_length", c_int),
         ("gpu_layers", c_int),
@@ -3085,6 +3214,8 @@ class ConfigStruct(Structure):
 
 
 class GGUFGenerativeModel:
+
+    """ GGUFGenerativeModel implements interface into llama.cpp """
 
     #   This implementation of GGUFGenerativeModel includes code derived, inspired, and modified from ctransformers
     #   For more information on ctransformers: please see https://github.com/marella/ctransformers
@@ -3494,7 +3625,10 @@ class GGUFGenerativeModel:
         #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
         #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
 
-        lib = CDLL(path)
+        try:
+            lib = CDLL(path)
+        except:
+            raise ModuleNotFoundException("GGUF-Implementation")
 
         lib.ctransformers_llm_create.argtypes = [c_char_p, c_char_p, ConfigStruct]
         lib.ctransformers_llm_create.restype = llm_p
@@ -3698,6 +3832,9 @@ class GGUFGenerativeModel:
 
 class LLMWareSemanticModel:
 
+    """ LLMWareSemanticModel class implements the LLMWareSemanticModel API, which is based on the SentenceTransformer
+    architecture. """
+
     def __init__(self, model_name=None, model=None, embedding_dims=None, max_seq_length=150,
                  model_card=None, api_key=None):
 
@@ -3835,6 +3972,8 @@ class LLMWareSemanticModel:
 
 class STransformer (nn.Sequential):
 
+    """STransformer class is simplified implementation of Sentence Transformers. """
+
     def __init__(self, model_path, max_seq_length=150, model_size="standard",
                  torch_dtype=torch.float32):
 
@@ -3941,6 +4080,8 @@ class STransformer (nn.Sequential):
 
 class Transformer (nn.Module):
 
+    """ Transformer is simplified implementation of wrapper utility class used to assemble Sentence Transformers. """
+
     def __init__(self, model_path, max_seq_length=150, do_lower_case= False, model_size="standard"):
         super().__init__()
 
@@ -4010,6 +4151,8 @@ class Transformer (nn.Module):
 
 
 class Pooling(nn.Module):
+
+    """Pooling is a component of the Sentence Transformer architecture. """
 
     def __init__(self, word_embedding_dimension):
 
@@ -4516,6 +4659,8 @@ def prune_linear_layer(layer, index, dim= 0):
 
 class LLMWareInferenceServer:
 
+    """ LLMWare Inference Server class implements the server-side lightweight inference server. """
+
     def __init__(self, model_name, model_catalog=None, hf_api_key=None, secret_api_key=None, home_path=None,
                  port=8080):
 
@@ -4619,5 +4764,4 @@ class LLMWareInferenceServer:
         torch.cuda.empty_cache()
 
         return jsonify(output)
-
 

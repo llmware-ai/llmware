@@ -14,14 +14,9 @@
 # permissions and limitations under the License.
 
 
-# from bson.int64 import Int64
-# from bson.objectid import ObjectId
-# import bson.json_util as json_util
-# import shutil
-
 import platform
-from pymongo import ReturnDocument
-from pymongo import MongoClient
+from pymongo import MongoClient, ReturnDocument
+from bson import ObjectId
 import pymongo
 import sys
 import boto3
@@ -30,6 +25,7 @@ from botocore.config import Config
 from werkzeug.utils import secure_filename
 from botocore.exceptions import ClientError
 import os
+import ast
 import json
 import csv
 import uuid
@@ -39,72 +35,275 @@ import random
 import logging
 from pymongo.errors import ConnectionFailure
 
-from llmware.configs import LLMWareConfig
-from llmware.exceptions import LibraryNotFoundException, UnsupportedCollectionDatabaseException
+from llmware.configs import LLMWareConfig, PostgresConfig,  LLMWareTableSchema, SQLiteConfig, AWSS3Config
+
+from llmware.exceptions import LibraryNotFoundException, UnsupportedCollectionDatabaseException, InvalidNameException
+
+# new imports
+import sqlite3
+import psycopg
 
 
-class DBManager:
+class CollectionRetrieval:
 
-    class __DBManager:
+    """CollectionRetrieval is primary class abstraction to handle all queries to underlying Text Index Database.
+    All calling functions should use CollectionRetrieval, which will, in turn, route to the correct DB resource """
 
-        def __init__(self):
+    def __init__(self, library_name, account_name="llmware"):
 
-            self.collection_db_path = LLMWareConfig.get_config("collection_db_uri")
+        self.library_name = library_name
+        self.account_name = account_name
 
-            # default client is Mongo currently
-            self.client = MongoClient(self.collection_db_path, unicode_decode_error_handler='ignore')
-            #self.client.admin.authenticate(username, password)
+        self.supported_collection_db = LLMWareConfig().get_supported_collection_db()
+        self.active_db = LLMWareConfig().get_active_db()
 
-    __instance = None
+        self._retriever = None
 
-    def __init__(self):
+        if self.active_db in self.supported_collection_db:
 
-        if not DBManager.__instance:
-            DBManager.__instance = DBManager.__DBManager()
+            if self.active_db == "mongo":
+                self._retriever = MongoRetrieval(self.library_name, account_name=account_name)
 
-    def __getattr__(self, item):
-        return getattr(self.__instance, item)
+            if self.active_db == "postgres":
+                self._retriever = PGRetrieval(self.library_name, account_name=account_name)
 
+            if self.active_db == "sqlite":
+                self._retriever = SQLiteRetrieval(self.library_name, account_name=account_name)
 
-def check_db_uri(timeout_secs=5):
+        else:
+            raise UnsupportedCollectionDatabaseException(self.active_db)
 
-    uri_string = LLMWareConfig.get_config("collection_db_uri")
+    def test_connection(self):
+        """Pings database and confirms valid connection"""
+        return self._retriever.test_connection()
 
-    # default client is Mongo currently
-    client = MongoClient(uri_string, unicode_decode_error_handler='ignore')
+    def safe_name(self, input_name):
+        """ Checks if collection name valid for db resource """
+        return self._retriever.safe_name(input_name)
 
-    # self.client.admin.authenticate(username, password)
+    def lookup(self, key,value):
+        """lookup returns a list of dictionary entries - generally a list of 1 entry for 'lookup'"""
+        return self._retriever.lookup(key,value)
 
-    try:
-        # catch if mongo not available
-        with pymongo.timeout(timeout_secs):
-            client.admin.command('ping')
-            logging.info("update: confirmed - Collection DB available at uri string - %s ", uri_string)
-            db_status = True
+    def embedding_key_lookup(self, key, value):
+        return self._retriever.embedding_key_lookup(key,value)
 
-    except ConnectionFailure:
-        logging.warning("warning:  Collection DB not found at uri string in LLMWareConfig - %s - check "
-                        "connection and/or reset LLMWareConfig 'collection_db_uri' to point to the correct uri.",
-                        uri_string)
+    def get_whole_collection(self):
+        """Retrieves whole collection, e.g., filter {} or SELECT * FROM {table}- will return a Cursor object"""
+        return self._retriever.get_whole_collection()
 
-        db_status = False
+    def basic_query(self, query):
+        """Simple text query passed to the text index"""
+        return self._retriever.basic_query(query)
 
-    return db_status
+    def filter_by_key(self, key, value):
+        """Filter_by_key accepts a key string, corresponding to a column in the DB, and matches to a value"""
+        return self._retriever.filter_by_key(key, value)
+
+    def text_search_with_key_low_high_range(self, query, key, low, high, key_value_dict=None):
+        """Text search with a key, such as page or document number, and matches entries in a range of 'low' to 'high'"""
+        return self._retriever.text_search_with_key_low_high_range(query, key, low, high, key_value_dict=key_value_dict)
+
+    def text_search_with_key_value_range(self, query, key, value_range_list, key_value_dict=None):
+        """Text search with added filter of confirming that a key is in the selected value_range list
+        with option for any number of further constraints passed as optional key_value_dict"""
+        return self._retriever.text_search_with_key_value_range(query, key, value_range_list,
+                                                                key_value_dict=key_value_dict)
+
+    def text_search_with_key_value_dict_filter(self, query, key_value_dict):
+        """Text search with with {key:value} filter added"""
+        return self._retriever.text_search_with_key_value_dict_filter(query, key_value_dict)
+
+    def get_distinct_list(self, key):
+        """Returns distinct list of elements in collection by key"""
+        return self._retriever.get_distinct_list(key)
+
+    def filter_by_key_dict(self, key_dict):
+        """Filters by key dictionary"""
+        return self._retriever.filter_by_key_dict(key_dict)
+
+    def filter_by_key_value_range(self, key, value_range):
+        """Filters by key value range"""
+        return self._retriever.filter_by_key_value_range(key, value_range)
+
+    def filter_by_key_ne_value(self, key, value):
+        """Filters by key not equal to selected value"""
+        return self._retriever.filter_by_key_ne_value(key, value)
+
+    def count_documents(self, filter_dict):
+        """Counts entries returned by filter dict"""
+        return self._retriever.count_documents(filter_dict)
+
+    def close(self):
+        """Close underlying DB connection - handled by underlying DB resource"""
+        return self._retriever.close()
+
+    #   2 specific reads for embedding
+    def embedding_job_cursor(self, new_embedding_key, doc_id=None):
+        """Handles end-to-end retrieval of text blocks selected for embedding & returns cursor"""
+        return self._retriever.embedding_job_cursor(new_embedding_key,doc_id=doc_id)
+
+    def count_embedded_blocks(self, embedding_key):
+        """Counts the number of blocks to be created for an embedding job"""
+        return self._retriever.count_embedded_blocks(embedding_key)
 
 
 class CollectionWriter:
 
-    def __init__(self, collection):
-        self.collection = collection
+    """CollectionWriter is the main class abstraction for writing, editing, and deleting new elements to the
+    underlying text collection index - calling functions should use CollectionWriter, which will route and manage
+    the connection to the underlying DB resource"""
 
-    # write - this is where new blocks get added to the library collection
-    def write_new_record(self, new_record):
-        registry_id = self.collection.insert_one(new_record).inserted_id
+    def __init__(self, library_name, account_name="llmware"):
+
+        self.library_name = library_name
+        self.account_name = account_name
+
+        self.supported_collection_db = LLMWareConfig().get_supported_collection_db()
+        self.active_db = LLMWareConfig().get_active_db()
+
+        self._writer = None
+
+        if self.active_db in self.supported_collection_db:
+
+            if self.active_db == "mongo":
+                self._writer = MongoWriter(self.library_name, account_name=self.account_name)
+
+            if self.active_db == "postgres":
+                self._writer = PGWriter(self.library_name, account_name=self.account_name)
+
+            if self.active_db == "sqlite":
+                self._writer = SQLiteWriter(self.library_name, account_name=self.account_name)
+
+        else:
+            raise UnsupportedCollectionDatabaseException(self.active_db)
+
+    def build_text_index(self):
+        """Builds text index using db-specific methods"""
+        self._writer.build_text_index()
         return 1
 
-    # note:  this will delete the entire collection
+    def check_if_table_build_required(self):
+        """Checks if table build required- returns True if table build required, e.g., no table found
+        and building table schema is required by the DB resource"""
+
+        build_table = self._writer.check_if_table_build_required()
+
+        return build_table
+
+    def create_table(self, table_name, schema):
+        """Creates table"""
+        return self._writer.create_table(table_name, schema)
+
+    def write_new_record(self, new_record):
+        """Inserts new record to the DB resource - unpacks and validates the new_record dict, if required """
+        return self._writer.write_new_record(new_record)
+
+    def destroy_collection(self, confirm_destroy=False):
+        """Drops the collection associated with the library"""
+        return self._writer.destroy_collection(confirm_destroy=confirm_destroy)
+
+    #TODO: may be able to remove - called only by Library.update_block
+    def update_block(self, doc_id, block_id, key, new_value, default_keys):
+        """Updates specific row, based on doc_id and block_id"""
+        return self._writer.update_block(doc_id, block_id, key, new_value, default_keys)
+
+    def update_one_record(self, filter_dict, key, new_value):
+        """Updates one record selected by filter_dict"""
+        return self._writer.update_one_record(filter_dict, key, new_value)
+
+    #TODO:  may be able to remove - not called
+    """
+    def update_many_records(self, filter_dict, key, new_value):
+        # Updates multiple records selected by filter_dict
+        return self._writer.update_many_records(filter_dict, key, new_value)
+
+    def update_many_records_custom(self, filter_dict, update_dict):
+        # Updates many records custom using update_dict
+        return self._writer.update_many_records_custom(filter_dict, update_dict)
+    """
+
+    def replace_record(self, filter_dict, new_entry):
+        """Deletes and replaces selected record"""
+        return self._writer.replace_record(filter_dict, new_entry)
+
+    def delete_record_by_key(self, key, value):
+        """Deletes single record by key and matching value"""
+        return self._writer.delete_record_by_key(key, value)
+
+    def update_library_card(self, library_name, update_dict, lib_card, delete_record=False):
+
+        """Special update method to handle library card updates"""
+
+        return self._writer.update_library_card(library_name, update_dict, lib_card, delete_record=delete_record)
+
+    def get_and_increment_doc_id(self, library_name):
+
+        """Gets and increments doc_id"""
+
+        return self._writer.get_and_increment_doc_id(library_name)
+
+    def set_incremental_docs_blocks_images(self, library_name, added_docs=0, added_blocks=0, added_images=0,
+                                           added_pages=0, added_tables=0):
+
+        """Updates counts on library card"""
+
+        return self._writer.set_incremental_docs_blocks_images(library_name, added_docs=added_docs,
+                                                               added_blocks=added_blocks,
+                                                               added_images=added_images, added_pages=added_pages,
+                                                               added_tables=added_tables)
+
+    def add_new_embedding_flag(self, _id, embedding_key, value):
+        """Updates JSON column of one record by adding new key:value"""
+        return self._writer.add_new_embedding_flag(_id, embedding_key,value)
+
+    def unset_embedding_flag(self, embedding_key):
+        return self._writer.unset_embedding_flag(embedding_key)
+
+    def close(self):
+        """Close connection to underlying DB resource"""
+        return self._writer.close()
+
+
+class MongoWriter:
+
+    """MongoWriter is main class abstraction for writes, edits and deletes to a Mongo text index collection"""
+
+    def __init__(self, library_name, account_name="llmware"):
+
+        self.library_name = library_name
+        self.account_name = account_name
+        self.uri_string = LLMWareConfig.get_db_uri_string()
+
+        # initiate connection to Mongo resource
+        self.collection = _MongoConnect().connect(db_name=account_name, collection_name=library_name)
+
+    def build_text_index(self):
+        """Builds Mongo text search index"""
+        self.collection.create_index([("text_search", "text")])
+        return True
+
+    def check_if_table_build_required(self):
+        """Always returns False, since no table build steps required for Mongo no-sql DB"""
+        return False
+
+    def create_table(self, table_name, schema):
+        """No table creation steps required in Mongo DB"""
+        return True
+
+    def write_new_record(self, new_record):
+        """Inserts one new record in Mongo collection"""
+
+        if "_id" in new_record:
+            new_record.update({"_id": ObjectId(new_record["_id"])})
+
+        registry_id = self.collection.insert_one(new_record).inserted_id
+
+        return 1
+
     def destroy_collection(self, confirm_destroy=False):
 
+        """Drops collection for library"""
         if confirm_destroy:
             self.collection.drop()
             return 1
@@ -112,10 +311,10 @@ class CollectionWriter:
         logging.warning("update: library not destroyed - need to set confirm_destroy = True")
         return 0
 
-    # write/update specific record
     def update_block (self, doc_id, block_id, key, new_value, default_keys):
 
-        # for specific (doc_id, block_id) identified, update {key:new_value}
+        """Selects specific (doc_id, block_id) and updates with {key:new_value}"""
+
         completed = False
 
         f = {"$and": [{"block_ID": block_id}, {"doc_ID": doc_id}]}
@@ -128,30 +327,270 @@ class CollectionWriter:
         return completed
 
     def update_one_record(self, filter_dict, key,new_value):
+
+        """Updates one record selected by filter_dict, with {key:new_value}"""
+
+        if "_id" in filter_dict:
+            filter_dict.update({"_id": ObjectId(filter_dict["_id"])})
+
         new_values = {"$set": {key:new_value}}
         self.collection.update_one(filter_dict, new_values)
         return 0
 
+    """
     def update_many_records(self, filter_dict, key, new_value):
-        new_values = {"$set": {key:new_value}}
+
+        # Updates many records selected by filter_dict, with {key:new_value}
+
+        if "_id" in filter_dict:
+            filter_dict.update({"_id": ObjectId(filter_dict["_id"])})
+
+        new_values = {"$set": {key :new_value}}
         self.collection.update_many(filter_dict, new_values)
         return 0
-    
+    """
+    """
     def update_many_records_custom(self, filter_dict, update_dict):
+
+        # Updates many records using custom filter dict and potentially multiple updates
+
+        if "_id" in filter_dict:
+            filter_dict.update({"_id": ObjectId(filter_dict["_id"])})
+
         self.collection.update_many(filter_dict, update_dict)
+        return 0
+    """
+
+    def replace_record(self, filter_dict, new_entry):
+
+        """Replaces record in MongoDB collection"""
+
+        if "_id" in filter_dict:
+            filter_dict.update({"_id": ObjectId(filter_dict["_id"])})
+
+        self.collection.replace_one(filter_dict, new_entry, upsert=True)
+
+        return 1
+
+    def delete_record_by_key(self,key,value):
+
+        """Deletes record by key matching value"""
+
+        if key == "_id":
+            value = ObjectId(value)
+
+        self.collection.delete_one({key:value})
+
+        return 1
+
+    def update_library_card(self, library_name, update_dict,lib_card, delete_record=False):
+
+        """Updates library card in Mongo Library Catalog"""
+
+        f = {"library_name": library_name}
+        new_values = {"$set": update_dict}
+
+        embedding_list = lib_card["embedding"]
+
+        #   standard collection update for all except embedding
+        if "embedding" not in update_dict:
+            self.collection.update_one(f,new_values)
+
+        else:
+            # special flag to identify where to 'merge' and update an existing embedding record
+            merged_embedding_update = False
+            inserted_list = []
+
+            if len(embedding_list) > 0:
+                # if the last row is a "no" embedding, then remove it
+                if embedding_list[-1]["embedding_status"] == "no":
+                    del embedding_list[-1]
+
+                for emb_records in embedding_list:
+
+                    if emb_records["embedding_model"] == update_dict["embedding"]["embedding_model"] and \
+                            emb_records["embedding_db"] == update_dict["embedding"]["embedding_db"]:
+
+                        if not delete_record:
+                            inserted_list.append(update_dict["embedding"])
+                        else:
+                            pass
+
+                        merged_embedding_update = True
+
+                        # catch potential error
+
+                        if not delete_record:
+                            if "embedded_blocks" in emb_records and "embedded_blocks" in update_dict["embedding"]:
+
+                                if emb_records["embedded_blocks"] > update_dict["embedding"]["embedded_blocks"]:
+
+                                    logging.warning("warning: may be issue with embedding - mis-alignment in "
+                                                    "embedding block count - %s > %s ", emb_records["embedded_blocks"],
+                                                    update_dict["embedding"]["embedded_blocks"])
+
+                    else:
+                        inserted_list.append(emb_records)
+
+            if not merged_embedding_update:
+                embedding_list.append(update_dict["embedding"])
+                embedding_update_dict = {"embedding": embedding_list}
+            else:
+                embedding_update_dict = {"embedding": inserted_list}
+
+            self.collection.update_one(f, {"$set": embedding_update_dict})
+
+        return 1
+
+    def get_and_increment_doc_id(self, library_name):
+
+        """method called at the start of parsing each new doc -> each parser gets a new doc_id"""
+
+        library_counts = self.collection.find_one_and_update(
+            {"library_name": library_name},
+            {"$inc": {"unique_doc_id": 1}},
+            return_document=ReturnDocument.AFTER
+        )
+
+        unique_doc_id = library_counts.get("unique_doc_id",-1)
+
+        return unique_doc_id
+
+    def set_incremental_docs_blocks_images(self, library_name, added_docs=0, added_blocks=0, added_images=0,
+                                           added_pages=0, added_tables=0):
+
+        """updates counting parameters at end of parsing"""
+
+        self.collection.update_one(
+            {"library_name": library_name},
+            {"$inc": {"documents": added_docs, "blocks": added_blocks, "images": added_images, "pages": added_pages,
+                      "tables": added_tables
+        }})
+
+        return 0
+
+    def add_new_embedding_flag(self,_id,  embedding_key, value):
+
+        filter_dict = {"_id": _id}
+        self.update_one_record (filter_dict, embedding_key, value)
+
+        return 0
+
+    def unset_embedding_flag(self, embedding_key):
+
+        update = {"$unset": {embedding_key: ""}}
+        self.collection.update_many({}, update)
+
+        return 0
+
+    def close(self):
+        """Closes MongoDB connection"""
+        self.collection.close()
         return 0
 
 
-class CollectionRetrieval:
+class MongoRetrieval:
 
-    def __init__(self, collection):
-        self.collection = collection
+    """MongoRetrieval is primary class abstraction to handle queries to Mongo text collection"""
+
+    def __init__(self, library_name, account_name="llmware"):
+
+        self.library_name = library_name
+        self.account_name = account_name
+        self.uri_string = LLMWareConfig.get_db_uri_string()
+
+        # establish connection at construction of retrieval object
+        self.collection = _MongoConnect().connect(self.account_name,collection_name=self.library_name)
+
+        self.reserved_tables = ["status", "library", "parser_events"]
+        self.text_retrieval = False
+
+        if library_name not in self.reserved_tables:
+            self.text_retrieval = True
+
+    def safe_name(self, input_name):
+
+        """ Mongo is flexible on collection names - for now, only filter is reserved collection names"""
+
+        if input_name not in self.reserved_tables:
+            output_name = input_name
+        else:
+            raise InvalidNameException(input_name)
+
+        return output_name
+
+    def test_connection(self,timeout_secs=5):
+
+        """Tests and confirms if connected to MongoDB"""
+
+        client = MongoClient(self.uri_string, unicode_decode_error_handler='ignore')
+
+        # self.client.admin.authenticate(username, password)
+
+        try:
+            # catch if mongo not available
+            with pymongo.timeout(timeout_secs):
+                client.admin.command('ping')
+                logging.info("update: mongo connected - collection db available at uri string - %s ", self.uri_string)
+                db_status = True
+
+        except ConnectionFailure:
+            logging.warning("warning:  collection db not found at uri string in LLMWareConfig - %s - check "
+                            "connection and/or reset LLMWareConfig 'collection_db_uri' to point to the correct uri.",
+                            self.uri_string)
+
+            db_status = False
+
+        return db_status
+
+    def unpack(self, entry):
+
+        """Unpack converts array row output to dictionary using schema, e.g., Identity function for MongoDB """
+
+        output = entry
+
+        if isinstance(entry, list):
+            if len(entry) > 0:
+                if isinstance(entry[0], dict):
+                    output = entry[0]
+
+        return output
+
+    def lookup(self, key, value):
+
+        """Returns list of dictionary entries representing results"""
+
+        # special handling for reserved id in Mongo
+        if key == "_id":
+
+            try:
+                value = ObjectId(value)
+            except:
+                logging.info("update: mongo lookup - could not find _id into ObjectID - %s", value)
+                value = value
+
+        target = list(self.collection.find({key:value}))
+
+        return target
+
+    def embedding_key_lookup(self, key, value):
+        return self.lookup(key,value)
 
     def get_whole_collection(self):
-        all_output = list(self.collection.find({},no_cursor_timeout=True))
-        return all_output
+
+        """Retrieves whole collection in Mongo- will return as a Cursor object"""
+
+        all_output = self.collection.find({}, no_cursor_timeout=True)
+
+        cursor = DBCursor(all_output,self, "mongo")
+
+        return cursor
+
 
     def basic_query(self, query):
+
+        """Basic text index query in MongoDB"""
+
         match_results_cursor = self.collection.find(
             {"$text": {"$search": query}},
             {"score": {"$meta": "textScore"}}).sort([('score', {'$meta': 'textScore'})]).allow_disk_use(True)
@@ -159,12 +598,16 @@ class CollectionRetrieval:
         return match_results_cursor
 
     def filter_by_key(self, key, value):
-        match_results_cursor = self.collection.find({key:value})
+
+        """Returns a cursor of entries in which key matches value"""
+
+        match_results_cursor = list(self.collection.find({key:value}))
         return match_results_cursor
 
     def text_search_with_key_low_high_range(self, query, key, low, high, key_value_dict=None):
 
-        # accepts key with low & high value + optional key_value_dict with additional parameters
+        """Accepts key with low & high value + optional key_value_dict with additional parameters"""
+
         d = []
         f = {}
 
@@ -192,6 +635,8 @@ class CollectionRetrieval:
 
     def text_search_with_key_value_range(self, query, key, value_range_list, key_value_dict=None):
 
+        """Text search with additional constraint of key in provided value_range list"""
+
         f = {}
         text_search = {"$text": {"$search": query}}
 
@@ -217,6 +662,8 @@ class CollectionRetrieval:
         return results
 
     def text_search_with_key_value_dict_filter(self, query, key_value_dict):
+
+        """Text search with additional key_value filter dictionary applied"""
 
         f = {}
         text_search = {"$text": {"$search": query}}
@@ -245,60 +692,2199 @@ class CollectionRetrieval:
         return results
 
     def get_distinct_list(self, key):
+
+        """Returns distinct list of items by key"""
+
         distinct_list = list(self.collection.distinct(key))
         return distinct_list
 
     def filter_by_key_dict (self, key_dict):
 
+        """Filters collection by key-value dictionary"""
+
         f = {}
         d = []
         for key, value in key_dict.items():
-            d.append({key:value})
+            d.append({key :value})
 
         # if one key-value pair, then simple filter
         if len(d) == 1: f = d[0]
 
         # if multiple key-value pairs, then insert list with "$and"
-        if len(d) >= 2:
-            f= {"$and":d}
+        if len(d) >= 2: f= {"$and":d}
 
         results = list(self.collection.find(f))
 
         return results
 
     def filter_by_key_value_range(self, key, value_range):
-        # e.g., {"doc_ID": [1,2,3,4,5]}
+
+        """Filter by key matching value_range list, e.g., {"doc_ID": [1,2,3,4,5]}"""
+
         results = list(self.collection.find({key: {"$in": value_range}}))
         return results
 
     def filter_by_key_ne_value(self, key, value):
+
+        """Filter by key not equal to specific value"""
+
         f = {key: {"$ne":value}}
         output = list(self.collection.find(f))
         return output
 
-    def custom_filter(self, custom_filter):
-        results = list(self.collection.find(custom_filter))
-        return results
+    def count_documents(self, filter_dict):
 
-    def get_cursor_by_block(self, doc_id, block_id, selected_page):
+        """Count documents that match filter conditions"""
 
-        block_cursor = self.collection.find_one({"$and": [
-            {"doc_ID": int(doc_id)},
-            {"block_ID": {"$gt": block_id}},
-            {"content_type": {"$ne": "image"}},
-            {"master_index": {"$in": [selected_page, selected_page + 1]}}]})
+        num_of_blocks = self.collection.count_documents(filter_dict)
+        return num_of_blocks
 
-        return block_cursor
+    def embedding_job_cursor(self, new_embedding_key,doc_id=None):
+
+        """Handles end-to-end retrieval of text blocks selected for embedding - returns Cursor"""
+
+        if doc_id:
+            filter_dict = {"doc_ID":{"$in": doc_id}}
+            num_of_blocks = self.count_documents(filter_dict)
+            all_blocks_cursor = self.collection.find(filter_dict)
+
+        else:
+            filter_dict = {new_embedding_key: {"$exists": False}}
+            num_of_blocks = self.count_documents(filter_dict)
+            all_blocks_cursor = self.collection.find(filter_dict)
+
+        cursor = DBCursor(all_blocks_cursor,self, "mongo")
+
+        return num_of_blocks, cursor
+
+    def count_embedded_blocks(self, embedding_key):
+
+        """Counts number of text blocks to be embedded in current embedding job scope"""
+
+        filter_dict = {embedding_key: {"$exists": True}}
+        embedded_blocks = self.count_documents(filter_dict)
+
+        return embedded_blocks
+
+    def close(self):
+        """Closing MongoDB connection not required - no action taken"""
+        # self.collection.close()
+        return 0
+
+
+class PGRetrieval:
+
+    """PGRetrieval is main class to handle interactions with Postgres DB for queries and retrieval -
+    Embedding connections through PGVector are handled separately through EmbeddingPGVector class"""
+
+    def __init__(self, library_name, account_name="llmware"):
+
+        self.account_name = account_name
+        self.library_name = library_name
+
+        self.conn = _PGConnect().connect()
+
+        self.reserved_tables = ["status", "library", "parser_events"]
+        self.text_retrieval = False
+
+        if library_name == "status":
+            self.schema = LLMWareTableSchema().get_status_schema()
+        elif library_name == "library":
+            self.schema = LLMWareTableSchema().get_library_card_schema()
+        elif library_name == "parser_events":
+            self.schema = LLMWareTableSchema().get_parser_table_schema()
+        else:
+            self.schema = LLMWareTableSchema().get_block_schema()
+
+        if library_name not in self.reserved_tables:
+            self.text_retrieval = True
+
+    def test_connection(self):
+
+        """Test connection to Postgres database"""
+        test = True
+
+        try:
+            # try to open and close connection
+            test_connection = _PGConnect().connect()
+            test_connection.close()
+        except:
+            # if error, then catch and fail test
+            test = False
+
+        return test
+
+    def safe_name(self, input_name):
+
+        """ Table names in Postgres must consist of alpha, numbers and _ -> does not permit '-' """
+
+        if input_name not in self.reserved_tables:
+            output_name = re.sub("-","_", input_name)
+        else:
+            raise InvalidNameException(input_name)
+
+        # print("update: pg - safe_name - ", output_name)
+
+        return output_name
+
+    def unpack(self, results_cursor):
+
+        """Iterate through rows of results_cursor and builds dictionary output rows using schema"""
+
+        output = []
+
+        for row in results_cursor:
+
+            counter = 0
+            new_dict = {}
+
+            for key, value in self.schema.items():
+
+                if key != "PRIMARY KEY":
+                    if counter < len(row):
+                        if key == "text_block":
+                            key = "text"
+                        if key == "table_block":
+                            key = "table"
+                        new_dict.update({key: row[counter]})
+                        counter += 1
+                    else:
+                        logging.info("update: pg_retriever - outputs not matching - %s - %s", counter, row[counter])
+
+            output.append(new_dict)
+
+        return output
+
+    def unpack_search_result(self, results_cursor):
+
+        """Iterate through rows of results_cursor and builds dictionary output rows using schema"""
+
+        output = []
+
+        for row in results_cursor:
+
+            counter = 0
+            new_dict = {}
+            new_dict.update({"score": row[0]})
+            counter += 1
+
+            for key, value in self.schema.items():
+
+                if key != "PRIMARY KEY":
+                    if counter < len(row):
+                        if key == "text_block":
+                            key = "text"
+                        if key == "table_block":
+                            key = "table"
+                        new_dict.update({key: row[counter]})
+                        counter += 1
+                    else:
+                        logging.info ("update: pg_retriever - outputs not matching - %s - %s ", counter, row[counter])
+
+            output.append(new_dict)
+
+        return output
+
+    def lookup(self, key, value):
+
+        """Lookup returns entry with key (column) with matching value - returns as unpacked dict entry"""
+
+        output = {}
+
+        sql_query = f"SELECT * FROM {self.library_name} WHERE {key} = '{value}';"
+        results = list(self.conn.cursor().execute(sql_query))
+
+        if results:
+            if len(results) >= 1:
+                output = self.unpack(results)
+
+        self.conn.close()
+
+        return output
+
+    def embedding_key_lookup(self, key, value):
+
+        # lookup in json dictionary - special sql command
+        output = []
+        value = str(value)
+
+        # print("update: embedding_key_lookup - ", key, value)
+
+        sql_query= f"SELECT * FROM {self.library_name} WHERE embedding_flags->>'{key}' = '{value}'"
+
+        results = list(self.conn.cursor().execute(sql_query))
+
+        # print("update: lookup results - ", results)
+
+        if results:
+            if len(results) >= 1:
+                output = self.unpack(results)
+
+        self.conn.close()
+
+        return output
+
+    def get_whole_collection(self):
+
+        """Returns whole collection - as a Cursor object"""
+
+        sql_command = f"SELECT * FROM {self.library_name}"
+        results = self.conn.cursor().execute(sql_command)
+
+        cursor = DBCursor(results,self, "postgres")
+
+        # self.conn.close()
+
+        return cursor
+
+    def _prep_query(self, query):
+
+        """ Simple query text preparation - will add more options over time """
+
+        pg_strings = {"AND": " & ", "OR": " | "}
+
+        exact_match = False
+        # check if wrapped in quotes
+        if query.startswith('"') and query.endswith('"'):
+            exact_match = True
+
+        # remove punctuation and split into tokens by whitespace
+        q_clean = re.sub("[^\w\s]", "", query)
+        q_toks = q_clean.split(" ")
+
+        q_string = ""
+        for tok in q_toks:
+            q_string += tok
+            if exact_match:
+                # q_string += " & "
+                q_string += pg_strings["AND"]
+            else:
+                # q_string += " | "
+                q_string += pg_strings["OR"]
+
+        if q_string.endswith(pg_strings["AND"]):
+            q_string = q_string[: -len(pg_strings["AND"])]
+
+        if q_string.endswith(pg_strings["OR"]):
+            # if q_string.endswith(" & ") or q_string.endswith(" | "):
+            q_string = q_string[:-len(pg_strings["OR"])]
+
+        return q_string
+
+    def basic_query(self, query):
+
+        """Basic Postgres tsquery text query"""
+
+        search_string = self._prep_query(query)
+
+        sql_query = f"SELECT ts_rank_cd (ts, to_tsquery('english', '{search_string}')) as rank, * " \
+                    f"FROM {self.library_name} " \
+                    f"WHERE ts @@ to_tsquery('english', '{search_string}') " \
+                    f"ORDER BY rank DESC LIMIT 100 ;"
+
+        results = self.conn.cursor().execute(sql_query)
+
+        output_results = self.unpack_search_result(results)
+
+        self.conn.close()
+
+        return output_results
+
+    def filter_by_key(self, key, value):
+
+        """SELECT ... WHERE {key} = '{value}'"""
+
+        output = [{}]
+
+        sql_query = f"SELECT * FROM {self.library_name} WHERE {key} = '{value}';"
+        results = self.conn.cursor().execute(sql_query)
+
+        if results:
+
+            if self.text_retrieval:
+                output = self.unpack_search_result(results)
+            else:
+                output = self.unpack(results)
+
+        self.conn.close()
+
+        return output
+
+    def text_search_with_key_low_high_range(self, query, key, low, high, key_value_dict=None):
+
+        """Text search with additional constraint of matching column with value in specified range"""
+
+        search_string = self._prep_query(query)
+
+        sql_query = f"SELECT ts_rank_cd (ts, to_tsquery('english', '{search_string}')) as rank, * " \
+                    f"FROM {self.library_name} " \
+                    f"WHERE ts @@ to_tsquery('english', '{search_string}') " \
+                    f"AND {key} BETWEEN {low} AND {high}"
+
+        if key_value_dict:
+            for key, value in key_value_dict.items():
+                sql_query += f" AND {key} = {value}"
+
+        sql_query += " ORDER by rank"
+        sql_query += ";"
+
+        results = self.conn.cursor().execute(sql_query)
+
+        output_results = self.unpack_search_result(results)
+
+        self.conn.close()
+
+        return output_results
+
+    def text_search_with_key_value_range(self, query, key, value_range_list, key_value_dict=None):
+
+        """Text search with additional constraint(s) of keys matching values in value_range list and
+            optional key_value_dict"""
+
+        search_string = self._prep_query(query)
+
+        ia_str = "("
+        for v in value_range_list:
+            if isinstance(v, int):
+                ia_str += str(v)
+            else:
+                ia_str += "'" + v + "'"
+            ia_str += ", "
+        if ia_str.endswith(", "):
+            ia_str = ia_str[:-2]
+        ia_str += ")"
+
+        # ia_str = "(1)"
+
+        sql_query = f"SELECT ts_rank_cd (ts, to_tsquery('english', '{search_string}')) as rank, * " \
+                    f"FROM {self.library_name} " \
+                    f"WHERE ts @@ to_tsquery('english', '{search_string}') " \
+                    f"AND {key} IN {ia_str}"
+
+        if key_value_dict:
+            for key, value in key_value_dict.items():
+                sql_query += f" AND {key} = {value}"
+
+        sql_query += " ORDER BY rank"
+        sql_query += ";"
+
+        # print("update: postgres - sql_query - ", sql_query)
+
+        results = self.conn.cursor().execute(sql_query)
+
+        # for x in results: print("update: postgres - results - ", x)
+
+        output_results = self.unpack_search_result(results)
+
+        self.conn.close()
+
+        return output_results
+
+    def text_search_with_key_value_dict_filter(self, query, key_value_dict):
+
+        """Text search with additional "AND" constraints of key value dict with key = value"""
+
+        search_string = self._prep_query(query)
+
+        sql_query = f"SELECT ts_rank_cd (ts, to_tsquery('english', '{search_string}')) as rank, * " \
+                    f"FROM {self.library_name} " \
+                    f"WHERE ts @@ to_tsquery('english', {search_string})"
+
+        if key_value_dict:
+            for key, value in key_value_dict.items():
+
+                if isinstance(value,list):
+
+                    # need to check this
+                    value_range = str(value)
+                    value_range = value_range.replace("[", "(")
+                    value_range = value_range.replace("]", ")")
+
+                    sql_query += f" AND {key} IN {value_range}"
+                else:
+                    sql_query += f" AND {key} = '{value}'"
+
+        sql_query += " ORDER BY rank"
+        sql_query += ";"
+
+        results = self.conn.cursor().execute(sql_query)
+        output_results = self.unpack_search_result(results)
+
+        self.conn.close()
+
+        return output_results
+
+    def get_distinct_list(self, key):
+
+        """Returns distinct list by col (key)"""
+
+        sql_query = f"SELECT DISTINCT {key} FROM {self.library_name};"
+        results = self.conn.cursor().execute(sql_query)
+
+        output = []
+        for res in results:
+            if res:
+                if len(res) > 0:
+                    output.append(res[0])
+
+        self.conn.close()
+
+        return output
+
+    def filter_by_key_dict (self, key_dict):
+
+        """Returns rows selected by where conditions set forth in key-value dictionary"""
+
+        sql_query = f"SELECT * FROM {self.library_name}"
+
+        conditions_clause = " WHERE"
+        for key, value in key_dict.items():
+            conditions_clause += f" AND {key} = {value}"
+
+        if len(conditions_clause) > len(" WHERE"):
+            sql_query += conditions_clause + ";"
+
+        results = self.conn.cursor().execute(sql_query)
+
+        if self.text_retrieval:
+            output = self.unpack_search_result(results)
+        else:
+            output = self.unpack(results)
+
+        self.conn.close()
+
+        return output
+
+    def filter_by_key_value_range(self, key, value_range):
+
+        """Filter by key in value range, e.g., {"doc_ID": [1,2,3,4,5]}"""
+
+        value_range_str = "("
+        for v in value_range:
+            value_range_str += "'" + str(v) + "'" + ", "
+        if value_range_str.endswith(", "):
+            value_range_str = value_range_str[:-2]
+        value_range_str += ")"
+
+        sql_query = f"SELECT * from {self.library_name} WHERE '{key}' IN {value_range_str};"
+
+        results = self.conn.cursor().execute(sql_query)
+
+        if self.text_retrieval:
+            output = self.unpack_search_result(results)
+        else:
+            output = self.unpack(results)
+
+        self.conn.close()
+
+        return output
+
+    def filter_by_key_ne_value(self, key, value):
+
+        """Filter by col (key) not equal to specified value"""
+
+        sql_query = f"SELECT * from {self.library_name} WHERE NOT '{key}' = {value};"
+
+        results = self.conn.cursor().execute(sql_query)
+
+        if self.text_retrieval:
+            output = self.unpack_search_result(results)
+        else:
+            output = self.unpack(results)
+
+        self.conn.close()
+
+        return output
+
+    def embedding_job_cursor(self, new_embedding_key, doc_id=None):
+
+        """Handles end-to-end retrieval of text blocks selected for embedding job - returns Cursor"""
+
+        if doc_id:
+
+            # pull selected documents for embedding
+            insert_array = ()
+            insert_array += (tuple(doc_id),)
+
+            sql_query = f"SELECT COUNT(*) FROM {self.library_name} WHERE doc_ID IN %s;"
+            count_result = list(self.conn.cursor().execute(sql_query, insert_array))
+            count = count_result[0]
+
+            sql_query = f"SELECT * FROM {self.library_name} WHERE doc_ID IN %s;"
+            results = self.conn.cursor().execute(sql_query, insert_array)
+
+        else:
+
+            # first get the total count of blocks 'un-embedded' with this key in the collection
+            sql_query = f"SELECT COUNT(*) FROM {self.library_name} WHERE embedding_flags->>'{new_embedding_key}' " \
+                        f"is NULL;"
+
+            count_result = list(self.conn.cursor().execute(sql_query))
+            count = count_result[0]
+
+            sql_query = f"SELECT * FROM {self.library_name} WHERE embedding_flags->>'{new_embedding_key}' is NULL;"
+            results = self.conn.cursor().execute(sql_query)
+
+        cursor = DBCursor(results,self,"postgres")
+
+        return count[0], cursor
+
+    def count_embedded_blocks(self, embedding_key):
+
+        """Counts the total number of blocks to be embedded in current job scope"""
+
+        # send error code by default if can not count from db directly
+        embedded_blocks = -1
+
+        sql_query = f"SELECT COUNT(*) FROM {self.library_name} WHERE embedding_flags->>'{embedding_key}' is NOT NULL;"
+        results = list(self.conn.cursor().execute(sql_query))
+
+        if len(results) > 0:
+            embedded_blocks = results[0]
+
+            if not isinstance(embedded_blocks, int):
+                if len(embedded_blocks) > 0:
+                    embedded_blocks = embedded_blocks[0]
+
+        self.conn.close()
+
+        # print("update: count_embedded_blocks - pg - final output - ", embedded_blocks)
+
+        return embedded_blocks
+
+    def count_documents(self, filter_dict):
+
+        """Count documents that match filter conditions"""
+        conditions_clause = ""
+
+        if filter_dict:
+
+            for key, value in filter_dict.items():
+                conditions_clause += f"{key} = {value} AND "
+
+            if conditions_clause.endswith(" AND "):
+                conditions_clause = conditions_clause[:-5]
+
+        if conditions_clause:
+            sql_query = f"SELECT COUNT(*) FROM {self.library_name} WHERE {conditions_clause};"
+        else:
+            sql_query = f"SELECT COUNT(*) FROM {self.library_name};"
+
+        results = list(self.conn.cursor().execute(sql_query))
+
+        output = results[0]
+
+        # print("results - ", output)
+
+        self.conn.close()
+
+        return output
+
+    def close(self):
+
+        """Closes Postgres connection"""
+
+        self.conn.close()
+        return 0
+
+
+class PGWriter:
+
+    """PGWriter is main class abstraction to handle writing, indexing, modifying and deleting records in
+    Postgres tables"""
+
+    def __init__(self, library_name, account_name="llmware"):
+
+        self.library_name = library_name
+        self.account_name = account_name
+
+        self.conn = _PGConnect().connect()
+
+        #   simple lookup of schema by supported table type
+
+        if library_name == "status":
+            self.schema = LLMWareTableSchema().get_status_schema()
+
+        elif library_name == "library":
+            self.schema = LLMWareTableSchema().get_library_card_schema()
+
+        elif library_name == "parser_events":
+            self.schema = LLMWareTableSchema().get_parser_table_schema()
+
+        else:
+            # default is to assign as a 'block' text collection schema
+            self.schema = LLMWareTableSchema().get_block_schema()
+
+        self.reserved_tables = ["status", "library", "parser_events"]
+        self.text_retrieval = False
+
+        if library_name not in self.reserved_tables:
+            self.text_retrieval = True
+
+    def _add_search_column(self, search_col="ts"):
+
+        """Creates ts_vector search column = ts to enable text_search on Postgres DB"""
+
+        sql_add_ts_col = f"ALTER TABLE {self.library_name} ADD COLUMN {search_col} tsvector " \
+                         f"GENERATED ALWAYS AS(to_tsvector('english', text_search)) STORED;"
+
+        self.conn.execute(sql_add_ts_col)
+
+        self.conn.commit()
+
+        return 0
+
+    def build_text_index(self):
+
+        """Creates GIN index on new search column to enable text index search on Postgres DB"""
+
+        sql_text_index_create = f"CREATE INDEX IF NOT EXISTS ts_idx ON {self.library_name} USING GIN(ts);"
+
+        self.conn.execute(sql_text_index_create)
+        self.conn.commit()
+        self.conn.close()
+
+        return 1
+
+    def check_if_table_build_required(self):
+
+        """Check if table already exists"""
+
+        build_table = True
+        table_name = self.library_name
+
+        sql_query = f"SELECT * FROM pg_tables WHERE tablename = '{table_name}';"
+
+        test_result = list(self.conn.cursor().execute(sql_query))
+
+        if len(test_result) > 0:
+            if table_name in test_result[0]:
+                # print("update: pgconnect - test table - evaluates to True")
+                build_table = False
+
+        self.conn.close()
+
+        return build_table
+
+    def _build_sql_from_schema (self, table_name, schema):
+
+        """Utility function to build sql from a schema dictionary"""
+
+        table_create = f"CREATE TABLE IF NOT EXISTS {table_name} ("
+
+        for key, value in schema.items():
+            table_create += key + " " + value + ", "
+
+        if table_create.endswith(", "):
+            table_create = table_create[:-2]
+
+        table_create += ");"
+
+        return table_create
+
+    def create_table(self, table_name, schema, add_search_column=True):
+
+        """ Creates table with selected name and schema"""
+
+        #   only add search index to library blocks collection using self.library_name
+
+        if table_name in ["status", "library", "parser_events"]:
+            add_search_column = False
+        else:
+            add_search_column = True
+
+        table_create = self._build_sql_from_schema(table_name, schema)
+
+        self.conn.execute(table_create)
+
+        if add_search_column:
+            self._add_search_column()
+
+        self.conn.commit()
+
+        # close connection at end of update
+        self.conn.close()
+
+        return 1
+
+    def write_new_record(self, new_record):
+
+        """Writes new record - primary for creating new library card and status update"""
+
+        keys_list = "("
+        output_values = "("
+
+        for keys, values in new_record.items():
+
+            keys_list += keys + ", "
+
+            new_entry = str(new_record[keys])
+            new_entry = new_entry.replace("'", '"')
+
+            output_values += "'" + new_entry + "'" + ", "
+
+        if keys_list.endswith(", "):
+            keys_list = keys_list[:-2]
+
+        if output_values.endswith(", "):
+            output_values = output_values[:-2]
+
+        keys_list += ")"
+        output_values += ")"
+
+        sql_instruction = f"INSERT INTO {self.library_name} {keys_list} VALUES {output_values};"
+
+        results = self.conn.cursor().execute(sql_instruction)
+
+        self.conn.commit()
+
+        self.conn.close()
+
+        return 1
+
+    def destroy_collection(self, confirm_destroy=False):
+
+        """Drops table from database"""
+
+        if confirm_destroy:
+
+            sql_instruction = f"DROP TABLE {self.library_name};"
+
+            results = self.conn.cursor().execute(sql_instruction)
+            self.conn.commit()
+            self.conn.close()
+
+            return 1
+
+        logging.warning("update: library not destroyed - need to set confirm_destroy = True")
+
+        self.conn.commit()
+
+        self.conn.close()
+
+        return 0
+
+    def update_block (self, doc_id, block_id, key, new_value, default_keys):
+
+        """Lookup block by doc_id & block_id and update with specific key and new value"""
+
+        completed = False
+
+        if key in default_keys:
+
+            sql_instruction = f"UPDATE {self.library_name} "\
+                              f"SET {key} = {new_value} " \
+                              f"WHERE doc_ID = {doc_id} AND block_ID = {block_id};"
+
+            completed = True
+            results = self.conn.cursor().execute(sql_instruction)
+
+            self.conn.commit()
+
+        self.conn.close()
+
+        return completed
+
+    def update_one_record(self, filter_dict, key, new_value):
+
+        """Updates one record"""
+
+        conditions_clause = ""
+        for k, v in filter_dict.items():
+            conditions_clause += f"{k} = {v} AND"
+
+        if conditions_clause.endswith(" AND"):
+            conditions_clause = conditions_clause[:-4]
+
+        if conditions_clause:
+            sql_instruction = f"UPDATE {self.library_name} " \
+                              f"SET {key} = {new_value} " \
+                              f"WHERE {conditions_clause};"
+
+            results = self.conn.cursor().execute(sql_instruction)
+            self.conn.commit()
+
+        self.conn.close()
+
+        return 0
+
+    def replace_record(self, filter_dict, new_entry):
+
+        """Check if existing record with the same key - if so, delete, then create new"""
+
+        new_values = "("
+        for keys, values in new_entry.items():
+            new_values += "'" + str(values) + "', "
+        if new_values.endswith(", "):
+            new_values = new_values[:-2]
+        new_values += ")"
+
+        conditions_clause = ""
+        for keys, values in filter_dict.items():
+            conditions_clause += f"{keys} = '{values}' AND"
+        if conditions_clause.endswith(" AND"):
+            conditions_clause = conditions_clause[:-4]
+
+        sql_check = f"SELECT * FROM {self.library_name} WHERE {conditions_clause};"
+
+        exists = list(self.conn.cursor().execute(sql_check))
+
+        if exists:
+            # need to delete, then replace with new record
+
+            sql_delete = f"DELETE FROM {self.library_name} WHERE {conditions_clause};"
+            self.conn.cursor().execute(sql_delete)
+
+        sql_new_insert = f"INSERT INTO {self.library_name} VALUES {new_values};"
+
+        # print("sql new insert - ", sql_new_insert)
+
+        self.conn.cursor().execute(sql_new_insert)
+        self.conn.commit()
+
+        self.conn.close()
+
+        return 0
+
+    def delete_record_by_key(self,key,value):
+
+        """Deletes record found by matching key = value"""
+
+        sql_command = f"DELETE FROM {self.library_name} WHERE {key} = '{value}';"
+        self.conn.execute(sql_command)
+        self.conn.commit()
+        self.conn.close()
+        return 0
+
+    def update_library_card(self, library_name, update_dict, lib_card, delete_record=False):
+
+        """Updates library card"""
+
+        conditions_clause = f"library_name = '{library_name}'"
+
+        # print("update dict - items - ", update_dict.items())
+
+        update_embedding_record = False
+        insert_array = ()
+
+        update_clause = ""
+        for key, new_value in update_dict.items():
+
+            if key != "embedding":
+
+                if isinstance(new_value, int):
+                    # update_clause += f"{key} = {new_value}, "
+                    update_clause += f"{key} = %s"
+                    insert_array += (new_value,)
+                else:
+                    # update_clause += f"{key} = '{new_value}', "
+                    update_clause += f"{key} = %s"
+                    insert_array += (new_value,)
+            else:
+                # will update in second step
+                current_emb_record = lib_card["embedding"]
+                embedding_update = self._update_embedding_record_handler(current_emb_record, new_value,
+                                                                         delete_record=delete_record)
+                embedding_update = json.dumps(embedding_update)
+                # embedding_update = str(embedding_update).replace("'", '"')
+                # update_clause += f"{key} = '{embedding_update}', "
+                update_clause += f"{key} = %s, "
+                insert_array += (embedding_update,)
+
+        if update_clause.endswith(", "):
+            update_clause = update_clause[:-2]
+
+        sql_instruction = f"UPDATE {self.library_name} " \
+                          f"SET {update_clause} " \
+                          f"WHERE {conditions_clause};"
+
+        self.conn.cursor().execute(sql_instruction, insert_array)
+        self.conn.commit()
+
+        self.conn.close()
+
+        return 1
+
+    def _update_embedding_record_handler(self, embedding_list, new_value,delete_record=False):
+
+        """Internal helper method to integrate embedding update into array of dicts- which
+            is inserted as JSON directly in Postgres"""
+
+        # special flag to identify where to 'merge' and update an existing embedding record
+        merged_embedding_update = False
+        inserted_list = []
+
+        if len(embedding_list) > 0:
+            # if the last row is a "no" embedding, then remove it
+            if embedding_list[-1]["embedding_status"] == "no":
+                del embedding_list[-1]
+
+            for emb_records in embedding_list:
+
+                if emb_records["embedding_model"] == new_value["embedding_model"] and \
+                        emb_records["embedding_db"] == new_value["embedding_db"]:
+
+                    if not delete_record:
+                        inserted_list.append(new_value)
+                    else:
+                        pass
+
+                    merged_embedding_update = True
+
+                    # catch potential error
+
+                    if not delete_record:
+                        if "embedded_blocks" in emb_records and "embedded_blocks" in new_value:
+
+                            if emb_records["embedded_blocks"] > new_value["embedded_blocks"]:
+
+                                logging.warning("warning: may be issue with embedding - mis-alignment in "
+                                                "embedding block count - %s > %s ", emb_records["embedded_blocks"],
+                                                new_value["embedded_blocks"])
+
+                else:
+                    inserted_list.append(emb_records)
+
+        if not merged_embedding_update:
+            embedding_list.append(new_value)
+
+            output = embedding_list
+        else:
+            output = inserted_list
+
+        return output
+
+    def get_and_increment_doc_id (self, library_name):
+
+        """Gets and increments unique doc ID"""
+
+        val_out = -1
+
+        val_array = (str(library_name),)
+
+        sql_instruction = f"UPDATE library " \
+                          f"SET unique_doc_id = unique_doc_id + 1 " \
+                          f"WHERE library_name = %s " \
+                          f"RETURNING unique_doc_id"
+
+        result = self.conn.cursor().execute(sql_instruction, val_array)
+
+        output = list(result)
+        if len(output) > 0:
+            val = output[0]
+            if len(val) > 0:
+                val_out = val[0]
+
+        self.conn.commit()
+        self.conn.close()
+
+        return val_out
+
+    def set_incremental_docs_blocks_images(self, library_name, added_docs=0, added_blocks=0, added_images=0,
+                                           added_pages=0, added_tables=0):
+
+        """Updates library card after update of new parsing jobs"""
+
+        conditions_clause = f"library_name = '{library_name}'"
+
+        set_clause = f"documents = documents + {added_docs}, " \
+                     f"blocks = blocks + {added_blocks}, " \
+                     f"images = images + {added_images}, " \
+                     f"pages = pages + {added_pages}, " \
+                     f"tables = tables + {added_tables}"
+
+        sql_instruction = f"UPDATE {self.library_name} SET {set_clause} WHERE {conditions_clause};"
+
+        results = self.conn.cursor().execute(sql_instruction)
+
+        self.conn.commit()
+
+        self.conn.close()
+
+        return 0
+
+    def add_new_embedding_flag(self, _id, embedding_key, value):
+
+        insert_array = ()
+
+        insert_json = f'X"{embedding_key}": "{value}"Y'
+        insert_json = insert_json.replace("X", "{")
+        insert_json = insert_json.replace("Y", "}")
+        insert_json = "'" + insert_json + "'"
+        insert_json += "::jsonb"
+
+        json_dict = json.dumps({embedding_key:value})
+        insert_array += (json_dict,)
+
+        sql_command = f"UPDATE {self.library_name} " \
+                      f"SET embedding_flags = coalesce(embedding_flags, 'XY') || %s WHERE _id = {_id}"
+        sql_command = sql_command.replace("X","{")
+        sql_command = sql_command.replace("Y","}")
+
+        # print("sql_command - ", sql_command)
+
+        self.conn.cursor().execute(sql_command, insert_array)
+        self.conn.commit()
+        self.conn.close()
+
+        return 0
+
+    def unset_embedding_flag(self, embedding_key):
+
+        """To complete deletion of an embedding, remove the json embedding_key from the text collection"""
+
+        sql_instruction = f"UPDATE {self.library_name} " \
+                          f"SET embedding_flags = embedding_flags - {embedding_key}" \
+                          f"WHERE embedding_flags->>{embedding_key} IS NOT NULL"
+
+        self.conn.cursor().execute(sql_instruction)
+        self.conn.commit()
+        self.conn.close()
+
+        return 0
+
+    def close(self):
+        """Closes Postgres connection"""
+        self.conn.close()
+        return 0
+
+
+class SQLiteRetrieval:
+
+    """SQLiteRetrieval is main class abstraction to handle queries and retrievals from a SQLite DB running locally"""
+
+    def __init__(self, library_name, account_name="llmware"):
+
+        self.library_name = library_name
+        self.account_name = account_name
+
+        self.conn = _SQLiteConnect().connect(library_name)
+
+        self.reserved_tables = ["status", "library", "parser_events"]
+        self.text_retrieval = False
+
+        if library_name == "status":
+            self.schema = LLMWareTableSchema().get_status_schema()
+
+        elif library_name == "library":
+            self.schema = LLMWareTableSchema().get_library_card_schema()
+
+        elif library_name == "parser_events":
+            self.schema = LLMWareTableSchema().get_parser_table_schema()
+
+        else:
+            self.schema = LLMWareTableSchema().get_block_schema()
+
+        if library_name not in self.reserved_tables:
+            self.text_retrieval = True
+
+    def test_connection(self):
+
+        """SQLite test connection always returns True - runs in file system"""
+
+        return True
+
+    def safe_name(self, input_name):
+
+        """ Conforming table name rules in Sqlite to Postgres """
+
+        if input_name not in self.reserved_tables:
+            output_name = re.sub("-", "_", input_name)
+        else:
+            raise InvalidNameException(input_name)
+
+        return output_name
+
+    def unpack(self, results_cursor):
+
+        """Iterate through rows of results_cursor and builds dictionary output rows using schema"""
+
+        output = []
+
+        for row in results_cursor:
+
+            counter = 0
+            new_dict = {}
+
+            # assumes rowid included
+            new_dict.update({"_id": row[0]})
+            counter += 1
+
+            for key, value in self.schema.items():
+
+                if key not in ["_id","PRIMARY KEY"]:
+
+                    if counter < len(row):
+
+                        output_value = row[counter]
+
+                        if key == "text_block":
+                            key = "text"
+
+                        if key == "table_block":
+                            key = "table"
+
+                        if key == "embedding":
+                            output_value = ast.literal_eval(output_value)
+
+                        new_dict.update({key: output_value})
+                        counter += 1
+
+                    else:
+                        logging.info("update: sqlite_retriever - outputs not matching - %s - %s", counter, len(row))
+
+            output.append(new_dict)
+
+        return output
+
+    def unpack_search_result(self, results_cursor):
+
+        """Iterate through rows of results_cursor and builds dictionary output rows using schema"""
+
+        # assumes prepending of score + rowid
+
+        output = []
+
+        for row in results_cursor:
+
+            counter = 0
+            new_dict = {}
+            new_dict.update({"score": row[0]})
+            counter += 1
+            new_dict.update({"_id": row[1]})
+            counter += 1
+
+            for key, value in self.schema.items():
+
+                if key not in ["_id", "PRIMARY KEY"]:
+
+                    if counter < len(row):
+
+                        if key == "text_block":
+                            key = "text"
+
+                        if key == "table_block":
+                            key = "table"
+
+                        new_dict.update({key: row[counter]})
+                        counter += 1
+                    else:
+                        logging.info("update: sqlite_retriever - outputs not matching - %s - %s", counter, row[counter])
+
+            output.append(new_dict)
+
+        return output
+
+    def lookup(self, key, value):
+
+        """Lookup of col (key) matching to value - returns unpacked dictionary result"""
+
+        output = {}
+
+        if key == "_id":
+            key = "rowid"
+
+        sql_query = f"SELECT rowid, * FROM {self.library_name} WHERE {key} = '{value}';"
+
+        results = list(self.conn.cursor().execute(sql_query))
+
+        if results:
+            if len(results) >= 1:
+                output = self.unpack(results)
+
+        self.conn.close()
+
+        return output
+
+    def embedding_key_lookup(self, key, value):
+
+        output = {}
+
+        value = str(value)
+
+        # print("update: embedding_key_lookup - ", key, value)
+
+        # lookup embedding_flag = value and value in special_field1
+        sql_command = (f"SELECT rowid, * FROM {self.library_name} WHERE embedding_flags = '{key}' AND "
+                       f"special_field1 = '{value}'")
+
+        results = list(self.conn.cursor().execute(sql_command))
+
+        # print("results: ", results)
+
+        if len(results) > 0:
+            output = self.unpack(results)
+
+        return output
+
+    def get_whole_collection(self):
+
+        """Returns whole collection - as a Cursor object"""
+
+        sql_command = f"SELECT rowid, * FROM {self.library_name}"
+        results = self.conn.cursor().execute(sql_command)
+
+        cursor = DBCursor(results,self, "sqlite")
+
+        return cursor
+
+    def _prep_query(self, query):
+
+        """ Basic preparation of text search query for SQLite - will evolve over time. """
+
+        sqlite_strings = {"AND": " AND ", "OR": " OR "}
+
+        exact_match = False
+        # check if wrapped in quotes
+        if query.startswith('"') and query.endswith('"'):
+            exact_match = True
+
+        # remove punctuation and split into tokens by whitespace
+        q_clean = re.sub("[^\w\s]", "", query)
+        q_toks = q_clean.split(" ")
+
+        q_string = ""
+        for tok in q_toks:
+            q_string += tok
+            if exact_match:
+                # q_string += " & "
+                q_string += sqlite_strings["AND"]
+            else:
+                # q_string += " | "
+                q_string += sqlite_strings["OR"]
+
+        if q_string.endswith(sqlite_strings["AND"]):
+            q_string = q_string[:-len(sqlite_strings["AND"])]
+
+        if q_string.endswith(sqlite_strings["OR"]):
+            q_string = q_string[:-len(sqlite_strings["OR"])]
+
+        return q_string
+
+    def basic_query(self, query):
+
+        """Basic text query on SQLite using FTS5 index"""
+
+        query_str = self._prep_query(query)
+
+        sql_query = f"SELECT rank, rowid, * FROM {self.library_name} " \
+                    f"WHERE text_search MATCH '{query_str}' ORDER BY rank"
+
+        results = self.conn.cursor().execute(sql_query)
+
+        output = self.unpack_search_result(results)
+
+        self.conn.close()
+
+        return output
+
+    def filter_by_key(self, key, value):
+
+        """Returns rows in which col (key) = value"""
+
+        # used for getting library card
+        sql_query = f"SELECT rowid, * FROM {self.library_name} WHERE {key} = {value};"
+        results = self.conn.cursor().execute(sql_query)
+
+        # lib_card = {}
+
+        if self.text_retrieval:
+            output = self.unpack_search_result(results)
+        else:
+            output = self.unpack(results)
+
+        """
+        if self.library_name == "library":
+
+            # repackage library card
+            library_schema = LLMWareTableSchema.get_library_card_schema()
+            lib_card = {}
+            counter = 0
+            results = list(results)
+            for keys in library_schema:
+                # print("update: keys / sql - ", keys, results[0][counter])
+                lib_card.update({keys:results[0][counter]})
+                counter += 1
+        """
+
+        self.conn.close()
+
+        return output
+
+    def text_search_with_key_low_high_range(self, query, key, low, high, key_value_dict=None):
+
+        """Text search with additional filter of col (key) in low to high value range specified"""
+
+        query_str = self._prep_query(query)
+
+        sql_query = f"SELECT rank, rowid, * FROM {self.library_name} WHERE text_search MATCH '{query_str}' " \
+                    f"AND {key} BETWEEN {low} AND {high}"
+
+        if key_value_dict:
+            for key, value in key_value_dict.items():
+                sql_query += f" AND {key} = {value}"
+
+        sql_query += " ORDER BY rank"
+        sql_query += ";"
+
+        results = self.conn.cursor().execute(sql_query)
+
+        output = self.unpack_search_result(results)
+
+        self.conn.close()
+
+        return output
+
+    def text_search_with_key_value_range(self, query, key, value_range_list, key_value_dict=None):
+
+        """Text search with additional filter of key in value_range list with optional further key=value pairs
+        in key_value_dict"""
+
+        query_str = self._prep_query(query)
+
+        # insert_array = (tuple(value_range_list),)
+        # insert_array = tuple(value_range_list)
+        # ia_str = str("(1)")
+        # insert_array = value_range_list
+        # insert_array = [1,]
+
+        ia_str = "("
+        for v in value_range_list:
+            if isinstance(v, int):
+                ia_str += str(v)
+            else:
+                ia_str += "'" + v + "'"
+            ia_str += ", "
+        if ia_str.endswith(", "):
+            ia_str = ia_str[:-2]
+        ia_str += ")"
+
+        sql_query = f"SELECT rank, rowid, * FROM {self.library_name} WHERE text_search MATCH '{query_str}' " \
+                    f"AND {key} IN {ia_str}"
+
+        if key_value_dict:
+            for key, value in key_value_dict.items():
+                sql_query += f" AND {key} = '{value}'"
+
+        sql_query += " ORDER BY rank"
+
+        sql_query += ";"
+
+        # print("update: sqlite - query - ", sql_query, ia_str)
+
+        results = self.conn.cursor().execute(sql_query)
+        output = self.unpack_search_result(results)
+
+        self.conn.close()
+
+        return output
+
+    def text_search_with_key_value_dict_filter(self, query, key_value_dict):
+
+        """Text search with additional 'AND' filter of key=value for all keys in key_value_dict"""
+
+        query_str = self._prep_query(query)
+
+        sql_query = f"SELECT rank, rowid, * FROM {self.library_name} WHERE text_search MATCH '{query_str}' "
+
+        insert_array = ()
+
+        if key_value_dict:
+            for key, value in key_value_dict.items():
+
+                if isinstance(value,list):
+
+                    insert_array += (tuple(value),)
+                    sql_query += f" AND {key} IN %s"
+                else:
+                    sql_query += f" AND {key} = {value}"
+
+        sql_query += " ORDER BY rank"
+        sql_query += ";"
+
+        results = self.conn.cursor().execute(sql_query, insert_array)
+        output = self.unpack_search_result(results)
+
+        self.conn.close()
+
+        return output
+
+    def get_distinct_list(self, key):
+
+        """Gets distinct elements from list for selected col (key)"""
+
+        sql_query = f"SELECT DISTINCT {key} FROM {self.library_name};"
+        results = self.conn.cursor().execute(sql_query)
+
+        output = []
+        for res in results:
+            if res:
+                if len(res) > 0:
+                    output.append(res[0])
+
+        self.conn.close()
+
+        return output
+
+    def filter_by_key_dict (self, key_dict):
+
+        """Filters and returns elements where key=value as specified by the key_dict"""
+
+        sql_query = f"SELECT rowid, * FROM {self.library_name}"
+
+        conditions_clause = " WHERE"
+        for key, value in key_dict.items():
+            conditions_clause += f" AND {key} = {value}"
+
+        if len(conditions_clause) > len(" WHERE"):
+            sql_query += conditions_clause + ";"
+
+        results = self.conn.cursor().execute(sql_query)
+
+        if self.text_retrieval:
+            output = self.unpack_search_result(results)
+        else:
+            output = self.unpack(results)
+
+        self.conn.close()
+
+        return output
+
+    def filter_by_key_value_range(self, key, value_range):
+
+        """Filter by key in value range, e.g., {"doc_ID": [1,2,3,4,5]}"""
+
+        value_range_str = "("
+
+        for v in value_range:
+            value_range_str += "'" + str(v) + "'" + ", "
+
+        if value_range_str.endswith(", "):
+            value_range_str = value_range_str[:-2]
+
+        value_range_str += ")"
+
+        sql_query = f"SELECT rowid, * from {self.library_name} WHERE {key} IN {value_range_str};"
+
+        results = self.conn.cursor().execute(sql_query)
+
+        if self.text_retrieval:
+            output = self.unpack_search_result(results)
+        else:
+            output = self.unpack(results)
+
+        self.conn.close()
+
+        return output
+
+    def filter_by_key_ne_value(self, key, value):
+
+        """Filters where key not equal to value"""
+
+        sql_query = f"SELECT rowid, * from {self.library_name} WHERE NOT {key} = {value};"
+
+        results = self.conn.cursor().execute(sql_query)
+
+        if self.text_retrieval:
+            output = self.unpack_search_result(results)
+        else:
+            output = self.unpack(results)
+
+        self.conn.close()
+
+        return output
+
+    def embedding_job_cursor(self, new_embedding_key, doc_id=None):
+
+        """Handles end-to-end retrieval of text blocks to be embedded - returns Cursor"""
+
+        if doc_id:
+            # pull selected documents for embedding
+            insert_array = ()
+            insert_array += (tuple(doc_id),)
+            sql_query = f"SELECT COUNT(*) FROM {self.library_name} WHERE doc_ID IN %s;"
+            results = list(self.conn.cursor().execute(sql_query, insert_array))
+            count = results[0]
+
+            sql_query = f"SELECT rowid, * FROM {self.library_name} WHERE doc_ID IN %s;"
+            results = self.conn.cursor().execute(sql_query, insert_array)
+
+        else:
+
+            # Note: for SQLite - only designed for single embedding, not multiple embeddings on each block
+
+            # first get the total count of blocks 'un-embedded' with this key in the collection
+            sql_query = f"SELECT COUNT(*) FROM {self.library_name} WHERE embedding_flags IS NULL OR " \
+                        f"embedding_flags != '{new_embedding_key}';"
+
+            results = list(self.conn.cursor().execute(sql_query))
+            count = results[0]
+
+            # print("update: sqlite_retriever - get_embedding_cursor - count - results - ", results, new_embedding_key)
+
+            sql_query = f"SELECT rowid, * FROM {self.library_name} WHERE embedding_flags IS NULL OR " \
+                        f"embedding_flags != '{new_embedding_key}';"
+
+            results = self.conn.cursor().execute(sql_query)
+
+        results = list(results)
+
+        cursor = DBCursor(results, self, "sqlite")
+
+        return count[0], cursor
+
+    def count_embedded_blocks(self, embedding_key):
+
+        """Count all blocks to be embedded in current job scope"""
+
+        sql_query = f"SELECT COUNT(*) FROM {self.library_name} WHERE embedding_flags = '{embedding_key}';"
+
+        results = list(self.conn.cursor().execute(sql_query))
+
+        embedded_blocks = results[0]
+
+        # print("update: sqlite_retrieval - count embedded blocks -", embedded_blocks, results)
+
+        self.conn.close()
+
+        return embedded_blocks[0]
+
+    def count_documents(self, filter_dict):
+
+        """Count documents that match filter conditions"""
+
+        conditions_clause = ""
+
+        if filter_dict:
+
+            for key, value in filter_dict.items():
+                conditions_clause += f"{key} = {value} AND "
+
+            if conditions_clause.endswith(" AND "):
+                conditions_clause = conditions_clause[:-5]
+
+        if conditions_clause:
+            sql_query = f"SELECT COUNT(*) FROM {self.library_name} WHERE {conditions_clause};"
+        else:
+            sql_query = f"SELECT COUNT(*) FROM {self.library_name};"
+
+        results = list(self.conn.cursor().execute(sql_query))
+
+        output = results[0]
+
+        self.conn.close()
+
+        return output
+
+    def close(self):
+        """Closes SQLite connection"""
+        self.conn.close()
+        return 0
+
+
+class SQLiteWriter:
+
+    """SQLiteWriter is the main class abstraction to handle writes, indexes, edits and deletes on SQLite DB"""
+
+    def __init__(self, library_name, account_name="llmware"):
+
+        self.library_name = library_name
+        self.account_name = account_name
+
+        self.conn = _SQLiteConnect().connect(library_name)
+
+        if library_name == "status":
+            self.schema = LLMWareTableSchema().get_status_schema()
+
+        elif library_name == "library":
+            self.schema = LLMWareTableSchema().get_library_card_schema()
+
+        elif library_name == "parser_events":
+            self.schema = LLMWareTableSchema().get_parser_table_schema()
+
+        else:
+            self.schema = LLMWareTableSchema().get_block_schema()
+
+        self.reserved_tables = ["status", "library", "parser_events"]
+        self.text_retrieval = False
+
+        if library_name not in self.reserved_tables:
+            self.text_retrieval = True
+
+    def build_text_index(self, index_col="text_search"):
+
+        """No separate text index created on SQLite - created in Virtual Table at time of set up"""
+
+        return True
+
+    def check_if_table_build_required(self):
+
+        """Checks if table exists, and if not, responds True that build is required"""
+
+        sql_query = f"SELECT * FROM sqlite_master " \
+                    f"WHERE type = 'table' AND name = '{self.library_name}';"
+
+        results = self.conn.cursor().execute(sql_query)
+
+        if len(list(results)) > 0:
+            table_build = False
+        else:
+            table_build = True
+
+        return table_build
+
+    def _build_sql_virtual_table_from_schema (self, table_name, schema):
+
+        table_create = f"CREATE VIRTUAL TABLE IF NOT EXISTS {table_name} USING fts5("
+
+        for key, value in schema.items():
+
+            if key not in ["_id", "PRIMARY KEY"]:
+                table_create += key + ", "
+
+        if table_create.endswith(", "):
+            table_create = table_create[:-2]
+
+        table_create += ");"
+
+        return table_create
+
+    def _build_sql_from_schema (self, table_name, schema):
+
+        """Builds SQL table create string from schema dictionary"""
+
+        table_create = f"CREATE TABLE IF NOT EXISTS {table_name} ("
+
+        for key, value in schema.items():
+
+            # replace jsonb with json for sqlite
+            if value == "jsonb":
+                value = "json"
+
+            table_create += key + " " + value + ", "
+
+        if table_create.endswith(", "):
+            table_create = table_create[:-2]
+
+        table_create += ");"
+
+        return table_create
+
+    def create_table(self, table_name, schema, add_search_column=True):
+
+        """Builds SQL table"""
+
+        if table_name not in ["library", "status", "parsing_events"]:
+
+            # used for creating library text search index
+            table_create = self._build_sql_virtual_table_from_schema(table_name, schema)
+
+        else:
+            # status, library, parser_events + any other structured table
+            table_create = self._build_sql_from_schema(table_name, schema)
+
+        self.conn.execute(table_create)
+        self.conn.commit()
+
+        # close connection at end of update
+        self.conn.close()
+
+        return 1
+
+    def write_new_record(self, new_record):
+
+        """Writes new record - primary for creating new library card and status update"""
+
+        keys_list = "("
+        output_values = "("
+
+        for keys, values in new_record.items():
+            keys_list += keys + ", "
+
+            new_entry = str(new_record[keys])
+            new_entry = new_entry.replace("'", '"')
+
+            output_values += "'" + new_entry + "'" + ", "
+
+        if keys_list.endswith(", "):
+            keys_list = keys_list[:-2]
+
+        if output_values.endswith(", "):
+            output_values = output_values[:-2]
+
+        keys_list += ")"
+        output_values += ")"
+
+        sql_instruction = f"INSERT INTO {self.library_name} {keys_list} VALUES {output_values};"
+
+        results = self.conn.cursor().execute(sql_instruction)
+
+        self.conn.commit()
+
+        self.conn.close()
+
+        return 1
+
+    def destroy_collection(self, confirm_destroy=False):
+
+        """Drops table"""
+
+        if confirm_destroy:
+
+            sql_instruction = f"DROP TABLE {self.library_name};"
+            results = self.conn.cursor().execute(sql_instruction)
+            self.conn.commit()
+            self.conn.close()
+            return 1
+
+        logging.warning("update: library not destroyed - need to set confirm_destroy = True")
+        self.conn.close()
+
+        return 0
+
+    def update_block (self, doc_id, block_id, key, new_value, default_keys):
+
+        """Updates block by specified (doc_id, block_id) pair"""
+
+        completed = False
+
+        if key in default_keys:
+
+            sql_instruction = f"UPDATE {self.library_name} "\
+                              f"SET {key} = {new_value} " \
+                              f"WHERE doc_ID = {doc_id} AND block_ID = {block_id};"
+
+            completed = True
+            results = self.conn.cursor().execute(sql_instruction)
+
+        self.conn.close()
+
+        return completed
+
+    def update_one_record(self, filter_dict, key, new_value):
+
+        """Updates one record"""
+
+        conditions_clause = ""
+        for k, v in filter_dict.items():
+            conditions_clause += f"{k} = {v} AND"
+
+        if conditions_clause.endswith(" AND"):
+            conditions_clause = conditions_clause[:-4]
+
+        if conditions_clause:
+            sql_instruction = f"UPDATE {self.library_name} " \
+                              f"SET {key} = {new_value} " \
+                              f"WHERE {conditions_clause};"
+
+            results = self.conn.cursor().execute(sql_instruction)
+
+        self.conn.close()
+
+        return 0
+
+    def replace_record(self, filter_dict, new_entry):
+
+        """Check if existing record with the same key - if so, delete, then create new"""
+
+        new_values = "("
+        for keys, values in new_entry.items():
+
+            if keys not in ["_id"]:
+                new_values += "'" + str(values) + "', "
+
+        if new_values.endswith(", "):
+            new_values = new_values[:-2]
+        new_values += ")"
+
+        conditions_clause = ""
+        for keys, values in filter_dict.items():
+            conditions_clause += f"{keys} = '{values}' AND"
+        if conditions_clause.endswith(" AND"):
+            conditions_clause = conditions_clause[:-4]
+
+        sql_check = f"SELECT * FROM {self.library_name} WHERE {conditions_clause};"
+
+        exists = list(self.conn.cursor().execute(sql_check))
+
+        if exists:
+            # need to delete, then replace with new record
+            sql_delete = f"DELETE FROM {self.library_name} WHERE {conditions_clause};"
+            self.conn.cursor().execute(sql_delete)
+
+        sql_new_insert = f"INSERT INTO {self.library_name} VALUES {new_values};"
+
+        self.conn.cursor().execute(sql_new_insert)
+        self.conn.commit()
+
+        self.conn.close()
+
+        return 0
+
+    def delete_record_by_key(self, key, value):
+
+        """Deletes record by matching key = value"""
+
+        sql_command = f"DELETE FROM {self.library_name} WHERE {key} = '{value}';"
+        self.conn.execute(sql_command)
+        self.conn.commit()
+        self.conn.close()
+        return 0
+
+    def update_library_card(self, library_name, update_dict, lib_card, delete_record=False):
+
+        """Updates library card"""
+
+        conditions_clause = f"library_name = '{library_name}'"
+        update_clause = ""
+
+        for key, new_value in update_dict.items():
+
+            if key != "embedding":
+
+                if isinstance(new_value, int):
+                    update_clause += f"{key} = {new_value}, "
+                else:
+                    update_clause += f"{key} = '{new_value}', "
+            else:
+                # will update in second step
+                current_emb_record = lib_card["embedding"]
+                embedding_update = self._update_embedding_record_handler(current_emb_record, new_value,
+                                                                         delete_record=delete_record)
+                # from pg- start
+                embedding_update=str(embedding_update)
+                embedding_update=embedding_update.replace("'", '"')
+                update_clause += f"{key} = '{embedding_update}', "
+                # from pg- end
+
+        if update_clause.endswith(", "):
+            update_clause = update_clause[:-2]
+
+        sql_instruction = f"UPDATE {self.library_name} " \
+                          f"SET {update_clause} " \
+                          f"WHERE {conditions_clause};"
+
+        self.conn.cursor().execute(sql_instruction)
+        self.conn.commit()
+
+        self.conn.close()
+
+        return 1
+
+    def _update_embedding_record_handler(self, embedding_list, new_value, delete_record=False):
+
+        """Internal helper method to integrate embedding update into array of dicts- which
+            is inserted as JSON directly in Postgres"""
+
+        # special flag to identify where to 'merge' and update an existing embedding record
+        merged_embedding_update = False
+        inserted_list = []
+
+        if len(embedding_list) > 0:
+            # if the last row is a "no" embedding, then remove it
+            if embedding_list[-1]["embedding_status"] == "no":
+                del embedding_list[-1]
+
+            for emb_records in embedding_list:
+
+                if emb_records["embedding_model"] == new_value["embedding_model"] and \
+                        emb_records["embedding_db"] == new_value["embedding_db"]:
+
+                    if not delete_record:
+                        inserted_list.append(new_value)
+                    else:
+                        pass
+
+                    merged_embedding_update = True
+
+                    # catch potential error
+
+                    if not delete_record:
+                        if "embedded_blocks" in emb_records and "embedded_blocks" in new_value:
+
+                            if emb_records["embedded_blocks"] > new_value["embedded_blocks"]:
+                                logging.warning("warning: may be issue with embedding - mis-alignment in "
+                                                "embedding block count - %s > %s ", emb_records["embedded_blocks"],
+                                                new_value["embedded_blocks"])
+
+                else:
+                    inserted_list.append(emb_records)
+
+        if not merged_embedding_update:
+            embedding_list.append(new_value)
+
+            output = embedding_list
+        else:
+            output = inserted_list
+
+        return output
+
+    def get_and_increment_doc_id(self, library_name):
+
+        """Gets and increments unique doc ID"""
+
+        val_out = -1
+
+        val_array = (str(library_name),)
+
+        sql_instruction = f"UPDATE library " \
+                          f"SET unique_doc_id = unique_doc_id + 1 " \
+                          f"WHERE library_name = '{library_name}' " \
+                          f"RETURNING unique_doc_id"
+
+        result = self.conn.cursor().execute(sql_instruction)
+
+        output = list(result)
+        if len(output) > 0:
+            val = output[0]
+            if len(val) > 0:
+                val_out = val[0]
+
+        self.conn.commit()
+        self.conn.close()
+
+        return val_out
+
+    def set_incremental_docs_blocks_images(self, library_name, added_docs=0, added_blocks=0, added_images=0,
+                                           added_pages=0, added_tables=0):
+
+        """Increments key counters on library card post parsing"""
+
+        conditions_clause = f"library_name = '{library_name}'"
+
+        set_clause = f"documents = documents + {added_docs}, " \
+                     f"blocks = blocks + {added_blocks}, " \
+                     f"images = images + {added_images}, " \
+                     f"pages = pages + {added_pages}, " \
+                     f"tables = tables + {added_tables}"
+
+        sql_instruction = f"UPDATE {self.library_name} SET {set_clause} WHERE {conditions_clause};"
+
+        results = self.conn.cursor().execute(sql_instruction)
+
+        self.conn.commit()
+
+        self.conn.close()
+
+        return 0
+
+    def add_new_embedding_flag(self, _id, embedding_key, value):
+
+        """SQLite implementation saves new embedding flag in column and replaces any previous values"""
+
+        # the embedding key name is saved in embedding_flags, and the index is saved in special_field1
+
+        insert_array = ()
+
+        insert_array += (embedding_key,)
+        value=str(value)
+
+        sql_command = f"UPDATE {self.library_name} " \
+                      f"SET embedding_flags = '{embedding_key}', special_field1 = '{value}' " \
+                      f"WHERE rowid = {_id}"
+
+        self.conn.cursor().execute(sql_command)
+        self.conn.commit()
+
+        self.conn.close()
+
+        return 0
+
+    def unset_embedding_flag(self, embedding_key):
+
+        """To complete deletion of an embedding, remove the json embedding_key from the text collection"""
+
+        sql_instruction = f"UPDATE {self.library_name} " \
+                          f"SET embedding_flags = ''" \
+                          f"WHERE embedding_flags = '{embedding_key}';"
+
+        self.conn.cursor().execute(sql_instruction)
+        self.conn.commit()
+        self.conn.close()
+
+        return 0
+
+    def close(self):
+        """Closes SQLite connection"""
+        self.conn.close()
+        return 0
+
+
+class _PGConnect:
+
+    """_PGConnect returns a Postgres DB connection"""
+
+    def __init__(self):
+
+        #   Connect to postgres
+        self.postgres_host = None
+        self.postgres_port = None
+        self.postgres_db_name = None
+        self.postgres_user_name = None
+        self.postgres_full_schema = None
+        self.postgres_pw = None
+
+        self.conn = None
+
+    def connect(self, db_name=None, collection_name=None):
+
+        """Connect to Postgres DB - using config data in PostgresConfig"""
+
+        self.postgres_host = PostgresConfig().get_config("host")
+        self.postgres_port = PostgresConfig().get_config("port")
+        self.postgres_user_name = PostgresConfig().get_config("user_name")
+        self.postgres_pw = PostgresConfig().get_config("pw")
+
+        #   postgres will use the configured db name
+        # if db_name: self.postgres_db_name = db_name
+
+        self.postgres_db_name = PostgresConfig().get_config("db_name")
+
+        self.conn = psycopg.connect(host=self.postgres_host, port=self.postgres_port, dbname=self.postgres_db_name,
+                                    user=self.postgres_user_name, password=self.postgres_pw)
+
+        return self.conn
+
+
+class _SQLiteConnect:
+
+    """_SQLiteConnect returns a connection to a SQLite DB running locally"""
+
+    def __init__(self):
+        self.conn = None
+
+    def connect(self, db_name=None, collection_name=None):
+
+        """Connect to SQLite DB - using configuration parameters in SQLiteConfig"""
+
+        # db_file = os.path.join(SQLiteConfig.get_db_fp(), "sqlite_llmware.db")
+        db_file = SQLiteConfig.get_uri_string()
+
+        self.conn = sqlite3.connect(db_file)
+
+        return self.conn
+
+
+class _MongoConnect:
+
+    """_MongoConnect returns a connection to a Mongo collection"""
+
+    def __init__(self):
+
+        # self.collection_db_path = LLMWareConfig.get_config("collection_db_uri")
+        self.collection_db_path = LLMWareConfig.get_db_uri_string()
+        # self.client = MongoClient(self.collection_db_path, unicode_decode_error_handler='ignore')
+        self.mongo_client = None
+        self.timeout_secs = 5
+
+    def connect(self, db_name=None,collection_name=None):
+
+        """Connect to Mongo DB collection"""
+
+        self.mongo_client = MongoDBManager().client[db_name][collection_name]
+        return self.mongo_client
+
+
+class MongoDBManager:
+
+    """This is internal class - recommended as best practice by Mongo to manage connection threads"""
+
+    class __MongoDBManager:
+
+        def __init__(self):
+
+            # self.collection_db_path = LLMWareConfig.get_config("collection_db_uri")
+            self.collection_db_path = LLMWareConfig.get_db_uri_string()
+
+            # default client is Mongo currently
+            self.client = MongoClient(self.collection_db_path, unicode_decode_error_handler='ignore')
+            # self.client.admin.authenticate(username, password)
+
+    __instance = None
+
+    def __init__(self):
+
+        if not MongoDBManager.__instance:
+            MongoDBManager.__instance = MongoDBManager.__MongoDBManager()
+
+    def __getattr__(self, item):
+        return getattr(self.__instance, item)
+
+
+class DBCursor:
+
+    """Wrapper class around database cursors to handle specific cursor management across DBs"""
+
+    def __init__(self, cursor, collection_retriever, db_name, close_when_exhausted=True, return_dict=True, schema=None):
+
+        self.cursor = iter(cursor)
+        self.collection_retriever = collection_retriever
+        self.db_name = db_name
+        self.close_when_exhausted = close_when_exhausted
+        self.return_dict = return_dict
+        self.schema = schema
+
+    def pull_one(self):
+
+        """Calls next on the iterable cursor to pull one new row off the cursor and return to calling function"""
+
+        try:
+            new_row = next(self.cursor)
+            # print("update: DBCursor - new_row - ", new_row)
+
+        except StopIteration:
+            # The cursor is empty (no blocks found)
+            new_row = None
+            if self.close_when_exhausted:
+                self.collection_retriever.close()
+
+        # print("cursor - pull one - ", new_row)
+
+        if new_row and self.return_dict and not isinstance(new_row,dict):
+            return self.collection_retriever.unpack([new_row])[0]
+
+        return new_row
+
+    def pull_all(self):
+
+        """Exhausts remaining cursor and returns to calling function"""
+
+        output = []
+
+        while True:
+
+            new_entry = self.pull_one()
+
+            if not new_entry:
+                break
+            else:
+                output.append(new_entry)
+
+        """   
+        for entries in self.cursor:
+
+            if self.return_dict and not isinstance(entries,dict):
+                output.append(self.collection_retriever.unpack(entries))
+            else:
+                output.append(entries)
+        """
+
+        return output
 
 
 class CloudBucketManager:
 
+    """Main class for handling basic operations with Cloud Buckets - specifically for AWS S3"""
+
     def __init__(self):
         # placeholder - no state / config required currently
-        self.start = 0
+        self.s3_access_key = AWSS3Config().get_config("access_key")
+        self.s3_secret_key = AWSS3Config().get_config("secret_key")
 
     # used in Setup() to get sample test documents
     def pull_file_from_public_s3(self, object_key, local_file, bucket_name):
+
+        """Pulls selected file from public S3 bucket - used by Setup to get sample files"""
 
         # return list of successfully downloaded files
         downloaded_files = []
@@ -317,6 +2903,8 @@ class CloudBucketManager:
         return downloaded_files
 
     def create_local_model_repo(self, access_key=None,secret_key=None):
+
+        """Pulls down and caches models from public llmware public S3 repo """
 
         # list of models retrieved from cloud repo
         models_retrieved = []
@@ -373,6 +2961,8 @@ class CloudBucketManager:
 
     def pull_single_model_from_llmware_public_repo(self, model_name=None):
 
+        """Pulls selected model from llmware public S3 repo to local model repo"""
+
         # if no model name selected, then get all
         bucket_name = LLMWareConfig().get_config("llmware_public_models_bucket")
 
@@ -417,6 +3007,8 @@ class CloudBucketManager:
     def connect_to_user_s3_bucket (self, aws_access_key, aws_secret_key,
                                    user_bucket_name, local_download_path, max_files=1000):
 
+        """Connects to user S3 bucket"""
+
         files_copied = []
 
         accepted_file_formats = ["pptx", "xlsx", "docx", "pdf", "txt", "csv", "html", "jsonl",
@@ -445,262 +3037,9 @@ class CloudBucketManager:
         return files_copied
 
 
-class LibraryCollection:
-
-    def __init__(self, library=None):
-
-        self.library = library
-
-        if library:
-            self.library_name = library.library_name
-            self.account_name = library.account_name
-        else:
-            self.library_name = None
-            self.account_name = "llmware"      # default, if no account name specified
-
-    def create_library_collection(self, library_name=None, account_name="llmware"):
-
-        collection = None
-        if not library_name:
-            library_name = self.library_name
-
-        logging.info("update: LibraryCollection().create_library_collection - %s - %s - %s",
-                     library_name, self.account_name, LLMWareConfig.get_config("collection_db"))
-
-        if LLMWareConfig().get_config("collection_db") == "mongo":
-
-            if check_db_uri(timeout_secs=5):
-
-                collection = DBManager().client[self.account_name][library_name]
-                logging.info("update: creating library collection with Mongo - %s ",
-                             LLMWareConfig.get_config("collection_db_uri"))
-
-            else:
-                logging.error("error: tried unsuccessfully to connect to Mongo - %s ",
-                              LLMWareConfig.get_config("collection_db_uri"))
-
-        else:
-            raise UnsupportedCollectionDatabaseException(LLMWareConfig.get_config("collection_db"))
-
-        return collection
-
-    def get_library_collection(self, library_name, account_name="llmware"):
-
-        if LLMWareConfig.get_config("collection_db") == "mongo":
-
-            if check_db_uri(timeout_secs=5):
-                collection = DBManager().client[account_name][library_name]
-                logging.info("update: creating library collection with Mongo - %s ",
-                             LLMWareConfig.get_config("collection_db_uri"))
-
-            else:
-                logging.error("error: tried unsuccessfully to connect to Mongo - %s - "
-                              "please check connection and reset LLMWare Config collection db settings"
-                              "if needed to point to correction uri.", LLMWareConfig.get_config("collection_db_uri"))
-
-                collection = None
-
-            return collection
-        else:
-            raise UnsupportedCollectionDatabaseException(LLMWareConfig.get_config("collection_db"))
-
-    def get_library_card_collection(self, account_name="llmware"):
-
-        if LLMWareConfig.get_config("collection_db") == "mongo":
-
-            if check_db_uri(timeout_secs=5):
-                collection = DBManager().client[account_name].library
-                logging.info("update: creating library collection with Mongo - %s ",
-                             LLMWareConfig.get_config("collection_db_uri"))
-            else:
-                logging.error("error: tried unsuccessfully to connect to Mongo - %s ",
-                              LLMWareConfig.get_config("collection_db_uri"))
-                collection = None
-
-            return collection
-
-        else:
-            raise UnsupportedCollectionDatabaseException(LLMWareConfig.get_config("collection_db"))
-
-    def create_index(self, library_name=None):
-
-        if not library_name:
-            library_name = self.library_name
-
-        if LLMWareConfig.get_config("collection_db") == "mongo":
-            self.library.collection.create_index([("text_search", "text")])
-        else:
-            raise UnsupportedCollectionDatabaseException(LLMWareConfig.get_config("collection_db"))
-
-        return 0
-
-
-class LibraryCatalog:
-
-    def __init__(self, library=None, library_path=None, account_name="llmware"):
-
-        self.library = library
-        if library:
-            self.library_name = library.library_name
-            self.account_name = library.account_name
-        else:
-            self.library_name = None
-            self.account_name = account_name
-
-        self.library_card_collection = LibraryCollection().get_library_card_collection(self.account_name)
-
-        # check for llmware path & create if not already set up
-        if not os.path.exists(LLMWareConfig.get_llmware_path()):
-            LLMWareConfig.setup_llmware_workspace()
-
-        if not library_path:
-            self.library_path = LLMWareConfig.get_llmware_path()
-        else:
-            self.library_path = library_path
-
-    def get_library_card (self, library_name, account_name="llmware"):
-
-        # return either library_card {} or None
-
-        if account_name != "llmware":
-            # dynamically change to point to selected account_name - else points to default
-            # self.library_card_collection = DBManager().client[account_name].library
-            self.library_card_collection = LibraryCollection().get_library_card_collection(account_name=account_name)
-
-        db_record = list(self.library_card_collection.find({"library_name": library_name}))
-
-        if len(db_record) == 1:
-            library_card = db_record[0]
-        else:
-            library_card = None
-
-        return library_card
-
-    def all_library_cards(self):
-        all_library_cards = list(self.library_card_collection.find({}))
-        return all_library_cards
-
-    def create_new_library_card(self, new_library_card):
-        registry_id = self.library_card_collection.insert_one(new_library_card).inserted_id
-        return 0
-
-    def update_library_card(self, library_name, update_dict, account_name="llmware", delete_record=False):
-
-        f = {"library_name": library_name}
-        new_values = {"$set": update_dict}
-
-        if account_name != "llmware":
-            self.library_card_collection = LibraryCollection().get_library_card_collection(account_name=account_name)
-
-        #   standard collection update for all except embedding
-        if "embedding" not in update_dict:
-            self.library_card_collection.update_one(f,new_values)
-
-        else:
-            #   special handling for "embedding" attribute
-
-            lib_card = self.get_library_card(library_name)
-            embedding_list = lib_card["embedding"]
-
-            # special flag to identify where to 'merge' and update an existing embedding record
-            merged_embedding_update = False
-            inserted_list = []
-
-            if len(embedding_list) > 0:
-                # if the last row is a "no" embedding, then remove it
-                if embedding_list[-1]["embedding_status"] == "no":
-                    del embedding_list[-1]
-
-                for emb_records in embedding_list:
-
-                    if emb_records["embedding_model"] == update_dict["embedding"]["embedding_model"] and \
-                            emb_records["embedding_db"] == update_dict["embedding"]["embedding_db"]:
-
-                        if not delete_record:
-                            inserted_list.append(update_dict["embedding"])
-                        else:
-                            pass
-
-                        merged_embedding_update = True
-
-                        # catch potential error
-
-                        if not delete_record:
-                            if "embedded_blocks" in emb_records and "embedded_blocks" in update_dict["embedding"]:
-
-                                if emb_records["embedded_blocks"] > update_dict["embedding"]["embedded_blocks"]:
-
-                                    logging.warning("warning: may be issue with embedding - mis-alignment in "
-                                                    "embedding block count - %s > %s ", emb_records["embedded_blocks"],
-                                                    update_dict["embedding"]["embedded_blocks"])
-
-                    else:
-                        inserted_list.append(emb_records)
-
-            if not merged_embedding_update:
-                embedding_list.append(update_dict["embedding"])
-                embedding_update_dict = {"embedding": embedding_list}
-            else:
-                embedding_update_dict = {"embedding": inserted_list}
-
-            self.library_card_collection.update_one(f, {"$set": embedding_update_dict})
-
-        return 1
-
-    def delete_library_card(self, library_name=None, account_name="llmware"):
-
-        if not library_name:
-            library_name = self.library_name
-
-        f = {"library_name": library_name}
-
-        if account_name != "llmware":
-            self.library_card_collection = LibraryCollection().get_library_card_collection(account_name=account_name)
-
-        self.library_card_collection.delete_one(f)
-
-        return 1
-
-    def get_and_increment_doc_id (self, library_name, account_name="llmware"):
-
-        # controller for setting the library_collection and pointer to the DB Collection library
-
-        if account_name != "llmware":
-            self.library_card_collection = LibraryCollection().get_library_card_collection(account_name=account_name)
-
-        # method called at the start of parsing each new doc -> each parser gets a new doc_id
-        library_counts = self.library_card_collection.find_one_and_update(
-            {"library_name": self.library_name},
-            {"$inc": {"unique_doc_id": 1}},
-            return_document=ReturnDocument.AFTER
-        )
-
-        unique_doc_id = library_counts.get("unique_doc_id",-1)
-
-        return unique_doc_id
-
-    def set_incremental_docs_blocks_images(self, added_docs=0, added_blocks=0, added_images=0, added_pages=0,
-                                           added_tables=0):
-
-        # updates counting parameters at end of parsing
-
-        self.library_card_collection.update_one(
-            {"library_name": self.library_name},
-            {"$inc": {"documents": added_docs, "blocks": added_blocks, "images": added_images, "pages": added_pages,
-                      "tables": added_tables
-        }})
-
-        return 0
-
-    def bulk_update_graph_status(self):
-
-        update_dict = {"graph_status": "true"}
-        self.update_library_card(self.library_name,update_dict)
-
-        return 0
-
-
 class ParserState:
+
+    """ ParserState is the main class abstraction to manage and persist Parser State """
 
     def __init__(self, parsing_output=None, parse_job_id=None):
 
@@ -718,10 +3057,14 @@ class ParserState:
 
     def get_parser_state_fn_from_id(self, parser_job_id):
 
+        """ Generates the state filename from parser_job_id """
+
         fn = self.parser_job_output_base_name + str(parser_job_id) + self.parser_output_format
         return fn
 
     def get_parser_id_from_parser_state_fn(self, fn):
+
+        """ Returns the parser id extracted from the parser state filename """
 
         core_fn = fn.split(".")[0]
         id = core_fn.split("_")[-1]
@@ -729,10 +3072,14 @@ class ParserState:
 
     def lookup_by_parser_job_id(self, parser_id):
 
+        """ Look up the parser job id"""
+
         parser_output = self.lookup_by_parse_job_id(parser_id)
         return parser_output
 
     def save_parser_output(self, parser_job_id, parser_output):
+
+        """ Saves the parser output to jsonl file in parser history """
 
         fn = self.get_parser_state_fn_from_id(parser_job_id)
         fp = os.path.join(self.parser_output_fp, fn)
@@ -750,7 +3097,7 @@ class ParserState:
 
     def issue_new_parse_job_id(self, custom_id=None, mode="uuid"):
 
-        # issue new parse_job_id
+        """ Issues new parse_job_id """
 
         if custom_id:
             self.parse_job_id = custom_id
@@ -765,6 +3112,8 @@ class ParserState:
         return self.parse_job_id
 
     def lookup_by_parse_job_id (self, prompt_id):
+
+        """ Lookup by parse_job_id """
 
         output = []
 
@@ -785,6 +3134,8 @@ class ParserState:
 
 
 class PromptState:
+
+    """ PromptState is the main class abstraction that handles persisting and lookup of Prompt interactions"""
 
     def __init__(self, prompt=None):
 
@@ -811,19 +3162,29 @@ class PromptState:
         self.write_to_db = False
 
     def get_prompt_state_fn_from_id(self, prompt_id):
+
+        """Generates the prompt state filename from prompt_id """
         fn = self.prompt_state_base_name + str(prompt_id) + self.prompt_state_format
         return fn
 
     def get_prompt_id_from_prompt_state_fn(self, fn):
+
+        """ Gets the prompt id extracted from prompt state filename """
+
         core_fn = fn.split(".")[0]
         id = core_fn.split("_")[-1]
         return id
 
     def lookup_by_prompt_id(self, prompt_id):
+
+        """ Lookup by prompt id to retrieve a persisted prompt interaction """
+
         ai_trx_list = self.lookup_by_prompt_id_from_file(prompt_id)
         return ai_trx_list
 
     def register_interaction(self, ai_dict):
+
+        """ Registers a new prompt interaction into the interaction history in memory """
 
         # by default, add to the interaction_history in memory
         self.prompt.interaction_history.append(ai_dict)
@@ -831,6 +3192,8 @@ class PromptState:
         return ai_dict
 
     def initiate_new_state_session(self, prompt_id=None):
+
+        """ Starts a new state session for an indefinite set of prompt interactions """
 
         if not prompt_id:
             prompt_id = self.issue_new_prompt_id()
@@ -841,6 +3204,8 @@ class PromptState:
         return prompt_id
 
     def issue_new_prompt_id(self, custom_id=None, mode="uuid"):
+
+        """ Issues a new prompt id """
 
         # issue new prompt_id
         if custom_id:
@@ -856,6 +3221,8 @@ class PromptState:
         return self.prompt.prompt_id
 
     def load_state(self, prompt_id, prompt_path=None,clear_current_state=True):
+
+        """ Loads a saved prompt interaction history from disk """
 
         output = None
 
@@ -884,6 +3251,8 @@ class PromptState:
 
     def lookup_by_prompt_id_from_file(self, prompt_id):
 
+        """ Lookup prompt id from file """
+
         output = []
 
         fn = self.get_prompt_state_fn_from_id(prompt_id)
@@ -901,10 +3270,15 @@ class PromptState:
         return output
 
     def full_history(self):
+
+        """ Returns the full prompt history from disk """
+
         ai_trx_list = self.full_history_from_file()
         return ai_trx_list
 
     def full_history_from_file(self):
+
+        """ Returns the full prompt history from disk """
 
         output= []
 
@@ -923,6 +3297,8 @@ class PromptState:
         return output
 
     def lookup_prompt_with_filter(self, filter_dict):
+
+        """ Enables lookup of prompt history with filter """
 
         # default - return []
         output = []
@@ -952,6 +3328,8 @@ class PromptState:
         return output
 
     def update_records(self, prompt_id, filter_dict, update_dict):
+
+        """ Enables update of a prompt interaction history from file """
 
         updated_prompt_records = []
         matching_record = {}
@@ -992,6 +3370,8 @@ class PromptState:
 
     def save_custom_state(self, prompt_id, custom_history, prompt_path=None):
 
+        """ Saves state """
+
         if not prompt_path:
             prompt_path = LLMWareConfig.get_prompt_path()
 
@@ -1010,6 +3390,8 @@ class PromptState:
         return fp
 
     def save_state(self, prompt_id, prompt_path=None):
+
+        """ Saves state """
 
         if not prompt_path:
             prompt_path = LLMWareConfig.get_prompt_path()
@@ -1030,6 +3412,8 @@ class PromptState:
 
     def available_states(self, prompt_path=None):
 
+        """ Lists available prompt interaction history states """
+
         available_states = []
 
         if not prompt_path:
@@ -1047,7 +3431,7 @@ class PromptState:
 
     def generate_interaction_report(self, prompt_id_list, output_path=None, report_name=None):
 
-        # prepares a csv report that can be extracted to a spreadsheet
+        """ Prepares a csv report that can be extracted to a spreadsheet """
 
         if not output_path:
             output_path = self.output_path
@@ -1096,7 +3480,7 @@ class PromptState:
 
     def generate_interaction_report_current_state(self, output_path=None, report_name=None):
 
-        # prepares a csv report that can be extracted to a spreadsheet
+        """ Prepares a csv report that can be extracted to a spreadsheet """
 
         if not output_path:
             output_path = self.output_path
@@ -1139,6 +3523,8 @@ class PromptState:
 
 class QueryState:
 
+    """ QueryState is the main class abstraction to manage persistence of Queries """
+
     def __init__(self, query=None, query_id=None):
 
         if query:
@@ -1167,15 +3553,23 @@ class QueryState:
             os.chmod(self.query_path, 0o777)
 
     def get_query_state_fn_from_id(self, prompt_id):
+
+        """ Generates query state filename from query id  """
+
         fn = self.query_state_base_name + str(prompt_id) + self.query_state_format
         return fn
 
     def get_query_id_from_prompt_state_fn(self, fn):
+
+        """ Extracts the query id from the filename """
+
         core_fn = fn.split(".")[0]
         id = core_fn.split("_")[-1]
         return id
 
     def initiate_new_state_session(self, query_id=None):
+
+        """ Starts a new state session in memory - tracks all query results and metadata in session """
 
         if not query_id:
             query_id = self.issue_new_query_id()
@@ -1192,7 +3586,8 @@ class QueryState:
 
     def issue_new_query_id(self, custom_id=None, mode="uuid"):
 
-        # issue new query_id
+        """ Issue new query_id """
+
         if not custom_id:
 
             if mode == "time_stamp":
@@ -1205,6 +3600,8 @@ class QueryState:
         return custom_id
 
     def available_states(self):
+
+        """ Gets all available saved query states on file """
 
         available_states = []
 
@@ -1219,6 +3616,8 @@ class QueryState:
         return available_states
 
     def load_state (self, query_id):
+
+        """ Loads query state from file """
 
         output = []
         doc_id_list = []
@@ -1259,6 +3658,8 @@ class QueryState:
 
     def save_state(self, query_id=None):
 
+        """ Saves query state to jsonl file in query state history """
+
         if not query_id:
             query_id = self.query.query_id
 
@@ -1278,7 +3679,7 @@ class QueryState:
 
     def generate_query_report_current_state(self, report_name=None):
 
-        # prepares a csv report that can be extracted to a spreadsheet
+        """ Prepares a csv report that can be extracted to a spreadsheet """
 
         if not self.query:
             logging.error("error: QueryState - report generation - must load a current query")
@@ -1340,16 +3741,19 @@ class QueryState:
 
 class StateResourceUtil:
 
+    """ Utility methods for the State Resource classes """
+
     def __init__(self):
         self.do_nothing = 0     # placeholder - may add attributes in the future
 
     def get_uuid(self):
-        # uses unique id creator from uuid library
+        """ Uses unique id creator from uuid library """
         return uuid.uuid4()
 
     @staticmethod
     def get_current_time_now (time_str="%a %b %e %H:%M:%S %Y"):
-    
+        """ Gets current time """
+
         #   if time stamp used in filename, needs to be Windows compliant
         if platform.system() == "Windows":
             time_str = "%Y-%m-%d_%H%M%S"
@@ -1358,6 +3762,8 @@ class StateResourceUtil:
 
     @staticmethod
     def file_save (cfile, file_path, file_name):
+
+        """ Saves list/array to csv file to disk """
 
         max_csv_size = 20000
         csv.field_size_limit(max_csv_size)
@@ -1377,7 +3783,3 @@ class StateResourceUtil:
         csvfile.close()
 
         return 0
-
-
-
-

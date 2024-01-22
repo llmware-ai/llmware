@@ -14,18 +14,18 @@
 # permissions and limitations under the License.
 
 
-from bson import ObjectId
+# from bson import ObjectId
 import statistics
-from collections import Counter
+# from collections import Counter
 import re
 import time
 import logging
 import os
 import torch
 
-from llmware.util import Utilities, CorpTokenizer, PromptCatalog, YFinance, Graph
+from llmware.util import Utilities, CorpTokenizer, YFinance, Graph
 from llmware.resources import PromptState
-from llmware.models import ModelCatalog
+from llmware.models import ModelCatalog, PromptCatalog
 from llmware.parsers import Parser
 from llmware.retrieval import Query
 from llmware.library import Library
@@ -34,6 +34,9 @@ from llmware.configs import LLMWareConfig
 
 
 class Prompt:
+
+    """ Prompt is the main class for pre-processing, executing, and post-processing of inferences and for
+    managing end-to-end state of a series of related inferences. """
 
     def __init__(self, llm_name=None, tokenizer=None, model_card=None, library=None, account_name="llmware",
                  prompt_id=None, save_state=True, llm_api_key=None, llm_model=None, from_hf=False,
@@ -158,8 +161,9 @@ class Prompt:
             os.mkdir(self.prompt_path)
             os.chmod(self.prompt_path, 0o777)
 
-    # changes in importing huggingface models
     def load_model(self, gen_model,api_key=None, from_hf=False, trust_remote_code=False):
+
+        """Load model into prompt object by selecting model name """
 
         if api_key:
             self.llm_model_api_key = api_key
@@ -200,13 +204,16 @@ class Prompt:
         return self
 
     def set_inference_parameters(self, temperature=0.5, llm_max_output_len=200):
+
+        """ Convenience method to set inference parameters directly in prompt. """
+
         self.temperature = temperature
         self.llm_max_output_len = llm_max_output_len
         return self
 
     def get_current_history(self, key_list=None):
 
-        # will return selected state vars from current prompt session, based on key list
+        """ Will return selected state vars from current prompt session, based on key list """
 
         if not key_list:
             key_list = self.llm_state_vars
@@ -221,16 +228,22 @@ class Prompt:
         return output_dict
 
     def clear_history(self):
-        # removes elements from interaction history
+
+        """ Removes elements from interaction history """
+
         self.interaction_history = []
         self.dialog_tracker = []
         return self
 
     def clear_source_materials(self):
+
+        """ Clears the source materials from the prompt to start with fresh set of sources """
         self.source_materials = []
         return self
 
     def register_llm_inference (self, ai_dict, prompt_id=None, trx_dict=None):
+
+        """ Registers the llm inference to prompt state """
 
         if not prompt_id:
             prompt_id = self.prompt_id
@@ -256,10 +269,16 @@ class Prompt:
         return ai_dict
 
     def lookup_llm_trx_all (self):
+
+        """ Look up saved llm transactions persisted to file in prompt history """
+
         ai_trx_list = PromptState(self).full_history()
         return ai_trx_list
 
     def load_state(self, prompt_id, clear_current_state=True):
+
+        """ Loads an existing prompt history state by prompt_id from prompt history """
+
         PromptState(self).load_state(prompt_id,clear_current_state=clear_current_state)
         for entries in self.interaction_history:
             self.dialog_tracker.append({"user": entries["prompt"], "bot": entries["llm_response"]})
@@ -267,20 +286,31 @@ class Prompt:
         return self
 
     def save_state(self):
+
+        """ Saves the state of the prompt and writes to prompt history file """
+
         PromptState(self).save_state(self.prompt_id)
         return self
 
     def lookup_by_prompt_id (self, prompt_id):
+
+        """ Look up specific prompts by prompt_id """
+
         ai_trx_list = PromptState(self).lookup_by_prompt_id(prompt_id)
         return ai_trx_list
 
     def lookup_ai_trx_with_filter(self, filter_dict):
+
+        """ Look up prompts by filter dictionary """
+
         ai_trx_list = PromptState(self).lookup_prompt_with_filter(filter_dict)
         return ai_trx_list
 
     # prepare sources
 
     def add_source_new_query(self, library, query=None, query_type="semantic", result_count=10):
+
+        """ Attach a new source to a prompt object by running a new query against a library. """
 
         # step 1 - run selected query against library
         query_results = Query(library).query(query,query_type=query_type, result_count=result_count, results_only=True)
@@ -296,6 +326,8 @@ class Prompt:
 
     def add_source_query_results(self, query_results):
 
+        """ Attach a new source to a prompt object by passing directly the query results from a previous query. """
+
         #       example use - run a query directly, and then 'add' the query results to a prompt
         #       query_results = Query(self.library).semantic_query("what is the duration of the non-compete clause?")
         #       prompter = Prompt().load_model("claude-instant-v1",api_key="my_api_key")
@@ -310,6 +342,9 @@ class Prompt:
         return sources
 
     def add_source_library(self, library_name):
+
+        """ Attach a new source to a prompt object by passing an entire library - note: only recommended if the library
+        consists of a very small number of documents. """
 
         #       example use - created a small library with a few key documents in a previous step
         #       my_lib.add_documents(fp)
@@ -327,6 +362,8 @@ class Prompt:
         return sources
 
     def add_source_wikipedia(self, topic, article_count=3, query=None):
+
+        """ Attach a wikipedia source to a prompt object by selecting a topic and count of requested articles. """
 
         # step 1 - get wikipedia article
         output = Parser().parse_wiki([topic],write_to_db=False,target_results=article_count)
@@ -348,6 +385,8 @@ class Prompt:
         return sources
 
     def add_source_yahoo_finance(self, ticker=None, key_list=None):
+
+        """ Attach a source to a prompt object by selecting a ticker from Yahoo Finance. """
 
         #   example:    primary use is to quickly grab a factset about a specific company / stock ticker
         #               and 'inject' real-time, up-to-date fact set into the prompt to minimize hallucination risk
@@ -378,8 +417,10 @@ class Prompt:
 
         return sources
 
-    # TODO - WIP - how to pass/add knowledge graph context to a prompt
     def add_source_knowledge_graph(self, library, query):
+
+        """ Attach a new source to a prompt object consisting of summary output elements from knowledge graph.  This is
+        a WIP / experimental method - and will likely evolve.  """
 
         # need to check for library and for graph
         if library:
@@ -414,6 +455,8 @@ class Prompt:
 
     def add_source_website(self, url, query=None):
 
+        """ Attach a website source to a prompt object by identifying the url name. """
+
         # get website content
         output = Parser().parse_website(url,write_to_db=False,max_links=3)
 
@@ -432,6 +475,9 @@ class Prompt:
         return sources
 
     def add_source_document(self, input_fp,input_fn, query=None):
+
+        """ Attach a document directly to a prompt object by passing the folder path and file name of the source
+        document, and an optional query filter. """
 
         #   example:  intended for use to rapidly parse and add a document (of any type) from local file to a prompt
 
@@ -453,7 +499,7 @@ class Prompt:
 
     def add_source_last_interaction_step(self):
 
-        # will take the last interaction and add to source, useful in conversational dialog
+        """ Adds the last interaction step directly into the source to enable 'interactive dialog'. """
 
         interaction= ""
         if len(self.dialog_tracker) > 0:
@@ -473,6 +519,8 @@ class Prompt:
 
     def review_sources_summary(self):
 
+        """ Review the sources and provide summary. """
+
         #   Source metadata for each entry -    ["batch_id", "text", "metadata", "biblio", "batch_stats",
         #                                       "batch_stats.tokens", "batch_stats.chars", "batch_stats.samples"]
 
@@ -489,7 +537,7 @@ class Prompt:
 
     def verify_source_materials_attached(self):
 
-        # returns True if text present in source materials, else False
+        """ Verifies if source materials attached. Returns True if text present in source materials, else False. """
 
         source_materials_attached = False
 
@@ -505,6 +553,8 @@ class Prompt:
 
     def prompt_with_source(self, prompt, prompt_name=None, source_id_list=None, first_source_only=True,
                            max_output=None, temperature=None):
+
+        """ Inference method - uses the prepared source, along with prompt/question, and calls loaded model. """
 
         #   this method is intended to be used in conjunction with sources as follows:
         #           prompter = Prompt().load_model("claude-instant-v1", api_key=None)
@@ -612,6 +662,8 @@ class Prompt:
 
     def select_prompt_from_catalog(self, prompt_name):
 
+        """ Selects a prompt style from the catalog. """
+
         if prompt_name in self.pc.list_all_prompts():
             self.prompt_type = prompt_name
         else:
@@ -620,6 +672,8 @@ class Prompt:
         return self
 
     def prompt_from_catalog(self, prompt, context=None, prompt_name=None, inference_dict=None):
+
+        """ Inference method - runs a prompt by loading a specific prompt style from the catalog. """
 
         if prompt_name not in self.pc.list_all_prompts():
             raise PromptNotInCatalogException(prompt_name)
@@ -631,11 +685,17 @@ class Prompt:
 
     # useful 'out of the box' prompts
     def number_or_none(self, prompt, context=None):
+
+        """ Inference method - convenience method using 'number_or_none' prompt style instruction. """
+
         # rename - "facts_or_not_found"
         output = self.prompt_from_catalog(prompt, context=context,prompt_name="number_or_none")
         return output
 
     def summarize_with_bullets(self, prompt, context, number_of_bullets=5):
+
+        """ Inference method - convenience method using 'summarize_with_bullets' prompt style and configurable
+        number of 'bullets' requested. """
 
         #   useful 'out of the box' summarize capability with ability to parameterize the number_of_bullets
         #   note: most models are 'approximately' accurate when specifying a number of bullets
@@ -648,12 +708,16 @@ class Prompt:
 
     def yes_or_no(self, prompt, context):
 
+        """ Inference method - convenience method using 'yes_no' prompt style. """
+
         #   useful classification prompt, assumes prompt is a question that expects a "yes" or "no" answer
         response = self.prompt_from_catalog(prompt, context=context,prompt_name="yes_no")
 
         return response
 
     def completion(self, prompt, temperature=0.7, target_len=200):
+
+        """ Inference method - convenience method for a basic text completion. """
 
         self.llm_model.temperature = temperature
         self.llm_model.ai_max_output_len = target_len
@@ -663,6 +727,8 @@ class Prompt:
         return response
 
     def multiple_choice(self, prompt, context, choice_list):
+
+        """ Inference method - prepares a multiple choice question prompt, using prompt, context and choice list. """
 
         prompt += "\nWhich of the following choices best answers the question - "
         for i, choice in enumerate(choice_list):
@@ -677,6 +743,9 @@ class Prompt:
 
     def xsummary(self, context, number_of_words=20):
 
+        """ Inference method - uses 'xsummary' prompt style and configurable number of requested words for
+        short summaries."""
+
         #   provides an 'extreme summary', e.g., 'xsum' with ability to parameterize the number of words
         #   --most models are reasonably accurate when asking for specific number of words
 
@@ -687,6 +756,8 @@ class Prompt:
         return response
 
     def title_generator_from_source (self, prompt, context=None, title_only=True):
+
+        """ Inference method - uses 'report_title' prompt style to produce titles based on prompt and context. """
 
         response = self.prompt_from_catalog(prompt, context=context,prompt_name="report_title")
 
@@ -699,6 +770,8 @@ class Prompt:
     def prompt_main (self, prompt, prompt_name=None, context=None, call_back_attempts=1, calling_app_id="",
                      prompt_id=0,batch_id=0, trx_dict=None, selected_model= None, register_trx=False,
                      inference_dict=None, max_output=None, temperature=None):
+
+        """ Main inference method to execute inference on loaded model. """
 
         usage = {}
 
@@ -810,7 +883,6 @@ class Prompt:
 
         return output_dict
 
-    # new method
     def _doc_summarizer_old_works(self, query_results, max_batch_size=100, max_batch_cap=None,key_issue=None):
 
         # runs core summarization loop thru document
@@ -849,10 +921,10 @@ class Prompt:
 
         return response
 
-    # new method
     def _doc_summarizer(self, query_results, max_batch_cap=None,key_issue=None):
 
-        # runs core summarization loop thru document
+        """ Runs Core summarization loop through a selected document. """
+
         response = []
 
         source = self.add_source_query_results(query_results)
@@ -883,6 +955,9 @@ class Prompt:
     def summarize_document(self, input_fp,input_fn, query=None, text_only=True, max_batch_cap=10,
                            key_issue=None):
 
+        """ Returns a document summary from input folder path and file name, along with any optional
+        query filter and key issue. """
+
         output = Parser().parse_one(input_fp,input_fn)
 
         # run in memory filtering to sub-select from document only items matching query
@@ -908,6 +983,8 @@ class Prompt:
     # new method - document summarization from library
     def summarize_document_from_library(self, library, doc_id=None, filename=None, query=None,
                                         text_only=True,max_batch_cap=10):
+
+        """ Returns a document summary - based on a selected document ID from a library. """
 
         # need to handle error
         if not doc_id and not filename:
@@ -950,8 +1027,9 @@ class Prompt:
         else:
             return response
 
-    # useful "call backs"
     def summarize_multiple_responses(self, list_of_response_dict=None, response_id_list=None):
+
+        """ Summarizes multiple responses from previous inferences as a 'second-level' summary. """
 
         batch = None
 
@@ -971,6 +1049,9 @@ class Prompt:
         return aggregated_response_dict
 
     def select_among_multiple_responses(self, list_of_response_dict=None, response_id_list=None):
+
+        """ Aggregates multiple previous responses and passes as a 'second-level' inference to select the best
+        answer. """
 
         batch = None
 
@@ -993,6 +1074,9 @@ class Prompt:
 
     def evidence_check_numbers(self, response):
 
+        """ Runs analysis of the numbers in the llm_response and attempts to verify the values of those numbers
+        in the source materials.  Returns an updated list of response dictionaries, enriched with "fact_check" key. """
+
         # expect that response is a list of response dictionaries
         if isinstance(response, dict):
             response = [response]
@@ -1011,6 +1095,10 @@ class Prompt:
 
     def evidence_check_sources(self, response):
 
+        """ Runs analysis of the llm_response and uses statistical token-matching with the source materials to
+        try to identify a smaller 'snippet' that is the most likely source with metadata of file and page number.
+        Returns an updated list of response dictionaries, enriched with 'source_review' key. """
+
         # expect that response is a list of response dictionaries
         if isinstance(response, dict):
             response = [response]
@@ -1027,6 +1115,11 @@ class Prompt:
         return response_out
 
     def evidence_comparison_stats(self, response):
+
+        """ Runs analysis of the llm_response and uses statistical token-matching with the source materials to provide
+        an overall comparison 'match' level which can be a good quantitative indicator if the model output has
+        hallucinated or deviated materially from the source.  Returns an updated list of response dictionaries,
+        enriched with 'comparison_stats' key. """
 
         # expect that response is a list of response dictionaries
         if isinstance(response, dict):
@@ -1045,6 +1138,9 @@ class Prompt:
 
     def classify_not_found_response(self, response_list,parse_response=True,evidence_match=True,ask_the_model=False):
 
+        """ Takes a list of response dictionaries as input, and then runs tests to validate if the llm_response
+        appears to be 'not found'."""
+
         output_response_all = []
 
         if isinstance(response_list,dict):
@@ -1059,6 +1155,8 @@ class Prompt:
         return output_response_all
 
     def _classify_not_found_one_response(self, response_dict, parse_response=True, evidence_match=True, ask_the_model=False):
+
+        """ Internal utility helper to classify a single response."""
 
         output_response = {}
         nf = []
@@ -1099,15 +1197,23 @@ class Prompt:
 
     def send_to_human_for_review(self, output_path=None, output_fn=None):
 
+        """ Exports the current prompt interaction to a CSV for follow-up review by a person. """
+
         output = HumanInTheLoop(prompt=self).export_current_interaction_to_csv(output_path=output_path,report_name=output_fn)
         return output
 
     def apply_user_ratings(self, ratings_dict):
 
+        """ Adds a human rating to a response dictionary - useful to upstream applications to enable and capture
+        user input. """
+
         output = HumanInTheLoop(prompt=self).add_or_update_human_rating(self.prompt_id,ratings_dict)
         return output
 
     def apply_user_corrections(self, updates_dict):
+
+        """ Enables a user to manually update llm_responses as second-level human-in-the-loop review in upstream
+        application. """
 
         output = HumanInTheLoop(prompt=self).update_llm_response_record(self.prompt_id,updates_dict,keep_change_log=True)
         return output
@@ -1115,9 +1221,9 @@ class Prompt:
 
 class Sources:
 
-    #       Sources can accept any Python iterable consisting of dictionary entries
-    #       Each dictionary entry must support minimally the keys in self.source_input_keys
-    #       By default, this is a minimum of 3 keys - "text", "file_source", "page_num"
+    """ Sources class can accept any Python iterable consisting of dictionary entries.
+        --each dictionary entry must support minimally the keys in self.source_input_keys
+        --By default, this is a minimum of 3 keys - "text", "file_source", "page_num"  """
 
     def __init__(self, prompt):
 
@@ -1135,19 +1241,25 @@ class Sources:
                                 "source_name", "page_num"]
 
     def token_counter(self, text_sample):
+
+        """ Token counter utility """
+
         toks = self.tokenizer.encode(text_sample).ids
         return len(toks)
 
     def tokenize (self, text_sample):
+
+        """ Tokenize utility """
+
         toks = self.tokenizer.encode(text_sample).ids
         return toks
 
     def package_source(self, retrieval_material, aggregate_source=True, add_to_prompt=True,
                        backup_source_filename="user_provided_unknown_source"):
 
-        # generalized source packager
-        #   --assumes minimal metadata - doc_name, page_num and text chunk
-        #   --add to existing 'state' source & create new batch on top if overflow
+        """ Generalized source packager
+           --assumes minimal metadata - doc_name, page_num and text chunk
+           --add to existing 'state' source & create new batch on top if overflow  """
 
         # tracking variables
         tokens_per_batch = []
@@ -1362,8 +1474,7 @@ class Sources:
 
     def chunk_large_sample(self, sample):
 
-        #   if there is a very large single sample, which is bigger than the context window,
-        #   then, break up into smaller chunks
+        """ If single sample bigger than the context window, then break up into smaller chunks """
 
         chunks = []
         max_size = self.prompt.context_window_size
@@ -1395,6 +1506,9 @@ class Sources:
 
 class QualityCheck:
 
+    """ QualityCheck is the main class for comparisons and validations between the llm_response output and the
+    input source context information provided to generate the response. """
+
     def __init__(self, prompt=None):
 
         self.llm_response = None
@@ -1414,6 +1528,8 @@ class QualityCheck:
 
     def review (self, response_dict, add_markup=False, review_numbers=True, comparison_stats=True,
                 source_review=True, instruction=None):
+
+        """ Input as list of response dictionaries, and output is response dictionaries enriched with review keys. """
 
         self.llm_response = response_dict["llm_response"]
         self.evidence= response_dict["evidence"]
@@ -1437,6 +1553,9 @@ class QualityCheck:
         return self
 
     def fact_checker_numbers (self, response_dict):
+
+        """ Utility function to compare and match number values in llm_response with input source materials.  In most
+        cases, this function should be accessed through the prompt evidence methods rather than calling directly. """
 
         ai_gen_output = response_dict["llm_response"]
         evidence = response_dict["evidence"]
@@ -1654,6 +1773,9 @@ class QualityCheck:
 
     def source_reviewer (self, response_dict):
 
+        """ Utility function to compare and match llm_response with input source materials.  In most
+        cases, this function should be accessed through the prompt evidence methods rather than calling directly. """
+
         ai_tmp_output = response_dict["llm_response"]
         evidence_batch = response_dict["evidence"]
         evidence_metadata = response_dict["evidence_metadata"]
@@ -1765,12 +1887,14 @@ class QualityCheck:
 
         return sources_output
 
-    # enhanced token comparison
-    #   --applies different rules by instruction, e.g., yes-no exclude
-    #   --if number in output, looks to handle 'word numbers' + float value comparison
-    #   --if multiple points in output, will run comparison separately against each "key point"
-
     def token_comparison (self, response_dict):
+
+        """ Utility function to perform token-level comparison in llm_response with input source materials.  In most
+        cases, this function should be accessed through the prompt evidence methods rather than calling directly. """
+
+        #   --applies different rules by instruction, e.g., yes-no exclude
+        #   --if number in output, looks to handle 'word numbers' + float value comparison
+        #   --if multiple points in output, will run comparison separately against each "key point"
 
         ai_output_text = response_dict["llm_response"]
         evidence_batch = response_dict["evidence"]
@@ -1896,9 +2020,10 @@ class QualityCheck:
 
     def classify_not_found_parse_llm_response(self, response_dict):
 
-        #   Simple, but reasonably accurate way to classify as "not found" - especially with "not found" instructions
-        #   --(1) most models will follow the "not found" instruction and this will be the start of the response
-        #   --(2) if a model gets confused and does not provide any substantive response, then this will get flagged too
+        """Simple, but reasonably accurate way to classify as "not found" - especially with "not found" instructions
+        --(1) most models will follow the "not found" instruction and this will be the start of the response
+        --(2) if a model gets confused and does not provide any substantive response, then this will get flagged too
+        """
 
         # minimal cleaning of response output
         llm_response = response_dict["llm_response"]
@@ -1914,13 +2039,13 @@ class QualityCheck:
 
         return False
 
-    # alternative to calling the model to classify - may be more reliable
     def classify_not_found_evidence_match (self, response_dict, verified_token_match_threshold=0.25):
 
-        #   Objective of this method is to classify a LLM response as "not found"
-        #   --this is a key requirement of 'evidence-based' retrieval augmented generation
-        #   Note on output:     "True" - indicates that classification of 'Not Found'
-        #                       "False" - indicates not 'Not Found' - in other words, use as a valid response
+        """ Objective of this method is to classify a LLM response as "not found"
+            --this is a key requirement of 'evidence-based' retrieval augmented generation
+            Note on output:     "True" - indicates that classification of 'Not Found'
+                                "False" - indicates not 'Not Found' - in other words, use as a valid response
+        """
 
         if "comparison_stats" not in response_dict:
             comparison_stats = self.token_comparison(response_dict)
@@ -1946,6 +2071,9 @@ class QualityCheck:
         return False
 
     def classify_not_found_ask_the_model(self, response_dict, selected_model_name=None, model_api_key=None):
+
+        """ Experimental method to 'ask the model' to classify its own response - some models very effective
+        at doing this - others perform poorly - please handle with care. """
 
         if not selected_model_name:
             selected_model_name = self.prompt.llm_name
@@ -1973,7 +2101,8 @@ class QualityCheck:
 
 class HumanInTheLoop:
 
-    # add user ratings to queries and analysis + package for 'human-in-the-loop' review
+    """HumanInTheLoop class provides a set of basic utilities to extract prompt history state for
+    secondary level review, including corrections and user ratings."""
 
     def __init__(self, prompt, prompt_id_list=None):
 
@@ -1982,7 +2111,7 @@ class HumanInTheLoop:
 
     def export_interaction_to_csv(self, prompt_id_list=None, output_path=None, report_name=None):
 
-        # this method will take a list of one or more prompt_ids and dump to csv for user to review and edit
+        """Input a list of one or more prompt_ids and dump to csv for user to review and edit """
 
         output = PromptState(self.prompt).generate_interaction_report(prompt_id_list,
                                                                       output_path=output_path,
@@ -1992,20 +2121,24 @@ class HumanInTheLoop:
 
     def export_current_interaction_to_csv(self, output_path=None, report_name=None):
 
-        # this method will take the current interaction state and dump to csv ffor user to review and edit
+        """ this method will take the current interaction state and dump to csv for user to review and edit """
 
         output = PromptState(self.prompt).generate_interaction_report_current_state(output_path=output_path,
                                                                                     report_name=report_name)
 
         return output
 
-    # TODO-WIP
     def import_updated_csv(self, fp, fn, prompt_id):
 
+        """ Not implemented yet. """
+
         # allows corrections to be uploaded by csv spreadsheet and corrections made in the history
+
         return 0
 
     def add_or_update_human_rating (self, prompt_id, rating_dict):
+
+        """ Adds and updates human rating and feedback to a selected response dictionary. """
 
         rating = -1
         accuracy = ""
@@ -2028,8 +2161,9 @@ class HumanInTheLoop:
 
         return 0
 
-    # new method to allow user to edit/update an llm_response record
     def update_llm_response_record(self,prompt_id, update_dict,keep_change_log=True):
+
+        """ Provide more general update, including corrections, to a response dictionary 'post-human-review.' """
 
         # as default option, preserve the current values in a change_log list
         #   --over time, we can evaluate whether to capture more metadata about the change, roll-back, etc.

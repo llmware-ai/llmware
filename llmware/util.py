@@ -41,17 +41,142 @@ import uuid
 from wikipediaapi import Wikipedia, ExtractFormat
 import yfinance
 
-from llmware.resources import CollectionRetrieval, CollectionWriter, PromptState, CloudBucketManager
+from llmware.resources import CollectionRetrieval, PromptState, CloudBucketManager
 from llmware.configs import LLMWareConfig
 from llmware.exceptions import ModelNotFoundException, DependencyNotInstalledException, \
-    FilePathDoesNotExistException, LibraryObjectNotFoundException, DatasetTypeNotFoundException
+    FilePathDoesNotExistException, LibraryObjectNotFoundException, DatasetTypeNotFoundException, \
+    ModuleNotFoundException
 
 
 class Utilities:
 
+    """ Utility functions used throughout LLMWare """
+
     def __init__(self, library=None):
         self.start = 0
         self.library = library
+
+    def get_module_graph_functions(self):
+
+        #   * C Utility functions *
+        # Load shared libraries based on current platform/architecture
+
+        # Best ways we've found to detect machine architecture
+        if platform.system() == "Windows":
+            system = "windows"
+            machine = "x86_64"
+            file_ext = ".dll"
+        else:
+            system = platform.system().lower()
+            machine = os.uname().machine.lower()
+            file_ext = ".so"
+
+        # Default to known architectures if we encounter an unknown one
+        if system == 'darwin' and machine not in ['arm64', 'x86_64']:
+            machine = 'arm64'
+        if system == 'linux' and machine not in ['aarch64', 'x86_64']:
+            machine = 'x86_64'
+
+        # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
+        machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
+
+        # replace for local testing:  file_ext -> .dylib
+        _path_graph = os.path.join(machine_dependent_lib_path, "llmware", "libgraph_llmware" + file_ext)
+
+        _mod_utility = None
+
+        try:
+            _mod_utility = cdll.LoadLibrary(_path_graph)
+        except:
+            logging.warning("warning: Module 'Graph Processor' could not be loaded from path - \n %s.\n",
+                            _path_graph)
+
+        if not _mod_utility:
+            raise ModuleNotFoundException("Graph Processor")
+
+        return _mod_utility
+
+    def get_module_pdf_parser(self):
+
+        # Best ways we've found to detect machine architecture
+        if platform.system() == "Windows":
+            system = "windows"
+            machine = "x86_64"
+            file_ext = ".dll"
+        else:
+            system = platform.system().lower()
+            machine = os.uname().machine.lower()
+            file_ext = ".so"
+
+        # Default to known architectures if we encounter an unknown one
+        if system == 'darwin' and machine not in ['arm64', 'x86_64']:
+            machine = 'arm64'
+        if system == 'linux' and machine not in ['aarch64', 'x86_64']:
+            machine = 'x86_64'
+
+        # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
+        machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
+
+        # shift to file_ext
+        _path_pdf = os.path.join(machine_dependent_lib_path, "llmware", "libpdf_llmware" + file_ext)
+
+        _mod_pdf = None
+
+        try:
+            # attempt to load the shared library with ctypes
+            _mod_pdf = cdll.LoadLibrary(_path_pdf)
+
+        except:
+            # catch error, if possible
+            logging.warning("warning: Module 'PDF Parser' could not be loaded from path - \n %s.\n",
+                            _path_pdf)
+
+        #   if no module loaded, then raise exception
+        if not _mod_pdf:
+            raise ModuleNotFoundException("PDF Parser")
+
+        return _mod_pdf
+
+    def get_module_office_parser(self):
+
+        # Best ways we've found to detect machine architecture
+        if platform.system() == "Windows":
+            system = "windows"
+            machine = "x86_64"
+            file_ext = ".dll"
+        else:
+            system = platform.system().lower()
+            machine = os.uname().machine.lower()
+            file_ext = ".so"
+
+        # Default to known architectures if we encounter an unknown one
+        if system == 'darwin' and machine not in ['arm64', 'x86_64']:
+            machine = 'arm64'
+        if system == 'linux' and machine not in ['aarch64', 'x86_64']:
+            machine = 'x86_64'
+
+        # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
+        machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
+
+        _path_office = os.path.join(machine_dependent_lib_path, "llmware", "liboffice_llmware" + file_ext)
+
+        _mod = None
+
+        try:
+            # attempt to load the shared library with ctypes
+            _mod = cdll.LoadLibrary(_path_office)
+
+        except:
+
+            # catch the error, if possible
+            logging.warning("warning: Module 'Office Parser' could not be loaded from path - \n %s.\n",
+                            _path_office)
+
+        # if no module loaded, then raise exception
+        if not _mod:
+            raise ModuleNotFoundException("Office Parser")
+
+        return _mod
 
     def get_default_tokenizer(self):
 
@@ -381,127 +506,6 @@ class Utilities:
 
         return clean_out
 
-    def get_sentences(self,lib, key_term, block_cursor):
-
-        output = []
-        sentences_only = []
-
-        abbrevs = "^Mr^Mrs^Ms^Jr^Sr"
-        regex_string = '((?=([^"]*"[^"]*")*[^"]*$)(?<=[^\d' + abbrevs + '])[.!?])'
-
-        for block in block_cursor:
-            text_block_tmp = block["text"]
-
-            # need to check if previous_block and/or next_block in results
-            previous_block = self.get_cursor_previous_block(lib, block["doc_ID"],block["block_ID"],block["master_index"])
-            next_block = self.get_cursor_next_block(lib, block["doc_ID"],block["block_ID"],block["master_index"])
-
-            if previous_block:
-                previous_text = previous_block["text"]
-                # regex - split on .!? unless inside a "
-                last_sentence = list(re.split(regex_string, previous_text))[-1]
-                text_block_tmp = last_sentence + " " + text_block_tmp
-
-            if next_block:
-                next_text = next_block["text"]
-                # regex - split on .!? unless inside a "
-                first_sentence = list(re.split(regex_string, next_text))[0]
-
-                text_block_tmp = text_block_tmp + " " + first_sentence
-
-            sentences = re.split(regex_string,text_block_tmp)
-
-            leftover = ""
-
-            for x in range(0,len(sentences)):
-
-                if sentences[x]:
-                    working_sentence = leftover + sentences[x]
-                    leftover = ""
-                    # if shorter than 10 chars, bundle with the next full sentence
-                    #   -- need more sophisticated regex to avoid splitting on 'Section 2.3' etc
-
-                    if len(working_sentence) > 10:
-
-                        matches_found = self.find_match(key_term, working_sentence)
-                        if matches_found:
-
-                            if working_sentence not in sentences_only:
-
-                                if (x+1) < len(sentences):
-                                    if sentences[x+1]:
-                                        if len(sentences[x+1]) <= 10:
-                                            working_sentence += " " + sentences[x+1]
-
-                                new_row = {"sentence": working_sentence, "matches": matches_found, "block": block}
-                                output.append(new_row)
-                                sentences_only.append(working_sentence)
-                                leftover = ""
-
-        return output, sentences_only
-
-    def get_sentences_fast_cap(self,lib, key_term_list, block_cursor,top_k=20):
-
-        output = []
-        sentences_only = []
-
-        abbrevs = "^Mr^Mrs^Ms^Jr^Sr"
-        regex_string = '((?=([^"]*"[^"]*")*[^"]*$)(?<=[^\d' + abbrevs + '])[.!?])'
-
-        for block in block_cursor:
-            text_block_tmp = block["text"]
-
-            # need to check if previous_block and/or next_block in results
-            previous_block = self.get_cursor_previous_block(lib, block["doc_ID"],block["block_ID"],block["master_index"])
-            next_block = self.get_cursor_next_block(lib, block["doc_ID"],block["block_ID"],block["master_index"])
-
-            if previous_block:
-                previous_text = previous_block["text"]
-                last_sentence = list(re.split(regex_string, previous_text))[-1]
-                text_block_tmp = last_sentence + " " + text_block_tmp
-
-            if next_block:
-                next_text = next_block["text"]
-                first_sentence = list(re.split(regex_string, next_text))[0]
-
-                text_block_tmp = text_block_tmp + " " + first_sentence
-
-            sentences = re.split(regex_string,text_block_tmp)
-
-            leftover = ""
-
-            for x in range(0,len(sentences)):
-
-                if sentences[x]:
-                    working_sentence = leftover + sentences[x]
-                    leftover = ""
-                    # if shorter than 10 chars, bundle with the next full sentence
-                    #   -- need more sophisticated regex to avoid splitting on 'Section 2.3' etc
-
-                    if len(working_sentence) > 10:
-
-                        matches_found = []
-                        for kt in key_term_list:
-                            matches_found.append(self.find_match(kt, working_sentence))
-
-                        if matches_found:
-
-                            if working_sentence not in sentences_only:
-
-                                if (x+1) < len(sentences):
-                                    if sentences[x+1]:
-                                        if len(sentences[x+1]) <= 10:
-                                            working_sentence += " " + sentences[x+1]
-
-                                new_row = {"sentence": working_sentence, "matches": matches_found, "block": block}
-                                output.append(new_row)
-                                sentences_only.append(working_sentence)
-                                leftover = ""
-                                if len(output) >= top_k:
-                                    break
-
-        return output, sentences_only
-
     def sentence_splitter(self, sentence, key_word, marker_list):
 
         text = []
@@ -652,14 +656,6 @@ class Utilities:
 
         return answer
 
-    def get_cursor_next_block(self, lib,doc_id, block_id, selected_page):
-        next_block = CollectionRetrieval(lib.collection).get_cursor_by_block(doc_id, block_id+1, selected_page)
-        return next_block
-
-    def get_cursor_previous_block(self,lib, doc_id, block_id, selected_page):
-        previous_block = CollectionRetrieval(lib.collection).get_cursor_by_block(doc_id,block_id-1, selected_page)
-        return previous_block
-
     def split_context_row (self, context_row):
 
         entries_list = []
@@ -781,6 +777,8 @@ class Utilities:
 
 class CorpTokenizer:
 
+    """ Simple Custom 'Whole-word' Tokenizer implementation """
+
     def __init__(self, lower_case=True, remove_punctuation=True, remove_stop_words=True,
                  remove_numbers=True, one_letter_removal=False):
 
@@ -826,6 +824,8 @@ class CorpTokenizer:
 
 class XlTable:
 
+    """ XLTable class for handling and processing XL tables. """
+
     def __init__(self, xl_table_block, account, library):
 
         self.table = xl_table_block["table"]
@@ -869,7 +869,8 @@ class XlTable:
 
         else:
             key_dict = {"file_source": self.file_source, "master_index": self.sheet_num, "coords_y": 0}
-            results = CollectionRetrieval(self.library.collection).filter_by_key_dict(key_dict)
+            results = CollectionRetrieval(self.library.library_name,
+                                          account_name=self.library.account_name).filter_by_key_dict(key_dict)
 
             if results:
                 first_batch = list(results)
@@ -1270,6 +1271,8 @@ class XlTable:
 
 class WikiKnowledgeBase:
 
+    """ WikiKnowledgeBase implements Wikipedia API """
+
     def __init__(self):
 
         # importing here to suppress log warnings produced by urllib3
@@ -1334,6 +1337,8 @@ class WikiKnowledgeBase:
 
 class TextChunker:
 
+    """ Text Chunker - input is a big chunk of text and output is a chunked set of smaller text chunks. """
+
     # simple class that can be inserted for OCR, Text or HTML
     # class expects to be passed a big chunk of text, e.g., output from OCR or full read of text file
     #   --will chop up blocks out of the text
@@ -1374,7 +1379,7 @@ class TextChunker:
                 if len(self.chunks) > 0:
                     self.chunks[-1] += chunk
                 else:
-                    self.chunks += chunk
+                    self.chunks.append(chunk)
 
             else:
                 # general case - create next chunk
@@ -1456,576 +1461,10 @@ class TextChunker:
         return smooth_stop
 
 
-global_default_prompt_catalog = [
-
-    {"prompt_name": "just_the_facts",
-     "prompt_description": "Closed Context - read passage, answer question, stick to the facts.",
-     "run_order": ["blurb1", "$context", "blurb2", "$query", "instruction"],
-     "blurb1": "Please read the following text: ",
-     "blurb2": " Please answer the question: ",
-     "instruction": "In providing the answer, please only use facts contained in the text.",
-     "system_message": "You are a helpful assistant who speaks with facts and no wasted words.",
-     "user_vars": {}},
-
-    {"prompt_name": "answer_or_not_found",
-     "prompt_description": "Closed Context - read passage, answer question, provide 'Not Found' if no answer in text.",
-     "run_order": ["blurb1", "$context", "blurb2", "$query", "instruction"],
-     "blurb1": "Please read the following text: ",
-     "blurb2": " Please answer the question: ",
-     "instruction": "Please only use facts in the text.  If the text does not provide the answer, then please "
-                    "respond with: {{not_found_response}}",
-     "system_message": "You are a helpful assistant who speaks with facts and no wasted words.",
-     "user_vars": {"not_found_response": "'Not Found.'"}},
-
-    {"prompt_name": "number_or_none",
-     "prompt_description": "Closed Context - read passage, answer question, provide 'Not Found' if no answer in text.",
-     "run_order": ["blurb1", "$context", "blurb2", "$query","instruction"],
-     "blurb1" : "Please read the following text: ",
-     "blurb2" : " Please answer the question: ",
-     "instruction": "Please provide a specific number as an answer from the text.  "
-                    "If the text does not provide a specific numerical answer, then please respond "
-                    "with: {{not_found_response}}",
-     "system_message": "You are a helpful assistant who speaks with facts and no wasted words.",
-     "user_vars": {"not_found_response": "'Not Found.'"}},
-
-    {"prompt_name": "summarize_with_bullets",
-     "prompt_description": "Basic summarization with open ended number of bullet points.",
-     "run_order": ["blurb1", "$context", "instruction"],
-     "blurb1": "Please read the following text: ",
-     "instruction": "Please summarize with bulletpoints.",
-     "system_message": "You are a helpful assistant who speaks with facts and no wasted words.",
-     "user_vars": {}},
-
-    {"prompt_name": "summarize_with_numbered_bullets",
-     "prompt_description": "Summarization with specified number of bullet points.",
-     "run_order": ["blurb1", "$context", "instruction"],
-     "blurb1": "Please read the following text: ",
-     "instruction": "Please summarize the text with approximately {{number_of_bulletpoints}} numbered bulletpoints.",
-     "system_message": "You are a helpful assistant who speaks with facts and no wasted words.",
-     "user_vars": {"number_of_bulletpoints": 5}},
-
-    {"prompt_name": "xsummary",
-     "prompt_description": "Xtreme summarization with specified number of words.",
-     "run_order": ["blurb1", "$context", "instruction"],
-     "blurb1": "Please read the following text: ",
-     "instruction": "Please summarize the text in no more than {{number_of_words}} words.",
-     "system_message": "You are a helpful assistant who speaks with facts and no wasted words.",
-     "user_vars": {"number_of_words": 25}},
-
-    {"prompt_name": "completion",
-     "prompt_description": "Open context text generation to complete starting point provided in prompt.",
-     "run_order": ["blurb1", "$query", "instruction"],
-     "blurb1": "Here is the starting point of a longer text: ",
-     "instruction": "Please complete this text in the style provided in the text.",
-     "system_message": "You are a helpful assistant who is a good creative writer.",
-     "user_vars": {}},
-
-    {"prompt_name": "dialog_summary",
-     "prompt_description": "General summarization of a conversation text with specified number of bullet points.",
-     "run_order": ["blurb1", "$context", "instruction"],
-     "blurb1": "Please read the following discussion between two parties: ",
-     "instruction": "Please summarize the key points from the conversation using less "
-                    "than {{number_of_bulletpoints}} bulletpoints.",
-     "system_message": "You are a helpful assistant.",
-     "user_vars": {"number_of_bulletpoints": 10}},
-
-    {"prompt_name": "not_found_classifier",
-     "prompt_description": "Not Found Response classifier - used to ask a model to classify a particular response "
-                           "as 'not found' - very useful in RAG applications.",
-     "run_order": ["blurb1", "blurb2", "$context", "instruction"],
-     "blurb1": "Here are several examples of a 'not found' response: "
-               "Not Found \n"
-               "The text does not provide an answer. \n"
-               "The answer is not clear. \n"
-               "Sorry, I could not find a definitive answer. \n"
-               "The answer is not provided in the information given. \n"
-               "The text does not specify the answer to this question. \n",
-     "blurb2": "Here is a new example: ",
-     "instruction": "Please respond 'Yes' or 'No' if this new example is a 'Not Found' response.",
-     "system_message": "You are a helpful assistant.",
-     "user_vars": {}},
-
-    {"prompt_name": "top_level_select",
-     "prompt_description": "Select the best answer among choices provided.",
-     "run_order": ["blurb1", "$query", "blurb2","$context", "instruction"],
-     "blurb1": "We are trying to answer the following question: ",
-     "blurb2": "Which of the following selections best answers the question?",
-     "instruction": "Please respond with the best answer among these selections.  "
-                    "If more than one answer is useful, please summarize with bulletpoints.",
-     "system_message": "You are a helpful assistant who speaks with facts and no wasted words.",
-     "user_vars": {}},
-
-    {"prompt_name": "answer_question_in_role",
-     "prompt_description": "Answer a question with a specific role or point of view.",
-     "run_order": ["blurb1", "$context", "blurb2", "$query", "instruction"],
-     "blurb1": "Please read the following text: ",
-     "blurb2": "Please answer the following question: ",
-     "instruction": "In providing an answer to the question, please assume the perspective of a {{role}} and "
-                    "write in that style.",
-     "system_message": "You are a helpful assistant.",
-     "user_vars": {"role": "business analyst"}},
-
-    {"prompt_name": "editor_in_role",
-     "prompt_description": "Edit a passage with a specific role or point of view.",
-     "run_order": ["blurb1", "$context", "instruction"],
-     "blurb1": "Please read the following text: ",
-     "instruction": "Our task is to edit and improve the language of the text from the perspective of a business analyst.",
-     "system_message": "You are a helpful editor and writer who reads text and improves the writing.",
-     "user_vars": {"role": "business analyst"}},
-
-    {"prompt_name": "yes_no",
-     "prompt_description": "Answer a question with 'Yes' or 'No'.",
-     "run_order": ["blurb1", "$context", "blurb2", "$query", "instruction"],
-     "blurb1": "Please read the following text: ",
-     "blurb2": "Based on these materials, please answer the question: ",
-     "instruction": "Please answer this question with 'Yes' or 'No'.  If the text does not provide an answer,"
-                    "then please respond with 'Not Found.'",
-     "system_message": "You are a helpful assistant who speaks with facts and no wasted words.",
-     "user_vars": {}},
-
-    {"prompt_name": "multiple_choice",
-     "prompt_description": "Answer a question using a set of pre-defined choices provided.",
-     "run_order": ["blurb1", "$context", "blurb2", "$query", "instruction"],
-     "blurb1": "Please read the following text: ",
-     "blurb2": "Based on these materials, please answer the question: ",
-     "instruction": "Please select from the choices provided.  If the text does not provide an answer,"
-                    "then please respond with 'Not Found.'",
-     "system_message": "You are a helpful assistant who speaks with facts and no wasted words."},
-
-    {"prompt_name": "default_with_context",
-     "prompt_description": "Default simple prompt when a question and context are passed.",
-     "run_order": ["blurb1", "$context", "blurb2", "$query"],
-     "blurb1": "Please read the following text: ",
-     "blurb2": "Based on this text, please answer the question: ",
-     "instruction": "",
-     "system_message": "You are a helpful assistant who speaks with facts and no wasted words."},
-
-    {"prompt_name": "default_no_context",
-     "prompt_description": "Default simple prompt when only a question is passed.",
-     "run_order": ["blurb1","$query"],
-     "blurb1": "Please discuss the following: ",
-     # "blurb2": "Based on this text, please answer the question: ",
-     "instruction": "",
-     "system_message": "You are a helpful assistant who likes to answer questions."},
-
-    {"prompt_name": "summarize_with_bullets_w_query",
-     "prompt_description": "Summarization of a text with a specific question being posed.",
-     "run_order": ["blurb1", "$context", "blurb2","$query","instruction"],
-     "blurb1": "Please read the following text: ",
-     "blurb2": "Please read the following question: ",
-     "instruction": "Please summarize with bulletpoints an analysis of the question.",
-     "system_message": "You are a helpful assistant who speaks with facts and no wasted words."},
-
-    {"prompt_name": "summarize_with_references_w_query",
-     "prompt_description": "Summarization with text with guidance to provide reference to specific "
-                           "information in the text passage.",
-     "run_order": ["blurb1", "$context", "blurb2", "$query", "instruction"],
-     "blurb1": "Please read the following text: ",
-     "blurb2": "Please read the following question: ",
-     "instruction": "Please provide an analysis of the question using information and specific clauses "
-                    "in the text.",
-     "system_message": "You are a helpful assistant who speaks with facts and no wasted words."},
-
-    {"prompt_name": "write_poem",
-     "prompt_description": "Write a poem prompt - note: results may vary greatly by model.",
-     "run_order": ["instruction", "$query"],
-     "instruction": "Please write a poem using the following prompt: ",
-     "system_message": "You are a helpful assistant who is a creative writer and can rhyme words easily."},
-
-    {"prompt_name": "ten_words",
-     "prompt_description": "Xtreme summarization to answer question from a text in 10 words of less.",
-     "run_order": ["instruction", "$query", "$context"],
-     "blurb1": "Please read the following text: ",
-     "blurb2": "Please read the following question: ",
-     "instruction": "In no more than ten words, please give concise answer to the following question, using the "
-                    "text as evidence to support",
-     "system_message": "You are a helpful assistant who speaks with facts and no wasted words."},
-
-    {"prompt_name": "explain_child",
-     "prompt_description": "Standard simplified answer prompt - note: results may vary greatly by model.",
-     "run_order": ["instruction", "$query", "$context"],
-     "instruction": "Please explain to a child the following question using the provided text: ",
-     "system_message": "You are a helpful assistant."},
-
-    {"prompt_name": "make_joke",
-     "prompt_description": "Standard joke prompt - note:  results may vary greatly by model.",
-     "run_order": ["instruction", "$query"],
-     "instruction": "Please be funny and tell a joke on the subject of: ",
-     "system_message": "You are a helpful assistant with a good sense of humor."},
-
-    {"prompt_name": "tell_story",
-     "prompt_description": "Standard tell a story prompt - note: results may vary greatly by model.",
-     "run_order": ["instruction", "$query"],
-     "instruction": "Please write the start of a story on the topic of: ",
-     "system_message": "You are a helpful assistant."},
-
-    {"prompt_name": "write_headline",
-     "prompt_description": "Generate a headline from a question and context.",
-     "run_order": ["instruction", "$query", "$context"],
-     "instruction": "Please write the headline only in a few words in capitalization to answer the question below, "
-                    "using the materials provided. ",
-     "system_message": "You are a helpful assistant."},
-
-    {"prompt_name": "facts_only",
-     "prompt_description": "Basic 'facts only' Q&A prompt.",
-     "run_order": ["blurb1", "$context", "blurb2", "$query", "instruction"],
-     "blurb1": "Please use the following materials- ",
-     "blurb2": "Please answer the following question - ",
-     "instruction": "In answering the question, please only use information contained in the provided materials.",
-     "system_message": "You are a helpful assistant."},
-
-    {"prompt_name": "top_bulletpoints",
-     "prompt_description": "Summarization with question and answer in 5 bullet points.",
-     "run_order": ["blurb1", "$context", "blurb2", "$query", "instruction"],
-     "blurb1": "Please read the text below -  ",
-     "blurb2": "Please read the following question - ",
-     "instruction": "Please answer the question using the text, and write no more than 5 bulletpoints.",
-     "system_message": "You are a helpful assistant."},
-
-    {"prompt_name": "report_title",
-     "prompt_description": "Generate title of report given context passage.",
-     "run_order": ["instruction", "$context"],
-     "instruction": "Please write the title to a report with the following information:  ",
-     "system_message": "You are a helpful assistant."},
-
-    {"prompt_name": "marketing_slogan",
-     "prompt_description": "Generate marketing style slogan given context passage.",
-     "run_order": ["blurb1", "$context", "blurb2", "$query", "instruction"],
-     "blurb1": "Please read the following materials- ",
-     "blurb2": "Please answer the following question - ",
-     "instruction": "Please write a marketing slogan for the following offering using the following information as "
-                    "background source materials.",
-     "system_message": "You are a helpful assistant."},
-
-    {"prompt_name": "top_level_summary",
-     "prompt_description": "Summarization prompt intended for 'second-level' summaries of materials.",
-     "run_order": ["blurb1", "$context", "blurb2", "$query", "instruction"],
-     "blurb1": "Please read the following materials- ",
-     "blurb2": "Please answer the following question - ",
-     "instruction": "In answering the question, please write no more than five bulletpoints, and reference the most "
-                    "important facts in the source materials.",
-     "system_message": "You are a helpful assistant."},
-
-]
-
-
-class PromptCatalog:
-
-    def __init__(self):
-
-        self.prompt_catalog = global_default_prompt_catalog
-
-        # add <INST> for Llama2 Chat Wrapper
-        self.prompt_wrappers = ["alpaca", "human_bot", "chatgpt", "<INST>", "open_chat", "hf_chat", "chat_ml"]
-        self.prompt_wrapper_lookup = {
-
-            "human_bot": {"main_start": "<human>: ", "main_stop": "\n", "start_llm_response": "<bot>:"},
-            "<INST>": {"main_start": "<INST>", "main_stop": "</INST>", "start_llm_response": ""},
-            "hf_chat": {"system_start": "<|im_start|>system\n", "system_stop": "<|im_end|>\n",
-                        "main_start": "<|im_start|>user", "main_stop": "<|im_end|\n",
-                        "start_llm_response":"<|im_start|>assistant"},
-            "open_chat": {"main_start": "GPT4 User: ", "main_stop": "<|endofturn|>",
-                          "start_llm_response": "GPT4 Assistant:"},
-            "alpaca": {"main_start": "### Instruction: ", "main_stop": "\n",
-                       "start_llm_response": "### Response: "}
-
-        }
-
-        self.prompt_list = self.list_all_prompts()
-
-    def lookup_prompt(self, prompt_name):
-
-        for prompts in self.prompt_catalog:
-            if prompts["prompt_name"] == prompt_name:
-                return prompts
-
-        return None
-
-    def get_all_prompts(self):
-        return self.prompt_catalog
-
-    def list_all_prompts(self):
-        prompt_list = []
-        for prompt in self.prompt_catalog:
-            if "prompt_name" in prompt:
-                prompt_list.append(prompt["prompt_name"])
-        return prompt_list
-
-    def parse_instruction_for_user_vars(self, prompt_card, inference_dict=None):
-
-        # if no user vars key in prompt_card, then return instruction unchanged
-
-        if "user_vars" not in prompt_card:
-            return prompt_card["instruction"]
-
-        if not prompt_card["user_vars"]:
-            return prompt_card["instruction"]
-
-        # if no inference_dict, then define as empty dictionary
-        if not inference_dict:
-            inference_dict = {}
-
-        # in this case, will 'parameterize' and dynamically update instruction
-        tokens = prompt_card["instruction"].split(" ")
-        updated_instruction = ""
-
-        for i, t in enumerate(tokens):
-
-            if t.startswith("{{") and t.endswith("}}"):
-
-                t_core = t[2:-2]
-
-                # if value found for key in the inference dict, then apply as true 'user_vars'
-                if t_core in inference_dict:
-                    new_inserted_token = inference_dict[t_core]
-                    updated_instruction += str(new_inserted_token) + " "
-                else:
-                    # apply default value found in the prompt card as back-up
-                    if t_core in prompt_card["user_vars"]:
-                        new_inserted_token = prompt_card["user_vars"][t_core]
-                        updated_instruction += str(new_inserted_token) + " "
-
-            else:
-                updated_instruction += t + " "
-
-        logging.info(f"update: prompt catalog - constructed dynamic instruction - {updated_instruction}")
-     
-        return updated_instruction.strip()
-
-    def build_core_prompt(self, prompt_card=None, prompt_name=None, separator="\n", query=None,context=None,
-                          inference_dict=None):
-
-        if not context:  context = ""
-        if not query: query= ""
-
-        if not prompt_card and not prompt_name:
-            # error - returning query
-            logging.error("error: no prompt selected in PromptCatalog().build_core_prompt")
-            prompt_dict = {"core_prompt": context+"\n"+query, "prompt_card": {}}
-            return prompt_dict
-
-        if not prompt_card:
-            prompt_card = PromptCatalog().lookup_prompt(prompt_name)
-
-        logging.info(f"update: prompt_card - {prompt_card}")
-     
-        core_prompt = ""
-
-        if prompt_card:
-            for keys in prompt_card["run_order"]:
-
-                if keys == "instruction":
-                    # special handler
-                    instruction = self.parse_instruction_for_user_vars(prompt_card,inference_dict=inference_dict)
-                    core_prompt += instruction + separator
-                else:
-                    if not keys.startswith("$"):
-                        core_prompt += prompt_card[keys] + separator
-                    else:
-                        if keys == "$query":
-                            core_prompt += query + separator
-                        if keys == "$context":
-                            core_prompt += context + separator
-
-        # update instruction, if user_vars accepted in instruction
-        """
-        if "instruction" in prompt_card:
-            prompt_card["instruction"] = self.parse_instruction_for_user_vars(prompt_card,inference_dict=inference_dict)
-            print("update: prompt_card instruction - ", prompt_card)
-            core_prompt += prompt_card["instruction"]
-        """
-
-        prompt_dict = {"core_prompt": core_prompt, "prompt_card": prompt_card}
-
-        # print("update - core prompt built - ", core_prompt)
-
-        logging.info(f"update: prompt created - {prompt_dict}")
-
-        return prompt_dict
-
-    def add_custom_prompt_card(self, prompt_name, run_order_list, prompt_dict, prompt_description=None):
-
-        new_prompt_card = {"prompt_name": prompt_name,
-                           "prompt_description": prompt_description,
-                           "run_order": run_order_list}
-
-        for keys, values in prompt_dict.items():
-            new_prompt_card.update({keys:values})
-
-        self.prompt_catalog.append(new_prompt_card)
-
-        return new_prompt_card
-
-    def apply_prompt_wrapper(self, text, prompt_wrapper, separator="\n", instruction=None):
-
-        output_text = text
-
-        if prompt_wrapper not in self.prompt_wrappers:
-
-            logging.info("update: selected wrapper - %s - could not be identified -"
-                         "returning text prompt without any special format wrapping", prompt_wrapper)
-
-            return output_text
-
-        if prompt_wrapper == "chatgpt":
-            return self.wrap_chatgpt_sample(text, instruction)
-
-        if prompt_wrapper == "human_bot":
-            return self.wrap_human_bot_sample(text)
-
-        if prompt_wrapper == "alpaca":
-            return self.wrap_alpaca_sample(text, separator)
-
-        if prompt_wrapper == "<INST>":
-            return self.wrap_llama2_chat_sample(text, separator)
-
-        if prompt_wrapper == "hf_chat":
-            return self.wrap_hf_chat_zephyr_sample(text, separator)
-
-        if prompt_wrapper == "open_chat":
-            return self.wrap_openchat_sample(text, separator)
-
-        if prompt_wrapper == "chat_ml":
-            return self.wrap_chat_ml_sample(text, separator,instruction)
-
-        return output_text
-
-    def wrap_chat_ml_sample(self, text, separator,instruction):
-
-        if not instruction:
-            instruction = "You are a helpful assistant."
-
-        output_text = "<|im_start|>system\n" + instruction + "<|im_end|>\n" + \
-                      "<|im_start|>user" + text + "<|im_end|>\n" + \
-                      "<|im_start|>assistant"
-
-        return output_text
-
-    #   wip - create ability to customize template
-    def wrap_custom(self, text, wrapper_type, instruction=None):
-
-        prompt_out = ""
-
-        if wrapper_type in self.prompt_wrapper_lookup:
-
-            prompt_template = self.prompt_wrapper_lookup[wrapper_type]
-
-            if "system_start" in prompt_template:
-
-                prompt_out += prompt_template["system_start"]
-                if instruction:
-                    prompt_out += instruction
-                else:
-                    prompt_out += "You are a helpful assistant."
-
-                if "system_stop" in prompt_template:
-                    prompt_out += prompt_template["system_stop"]
-
-            if "main_start" in prompt_template:
-
-                prompt_out += prompt_template["main_start"]
-                prompt_out += text
-
-                if "main_stop" in prompt_template:
-                    prompt_out += prompt_template["main_stop"]
-
-            if "start_llm_response" in prompt_template:
-                prompt_out += prompt_template["start_llm_response"]
-
-        else:
-            prompt_out = text
-
-        return prompt_out
-
-    def wrap_chatgpt_sample(self, text, instruction):
-
-        if not instruction:
-            instruction = "You are a helpful assistant."
-
-        new_sample = [{"role": "system", "content": instruction},
-                      {"role": "user", "content": text}]
-
-        return new_sample
-
-    def wrap_human_bot_sample(self, text, user_separator="<human>: ", response_separator="<bot>:"):
-        content = user_separator + text + "\n" + response_separator
-        return content
-
-    #   add support for Llama2 Chat wrapper
-    def wrap_llama2_chat_sample(self, text, separator):
-        content = "<INST> " + text + "</INST>"
-        return content
-
-    def wrap_alpaca_sample(self, text, separator="\n"):
-        content = "### Instruction: " + text + separator + "### Response: "
-        return content
-
-    def wrap_openchat_sample(self, text, separator="\n"):
-        content = "GPT4 User: " + text + "<|endofturn|>" + "GPT4 Assistant:"
-        return content
-
-    def wrap_hf_chat_zephyr_sample (self, text, separator="\n"):
-        content = "<|system|>You are a helpful assistant.\n</s>" + \
-                  "<|user|>" + text + "\n</s>" + \
-                  "<|assistant|>"
-        return content
-
-#   * C Utility functions *
-# Load shared libraries based on current platform/architecture
-
-# Best ways we've found to detect machine architecture
-if platform.system() == "Windows":
-    system = "windows"
-    machine = "x86_64"
-    file_ext = ".dll"
-else:
-    system = platform.system().lower()
-    machine = os.uname().machine.lower()
-    file_ext = ".so"
-
-# Default to known architectures if we encounter an unknown one
-if system == 'darwin' and machine not in ['arm64','x86_64']:
-    machine = 'arm64'
-if system == 'linux' and machine not in ['aarch64','x86_64']:
-    machine = 'x86_64'
-
-# Constuct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
-machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
-
-_path_graph  = os.path.join(machine_dependent_lib_path, "llmware", "libgraph_llmware" + file_ext)
-
-_mod_utility = cdll.LoadLibrary(_path_graph)
-
-#   *  End - C Utility functions *
-
-"""
-#   * C Utility functions * 
-# Load shared libraries based on current platform/architecture
-
-system = platform.system().lower()
-machine = sysconfig.get_platform().split("-")[-1].lower()
-_path_graph = None
-
-
-if system == "darwin" and machine == "x86_64":
-    _path_graph  = os.path.join(LLMWareConfig.get_config("shared_lib_path"),  "darwin", "x86_64", "libgraph_llmware.dylib")
-
-if system == "darwin" and machine in ["universal2", "arm64"]:
-    _path_graph  = os.path.join(LLMWareConfig.get_config("shared_lib_path"),  "darwin", "arm64", "libgraph_llmware.dylib")
-
-if system == "linux" and machine == "x86_64":
-    _path_graph  = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "x86_64", "libgraph_llmware.so")
-
-if system == "linux" and machine == "aarch64":
-    _path_graph  = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "aarch64", "libgraph_llmware.so")
-
-_mod_utility = cdll.LoadLibrary(_path_graph)
-
-#   *  End - C Utility functions *
-"""
-
-
 class Graph:
+
+    """Graph is a set of NLP statistical functions that generate statistical relationships between key words and
+    concepts in a library. """
 
     def __init__(self, library):
 
@@ -2054,6 +1493,9 @@ class Graph:
 
         # create stop words txt file in nlp path
         self.stop_words = Utilities().load_stop_words_list(self.library.nlp_path)
+
+        # load graph c modules - note: if any issues loading module, will be captured in get_module_graph_functions()
+        self._mod_utility = Utilities().get_module_graph_functions()
 
     # new method - used to track 'counter' inside the bow files for incremental read/write/analysis
     def bow_locator(self):
@@ -2179,7 +1621,8 @@ class Graph:
         account_name = create_string_buffer(input_account_name.encode('ascii', 'ignore'))
         library_name = create_string_buffer(input_library_name.encode('ascii', 'ignore'))
 
-        input_db_path = LLMWareConfig.get_config("collection_db_uri")
+        input_db_path = LLMWareConfig.get_db_uri_string()
+        # input_db_path = MongoConfig.get_config("collection_db_uri")
 
         db_path_c = create_string_buffer(input_db_path.encode('ascii', 'ignore'))
 
@@ -2193,8 +1636,24 @@ class Graph:
         input_text_field = "text"
         text_field_c = create_string_buffer(input_text_field.encode('ascii', 'ignore'))
 
-        teh = _mod_utility.text_extract_main_handler
-        teh.argtypes = (c_char_p, c_char_p, c_int, c_char_p, c_char_p, c_char_p, c_char_p, c_int, c_int)
+        # int text_extract_main_handler(char * input_account_name, char * input_library_name,
+        # char * db, int new_bow, char * db_uri_string,
+        # char * input_stop_words_fp, char * input_bow_fp,
+        # char * input_text_field, int bow_index, int bow_len)
+
+        db = LLMWareConfig().get_active_db()
+        db_c = create_string_buffer(db.encode('ascii','ignore'))
+
+        print("update: graph_builder - python - db, db_uri - ", db_c, input_db_path)
+
+        # new signature
+        teh = self._mod_utility.text_extract_main_handler
+        teh.argtypes = (c_char_p, c_char_p, c_char_p, c_int, c_char_p, c_char_p, c_char_p, c_char_p, c_int, c_int)
+
+        # old
+        # teh.argtypes = (c_char_p, c_char_p, c_int, c_char_p, c_char_p, c_char_p, c_char_p, c_int, c_int)
+        # end - current code
+
         teh.restype = c_int
 
         # note: key input - is there an existing bow already to build off ('a'), or start new ('w') ?
@@ -2215,8 +1674,14 @@ class Graph:
         logging.info("update: Graph() bow_builder - calling on text_extract handler - bow vars - %s - %s ", bow_index_current,
                      bow_len_remainder_only)
 
+        # int text_extract_main_handler(char * input_account_name, char * input_library_name,
+        # char * db, int new_bow, char * db_uri_string,
+        # char * input_stop_words_fp, char * input_bow_fp,
+        # char * input_text_field, int bow_index, int bow_len)
+
         bow_count = teh(account_name,
                         library_name,
+                        db_c,
                         new_bow_c,
                         db_path_c,
                         stop_words_c,
@@ -2430,7 +1895,7 @@ class Graph:
 
         logging.info("update: build_graph_raw: bow len - %s %s: ", bow_count, bow_len_remainder)
 
-        graph_handler = _mod_utility.graph_builder
+        graph_handler = self._mod_utility.graph_builder
 
         graph_handler.argtypes = (c_char_p,
                                   c_char_p,
@@ -3013,7 +2478,8 @@ class Graph:
                     bid = int(block_scores_list[x][0][len("block_id="):])
 
                     filter_dict = {"doc_ID": int(doc_id), "block_ID": bid}
-                    blok_qr = CollectionRetrieval(self.library.collection).filter_by_key_dict(filter_dict)
+                    blok_qr = CollectionRetrieval(self.library_name,
+                                                  account_name=self.account_name).filter_by_key_dict(filter_dict)
                     if blok_qr:
                         bloks_out += blok_qr[0]["text"] + "\n"
 
@@ -3266,6 +2732,9 @@ class Graph:
 
 
 class Datasets:
+
+    """Datasets class implements a set of data packaging tools to create 'model-ready' datasets using a variety of
+    packaging strategies automatically derived from artifacts across llmware. """
 
     def __init__(self, library=None, ds_folder=None, validation_split=0.1, testing_split=0.1, tokenizer=None):
 
@@ -3609,14 +3078,15 @@ class Datasets:
                 filter_list = ["text", "table"]
 
                 if self.library:
-                    results = CollectionRetrieval(self.library.collection).filter_by_key_value_range("content_type",filter_list)
+                    results = CollectionRetrieval(self.library_name,
+                                                  account_name=self.account_name).filter_by_key_value_range("content_type",filter_list)
                 else:
                     raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
 
             else:
 
                 if self.library:
-                    results = CollectionRetrieval(self.library.collection).\
+                    results = CollectionRetrieval(self.library_name,account_name=self.account_name).\
                         text_search_with_key_value_dict_filter(query, filter_dict)
                 else:
                     raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
@@ -3817,7 +3287,7 @@ class Datasets:
             filter_list = ["text", "table"]
 
             if self.library:
-                results = CollectionRetrieval(self.library.collection).\
+                results = CollectionRetrieval(self.library_name, account_name=self.account_name).\
                     filter_by_key_value_range("content_type", filter_list)
             else:
                 raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
@@ -3976,7 +3446,7 @@ class Datasets:
             filter_list = ["text"]  # includes only text - should tables be excluded ?
 
             if self.library:
-                results = CollectionRetrieval(self.library.collection).\
+                results = CollectionRetrieval(self.library_name, account_name=self.account_name).\
                     filter_by_key_value_range("content_type", filter_list)
             else:
                 raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
@@ -4130,7 +3600,7 @@ class Datasets:
         if not qr:
 
             if self.library:
-                dialogs = CollectionRetrieval(self.library.collection).filter_by_key("dialog", "true")
+                dialogs = CollectionRetrieval(self.library_name,account_name=self.account_name).filter_by_key("dialog", "true")
             else:
                 raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
 
@@ -4490,7 +3960,8 @@ class Datasets:
                 filter_list = ["image"]
 
                 if self.library:
-                    results = CollectionRetrieval(self.library.collection).filter_by_key_value_range("content_type",
+                    results = CollectionRetrieval(self.library_name,
+                                                  account_name=self.account_name).filter_by_key_value_range("content_type",
                                                                                                  filter_list)
                 else:
                     raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
@@ -4500,7 +3971,7 @@ class Datasets:
                 filter_dict.update({"content_type": "image"})
 
                 if self.library:
-                    results = CollectionRetrieval(self.library.collection). \
+                    results = CollectionRetrieval(self.library_name, account_name=self.account_name). \
                         text_search_with_key_value_dict_filter(query, filter_dict)
                 else:
                     raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
@@ -4635,14 +4106,16 @@ class Datasets:
                 filter_list = ["text", "table"]
 
                 if self.library:
-                    results = CollectionRetrieval(self.library.collection).filter_by_key_value_range("content_type",
+                    results = CollectionRetrieval(self.library.library_name,
+                                                  account_name=self.library.account_name).filter_by_key_value_range("content_type",
                                                                                                  filter_list)
                 else:
                     raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
             else:
 
                 if self.library:
-                    results = CollectionRetrieval(self.library.collection).\
+                    results = CollectionRetrieval(self.library.library_name,
+                                                  account_name=self.library.account_name).\
                         text_search_with_key_value_dict_filter(query, filter_dict)
                 else:
                     raise LibraryObjectNotFoundException("no-library-loaded-in-Dataset-constructor")
@@ -5107,6 +4580,8 @@ class Datasets:
 # simple API wrapper around popular Yahoo Finance - used in Prompt to pull in real-time info
 
 class YFinance:
+
+    """ YFinance class implements the Yahoo Finance API. """
 
     def __init__(self, ticker=None):
 

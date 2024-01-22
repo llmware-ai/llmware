@@ -59,6 +59,12 @@ class UnsupportedCollectionDatabaseException(LLMWareException):
         super().__init__(message)
 
 
+class UnsupportedTableDatabaseException(LLMWareException):
+    def __init__(self, collection_db):
+        message = f"'{collection_db}' is not currently a supported SQL / table database"
+        super().__init__(message)
+
+
 class CollectionDatabaseNotFoundException(LLMWareException):
 
     def __init__(self, uri):
@@ -150,6 +156,7 @@ class DatasetTypeNotFoundException(LLMWareException):
         message = f"'{ds_name}' is not a recognized dataset type"
         super().__init__(message)
 
+
 class OCRDependenciesNotFoundException(LLMWareException):
     def __init__(self, dependency_name):
         message = f"'{dependency_name}' does not appear to be installed locally. " \
@@ -157,3 +164,37 @@ class OCRDependenciesNotFoundException(LLMWareException):
                   f"For MacOS: 'brew install tesseract poppler'. " \
                   f"For Linux: 'apt install -y tesseract-ocr poppler-utils'."
         super().__init__(message)
+
+
+class ConfigKeyException(LLMWareException):
+
+    def __init__(self, config_key):
+        message = f"'{config_key}' is not a valid configuration key."
+        super().__init__(message)
+
+
+class InvalidNameException(LLMWareException):
+
+    def __init__(self, config_key):
+        message = (f"'{config_key}' is not a valid name for this resource - please check special "
+                   f"characters and/or may be reserved name.")
+        super().__init__(message)
+
+class ModuleNotFoundException(LLMWareException):
+
+    def __init__(self, module_name):
+        message = (f"Module '{module_name}' could not be located.  Please confirm the file path and extension. "
+                   f"\n--There may be a missing binary, or an unsupported "
+                   f"operating system platform.\n--Binaries are shipped in LLMWare for Mac (Metal, x86), Windows (x86), "
+                   f"and Linux (aarch64, x86).\n--Please try re-installing and check documentation or raise issue "
+                   f"at main Github repository at:  https://www.github.com/llmware-ai/llmware.git.")
+
+        super().__init__(message)
+
+
+class ModelCardNotRegisteredException(LLMWareException):
+
+    def __init__(self, config_key):
+        message = (f"'{config_key}' is missing key attributes and fails validation to be registered as a model.")
+        super().__init__(message)
+
