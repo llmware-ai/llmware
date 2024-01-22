@@ -1758,18 +1758,14 @@ class EmbeddingNeo4j:
                 })
 
 
-        # will leave "-" and "_" in file path, but remove "@" and " "
-        model_safe_path = re.sub("[@ ]", "", self.model_name).lower()
-        self.mongo_key = "embedding_neo4j_" + model_safe_path
+        self.utils = _EmbeddingUtils(library_name=self.library_name,
+                                     model_name=self.model_name,
+                                     account_name=self.account_name,
+                                     db_name="neo4j",
+                                     embedding_dims=self.embedding_dims)
 
     def create_new_embedding(self, doc_ids=None, batch_size=500):
-        if doc_ids:
-            num_of_blocks = self.library.collection.count_documents({"doc_ID": {"$in": doc_ids}})
-            all_blocks_cursor = CollectionRetrieval(self.library.collection).filter_by_key_value_range("doc_ID", doc_ids)
-        else:
-            num_of_blocks = self.library.collection.count_documents({self.mongo_key: {"$exists": False }})
-            all_blocks_cursor = CollectionRetrieval\
-                (self.library.collection).custom_filter({self.mongo_key: {"$exists": False }})
+        all_blocks_cursor, num_of_blocks = self.utils.get_blocks_cursor(doc_ids=doc_ids)
 
         # Initialize a new status
         status = Status(self.library.account_name)
@@ -1830,6 +1826,8 @@ class EmbeddingNeo4j:
 
             self._query(query=insert_query, parameters=parameters)
 
+            current_index = self.utils.update_text_index(block_ids, current_index)
+
             # Update statistics
             embeddings_created += len(sentences)
             status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
@@ -1840,12 +1838,7 @@ class EmbeddingNeo4j:
 
         embedded_blocks = self.library.collection.count_documents({self.mongo_key: {"$exists": True}})
 
-        embedding_summary = {
-            "embeddings_created": embeddings_created,
-            "embedded_blocks": embedded_blocks,
-            "embedding_dims": self.embedding_dims,
-            "time_stamp": Utilities().get_current_time_now()
-        }
+        embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
         logging.info(f'update: EmbeddingHandler - Neo4j - embedding_summary - {embedding_summary}')
 
         return embedding_summary
@@ -1862,15 +1855,10 @@ class EmbeddingNeo4j:
 
         for result in results:
             block_id = result['node']['block_id']
-            block_cursor = CollectionRetrieval(self.library.collection).filter_by_key("_id", ObjectId(block_id))
+            block_result_list = self.utils.lookup_text_index(block_id)
 
-            try:
-                block = block_cursor.next()
-                distance = result['score']
-                block_list.append((block, distance))
-            except StopIteration:
-                # No blocks found
-                continue
+            for block in block_result_list:
+                block_list.append((block, match["score"]))
 
         return block_list
 
@@ -1880,9 +1868,7 @@ class EmbeddingNeo4j:
         except DatabaseError: # Index did not exist yet
             pass
 
-        # Delete mongo fields
-        block_cursor = CollectionWriter(self.library.collection).update_many_records_custom({}, {
-            "$unset": {self.mongo_key: ""}})
+        self.utils.unset_text_index()
 
     def _query(self, query, parameters=None):
         from neo4j.exceptions import CypherSyntaxError
