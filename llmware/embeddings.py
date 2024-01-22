@@ -1687,9 +1687,11 @@ class EmbeddingNeo4j:
 
 
         self.library = library
+        self.library_name = library.library_name
         self.model = model
         self.model_name = model_name
         self.embedding_dims = embedding_dims
+        self.account_name = library.account_name
 
         # if model passed (not None), then use model name
         if self.model:
