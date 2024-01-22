@@ -64,7 +64,7 @@ except:
 
 
 from llmware.configs import LLMWareConfig, MongoConfig, MilvusConfig, PostgresConfig, RedisConfig, \
-    PineconeConfig, QdrantConfig
+    PineconeConfig, QdrantConfig, Neo4jConfig
 from llmware.exceptions import UnsupportedEmbeddingDatabaseException, EmbeddingModelNotFoundException
 from llmware.resources import CollectionRetrieval, CollectionWriter
 from llmware.status import Status
@@ -1699,10 +1699,10 @@ class EmbeddingNeo4j:
         # user and password names are taken from environmen variables
         # Names for user and password are taken from the link below
         # https://neo4j.com/docs/operations-manual/current/tools/neo4j-admin/upload-to-aura/#_options
-        uri = os.environ.get('NEO4J_URI')
-        user = os.environ.get('NEO4J_USERNAME')
-        password = os.environ.get('NEO4J_PASSWORD')
-        database = os.environ.get('NEO4J_DATABASE')
+        uri = Neo4jConfig.get_config('uri')
+        user = Neo4jConfig.get_config('user')
+        password = Neo4jConfig.get_config('password')
+        database = Neo4jConfig.get_config('database')
 
 
         # Connect to Neo4J and verify connection.
