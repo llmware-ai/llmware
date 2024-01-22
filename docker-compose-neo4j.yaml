@@ -16,7 +16,7 @@ services:
 
         volumes:
             - $HOME/neo4j/data:/data
-            - $HOME/neo4j/conf/:conf/
+            - $HOME/neo4j/conf/:/conf
             - $HOME/neo4j/logs:/logs
 
         environment:
