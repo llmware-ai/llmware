@@ -1838,8 +1838,6 @@ class EmbeddingNeo4j:
                    "Embeddings Created: {embeddings_created} of {num_of_blocks}")
 
 
-        embedded_blocks = self.library.collection.count_documents({self.mongo_key: {"$exists": True}})
-
         embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
         logging.info(f'update: EmbeddingHandler - Neo4j - embedding_summary - {embedding_summary}')
 
