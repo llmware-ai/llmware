@@ -1778,13 +1778,13 @@ class EmbeddingNeo4j:
         current_index = 0
         finished = False
 
-        all_blocks_iter = iter(all_blocks_cursor)
+        all_blocks_iter = all_blocks_cursor.pull_one()
         while not finished:
             block_ids, doc_ids, sentences = [], [], []
 
             # Build the next batch
             for i in range(batch_size):
-                block = next(all_blocks_iter, None)
+                block = all_blocks_cursor.pull_one()
                 if not block:
                     finished = True
                     break
