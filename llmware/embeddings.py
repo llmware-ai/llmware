@@ -1858,7 +1858,7 @@ class EmbeddingNeo4j:
             block_result_list = self.utils.lookup_text_index(block_id)
 
             for block in block_result_list:
-                block_list.append((block, match["score"]))
+                block_list.append((block, result["score"]))
 
         return block_list
 
