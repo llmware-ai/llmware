@@ -687,9 +687,9 @@ class Neo4jConfig:
     """Configuration object for Neo4j"""
 
     _conf = {
-        'uri': os.environ.get('NEO4J_URI', 'neo4j://localhost:7687')
-        'user': os.environ.get('NEO4J_USERNAME', 'neo4j')
-        'password': os.environ.get('NEO4J_PASSWORD', 'neo4j')
+        'uri': os.environ.get('NEO4J_URI', 'neo4j://localhost:7687'),
+        'user': os.environ.get('NEO4J_USERNAME', 'neo4j'),
+        'password': os.environ.get('NEO4J_PASSWORD', 'neo4j'),
         'database': os.environ.get('NEO4J_DATABASE', 'llmware')
     }
 
