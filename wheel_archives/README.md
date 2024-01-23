@@ -3,7 +3,7 @@
 Wheel Archives: `llmware` pip install from pypy 
 ===============
 
-How to use?
+**How to use?**
 
 1.  Download a selected wheel, unzip, and then deploy the code directly into a project.
 2.  Place the wheel archive in a folder, and in that folder path, run:
@@ -21,7 +21,7 @@ All wheels are built and tested on five platforms:
 4.  Linux x86
 5.  Linx aarch64
 
-Release Notes  
+**Release Notes**  
 
 --0.2.0 released in the week of January 22, 2024 - significant enhancements, including integration of Postgres and SQLite drivers into the c lib parsers, and  
 more robust abstraction layer in CollectionRetrieval and CollectionWriter that enables seamless switching between SQL and no-SQL databases as the underlying persistent  
@@ -31,5 +31,6 @@ data store as well as synchronizing with Vector databases.
 
 --If cloning the repo, please be especially careful to pick up the new updated /lib dependencies for your platform.  
 
---New libs have new dependencies in Linux in particular - it has been most extensively tested on Ubuntu 22.   If any issues on a specific version of Linux, please raise a ticket.
+--New libs have new dependencies in Linux in particular - it has been most extensively tested on Ubuntu 22.   If any issues on a specific version of Linux,  
+please raise a ticket.
 
