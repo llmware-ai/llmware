@@ -55,9 +55,16 @@ try:
 except ImportError:
     pass
 
+#   optional import of neo4j - not in project requirements
+try:
+    import neo4j
+    from neo4j import GraphDatabase
+except:
+    pass
+
 
 from llmware.configs import LLMWareConfig, MongoConfig, MilvusConfig, PostgresConfig, RedisConfig, \
-    PineconeConfig, QdrantConfig
+    PineconeConfig, QdrantConfig, Neo4jConfig
 from llmware.exceptions import UnsupportedEmbeddingDatabaseException, EmbeddingModelNotFoundException
 from llmware.resources import CollectionRetrieval, CollectionWriter
 from llmware.status import Status
@@ -162,6 +169,10 @@ class EmbeddingHandler:
         if embedding_db in ["pg_vector", "postgres"]:
             return EmbeddingPGVector(self.library,model=model, model_name=model_name,
                                      embedding_dims=embedding_dims)
+
+        if embedding_db == "neo4j":
+            return EmbeddingNeo4j(self.library, model=model, model_name=model_name,
+                                   embedding_dims=embedding_dims)
 
     def generate_index_name(self, account_name, library_name, model_name, max_component_length=19):
 
@@ -1664,3 +1675,209 @@ class EmbeddingPGVector:
         self.utils.unset_text_index()
 
         return 0
+
+
+class EmbeddingNeo4j:
+
+    def __init__(self, library, model=None, model_name=None, embedding_dims=None):
+
+        # look up model card
+        if not model and not model_name:
+            raise EmbeddingModelNotFoundException("no-model-or-model-name-provided")
+
+
+        self.library = library
+        self.library_name = library.library_name
+        self.model = model
+        self.model_name = model_name
+        self.embedding_dims = embedding_dims
+        self.account_name = library.account_name
+
+        # if model passed (not None), then use model name
+        if self.model:
+            self.model_name = self.model.model_name
+            self.embedding_dims = model.embedding_dims
+
+        # user and password names are taken from environmen variables
+        # Names for user and password are taken from the link below
+        # https://neo4j.com/docs/operations-manual/current/tools/neo4j-admin/upload-to-aura/#_options
+        uri = Neo4jConfig.get_config('uri')
+        user = Neo4jConfig.get_config('user')
+        password = Neo4jConfig.get_config('password')
+        database = Neo4jConfig.get_config('database')
+
+
+        # Connect to Neo4J and verify connection.
+        # Code taken from the code below
+        # https://github.com/langchain-ai/langchain/blob/master/libs/community/langchain_community/vectorstores/neo4j_vector.py#L165C9-L177C14
+        try:
+            self.driver = GraphDatabase.driver(uri, auth=(user, password))
+            self.driver.verify_connectivity()
+        except neo4j.exceptions.ServiceUnavailable:
+            raise ValueError(
+                "Could not connect to Neo4j database. "
+                "Please ensure that the url is correct and that Neo4j is up and running.")
+        except neo4j.exceptions.AuthError:
+            raise ValueError(
+                "Could not connect to Neo4j database. "
+                "Please ensure that the username and password are correct.")
+        except Exception as err:
+            # We raise here any other excpetion that happend.
+            # This is usefull for debugging when some other error occurs.
+            raise 
+
+        # Make sure that the Neo4j version supports vector indexing.
+        neo4j_version = self._query('call dbms.components() '
+                                    'yield name, versions, edition '
+                                    'unwind versions as version '
+                                    'return version')[0]['version']
+
+        neo4j_version = tuple(map(int, neo4j_version.split('.')))
+
+        target_version = (5, 11, 0)
+        if neo4j_version < target_version:
+            raise ValueError('Vector indexing requires a Neo4j version >= 5.11.0')
+
+
+        # If the index does not exist, then we create the vector search index.
+        neo4j_indexes = self._query('SHOW INDEXES yield name')
+        neo4j_indexes = [neo4j_index['name'] for neo4j_index in neo4j_indexes]
+        if 'vectorIndex' not in neo4j_indexes:
+            self._query(
+                query='CALL '
+                      'db.index.vector.createNodeIndex('
+                          '$indexName, '
+                          '$label, '
+                          '$propertyKey, '
+                          'toInteger($vectorDimension), '
+                          '"euclidean"'
+                      ')',
+                parameters={
+                        'indexName': 'vectorIndex',
+                        'label': 'Chunk',
+                        'propertyKey': 'embedding',
+                        'vectorDimension': int(self.model.embedding_dims)
+                })
+
+
+        self.utils = _EmbeddingUtils(library_name=self.library_name,
+                                     model_name=self.model_name,
+                                     account_name=self.account_name,
+                                     db_name="neo4j",
+                                     embedding_dims=self.embedding_dims)
+
+    def create_new_embedding(self, doc_ids=None, batch_size=500):
+        all_blocks_cursor, num_of_blocks = self.utils.get_blocks_cursor(doc_ids=doc_ids)
+
+        # Initialize a new status
+        status = Status(self.library.account_name)
+        status.new_embedding_status(self.library.library_name, self.model_name, num_of_blocks)
+
+
+        embeddings_created = 0
+        current_index = 0
+        finished = False
+
+        all_blocks_iter = all_blocks_cursor.pull_one()
+        while not finished:
+            block_ids, doc_ids, sentences = [], [], []
+
+            # Build the next batch
+            for i in range(batch_size):
+                block = all_blocks_cursor.pull_one()
+                if not block:
+                    finished = True
+                    break
+
+                text_search = block["text_search"].strip()
+                if not text_search or len(text_search) < 1:
+                    continue
+
+                block_ids.append(str(block["_id"]))
+                doc_ids.append(int(block["doc_ID"]))
+            sentences.append(text_search)
+
+        if len(sentences) > 0:
+            # Process the batch
+            vectors = self.model.embedding(sentences)
+            data = [block_ids, doc_ids, vectors]
+
+            # Insert into Neo4J
+            insert_query = (
+                "UNWIND $data AS row "
+                "CALL "
+                "{ " 
+                "WITH row "
+                "MERGE (c:Chunk {id: row.doc_id, block_id: row.block_id}) "
+                "WITH c, row "
+                "CALL db.create.setVectorProperty(c, 'embedding', row.embedding) "
+                "YIELD node "
+                "SET c.sentence = row.sentence "
+                "} "
+                "IN TRANSACTIONS OF 1000 ROWS"
+            )
+
+            parameters = {
+                "data": [
+                    {"block_id": block_id, "doc_id": doc_id, "sentence": sentences, "embedding": vector}
+                    for block_id, doc_id, sentence, vector in zip(
+                        block_ids, doc_ids, sentences, vectors
+                    )
+                ]
+            }
+
+            self._query(query=insert_query, parameters=parameters)
+
+            current_index = self.utils.update_text_index(block_ids, current_index)
+
+            # Update statistics
+            embeddings_created += len(sentences)
+            status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
+
+            print(f"update: embedding_handler - Neo4j - "
+                   "Embeddings Created: {embeddings_created} of {num_of_blocks}")
+
+
+        embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
+        logging.info(f'update: EmbeddingHandler - Neo4j - embedding_summary - {embedding_summary}')
+
+        return embedding_summary
+
+    def search_index(self, query_embedding_vector, sample_count=10):
+        block_list = []
+
+        search_query = 'CALL db.index.vector.queryNodes("vectorIndex" , $sample_count, $query_embedding_vector) '\
+                       'YIELD node, score '
+
+        parameters = {'sample_count': sample_count, 'query_embedding_vector': query_embedding_vector}
+
+        results = self._query(query=search_query, parameters=parameters)
+
+        for result in results:
+            block_id = result['node']['block_id']
+            block_result_list = self.utils.lookup_text_index(block_id)
+
+            for block in block_result_list:
+                block_list.append((block, result["score"]))
+
+        return block_list
+
+    def delete_index(self, index_name):
+        try:
+            self._query(f"DROP INDEX $index_name", {'index_name': index_name})
+        except DatabaseError: # Index did not exist yet
+            pass
+
+        self.utils.unset_text_index()
+
+    def _query(self, query, parameters=None):
+        from neo4j.exceptions import CypherSyntaxError
+
+        parameters = parameters or {}
+
+        with self.driver.session(database='neo4j') as session:
+            try:
+                data = session.run(query, parameters)
+                return [d.data() for d in data]
+            except CypherSyntaxError as e:
+                raise ValueError(f'Cypher Statement is not valid\n{e}')

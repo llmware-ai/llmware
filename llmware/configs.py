@@ -43,7 +43,7 @@ class LLMWareConfig:
            "tmp_path_name": "tmp" + os.sep}
 
     # note: two alias for postgres vector db - "postgres" and "pg_vector" are the same
-    _supported = {"vector_db": ["milvus", "pg_vector", "postgres", "redis", "pinecone", "faiss", "qdrant", "mongo_atlas"],
+    _supported = {"vector_db": ["neo4j", "milvus", "pg_vector", "postgres", "redis", "pinecone", "faiss", "qdrant", "mongo_atlas"],
                   "collection_db": ["mongo", "postgres", "sqlite"],
                   "table_db": ["postgres", "sqlite"]}
 
@@ -682,3 +682,46 @@ class LLMWareTableSchema:
     def get_parser_table_schema(cls):
         return cls._parser_record
 
+
+class Neo4jConfig:
+    """Configuration object for Neo4j"""
+
+    _conf = {
+        'uri': os.environ.get('NEO4J_URI', 'neo4j://localhost:7687'),
+        'user': os.environ.get('NEO4J_USERNAME', 'neo4j'),
+        'password': os.environ.get('NEO4J_PASSWORD', 'neo4j'),
+        'database': os.environ.get('NEO4J_DATABASE', 'llmware')
+    }
+
+    @classmethod
+    def get_db_configs(cls):
+        configs = {}
+        for keys, values in cls._conf.items():
+            configs.update({keys:values})
+        return configs
+
+    @classmethod
+    def get_config(cls, name):
+        if name in cls._conf:
+            return cls._conf[name]
+        raise ConfigKeyException(name)
+
+    @classmethod
+    def set_config(cls, name, value):
+        cls._conf[name] = value
+
+    @classmethod
+    def get_uri_string(cls):
+        return cls._conf["uri"]
+
+    @classmethod
+    def get_user_name(cls):
+        return cls._conf["user"]
+
+    @classmethod
+    def get_db_pw(cls):
+        return cls._conf["password"]
+
+    @classmethod
+    def get_database_name(cls):
+        return cls._conf["database"]
