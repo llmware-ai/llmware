@@ -70,15 +70,20 @@ setup(
         'tabulate==0.9.0',
         'tokenizers>=0.15.0',
         'torch>=1.13.1',
-        'transformers==4.35.2',
+        'transformers>=4.36.0',
         'Werkzeug==3.0.1',
         'word2number==1.1',
         'Wikipedia-API==0.6.0',
-        'yfinance==0.2.28'
+        'yfinance==0.2.28',
+        'psycopg-binary==3.1.17',
+        'psycopg==3.1.17',
+        'pgvector==0.2.4'
     ],
+
     extras_require={
         'pinecone': ['pinecone-client==3.0.0'],
         'qdrant': ['qdrant-client==1.7.0'],
         'redis': ['redis==5.0.1'],
+        'neo4j': ['neo4j==5.16.0']
     },
 )
