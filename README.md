@@ -528,7 +528,7 @@ if __name__ == "__main__":
 
 -**OpenChat API integration** - OpenChat ([example](examples/Models/using-open-chat-models.py))  
 
--**Neo4j Vector Database integration** - ([example](examples/Embedding/using-neo4j.py))  
+-**Neo4j Vector Database integration** - ([example](examples/Embedding/using_neo4j.py))  
 
 
 
