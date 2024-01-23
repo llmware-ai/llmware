@@ -23,14 +23,12 @@ All wheels are built and tested on five platforms:
 
 **Release Notes**  
 
---0.2.0 released in the week of January 22, 2024 - significant enhancements, including integration of Postgres and SQLite drivers into the c lib parsers, and  
-more robust abstraction layer in CollectionRetrieval and CollectionWriter that enables seamless switching between SQL and no-SQL databases as the underlying persistent  
-data store as well as synchronizing with Vector databases.
+--0.2.0 released in the week of January 22, 2024 - significant enhancements, including integration of Postgres and SQLite drivers into the c lib parsers.  
 
---New examples involving Postgres or SQLite support (including 'Fast Start' examples) will require a fresh pip install of 0.2.0 or clone of the repo.   
+--New examples involving Postgres or SQLite support (including 'Fast Start' examples) will require a fresh pip install of 0.2.0 or clone of the repo.  
 
 --If cloning the repo, please be especially careful to pick up the new updated /lib dependencies for your platform.  
 
---New libs have new dependencies in Linux in particular - it has been most extensively tested on Ubuntu 22.   If any issues on a specific version of Linux,  
-please raise a ticket.
+--New libs have new dependencies in Linux in particular - most extensive testing on Ubuntu 22. If any issues on a specific version of Linux, please raise a ticket.  
+
 
