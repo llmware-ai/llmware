@@ -1767,18 +1767,19 @@ class EmbeddingNeo4j:
                                      embedding_dims=self.embedding_dims)
 
     def create_new_embedding(self, doc_ids=None, batch_size=500):
+        
         all_blocks_cursor, num_of_blocks = self.utils.get_blocks_cursor(doc_ids=doc_ids)
 
         # Initialize a new status
         status = Status(self.library.account_name)
         status.new_embedding_status(self.library.library_name, self.model_name, num_of_blocks)
 
-
         embeddings_created = 0
         current_index = 0
         finished = False
 
-        all_blocks_iter = all_blocks_cursor.pull_one()
+        # all_blocks_iter = all_blocks_cursor.pull_one()
+        
         while not finished:
             block_ids, doc_ids, sentences = [], [], []
 
@@ -1795,47 +1796,46 @@ class EmbeddingNeo4j:
 
                 block_ids.append(str(block["_id"]))
                 doc_ids.append(int(block["doc_ID"]))
-            sentences.append(text_search)
+                sentences.append(text_search)
 
-        if len(sentences) > 0:
-            # Process the batch
-            vectors = self.model.embedding(sentences)
-            data = [block_ids, doc_ids, vectors]
+            if len(sentences) > 0:
+                # Process the batch
+                vectors = self.model.embedding(sentences)
+                data = [block_ids, doc_ids, vectors]
 
-            # Insert into Neo4J
-            insert_query = (
-                "UNWIND $data AS row "
-                "CALL "
-                "{ " 
-                "WITH row "
-                "MERGE (c:Chunk {id: row.doc_id, block_id: row.block_id}) "
-                "WITH c, row "
-                "CALL db.create.setVectorProperty(c, 'embedding', row.embedding) "
-                "YIELD node "
-                "SET c.sentence = row.sentence "
-                "} "
-                "IN TRANSACTIONS OF 1000 ROWS"
-            )
+                # Insert into Neo4J
+                insert_query = (
+                    "UNWIND $data AS row "
+                    "CALL "
+                    "{ " 
+                    "WITH row "
+                    "MERGE (c:Chunk {id: row.doc_id, block_id: row.block_id}) "
+                    "WITH c, row "
+                    "CALL db.create.setVectorProperty(c, 'embedding', row.embedding) "
+                    "YIELD node "
+                    "SET c.sentence = row.sentence "
+                    "} "
+                    f"IN TRANSACTIONS OF {batch_size} ROWS"
+                )
 
-            parameters = {
-                "data": [
-                    {"block_id": block_id, "doc_id": doc_id, "sentence": sentences, "embedding": vector}
-                    for block_id, doc_id, sentence, vector in zip(
-                        block_ids, doc_ids, sentences, vectors
-                    )
-                ]
-            }
+                parameters = {
+                    "data": [
+                        {"block_id": block_id, "doc_id": doc_id, "sentence": sentences, "embedding": vector}
+                        for block_id, doc_id, sentence, vector in zip(
+                            block_ids, doc_ids, sentences, vectors
+                        )
+                    ]
+                }
 
-            self._query(query=insert_query, parameters=parameters)
+                self._query(query=insert_query, parameters=parameters)
 
-            current_index = self.utils.update_text_index(block_ids, current_index)
+                current_index = self.utils.update_text_index(block_ids, current_index)
 
-            # Update statistics
-            embeddings_created += len(sentences)
-            status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
+                # Update statistics
+                embeddings_created += len(sentences)
+                status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
 
-            print(f"update: embedding_handler - Neo4j - "
-                   "Embeddings Created: {embeddings_created} of {num_of_blocks}")
+                print(f"update: embedding_handler - Neo4j - Embeddings Created: {embeddings_created} of {num_of_blocks}")
 
 
         embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
