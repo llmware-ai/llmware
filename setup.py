@@ -75,13 +75,17 @@ setup(
         'word2number==1.1',
         'Wikipedia-API==0.6.0',
         'yfinance==0.2.28',
+<<<<<<< HEAD
         'psycopg-binary==3.1.17',
         'psycopg==3.1.17',
         'pgvector==0.2.4'
+=======
+>>>>>>> 47a1ad8 (integration changes)
     ],
 
     extras_require={
         'pinecone': ['pinecone-client==3.0.0'],
+        'lancedb' :['lancedb==0.5.0'],
         'qdrant': ['qdrant-client==1.7.0'],
         'redis': ['redis==5.0.1'],
         'neo4j': ['neo4j==5.16.0']
