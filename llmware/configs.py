@@ -561,7 +561,7 @@ class QdrantConfig:
     }
 
     @classmethod
-    def get_config(cls, name: str | None = None):
+    def get_config(cls, name):
         if not name:
             return cls._conf
 
