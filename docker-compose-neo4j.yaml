@@ -20,4 +20,4 @@ services:
 
         environment:
             - NEO4J_AUTH=none
-            - NEO4J_DATABASE=llmware
+            
