@@ -704,7 +704,7 @@ class EmbeddingLanceDB:
             import pyarrow as pa
 
             schema = pa.schema([
-                            pa.field("vector", pa.list_(pa.float32(), 384)),
+                            pa.field("vector", pa.list_(pa.float32(), int(self.embedding_dims))),
                             pa.field("id", pa.string()),
                         ])
             tbl = self.db.create_table(table_name, schema=schema, mode="overwrite")
