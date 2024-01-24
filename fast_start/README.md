@@ -30,7 +30,8 @@ Examples:
 
 3.  **Prompts** & **Model Catalog** - start running inferences and building prompts.
 
-**Section II - Connecting Knowledge with Prompts - 3 scenarios**
+**Section II - Connecting Knowledge with Prompts - 3 scenarios**  
+
 4.  **RAG with Text Query** - start integrating documents into prompts.  
 
 5.  **RAG with Semantic Query** - use natural language queries on documents and integrate with prompts.
