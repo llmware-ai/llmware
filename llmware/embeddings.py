@@ -56,27 +56,22 @@ try:
 except ImportError:
     pass
 
-<<<<<<< HEAD
+#   optional import of lancedb - not in project requirements
+try:
+    import lancedb
+except ImportError:
+    pass
+
 #   optional import of neo4j - not in project requirements
 try:
     import neo4j
     from neo4j import GraphDatabase
 except:
-=======
-#   optional import of lancedb - not in project requirements
-try:
-    import lancedb
-except ImportError:
->>>>>>> 47a1ad8 (integration changes)
     pass
 
 
 from llmware.configs import LLMWareConfig, MongoConfig, MilvusConfig, PostgresConfig, RedisConfig, \
-<<<<<<< HEAD
-    PineconeConfig, QdrantConfig, Neo4jConfig
-=======
-    PineconeConfig, QdrantConfig, LanceDBConfig
->>>>>>> 47a1ad8 (integration changes)
+    PineconeConfig, QdrantConfig, Neo4jConfig, LanceDBConfig
 from llmware.exceptions import UnsupportedEmbeddingDatabaseException, EmbeddingModelNotFoundException
 from llmware.resources import CollectionRetrieval, CollectionWriter
 from llmware.status import Status
@@ -701,7 +696,6 @@ class EmbeddingLanceDB:
                 self.index = self._init_table(self.collection_name)
                 # you don't need to create an index with lanceDB upto million vectors is efficiently supported with peak performance,
                 # Creating an index will fasten the search process and it needs to be done once table has some vectors already.
-                # describe_index_stats()  # Returns: {'dimension': 8, 'index_fullness': 0.0, 'namespaces': {'': {'vector_count': 5}}}
 
             # connect to table
             self.index = self.db.open_table(self.collection_name)
