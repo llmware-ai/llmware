@@ -43,11 +43,7 @@ class LLMWareConfig:
            "tmp_path_name": "tmp" + os.sep}
 
     # note: two alias for postgres vector db - "postgres" and "pg_vector" are the same
-<<<<<<< HEAD
-    _supported = {"vector_db": ["neo4j", "milvus", "pg_vector", "postgres", "redis", "pinecone", "faiss", "qdrant", "mongo_atlas"],
-=======
-    _supported = {"vector_db": ["milvus", "pg_vector", "postgres", "redis", "pinecone", "faiss", "qdrant", "mongo_atlas","lancedb"],
->>>>>>> 47a1ad8 (integration changes)
+    _supported = {"vector_db": ["neo4j", "milvus", "pg_vector", "postgres", "redis", "pinecone", "faiss", "qdrant", "mongo_atlas","lancedb"],
                   "collection_db": ["mongo", "postgres", "sqlite"],
                   "table_db": ["postgres", "sqlite"]}
 
