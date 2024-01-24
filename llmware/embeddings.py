@@ -769,7 +769,7 @@ class EmbeddingLanceDB:
 
             embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
 
-            logging.info("update: EmbeddingHandler - Pinecone - embedding_summary - %s", embedding_summary)
+            logging.info("update: EmbeddingHandler - Lancedb - embedding_summary - %s", embedding_summary)
 
             return embedding_summary
     
@@ -780,22 +780,30 @@ class EmbeddingLanceDB:
                 .limit(sample_count).to_pandas()
 
             block_list = []
-            for match in result.iterrows():
-                _id = match["id"]
+
+            for (_, id, vec, score) in result.itertuples(name=None):
+                _id = id
                 block_result_list = self.utils.lookup_text_index(_id)
 
                 for block in block_result_list:
-                    block_list.append((block, match["score"]))
+                    block_list.append((block, score))
+
+            # for match in result.itertuples(index=False):
+            #     _id = match.id
+            #     block_result_list = self.utils.lookup_text_index(_id)
+
+            #     for block in block_result_list:
+            #         block_list.append((block, match._distance))
                     
         except Exception as e:
-            print(result.columns)
+            print("result df cols" ,result.columns, type(result))
             raise e
 
         return block_list
 
-    def delete_index(self, index_name):
+    def delete_index(self):
 
-        pinecone.drop_table(index_name)
+        self.db.drop_table(self.collection_name)
 
         # remove emb key - 'unset' the blocks in the text collection
         self.utils.unset_text_index()

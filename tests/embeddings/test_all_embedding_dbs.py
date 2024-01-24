@@ -90,5 +90,5 @@ def generic_embedding_and_query(library, embedding_db):
     query_results = Query(library).semantic_query(query, result_count=5)
 
     # Delete the embedding
-    embedding_handler.delete_index(embedding_db=embedding_db, model=model)
+    embedding_handler.delete_index(embedding_db=embedding_db,embedding_dims=embedding_summary["embedding_dims"], model_name=model.model_name)
     return query_results
