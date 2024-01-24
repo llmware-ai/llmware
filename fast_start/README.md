@@ -32,7 +32,9 @@ Examples:
 
 **Section II - Connecting Knowledge with Prompts - 3 scenarios**
 4.  **RAG with Text Query** - start integrating documents into prompts.  
-5.  **RAG with Semantic Query** - use natural language queries on documents and integrate with prompts. 
+
+5.  **RAG with Semantic Query** - use natural language queries on documents and integrate with prompts.
+ 
 6.  **RAG with more complex retrieval** - start integrating more complex retrieval patterns.
 
 After completing these 6 examples, you should have a good foundation and set of recipes to start 
