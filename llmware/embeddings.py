@@ -22,6 +22,7 @@ import re
 import time
 import uuid
 
+from typing import Any
 from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection
 from pymongo import MongoClient
 
@@ -55,6 +56,12 @@ try:
 except ImportError:
     pass
 
+#   optional import of lancedb - not in project requirements
+try:
+    import lancedb
+except ImportError:
+    pass
+
 #   optional import of neo4j - not in project requirements
 try:
     import neo4j
@@ -64,7 +71,7 @@ except:
 
 
 from llmware.configs import LLMWareConfig, MongoConfig, MilvusConfig, PostgresConfig, RedisConfig, \
-    PineconeConfig, QdrantConfig, Neo4jConfig
+    PineconeConfig, QdrantConfig, Neo4jConfig, LanceDBConfig
 from llmware.exceptions import UnsupportedEmbeddingDatabaseException, EmbeddingModelNotFoundException
 from llmware.resources import CollectionRetrieval, CollectionWriter
 from llmware.status import Status
@@ -164,7 +171,11 @@ class EmbeddingHandler:
         if embedding_db == "qdrant":
             return EmbeddingQdrant(self.library, model=model, model_name=model_name,
                                    embedding_dims=embedding_dims)
-
+        
+        if embedding_db == "lancedb":
+            return EmbeddingLanceDB(self.library, model=model, model_name=model_name,
+                                   embedding_dims=embedding_dims)
+  
         #   note: pg_vector == postgres (two aliases provided)
         if embedding_db in ["pg_vector", "postgres"]:
             return EmbeddingPGVector(self.library,model=model, model_name=model_name,
@@ -632,6 +643,170 @@ class EmbeddingFAISS:
 
             # remove emb key - 'unset' the blocks in the text collection
             self.utils.unset_text_index()
+
+        return 1
+
+class EmbeddingLanceDB:
+    """ 
+    LanceDB vector database object - executes all operations on LanceDB
+    """
+    def __init__(self, library, model=None, model_name=None, embedding_dims=None):
+            self.uri = LanceDBConfig().get_config("uri")
+            self.library = library
+            self.library_name = self.library.library_name
+            self.account_name = self.library.account_name
+
+            # look up model card
+            if not model and not model_name:
+                raise EmbeddingModelNotFoundException("no-model-or-model-name-provided")
+
+            self.model = model
+            self.model_name = model_name
+            self.embedding_dims = embedding_dims
+
+            # if model passed (not None), then use model name
+            if self.model:
+                self.model_name = self.model.model_name
+                self.embedding_dims = model.embedding_dims
+
+            # initialize LanceDB
+            self.index = None
+
+            # initiate connection to LanceDB locally
+            try:
+                self.db = lancedb.connect(self.uri)
+            except:
+                raise ImportError(
+                    "Exception - could not connect to LanceDB - please check:"
+                    "1.  LanceDB python package is installed, e.g,. 'pip install lancedb', and"
+                    "2.  The uri is properly set.")
+            self.utils = _EmbeddingUtils(library_name=self.library_name,
+                                     model_name=self.model_name,
+                                     account_name=self.account_name,
+                                     db_name="lancedb",
+                                     embedding_dims=self.embedding_dims)
+
+            self.collection_name = self.utils.create_safe_collection_name()
+            self.collection_key = self.utils.create_db_specific_key()
+
+            # build new name here
+            # self.index_name = self.collection_name
+
+            if self.collection_name not in self.db.table_names():
+                self.index = self._init_table(self.collection_name)
+                # you don't need to create an index with lanceDB upto million vectors is efficiently supported with peak performance,
+                # Creating an index will fasten the search process and it needs to be done once table has some vectors already.
+
+            # connect to table
+            self.index = self.db.open_table(self.collection_name)
+        
+    def _init_table(self,table_name) -> Any:
+            import pyarrow as pa
+
+            schema = pa.schema([
+                            pa.field("vector", pa.list_(pa.float32(), int(self.embedding_dims))),
+                            pa.field("id", pa.string()),
+                        ])
+            tbl = self.db.create_table(table_name, schema=schema, mode="overwrite")
+            return tbl
+
+    
+    def create_new_embedding(self, doc_ids = None, batch_size=500):
+
+            all_blocks_cursor, num_of_blocks = self.utils.get_blocks_cursor(doc_ids=doc_ids)
+
+            # Initialize a new status
+            status = Status(self.library.account_name)
+            status.new_embedding_status(self.library.library_name, self.model_name, num_of_blocks)
+
+            embeddings_created = 0
+
+            # starting current_index @ 0
+            current_index = 0
+
+            finished = False
+            # all_blocks_iter = iter(all_blocks_cursor)
+
+            while not finished:
+                block_ids, doc_ids, sentences = [], [], []
+                # Build the next batch
+                for i in range(batch_size):
+                    block = all_blocks_cursor.pull_one()
+                    # block = next(all_blocks_iter, None)
+
+                    if not block:
+                        finished = True
+                        break
+                    text_search = block["text_search"].strip()
+                    if not text_search or len(text_search) < 1:
+                        continue
+                    block_ids.append(str(block["_id"]))
+                    doc_ids.append(int(block["doc_ID"]))
+                    sentences.append(text_search)
+                
+                if len(sentences) > 0:
+                    # Process the batch
+                    vectors = self.model.embedding(sentences)
+
+                    # expects records as tuples - (batch of _ids, batch of vectors, batch of dict metadata)
+                    # records = zip(block_ids, vectors) #, doc_ids)
+                    # upsert to lanceDB
+                    try  :
+                        vectors_ingest = [{ 'id' : block_id,'vector': vector.tolist()} for block_id,vector in zip(block_ids,vectors)]
+                        self.index.add(vectors_ingest)
+                    except Exception as e :
+                        print(self.index)
+                        print('schema',self.index.schema)
+                        raise e
+
+                    current_index = self.utils.update_text_index(block_ids,current_index)
+
+                    embeddings_created += len(sentences)
+                    status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
+
+                    # will add options to configure to show/hide
+                    print (f"update: embedding_handler - Lancedb - Embeddings Created: {embeddings_created} of {num_of_blocks}")
+
+            embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
+
+            logging.info("update: EmbeddingHandler - Lancedb - embedding_summary - %s", embedding_summary)
+
+            return embedding_summary
+    
+    def search_index(self, query_embedding_vector, sample_count=10):
+        try:
+            result = self.index.search(query=query_embedding_vector.tolist())\
+                .select(["id", "vector"])\
+                .limit(sample_count).to_pandas()
+
+            block_list = []
+
+            for (_, id, vec, score) in result.itertuples(name=None):
+                _id = id
+                block_result_list = self.utils.lookup_text_index(_id)
+
+                for block in block_result_list:
+                    block_list.append((block, score))
+
+            # for match in result.itertuples(index=False):
+            #     _id = match.id
+            #     block_result_list = self.utils.lookup_text_index(_id)
+
+            #     for block in block_result_list:
+            #         block_list.append((block, match._distance))
+                    
+        except Exception as e:
+            print("result df cols" ,result.columns, type(result))
+            raise e
+
+        return block_list
+
+    def delete_index(self):
+
+        self.db.drop_table(self.collection_name)
+
+        # remove emb key - 'unset' the blocks in the text collection
+        self.utils.unset_text_index()
 
         return 1
 

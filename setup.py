@@ -82,6 +82,7 @@ setup(
 
     extras_require={
         'pinecone': ['pinecone-client==3.0.0'],
+        'lancedb' :['lancedb==0.5.0'],
         'qdrant': ['qdrant-client==1.7.0'],
         'redis': ['redis==5.0.1'],
         'neo4j': ['neo4j==5.16.0']

@@ -43,7 +43,7 @@ class LLMWareConfig:
            "tmp_path_name": "tmp" + os.sep}
 
     # note: two alias for postgres vector db - "postgres" and "pg_vector" are the same
-    _supported = {"vector_db": ["neo4j", "milvus", "pg_vector", "postgres", "redis", "pinecone", "faiss", "qdrant", "mongo_atlas"],
+    _supported = {"vector_db": ["neo4j", "milvus", "pg_vector", "postgres", "redis", "pinecone", "faiss", "qdrant", "mongo_atlas","lancedb"],
                   "collection_db": ["mongo", "postgres", "sqlite"],
                   "table_db": ["postgres", "sqlite"]}
 
@@ -491,6 +491,19 @@ class PineconeConfig:
             return cls._conf[name]
         raise ConfigKeyException(name)
 
+    @classmethod
+    def set_config(cls, name, value):
+        cls._conf[name] = value
+
+class LanceDBConfig:
+
+    _conf = {'uri': '/tmp/lancedb/'}
+
+    @classmethod
+    def get_config(cls,name):
+        if name in cls._conf:
+            return cls._conf[name]
+        raise ConfigKeyException(name)
     @classmethod
     def set_config(cls, name, value):
         cls._conf[name] = value

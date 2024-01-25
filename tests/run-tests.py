@@ -35,8 +35,8 @@ class RunTests():
             
         # Reset Mongo
         Logger().log("Resetting Mongo (deleting the llmware db)")
-        from llmware.resources import DBManager
-        DBManager().client.drop_database("llmware")
+        from llmware.resources import MongoDBManager
+        MongoDBManager().client.drop_database("llmware")
 
         # Reset Milvus
         Logger().log("Resetting Milvus (deleting all collections)")
