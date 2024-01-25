@@ -22,7 +22,6 @@ import re
 import time
 import uuid
 
-from typing import Any
 from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection
 from pymongo import MongoClient
 
@@ -72,7 +71,8 @@ except:
 
 from llmware.configs import LLMWareConfig, MongoConfig, MilvusConfig, PostgresConfig, RedisConfig, \
     PineconeConfig, QdrantConfig, Neo4jConfig, LanceDBConfig
-from llmware.exceptions import UnsupportedEmbeddingDatabaseException, EmbeddingModelNotFoundException
+from llmware.exceptions import (UnsupportedEmbeddingDatabaseException, EmbeddingModelNotFoundException,
+                                DependencyNotInstalledException)
 from llmware.resources import CollectionRetrieval, CollectionWriter
 from llmware.status import Status
 from llmware.util import Utilities
@@ -700,8 +700,12 @@ class EmbeddingLanceDB:
             # connect to table
             self.index = self.db.open_table(self.collection_name)
         
-    def _init_table(self,table_name) -> Any:
-            import pyarrow as pa
+    def _init_table(self,table_name):
+
+            try:
+                import pyarrow as pa
+            except:
+                raise DependencyNotInstalledException("pyarrow")
 
             schema = pa.schema([
                             pa.field("vector", pa.list_(pa.float32(), int(self.embedding_dims))),
