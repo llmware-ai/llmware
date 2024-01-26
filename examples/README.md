@@ -17,6 +17,7 @@
 | 13.  Hugging Face Integration ([code](Models/huggingface_integration.py)) | How to bring your favorite HF model into llmware seamlessly.  Customize a generative model with weights from a custom fine-tuned model. |
 | 14.  Working with Datasets ([code](Datasets/working_with_datasets.py)) | Dataset generation streamlined for fine-tuning generative and embedding models and formats such as Alpaca, ChatGPT, Human-Bot.  |
 | 15.  Working without Databases ([code](Getting_Started/working_without_a_database.py) / [video](https://www.youtube.com/watch?v=tAGz6yR14lw))| Parse, Prompt and generate Datasets from Prompt history without installing MongoDB or a vector database.|
+| 16.  Working without Databases with a minimal Web UI([code](Getting_Started/ui_without_a_database.py) | Upload pdfs, and run inference on llmware BLING models without installing MongoDB or a vector database.|
 
 
 # Using `llmware` without a database
