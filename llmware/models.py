@@ -430,7 +430,7 @@ class ModelCatalog:
             #   GGUF models pulled directly from HF repos
             logging.info("update: pulling GGUF model from HF - %s - %s", model_location, model_card)
 
-            GGUFGenerativeModel().pull_model_from_hf(model_card, model_location)
+            self.pull_model_from_hf(model_card, model_location)
 
         logging.info("update: ModelCatalog - done pulling model into local folder - %s ", model_location)
 
@@ -762,6 +762,47 @@ class ModelCatalog:
                 break
 
         return my_model
+
+    def pull_model_from_hf(self, model_card, local_model_repo_path, api_key=None):
+
+        """ Pulls a specific model file from Huggingface repository into local model repo path """
+
+        from huggingface_hub import hf_hub_download
+
+        model_name = model_card["model_name"].split("/")[-1]
+
+        gguf_file = model_card["gguf_file"]     # e.g., "ggml-model-q4_k_m.gguf",
+        gguf_repo = model_card["gguf_repo"]     # e.g., "llmware/dragon-mistral-7b-v0-gguf"
+
+        # model_path = os.path.join(local_model_repo_path, self.model_name)
+
+        logging.info("update: pull_model_from_repo - %s - %s", local_model_repo_path, model_name)
+
+        if not os.path.exists(local_model_repo_path):
+            os.mkdir(local_model_repo_path)
+
+        downloader = hf_hub_download(gguf_repo,
+                                     gguf_file,
+                                     local_dir=local_model_repo_path,
+                                     # note: change to save bits in local model repo, not symlink to HF .cache
+                                     local_dir_use_symlinks=False,
+                                     token=api_key)
+
+        return local_model_repo_path
+
+    def pull_snapshot_from_hf(self, model_name, local_model_repo_path, api_key=None):
+
+        """ Pulls snapshot of HF model repository and saves into local folder path. """
+
+        from huggingface_hub import snapshot_download
+
+        model_name = "llmware/" + model_name
+
+        snapshot = snapshot_download(model_name, local_dir=local_model_repo_path, token=api_key,
+                                     local_dir_use_symlinks=False)
+
+        return local_model_repo_path
+
 
 
 class PromptCatalog:
@@ -3315,26 +3356,6 @@ class GGUFGenerativeModel:
         self._llm = None
         self._lib = None
         self._context = []
-
-    def pull_model_from_hf(self, model_card, local_model_repo_path):
-
-        from huggingface_hub import hf_hub_download
-
-        self.model_name = model_card["model_name"].split("/")[-1]
-
-        self.gguf_file = model_card["gguf_file"]     # e.g., "ggml-model-q4_k_m.gguf",
-        self.gguf_repo = model_card["gguf_repo"]     # e.g., "llmware/dragon-mistral-7b-v0-gguf"
-
-        # model_path = os.path.join(local_model_repo_path, self.model_name)
-
-        logging.info("update: pull_model_from_repo - %s - %s", local_model_repo_path, self.model_name)
-
-        if not os.path.exists(local_model_repo_path):
-            os.mkdir(local_model_repo_path)
-
-        downloader = hf_hub_download(self.gguf_repo, self.gguf_file, local_dir=local_model_repo_path)
-
-        return local_model_repo_path
 
     def load_model_for_inference(self, file_loading_path, model_card=None):
 
