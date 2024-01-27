@@ -9,7 +9,8 @@ import time
 from llmware.parsers import Parser
 from llmware.prompts import Prompt
 from llmware.setup import Setup
-from llmware.util import PromptCatalog, Datasets
+from llmware.util import Datasets
+from llmware.models import PromptCatalog
 from llmware.resources import PromptState
 import streamlit as st
 
