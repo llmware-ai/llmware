@@ -66,7 +66,7 @@ class _ModelRegistry:
     registered_models = global_model_repo_catalog_list
 
     model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
-                     "LLMWareSemanticModel", "HFEmbeddingModel", "OpenChatModel",
+                     "LLMWareSemanticModel", "HFEmbeddingModel", "OpenChatModel", "OllamaModel",
                      "OpenAIGenModel", "ClaudeModel", "GoogleGenModel",
                      "CohereGenModel", "JurassicModel", "AIBReadGPTModel",
                      "OpenAIEmbeddingModel", "CohereEmbeddingModel","GoogleEmbeddingModel"]
@@ -117,11 +117,16 @@ class _ModelRegistry:
         if "prompt_wrapper" in model_card_dict:
 
             pwrap = model_card_dict["prompt_wrapper"]
-            if pwrap not in cls.get_wrapper_list():
 
-                # permits registering of new model card but issues warning
+            if pwrap:
 
-                print(f"update: this prompt wrapper - {pwrap} - is not registered which may lead to unpredictable "
+                # ok if prompt_wrapper = ""
+
+                if pwrap not in cls.get_wrapper_list():
+
+                    # permits registering of new model card but issues warning
+
+                    print(f"update: this prompt wrapper - {pwrap} - is not registered which may lead to unpredictable "
                       f"results in inference - you should register this prompt format for better results.")
 
         return True
@@ -192,7 +197,7 @@ class ModelCatalog:
                                 "OpenAIGenModel", "ClaudeModel", "GoogleGenModel",
                                 "CohereGenModel", "JurassicModel", "AIBReadGPTModel",
                                 "HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
-                                "OpenChatModel",
+                                "OpenChatModel", "OllamaModel",
 
                                 # embedding model classes
                                 "LLMWareSemanticModel",
@@ -201,7 +206,8 @@ class ModelCatalog:
                              ]
 
         self.open_source_model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
-                                          "LLMWareSemanticModel","HFEmbeddingModel", "OpenChatModel"]
+                                          "LLMWareSemanticModel","HFEmbeddingModel", "OpenChatModel",
+                                          "OllamaModel"]
 
         self.global_model_list = _ModelRegistry().get_model_list()
 
@@ -356,6 +362,52 @@ class ModelCatalog:
 
         return 0
 
+    def register_ollama_model(cls, model_name,
+                              host="localhost",
+                              port=11434,
+                              model_type="chat",
+                              raw=False,
+                              stream=False,
+                              display_name=None,
+                              context_window=4096,
+                              instruction_following=True,
+                              prompt_wrapper="",
+                              temperature=0.5):
+
+        """ Add any Ollama model into Model Registry - key parameters:
+
+        Assumes -
+        1.  default host/port configs of "localhost:11434"
+        2.  supports 'completion' ollama api, but uses "chat" by default
+        3.  assumes raw=False & stream=False -> more options will be supported over time
+
+        If you are using the ollama default settings, then you can register a model card by
+        simply providing the model name,
+
+        e.g., ModelCatalog().register_ollama_model("llama2")
+
+         """
+
+        if not display_name:
+            display_name = model_name
+
+        #   note: both raw_mode and stream_mode are set to False
+
+        new_model_card_dict = {"model_name": model_name, "model_type": model_type,
+                               "host": host, "port": port,
+                               "prompt_wrapper": prompt_wrapper,
+                               "display_name": display_name,
+                               "model_family": "OllamaModel", "model_category": "generative-api",
+                               "model_location": "api", "context_window": context_window,
+                               "instruction_following": instruction_following,
+                               "temperature": temperature, "trailing_space": "",
+                               "raw_mode": False, "stream_mode": False
+                               }
+
+        _ModelRegistry().add_model(new_model_card_dict)
+
+        return 0
+
     def setup_custom_llmware_inference_server(self, uri_string, secret_key=None):
 
         """ Sets up and registers a custom llmware inference server """
@@ -477,6 +529,10 @@ class ModelCatalog:
             if model_class == "OpenChatModel": my_model = OpenChatModel(model_name=model_name,
                                                                         context_window=context_window,
                                                                         api_key=api_key, model_card=model_card)
+
+            if model_class == "OllamaModel": my_model = OllamaModel(model_name=model_name,
+                                                                    context_window=context_window,
+                                                                    api_key=api_key, model_card=model_card)
 
             # stub for READ GPT provided -> will add other 3rd party models too
             if model_class == "AIBReadGPTModel": my_model = AIBReadGPTModel(model_name=model_name,api_key=api_key)
@@ -1114,7 +1170,7 @@ class OpenChatModel:
     def token_counter(self, text_sample):
 
         #   open ai recommends using the open source gpt2 tokenizer to count tokens
-        tokenizer = Utilities().get_default_tokenizer
+        tokenizer = Utilities().get_default_tokenizer()
         toks = tokenizer.encode(text_sample).ids
 
         return len(toks)
@@ -1321,6 +1377,263 @@ class OpenChatModel:
         return output_response
 
 
+
+class OllamaModel:
+
+    """ OllamaModel class implements the Ollama model prompt API and is intended for use in building
+     RAG pipelines while using a Ollama endpoint primarily for rapid local prototyping. """
+
+    def __init__(self, model_name=None,  model_card=None, context_window=4000,prompt_wrapper=None, api_key="not_used"):
+
+        # default ollama specific settings
+        # self.uri = "http://localhost:11434/api/"
+        self.host = "localhost"
+        self.port = 11434
+        self.model_name = "llama2"
+        self.model_type = "chat"
+        self.stream_mode = False
+        self.raw_mode = False
+
+        #   expected to take config parameters from model card
+        self.api_key = api_key
+        self.model_name = model_name
+        self.model_card = model_card
+
+        #   assume that prompt_wrapper is set in the model card configuration
+        self.prompt_wrapper = prompt_wrapper
+
+        if self.model_card:
+
+            if "model_name" in self.model_card:
+                self.model_name = self.model_card["model_name"]
+
+            if "model_type" in self.model_card:
+                self.model_type = self.model_card["model_type"]
+
+            if "host" in self.model_card:
+                self.host = self.model_card["host"]
+
+            if "port" in self.model_card:
+                self.port = self.model_card["port"]
+
+            if "prompt_wrapper" in self.model_card:
+                self.prompt_wrapper = self.model_card["prompt_wrapper"]
+
+            if "raw_mode" in self.model_card:
+                self.raw_mode = self.model_card["raw_mode"]
+
+            if "stream_mode" in self.model_card:
+                self.stream_mode = self.model_card["stream_mode"]
+
+        self.error_message = f"\nUnable to connect to Ollama Model. Please check that Ollama is running"\
+                             f"at {self.host}:{self.port}"
+
+        self.separator = "\n"
+
+        # assume input (50%) + output (50%)
+        self.max_total_len = context_window
+        self.max_input_len = int(context_window * 0.5)
+        self.llm_max_output_len = int(context_window * 0.5)
+
+        # inference settings -> not used as generation handled by Ollama inference
+        self.temperature = 0.7
+        self.target_requested_output_tokens = 100
+        self.add_prompt_engineering = False
+        self.add_context = ""
+
+        # self.uri = "http://localhost:11434/api/"
+        self.uri = f"http://{self.host}:{self.port}/api/"
+
+    def set_api_key (self, api_key, env_var="USER_MANAGED_OLLAMA_API_KEY"):
+
+        # set api_key
+        os.environ[env_var] = api_key
+        logging.info("update: added and stored Ollama api_key in environmental variable- %s", env_var)
+
+        return self
+
+    def _get_api_key (self, env_var="USER_MANAGED_OLLAMA_API_KEY"):
+
+        #   not expected to use api_key - so may be empty - handled in inference separately
+        self.api_key = os.environ.get(env_var)
+
+        return self.api_key
+
+    def token_counter(self, text_sample):
+
+        #   note: this is an approximation for counting the input tokens using a default tokenizer
+        #   --to get 100% accurate, need to use the tokenizer being applied on the 'ollama' decoding
+
+        tokenizer = Utilities().get_default_tokenizer()
+        toks = tokenizer.encode(text_sample).ids
+
+        return len(toks)
+
+    def prompt_engineer (self, query, context, inference_dict=None):
+
+        #   by default, this will construct a very basic prompt, concatenating the
+        #   query + context with a basic instruction
+
+        if not self.add_prompt_engineering:
+            if context:
+                selected_prompt = "default_with_context"
+            else:
+                selected_prompt = "default_no_context"
+        else:
+            selected_prompt = self.add_prompt_engineering
+
+        prompt_dict = PromptCatalog().build_core_prompt(prompt_name=selected_prompt,
+                                                        separator=self.separator,
+                                                        query=query, context=context,
+                                                        inference_dict=inference_dict)
+
+        core_prompt = prompt_dict["core_prompt"]
+
+        #   Ollama will handle the prompt wrap templating, unless self.raw_mode = True
+        if self.raw_mode:
+            if self.prompt_wrapper:
+                core_prompt = PromptCatalog().apply_prompt_wrapper(core_prompt, self.prompt_wrapper,
+                                                                   instruction=None)
+
+        return core_prompt
+
+    def discover_models(self):
+
+        """ Calls Ollama endpoint for discovery of available models and their locations. """
+
+        response = requests.get(self.uri+"tags")
+
+        logging.info("update: OllamaModel - discover_models - %s ", response.text)
+
+        output = json.loads(response.text)
+
+        return output
+
+    def inference(self, prompt, add_context=None, add_prompt_engineering=None, inference_dict=None,
+                  api_key=None):
+
+        """ In typical case with raw_mode = False, then no prompt engineering, just apply a basic
+        assembly of the prompt and context. """
+
+        if add_context:
+            self.add_context = add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        # default case - pass the prompt received without change
+        prompt_enriched = prompt
+
+        usage = {}
+
+        time_start = time.time()
+
+        try:
+
+            #   assumes 'chat' api by default
+
+            if self.model_type == "chat":
+
+                full_prompt = self.prompt_engineer(prompt_enriched, self.add_context, inference_dict)
+
+                messages = [{"role": "user", "content": full_prompt}]
+                uri = self.uri + "chat"
+
+                # print("messages: ", messages, uri)
+
+                response = requests.post(uri,
+                                         json={"model": self.model_name,
+                                               "messages": messages, "stream": self.stream_mode})
+
+                logging.info("update: OllamaModel response - chat - %s ", response.text)
+
+                output = json.loads(response.text)
+
+                text_out = output["message"]["content"]
+
+                # print("text only - ", output["message"]["content"])
+
+                pt = 0
+                ct = 0
+                tt = 0
+
+                """ best effort to gather usage data  """
+
+                if "eval_count" in output:
+                    ct = output["eval_count"]
+                    tt += ct
+
+                pt = self.token_counter(full_prompt)
+
+                tt += pt
+
+                usage = {"input": pt,
+                         "output": ct,
+                         "total": tt,
+                         "metric": "tokens",
+                         "processing_time": time.time() - time_start}
+
+            else:
+
+                # traditional completion 'instruct gpt' api
+
+                prompt_enriched = self.prompt_engineer(prompt_enriched, self.add_context,
+                                                       inference_dict=inference_dict)
+
+                prompt_final = prompt_enriched + self.separator
+
+                params = {"model": self.model_name, "prompt": prompt_final, "stream": self.stream_mode}
+
+                # response = requests.post("http://localhost:11434/api/generate", json=params)
+                response = requests.post(self.uri+"generate", json=params)
+
+                output = json.loads(response.text)
+
+                text_out = output["response"]
+
+                # print("response - generate - ", text_out)
+
+                pt = 0
+                ct = 0
+                tt = 0
+
+                """ best effort to gather usage data if conforms with OpenAI API """
+
+                if "eval_count" in output:
+
+                    ct = output["eval_count"]
+                    tt += ct
+
+                pt = self.token_counter(prompt_final)
+                tt += pt
+
+                usage = {"input": pt,
+                         "output": ct,
+                         "total": tt,
+                         "metric": "tokens",
+                         "processing_time": time.time() - time_start}
+
+        except Exception as e:
+
+            text_out = "/***ERROR***/"
+            usage = {"input":0, "output":0, "total":0, "metric": "tokens",
+                     "processing_time": time.time() - time_start}
+
+            logging.error("error: Ollama model inference produced error - %s ", e)
+
+        output_response = {"llm_response": text_out, "usage": usage}
+
+        return output_response
+
+
 class OpenAIGenModel:
 
     """ OpenAIGenModel class implements the OpenAI API for its generative decoder models. """
@@ -1365,7 +1678,7 @@ class OpenAIGenModel:
     def token_counter(self, text_sample):
 
         #   open ai recommends using the open source gpt2 tokenizer to count tokens
-        tokenizer = Utilities().get_default_tokenizer
+        tokenizer = Utilities().get_default_tokenizer()
         toks = tokenizer.encode(text_sample).ids
 
         return len(toks)
