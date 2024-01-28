@@ -199,6 +199,10 @@ class CollectionWriter:
         """Inserts new record to the DB resource - unpacks and validates the new_record dict, if required """
         return self._writer.write_new_record(new_record)
 
+    def write_new_parsing_record(self, new_record):
+        """Inserts new parsing record to the DB resource """
+        return self._writer.write_new_parsing_record(new_record)
+
     def destroy_collection(self, confirm_destroy=False):
         """Drops the collection associated with the library"""
         return self._writer.destroy_collection(confirm_destroy=confirm_destroy)
@@ -300,6 +304,10 @@ class MongoWriter:
         registry_id = self.collection.insert_one(new_record).inserted_id
 
         return 1
+
+    def write_new_parsing_record(self, new_record):
+        """ Writes new parsing record into Mongo DB """
+        return self.write_new_record(new_record)
 
     def destroy_collection(self, confirm_destroy=False):
 
@@ -585,7 +593,6 @@ class MongoRetrieval:
         cursor = DBCursor(all_output,self, "mongo")
 
         return cursor
-
 
     def basic_query(self, query):
 
@@ -1441,6 +1448,39 @@ class PGWriter:
         self.conn.close()
 
         return 1
+
+    def write_new_parsing_record(self, rec):
+
+        """ Writes new parsing record dictionary into Postgres """
+
+        sql_string = f"INSERT INTO {self.library_name}"
+        sql_string += " (block_ID, doc_ID, content_type, file_type, master_index, master_index2, " \
+                      "coords_x, coords_y, coords_cx, coords_cy, author_or_speaker, added_to_collection, " \
+                      "file_source, table_block, modified_date, created_date, creator_tool, external_files, " \
+                      "text_block, header_text, text_search, user_tags, special_field1, special_field2, " \
+                      "special_field3, graph_status, dialog, embedding_flags) "
+
+        sql_string += " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
+                      "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
+
+        # now unpack the new_record into parameters
+        insert_arr = (rec["block_ID"], rec["doc_ID"],rec["content_type"], rec["file_type"], rec["master_index"],
+                      rec["master_index2"], rec["coords_x"], rec["coords_y"], rec["coords_cx"], rec["coords_cy"],
+                      rec["author_or_speaker"], rec["added_to_collection"], rec["file_source"], rec["table"],
+                      rec["modified_date"], rec["created_date"], rec["creator_tool"], rec["external_files"],
+                      rec["text"], rec["header_text"], rec["text_search"], rec["user_tags"],
+                      rec["special_field1"], rec["special_field2"], rec["special_field3"], rec["graph_status"],
+                      rec["dialog"], str(rec["embedding_flags"]))
+
+        # note: sets embedding_flag value (last parameter) to "{}" = str({})
+
+        results = self.conn.cursor().execute(sql_string,insert_arr)
+
+        self.conn.commit()
+
+        self.conn.close()
+
+        return True
 
     def destroy_collection(self, confirm_destroy=False):
 
@@ -2424,6 +2464,38 @@ class SQLiteWriter:
         self.conn.close()
 
         return 1
+
+    def write_new_parsing_record(self, rec):
+
+        """ Writes new parsing record dictionary into SQLite """
+
+        sql_string = f"INSERT INTO {self.library_name}"
+        sql_string += " (block_ID, doc_ID, content_type, file_type, master_index, master_index2, " \
+                      "coords_x, coords_y, coords_cx, coords_cy, author_or_speaker, added_to_collection, " \
+                      "file_source, table_block, modified_date, created_date, creator_tool, external_files, " \
+                      "text_block, header_text, text_search, user_tags, special_field1, special_field2, " \
+                      "special_field3, graph_status, dialog, embedding_flags) "
+        sql_string += " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, " \
+                      "$19, $20, $21, $22, $23, $24, $25, $26, $27, $28);"
+
+        # now unpack the new_record into parameters
+        insert_arr = (rec["block_ID"], rec["doc_ID"],rec["content_type"], rec["file_type"], rec["master_index"],
+                      rec["master_index2"], rec["coords_x"], rec["coords_y"], rec["coords_cx"], rec["coords_cy"],
+                      rec["author_or_speaker"], rec["added_to_collection"], rec["file_source"], rec["table"],
+                      rec["modified_date"], rec["created_date"], rec["creator_tool"], rec["external_files"],
+                      rec["text"], rec["header_text"], rec["text_search"], rec["user_tags"],
+                      rec["special_field1"], rec["special_field2"], rec["special_field3"], rec["graph_status"],
+                      rec["dialog"], "")
+
+        # note: sets embedding flag - parameter $28 to "" by default
+
+        results = self.conn.cursor().execute(sql_string,insert_arr)
+
+        self.conn.commit()
+
+        self.conn.close()
+
+        return True
 
     def destroy_collection(self, confirm_destroy=False):
 
