@@ -1503,14 +1503,14 @@ class Parser:
 
                 for j, blocks in enumerate(output_by_page):
 
-                        if write_to_db_on == 1:
-                            new_output, new_blocks, _ = self._write_output_to_db(blocks, doc_fn, page_num=(j+1))
-                        else:
-                            new_output, new_blocks, _ = self._write_output_to_dict(blocks, doc_fn, page_num=(j+1))
+                    if write_to_db_on == 1:
+                        new_output, new_blocks, _ = self._write_output_to_db(blocks,doc_fn,page_num=(j+1))
+                    else:
+                        new_output, new_blocks, _ = self._write_output_to_dict(blocks,doc_fn,page_num=(j+1))
 
-                        output += new_output
-                        blocks_added += new_blocks
-                        pages_added += 1
+                    output += new_output
+                    blocks_added += new_blocks
+                    pages_added += 1
 
         # update overall library counter at end of parsing
 
@@ -1628,11 +1628,9 @@ class Parser:
             "creator_tool": meta["creator_tool"],
             "added_to_collection": time_stamp,
             "file_source": new_entry[6],
-            # changing from 'table'
-            "table_block": new_entry[7],
+            "table": new_entry[7],
             "external_files": new_entry[10],
-            # change from 'text'
-            "text_block": new_entry[11],
+            "text": new_entry[11],
             "header_text": new_entry[13],
             "text_search": new_entry[14],
             "user_tags": new_entry[15],
@@ -1647,7 +1645,7 @@ class Parser:
         if write_to_db:
             # registry_id = library.collection.insert_one(new_entry).inserted_id
             registry_id = CollectionWriter(library.library_name,
-                                           account_name=library.account_name).write_new_record(new_entry)
+                                           account_name=library.account_name).write_new_parsing_record(new_entry)
 
         return new_entry
 
@@ -1682,11 +1680,9 @@ class Parser:
             "creator_tool": meta["creator_tool"],
             "added_to_collection": time_stamp,
             "file_source": new_entry[6],
-            # changing from 'table'
-            "table_block": new_entry[7],
+            "table": new_entry[7],
             "external_files": new_entry[10],
-            # changing from 'text'
-            "text_block": new_entry[11],
+            "text": new_entry[11],
             "header_text": new_entry[13],
             "text_search": new_entry[14],
             "user_tags": new_entry[15],
