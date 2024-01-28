@@ -6,9 +6,8 @@
 """
 
 import os
-from llmware.library import Library
+from llmware.library import Library, LibraryCatalog
 from llmware.parsers import Parser, ImageParser
-from llmware.resources import LibraryCatalog
 from llmware.setup import Setup
 
 
