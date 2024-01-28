@@ -8,9 +8,9 @@ import os
 from llmware.parsers import Parser
 from llmware.prompts import Prompt
 from llmware.setup import Setup
-from llmware.util import PromptCatalog, Datasets
+from llmware.util import Datasets
 from llmware.resources import PromptState
-
+from llmware.models import PromptCatalog
 
 # Iterate through and analyze the contracts in a folder 
 def analyze_contracts_on_the_fly(model_name):
