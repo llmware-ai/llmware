@@ -7,7 +7,7 @@
 import os
 from llmware.prompts import Prompt
 from llmware.setup import Setup
-from llmware.util import PromptCatalog
+from llmware.models import PromptCatalog
 from llmware.library import Library
 from llmware.retrieval import Query
 
