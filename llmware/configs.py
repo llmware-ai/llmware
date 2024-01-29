@@ -738,3 +738,84 @@ class Neo4jConfig:
     @classmethod
     def get_database_name(cls):
         return cls._conf["database"]
+
+
+class ChromaDBConfig:
+    """Configuration object for chroma"""
+
+    _conf = {
+        'uri': os.environ.get('CHROMADB_URI', 'http://localhost:8000'),
+        'collection': os.environ.get('CHROMADB_COLLECTION', 'llmware')
+
+        # The provider decides whether we use authentication via username and password, or via a token.
+        # - For the username and password, this has to be set to chromadb.auth.basic.BasicAuthServerProvider
+        # - For the token, this has to be set to chromadb.auth.token.TokenAuthServerProvider
+        'auth_provider': os.environ.get('CHROMA_SERVER_AUTH_PROVIDER', None)
+
+        # The credential provider supplies the username and password or the token. This setting hence
+        # depends on the variable just above.
+        # - For the username and password, this has to be set to chromadb.auth.providers.HtpasswdFileServerAuthCredentialsProvider
+        # - For the token, this has to be set to chromadb.auth.token.TokenAuthServerProvider
+        'auth_credentials_provider': os.environ.get('CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER', None)
+
+        # Settings for authentication via username and password.
+        'user': os.environ.get('CHROMADB_USERNAME', 'admin'),
+        'password': os.environ.get('CHROMADB_PASSWORD', 'admin'),
+        'auth_credentials_file': os.environ.get('CHROMA_SERVER_AUTH_CREDENTIALS_FILE', 'server.htpasswd')
+
+        # Settings for authentication via token.
+        'auth_credentials': os.environ.get('CHROMA_SERVER_AUTH_CREDENTIALS', None)
+        'auth_token_transport_header': os.environ.get('CHROMA_SERVER_AUTH_TOKEN_TRANSPORT_HEADER', None)
+    }
+
+    @classmethod
+    def get_db_configs(cls):
+        configs = {}
+        for keys, values in cls._conf.items():
+            configs.update({keys:values})
+        return configs
+
+    @classmethod
+    def get_config(cls, name):
+        if name in cls._conf:
+            return cls._conf[name]
+        raise ConfigKeyException(name)
+
+    @classmethod
+    def set_config(cls, name, value):
+        cls._conf[name] = value
+
+    @classmethod
+    def get_uri_string(cls):
+        return cls._conf["uri"]
+
+    @classmethod
+    def get_user_name(cls):
+        return cls._conf["user"]
+
+    @classmethod
+    def get_db_pw(cls):
+        return cls._conf["password"]
+
+    @classmethod
+    def get_collection_name(cls):
+        return cls._conf["collection"]
+    @classmethod
+    def get_auth_provider(cls):
+        return cls._conf["auth_provider"]
+
+    @classmethod
+    def get_auth_credentials_provider(cls):
+        return cls._conf["auth_credentials_provider"]
+
+    @classmethod
+    def get_auth_credentials_file(cls):
+        return cls._conf["auth_credentials_file"]
+
+    @classmethod
+    def get_auth_credentials(cls):
+        return cls._conf["auth_credentials"]
+
+    @classmethod
+    def get_auth_token_transport_header(cls):
+        return cls._conf["auth_token_transport_header"]
