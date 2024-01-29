@@ -68,9 +68,15 @@ try:
 except:
     pass
 
+#   optional import of chromadb - not in project requirements
+try:
+    import chromadb
+except:
+    pass
+
 
 from llmware.configs import LLMWareConfig, MongoConfig, MilvusConfig, PostgresConfig, RedisConfig, \
-    PineconeConfig, QdrantConfig, Neo4jConfig, LanceDBConfig
+    PineconeConfig, QdrantConfig, Neo4jConfig, LanceDBConfig, ChromaDBConfig
 from llmware.exceptions import (UnsupportedEmbeddingDatabaseException, EmbeddingModelNotFoundException,
                                 DependencyNotInstalledException)
 from llmware.resources import CollectionRetrieval, CollectionWriter
@@ -2060,3 +2066,52 @@ class EmbeddingNeo4j:
                 return [d.data() for d in data]
             except CypherSyntaxError as e:
                 raise ValueError(f'Cypher Statement is not valid\n{e}')
+
+
+class EmbeddingChromaDB:
+
+    def __init__(self, library, model=None, model_name=None, embedding_dims=None):
+
+        # look up model card
+        if not model and not model_name:
+            raise EmbeddingModelNotFoundException("no-model-or-model-name-provided")
+
+
+        self.library = library
+        self.library_name = library.library_name
+        self.model = model
+        self.model_name = model_name
+        self.embedding_dims = embedding_dims
+        self.account_name = library.account_name
+
+        # if model passed (not None), then use model name
+        if self.model:
+            self.model_name = self.model.model_name
+            self.embedding_dims = model.embedding_dims
+
+        # user and password names are taken from environmen variables.
+        persistent_path = ChromaDBConfig.get_config('persistent_path')
+        host = ChromaDBConfig.get_config('host')
+
+        # Connect to chroma and verify connection.
+        if uri is None and persistent_path is None:
+            self.client = chromadb.EphemeralClient()
+
+        if persistent_path is not None:
+            self.client = chromadb.PersistentClient(path=persistent_path)
+
+        if host is not None:
+            self.client = chromadb.HttpClient(host=host,
+                                              port=ChromaDBConfig.get_config('port'),
+                                              ssl=ChromaDBConfig.get_config('ssl'),
+                                              headers=ChromaDBConfig.get_config('headers'))
+
+        collection_name = ChromaDBConfig.get_config('collection')
+        # If the collection already exists, it is returned.
+        _ = client.create_collection(name=collection_name, get_or_create=True)
+
+        self.utils = _EmbeddingUtils(library_name=self.library_name,
+                                     model_name=self.model_name,
+                                     account_name=self.account_name,
+                                     db_name="chromadb",
+                                     embedding_dims=self.embedding_dims)
