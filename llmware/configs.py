@@ -747,7 +747,15 @@ class ChromaDBConfig:
         'uri': os.environ.get('CHROMADB_URI', 'http://localhost:8000'),
         'collection': os.environ.get('CHROMADB_COLLECTION', 'llmware'),
 
+        #
+        # Persistent path to make chroma persistent.
+        # If this is None, then an in-memory only chroma instance will be created.
+        #
         'persistent_path': os.environ.get('CHROMADB_PERSISTENT_PATH', None),
+
+        #
+        # Configs below are only relevant when chromadb is run in client/server mode.
+        #
 
         # The provider decides whether we use authentication via username and password, or via a token.
         # - For the username and password, this has to be set to chromadb.auth.basic.BasicAuthServerProvider
