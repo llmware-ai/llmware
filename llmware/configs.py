@@ -745,7 +745,9 @@ class ChromaDBConfig:
 
     _conf = {
         'uri': os.environ.get('CHROMADB_URI', 'http://localhost:8000'),
-        'collection': os.environ.get('CHROMADB_COLLECTION', 'llmware')
+        'collection': os.environ.get('CHROMADB_COLLECTION', 'llmware'),
+
+        'persistent_path': os.environ.get('CHROMADB_PERSISTENT_PATH', None),
 
         # The provider decides whether we use authentication via username and password, or via a token.
         # - For the username and password, this has to be set to chromadb.auth.basic.BasicAuthServerProvider
