@@ -2818,6 +2818,138 @@ class Parser:
 
         return output
 
+    # update 012924 - new methods start here for duplicate checking
+
+    def input_build_folder(self, fp_list, exclude_if_already_in_library=True):
+
+        """ Creates a single 'input_build_folder' by consolidating the files across multiple folders, provided in
+        input list of file paths.   It will accept only one copy of a particular file, based on the
+        first version passed in the fp_list.  If exclude_if_already_in_library == True (default), then
+        any files already in the library will also be excluded. """
+
+        #   once the input_build_folder is created, it can be passed to any parsing method
+
+        library_docs = None
+
+        if not self.library:
+            exclude_if_already_in_library = False
+
+        if exclude_if_already_in_library:
+
+            # will get a list of all of the distinct files already in the library
+            library_docs = CollectionRetrieval(self.library_name,
+                                               account_name=self.account_name).get_distinct_list("file_source")
+
+        # create tmp workspace for new_input_folder
+        new_input_folder = os.path.join(self.parser_folder, "input_build" + os.sep)
+
+        #   if new_input_folder already created, then delete
+        if os.path.exists(new_input_folder):
+            shutil.rmtree(new_input_folder)
+
+        #   create and start fresh
+        if not os.path.exists(new_input_folder):
+            os.mkdir(new_input_folder)
+            os.chmod(new_input_folder, 0o777)
+
+        deduped_list = []
+        dupe_files = []
+        lib_match_list = []
+
+        for folder in fp_list:
+
+            input_files = os.listdir(folder)
+
+            for file in input_files:
+                if file not in deduped_list:
+                    dupe = 0
+                    if exclude_if_already_in_library:
+                        for lib_file in library_docs:
+                            if os.sep in lib_file:
+                                lib_file = lib_file.split(os.sep)[-1]
+                            if file == lib_file:
+                                dupe = 1
+                                lib_match_list.append(file)
+                                break
+                    if dupe == 0:
+                        deduped_list.append(file)
+                        shutil.copy(os.path.join(folder,file), os.path.join(new_input_folder,file))
+                else:
+                    # copies the full path of the file that is being excluded
+                    dupe_files.append(os.path.join(folder, file))
+
+        output_info = {"new_input_folder": new_input_folder,
+                       "file_count": len(deduped_list),
+                       "files_included": deduped_list,
+                       "duplicates_removed":dupe_files,
+                       "files_in_library_already": lib_match_list}
+
+        return output_info
+
+    def delete_input_build_folder(self):
+
+        """ Deletes an input build folder - at end of parsing transaction(s) using input_builder_folder """
+
+        input_build_folder = os.path.join(self.parser_folder, "input_build" + os.sep)
+
+        #   if new_input_folder already created, then delete
+        if os.path.exists(input_build_folder):
+            shutil.rmtree(input_build_folder)
+
+        return True
+
+    def duplicate_file_already_in_library(self, fp):
+
+        """ Reviews the files in input folder path, and checks if any of those files have blocks of information
+        in the library database collection. """
+
+        existing_docs_in_collection = CollectionRetrieval(self.library_name,
+                                                          account_name=self.account_name).get_distinct_list("file_source")
+
+        input_files = os.listdir(fp)
+
+        no_dupes_list = []
+        matching_file_names = []
+
+        for file in input_files:
+
+            match_found = 0
+
+            for existing_file in existing_docs_in_collection:
+
+                if os.sep in existing_file:
+                    # split to get base file name
+                    existing_file = existing_file.split(os.sep)[-1]
+
+                if file == existing_file:
+                    matching_file_names.append(file)
+                    match_found = 1
+                    break
+
+            if match_found == 0:
+                no_dupes_list.append(file)
+
+        duplicate_check = {"not_in_library": no_dupes_list, "in_library": matching_file_names}
+
+        return duplicate_check
+
+    def basic_library_duplicate_check(self, fn):
+
+        """ Checks if file is already part of the copied upload files for the library, and returns
+        True if file is found, and False if not found, e.g., 'new' to the library """
+
+        in_library = False
+
+        # run comparison with existing files in library copy path
+        if self.library:
+            if os.path.exists(self.library.file_copy_path):
+                existing_files = os.listdir(self.library.file_copy_path)
+
+                if fn in existing_files:
+                    in_library = True
+
+        return in_library
+
 
 class WebSiteParser:
 
