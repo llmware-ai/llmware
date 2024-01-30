@@ -5,6 +5,9 @@ RUN apt-get update \
 
 RUN git clone https://github.com/llmware-ai/llmware.git
 RUN /llmware/scripts/dev/load_native_libraries.sh
-RUN cd /llmware \
- && pip install .
+RUN cd llmware/llmware && pip install -r requirements.txt
+
+ENV PYTHONPATH=/llmware
+WORKDIR /llmware
+
 CMD /bin/bash
