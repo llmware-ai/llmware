@@ -2116,7 +2116,7 @@ class EmbeddingChromaDB:
 
         collection_name = ChromaDBConfig.get_config('collection')
         # If the collection already exists, it is returned.
-        _ = client.create_collection(name=collection_name, get_or_create=True)
+        self._collection = client.create_collection(name=collection_name, get_or_create=True)
 
 
         #
@@ -2170,10 +2170,10 @@ class EmbeddingChromaDB:
                 metadats = [{'doc_id': doc_id, 'block_id': block_id, 'sentence': sentence}
                             for doc_id, block_id, sentence in zip(doc_ids, block_ids, sentences)]
 
-                self.client.get_collection(name=ChromaDBConfig.get_config('collection')).add(ids=ids,
-                                                                                             documents=doc_ids,
-                                                                                             embeddings=vectors,
-                                                                                             metadats=metadatas)
+                self._collection.add(ids=ids,
+                                     documents=doc_ids,
+                                     embeddings=vectors,
+                                     metadats=metadatas)
 
 
                 current_index = self.utils.update_text_index(block_ids, current_index)
@@ -2193,7 +2193,7 @@ class EmbeddingChromaDB:
     def search_index(self, query_embedding_vector, sample_count=10):
         block_list = []
 
-        results = self.client.get_collection(name=ChromaDBConfig.get_config('collection')).query(query_embeddings=query_embedding_vector, n_results=sample_count)
+        results = self._collection.query(query_embeddings=query_embedding_vector, n_results=sample_count)
 
         for idx_result, result in enumerate(results):
             block_id = result['metadatas']['block_id']
