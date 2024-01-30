@@ -2127,3 +2127,65 @@ class EmbeddingChromaDB:
                                      account_name=self.account_name,
                                      db_name="chromadb",
                                      embedding_dims=self.embedding_dims)
+
+    def create_new_embedding(self, doc_ids=None, batch_size=500):
+
+        all_blocks_cursor, num_of_blocks = self.utils.get_blocks_cursor(doc_ids=doc_ids)
+
+        # Initialize a new status
+        status = Status(self.library.account_name)
+        status.new_embedding_status(self.library.library_name, self.model_name, num_of_blocks)
+
+        embeddings_created = 0
+        current_index = 0
+        finished = False
+
+        # all_blocks_iter = all_blocks_cursor.pull_one()
+
+        while not finished:
+            block_ids, doc_ids, sentences = [], [], []
+
+            # Build the next batch
+            for i in range(batch_size):
+                block = all_blocks_cursor.pull_one()
+                if not block:
+                    finished = True
+                    break
+
+                text_search = block["text_search"].strip()
+                if not text_search or len(text_search) < 1:
+                    continue
+
+                block_ids.append(str(block["_id"]))
+                doc_ids.append(int(block["doc_ID"]))
+                sentences.append(text_search)
+
+            if len(sentences) > 0:
+                # Process the batch
+                vectors = self.model.embedding(sentences)
+                data = [block_ids, doc_ids, vectors]
+
+                # Insert into ChromaDB
+                ids = [f'{doc_id}-block_id' for doc_id, block_id in zip(doc_id, block_id)]
+                metadats = [{'doc_id': doc_id, 'block_id': block_id, 'sentence': sentence}
+                            for doc_id, block_id, sentence in zip(doc_ids, block_ids, sentences)]
+
+                self.client.get_collection(name=ChromaDBConfig.get_config('collection')).add(ids=ids,
+                                                                                             documents=doc_ids,
+                                                                                             embeddings=vectors,
+                                                                                             metadats=metadatas)
+
+
+                current_index = self.utils.update_text_index(block_ids, current_index)
+
+                # Update statistics
+                embeddings_created += len(sentences)
+                status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
+
+                print(f"update: embedding_handler - ChromaDB - Embeddings Created: {embeddings_created} of {num_of_blocks}")
+
+
+        embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
+        logging.info(f'update: EmbeddingHandler - ChromaDB - embedding_summary - {embedding_summary}')
+
+        return embedding_summary
