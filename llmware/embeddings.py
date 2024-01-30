@@ -192,7 +192,7 @@ class EmbeddingHandler:
                                    embedding_dims=embedding_dims)
 
         if embedding_db == "chromadb":
-            return EmbeddingCrhomaDB(self.library, model=model, model_name=model_name,
+            return EmbeddingChromaDB(self.library, model=model, model_name=model_name,
                                    embedding_dims=embedding_dims)
 
     def generate_index_name(self, account_name, library_name, model_name, max_component_length=19):
