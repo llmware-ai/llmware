@@ -744,41 +744,41 @@ class ChromaDBConfig:
     """Configuration object for chroma"""
 
     _conf = {
-        'collection': os.environ.get('CHROMADB_COLLECTION', 'llmware'),
+        'collection': os.environ.get('CHROMA_COLLECTION', 'llmware'),
 
         #
         # Persistent path to make chroma persistent.
         # If this is None, then an in-memory only chroma instance will be created.
         #
-        'persistent_path': os.environ.get('CHROMADB_PERSISTENT_PATH', None),
+        'persistent_path': os.environ.get('CHROMA_PERSISTENT_PATH', None),
 
         #
         # Configs below are only relevant when chromadb is run in client/server mode.
         #
-        'host': os.environ.get('CHROMADB_HOST', 'localhost'),
-        'port': os.environ.get('CHROMADB_PORT', 8000),
-        'ssl': os.environ.get('CHROMADB_SSL', False),
-        'headers': os.environ.get('CHROMADB_HEADERS', {}),
+        'host': os.environ.get('CHROMA_HOST', 'localhost'),
+        'port': os.environ.get('CHROMA_PORT', 8000),
+        'ssl': os.environ.get('CHROMA_SSL', False),
+        'headers': os.environ.get('CHROMA_HEADERS', {}),
 
         # The provider decides whether we use authentication via username and password, or via a token.
         # - For the username and password, this has to be set to chromadb.auth.basic.BasicAuthServerProvider
         # - For the token, this has to be set to chromadb.auth.token.TokenAuthServerProvider
-        'auth_provider': os.environ.get('CHROMADB_SERVER_AUTH_PROVIDER', None)
+        'auth_provider': os.environ.get('CHROMA_SERVER_AUTH_PROVIDER', None)
 
         # The credential provider supplies the username and password or the token. This setting hence
         # depends on the variable just above.
         # - For the username and password, this has to be set to chromadb.auth.providers.HtpasswdFileServerAuthCredentialsProvider
         # - For the token, this has to be set to chromadb.auth.token.TokenAuthServerProvider
-        'auth_credentials_provider': os.environ.get('CHROMADB_SERVER_AUTH_CREDENTIALS_PROVIDER', None)
+        'auth_credentials_provider': os.environ.get('CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER', None)
 
         # Settings for authentication via username and password.
-        'user': os.environ.get('CHROMADB_USERNAME', 'admin'),
-        'password': os.environ.get('CHROMADB_PASSWORD', 'admin'),
-        'auth_credentials_file': os.environ.get('CHROMADB_SERVER_AUTH_CREDENTIALS_FILE', 'server.htpasswd')
+        'user': os.environ.get('CHROMA_USERNAME', 'admin'),
+        'password': os.environ.get('CHROMA_PASSWORD', 'admin'),
+        'auth_credentials_file': os.environ.get('CHROMA_SERVER_AUTH_CREDENTIALS_FILE', 'server.htpasswd')
 
         # Settings for authentication via token.
-        'auth_credentials': os.environ.get('CHROMADB_SERVER_AUTH_CREDENTIALS', None)
-        'auth_token_transport_header': os.environ.get('CHROMADB_SERVER_AUTH_TOKEN_TRANSPORT_HEADER', None)
+        'auth_credentials': os.environ.get('CHROMA_SERVER_AUTH_CREDENTIALS', None)
+        'auth_token_transport_header': os.environ.get('CHROMA_SERVER_AUTH_TOKEN_TRANSPORT_HEADER', None)
     }
 
     @classmethod
