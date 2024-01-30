@@ -755,7 +755,7 @@ class ChromaDBConfig:
         #
         # Configs below are only relevant when chromadb is run in client/server mode.
         #
-        'host': os.environ.get('CHROMA_HOST', 'localhost'),
+        'host': os.environ.get('CHROMA_HOST', None),
         'port': os.environ.get('CHROMA_PORT', 8000),
         'ssl': os.environ.get('CHROMA_SSL', False),
         'headers': os.environ.get('CHROMA_HEADERS', {}),
