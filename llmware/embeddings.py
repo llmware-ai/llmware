@@ -2120,7 +2120,7 @@ class EmbeddingChromaDB:
 
         collection_name = ChromaDBConfig.get_config('collection')
         # If the collection already exists, it is returned.
-        self._collection = client.create_collection(name=collection_name, get_or_create=True)
+        self._collection = self.client.create_collection(name=collection_name, get_or_create=True)
 
 
         #
