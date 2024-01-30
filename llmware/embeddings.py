@@ -191,6 +191,10 @@ class EmbeddingHandler:
             return EmbeddingNeo4j(self.library, model=model, model_name=model_name,
                                    embedding_dims=embedding_dims)
 
+        if embedding_db == "chromadb":
+            return EmbeddingCrhomaDB(self.library, model=model, model_name=model_name,
+                                   embedding_dims=embedding_dims)
+
     def generate_index_name(self, account_name, library_name, model_name, max_component_length=19):
 
         """ Creates a unique name for the vector index that concats library_name + model_name + account_name """
