@@ -2207,3 +2207,8 @@ class EmbeddingChromaDB:
                 block_list.append((block, result['distances'][idx_result]))
 
         return block_list
+
+    def delete_index(self):
+
+        self.client.delete_collection(self._collection.name)
+        self.utils.unset_text_index()
