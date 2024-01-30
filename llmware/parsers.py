@@ -1356,7 +1356,7 @@ class Parser:
 
         return output
 
-    def parse_text(self, input_fp, write_to_db=True, save_history=True):
+    def parse_text(self, input_fp, write_to_db=True, save_history=True, dupe_check=False,copy_to_library=False):
 
         """ Main entry point to parser for .txt, .csv, .json and .md files """
 
@@ -1388,64 +1388,76 @@ class Parser:
 
         for file in os.listdir(input_fp):
 
-            text_output = []
-            # increment and get new doc_id
-            if write_to_db_on == 1:
-                self.library.doc_ID = self.library.get_and_increment_doc_id()
+            # by default, will process all files with text file extensions
+            go_ahead = True
 
-            file_type = file.split(".")[-1]
+            if dupe_check:
 
-            # sub-routing by type of text file to appropriate handler
+                #   basic_library_duplicate_check returns TRUE if it finds the file
+                if self.basic_library_duplicate_check(file):
+                    go_ahead = False
 
-            if file_type.lower() in ["txt", "md"]:
-                # will parse as text
-                text_output = TextParser(self).text_file_handler (input_fp, file)
-                content_type = "text"
-                file_type = "txt"
+            if go_ahead:
 
-            if file_type.lower() in ["csv"]:
-                # will parse as table
-                interpret_as_table=True
-                text_output = TextParser(self).csv_file_handler(input_fp, file, interpret_as_table=True)
-                content_type = "text"
-                file_type = "csv"
-                if interpret_as_table:
-                    content_type = "table"
+                text_output = []
+                # increment and get new doc_id
+                if write_to_db_on == 1:
+                    self.library.doc_ID = self.library.get_and_increment_doc_id()
 
-            if file_type.lower() in ["json","jsonl"]:
-                # will parse each line item as separate entry
+                file_type = file.split(".")[-1]
 
-                interpret_as_table=False
-                keys = ["text"]
-                text_output = TextParser(self).jsonl_file_handler(input_fp,file,
-                                                                  key_list=keys,
-                                                                  interpret_as_table=interpret_as_table,
-                                                                  separator="\n")
-                content_type = "text"
-                file_type = "jsonl"
-                if interpret_as_table:
-                    content_type = "table"
+                # sub-routing by type of text file to appropriate handler
 
-            # consolidate into single function - breaking down output rows
+                if file_type.lower() in ["txt", "md"]:
+                    # will parse as text
+                    text_output = TextParser(self).text_file_handler (input_fp, file)
+                    content_type = "text"
+                    file_type = "txt"
 
-            if write_to_db_on == 1:
-                new_output, new_blocks, new_pages = self._write_output_to_db(text_output, file,
-                                                                             content_type=content_type,
-                                                                             file_type=file_type)
-            else:
-                new_output, new_blocks, new_pages = self._write_output_to_dict(text_output,file,
-                                                                               content_type=content_type,
-                                                                               file_type=file_type)
+                if file_type.lower() in ["csv"]:
+                    # will parse as table
+                    interpret_as_table=True
+                    text_output = TextParser(self).csv_file_handler(input_fp, file, interpret_as_table=True)
+                    content_type = "text"
+                    file_type = "csv"
+                    if interpret_as_table:
+                        content_type = "table"
 
+                if file_type.lower() in ["json","jsonl"]:
+                    # will parse each line item as separate entry
+
+                    interpret_as_table=False
+                    keys = ["text"]
+                    text_output = TextParser(self).jsonl_file_handler(input_fp,file,
+                                                                      key_list=keys,
+                                                                      interpret_as_table=interpret_as_table,
+                                                                      separator="\n")
+                    content_type = "text"
+                    file_type = "jsonl"
+                    if interpret_as_table:
+                        content_type = "table"
+
+                # consolidate into single function - breaking down output rows
+
+                if write_to_db_on == 1:
+                    new_output, new_blocks, new_pages = self._write_output_to_db(text_output, file,
+                                                                                 content_type=content_type,
+                                                                                 file_type=file_type)
+                else:
+                    new_output, new_blocks, new_pages = self._write_output_to_dict(text_output,file,
+                                                                                   content_type=content_type,
+                                                                                   file_type=file_type)
+
+                # will pass output_blocks as return value
                 output += new_output
 
-            docs_added += 1
-            blocks_created += new_blocks
-            pages_added += new_pages
+                docs_added += 1
+                blocks_created += new_blocks
+                pages_added += new_pages
 
         # update overall library counter at end of parsing
 
-        if len(text_output) > 0:
+        if len(output) > 0:
             if write_to_db_on == 1:
                 dummy = self.library.set_incremental_docs_blocks_images(added_docs=docs_added,added_blocks=blocks_created,
                                                                         added_images=0, added_pages=pages_added)
@@ -1453,9 +1465,13 @@ class Parser:
             if save_history and write_to_db_on == 0:
                 ParserState().save_parser_output(self.parser_job_id, self.parser_output)
 
+            if copy_to_library:
+                self.uploads(input_fp)
+
         return output
 
-    def parse_pdf_by_ocr_images(self, input_fp, write_to_db=True, save_history=True):
+    def parse_pdf_by_ocr_images(self, input_fp, write_to_db=True, save_history=True,
+                                dupe_check=False,copy_to_library=False):
 
         """ Alternative PDF parser option for scanned 'image-based' PDFs where digital parsing is not an option. """
 
@@ -1489,28 +1505,41 @@ class Parser:
 
         for file in os.listdir(input_fp):
 
-            ext = file.split(".")[-1]
-            if ext == "pdf":
-                doc_fn = secure_filename(file)
+            # by default, will process all files with text file extensions
+            go_ahead = True
 
-                # get new doc_ID number
-                if write_to_db_on == 1:
-                    self.library.doc_ID = self.library.get_and_increment_doc_id()
+            if dupe_check:
 
-                docs_added += 1
+                #   basic_library_duplicate_check returns TRUE if it finds the file
+                if self.basic_library_duplicate_check(file):
+                    go_ahead = False
 
-                output_by_page = ImageParser(self).process_pdf_by_ocr(input_fp, file)
+            if go_ahead:
 
-                for j, blocks in enumerate(output_by_page):
+                ext = file.split(".")[-1]
+                if ext == "pdf":
+                    doc_fn = secure_filename(file)
 
+                    # get new doc_ID number
                     if write_to_db_on == 1:
-                        new_output, new_blocks, _ = self._write_output_to_db(blocks,doc_fn,page_num=(j+1))
-                    else:
-                        new_output, new_blocks, _ = self._write_output_to_dict(blocks,doc_fn,page_num=(j+1))
+                        self.library.doc_ID = self.library.get_and_increment_doc_id()
 
-                    output += new_output
-                    blocks_added += new_blocks
-                    pages_added += 1
+                    docs_added += 1
+
+                    output_by_page = ImageParser(self).process_pdf_by_ocr(input_fp, file)
+
+                    for j, blocks in enumerate(output_by_page):
+
+                        if write_to_db_on == 1:
+                            new_output, new_blocks, _ = self._write_output_to_db(blocks,doc_fn,page_num=(j+1))
+                        else:
+                            new_output, new_blocks, _ = self._write_output_to_dict(blocks,doc_fn,page_num=(j+1))
+
+                        output += new_output
+                        blocks_added += new_blocks
+                        pages_added += 1
+
+                        print("update: writing doc - page - ", file, j, len(blocks))
 
         # update overall library counter at end of parsing
 
@@ -1520,6 +1549,9 @@ class Parser:
 
         if save_history and write_to_db_on == 0:
             ParserState().save_parser_output(self.parser_job_id, self.parser_output)
+
+        if copy_to_library:
+            self.uploads(input_fp)
 
         return output
 
@@ -1780,7 +1812,7 @@ class Parser:
 
         return output
 
-    def parse_image(self, input_folder, write_to_db=True, save_history=True):
+    def parse_image(self, input_folder, write_to_db=True, save_history=True, dupe_check=False,copy_to_library=False):
 
         """ Main entry point for OCR based parsing of image files. """
 
@@ -1811,23 +1843,35 @@ class Parser:
 
         for file in os.listdir(input_folder):
 
-            # increment and get new doc_id
-            if write_to_db_on == 1:
-                self.library.doc_ID = self.library.get_and_increment_doc_id()
+            # by default, will process all files with text file extensions
+            go_ahead = True
 
-            ip_output = ImageParser(self).process_ocr(input_folder, file)
+            if dupe_check:
 
-            if write_to_db_on == 1:
-                new_output, new_blocks, new_pages = self._write_output_to_db(ip_output,file,content_type="text",
-                                                                             file_type="ocr")
-            else:
-                new_output, new_blocks, new_pages = self._write_output_to_dict(ip_output,file, content_type="text",
-                                                                               file_type="ocr")
+                #   basic_library_duplicate_check returns TRUE if it finds the file
+                if self.basic_library_duplicate_check(file):
+                    go_ahead = False
+
+            if go_ahead:
+
+                # increment and get new doc_id
+                if write_to_db_on == 1:
+                    self.library.doc_ID = self.library.get_and_increment_doc_id()
+
+                ip_output = ImageParser(self).process_ocr(input_folder, file)
+
+                if write_to_db_on == 1:
+                    new_output, new_blocks, new_pages = self._write_output_to_db(ip_output,file,content_type="text",
+                                                                                 file_type="ocr")
+                else:
+                    new_output, new_blocks, new_pages = self._write_output_to_dict(ip_output,file, content_type="text",
+                                                                                   file_type="ocr")
+                # return output value in either case
                 output += new_output
 
-            docs_added += 1
-            blocks_added += new_blocks
-            pages_added += new_pages
+                docs_added += 1
+                blocks_added += new_blocks
+                pages_added += new_pages
 
         if write_to_db_on == 1:
             dummy = self.library.set_incremental_docs_blocks_images(added_docs=docs_added, added_blocks=blocks_added,
@@ -1836,9 +1880,12 @@ class Parser:
         if save_history and write_to_db_on == 0:
             ParserState().save_parser_output(self.parser_job_id, self.parser_output)
 
+        if copy_to_library:
+            self.uploads(input_folder)
+
         return output
 
-    def parse_voice(self, input_folder, write_to_db=True, save_history=True):
+    def parse_voice(self, input_folder, write_to_db=True, save_history=True, dupe_check=False,copy_to_library=False):
 
         """ Main entry point for parsing voice wav files. """
 
@@ -1869,23 +1916,35 @@ class Parser:
 
         for file in os.listdir(input_folder):
 
-            # increment and get new doc_id
-            if write_to_db_on == 1:
-                self.library.doc_ID = self.library.get_and_increment_doc_id()
+            # by default, will process all files with text file extensions
+            go_ahead = True
 
-            vp_output = VoiceParser(self).add_voice_file(input_folder, file)
+            if dupe_check:
 
-            if write_to_db_on == 1:
-                new_output, new_blocks, new_pages = self._write_output_to_db(vp_output, file, content_type="text",
-                                                                             file_type="voice-wav")
-            else:
-                new_output, new_blocks, new_pages = self._write_output_to_dict(vp_output,file, content_type="text",
-                                                                               file_type="voice-wav")
+                #   basic_library_duplicate_check returns TRUE if it finds the file
+                if self.basic_library_duplicate_check(file):
+                    go_ahead = False
+
+            if go_ahead:
+
+                # increment and get new doc_id
+                if write_to_db_on == 1:
+                    self.library.doc_ID = self.library.get_and_increment_doc_id()
+
+                vp_output = VoiceParser(self).add_voice_file(input_folder, file)
+
+                if write_to_db_on == 1:
+                    new_output, new_blocks, new_pages = self._write_output_to_db(vp_output, file, content_type="text",
+                                                                                 file_type="voice-wav")
+                else:
+                    new_output, new_blocks, new_pages = self._write_output_to_dict(vp_output,file, content_type="text",
+                                                                                   file_type="voice-wav")
+                # return output in either case
                 output += new_output
 
-            docs_added += 1
-            blocks_added += new_blocks
-            pages_added += new_pages
+                docs_added += 1
+                blocks_added += new_blocks
+                pages_added += new_pages
 
         if write_to_db_on == 1:
             dummy = self.library.set_incremental_docs_blocks_images(added_docs=docs_added, added_blocks=blocks_added,
@@ -1894,9 +1953,12 @@ class Parser:
         if save_history and write_to_db_on == 0:
             ParserState().save_parser_output(self.parser_job_id, self.parser_output)
 
+        if copy_to_library:
+            self.uploads(input_folder)
+
         return output
 
-    def parse_dialog(self, input_folder, write_to_db=True, save_history=True):
+    def parse_dialog(self, input_folder, write_to_db=True, save_history=True, dupe_check=False,copy_to_library=True):
 
         """ Main entry point for parsing AWS dialog transcripts. """
 
@@ -1927,53 +1989,66 @@ class Parser:
 
         for file in os.listdir(input_folder):
 
-            if file.endswith(".json"):
+            # by default, will process all files with text file extensions
+            go_ahead = True
 
-                # increment and get new doc_id
-                if write_to_db_on == 1:
-                    self.library.doc_ID = self.library.get_and_increment_doc_id()
+            if dupe_check:
 
-                logging.info(f"update: dialog file - {file}")
+                #   basic_library_duplicate_check returns TRUE if it finds the file
+                if self.basic_library_duplicate_check(file):
+                    go_ahead = False
 
-                dp_parse_output = DialogParser(self).parse_aws_json_file_format(input_folder, file)
+            if go_ahead:
 
-                block_id = 0
+                if file.endswith(".json"):
 
-                for i, blocks in enumerate(dp_parse_output):
-
-                    logging.info(f"update: dialog turn - {i} {blocks}")
-                  
-                    # iterate thru each block -> add to metadata
-                    speaker_name = blocks["speaker_name"]
-
-                    meta = {"author": speaker_name, "modified_date": "", "created_date": "", "creator_tool": ""}
-
-                    coords_dict = {"coords_x": blocks["start_time"], "coords_y": blocks["stop_time"],
-                                   "coords_cx": 0, "coords_cy": 0}
-
-                    text_entry = blocks["text"]
-
-                    # conforming file format with full path of dialog intake path
-
-                    format_type = "aws_json"
-
-                    new_entry = ("text", format_type, (1, 0), counter, "", "", input_folder + file,
-                                 text_entry, text_entry, "", "", text_entry, text_entry, "", text_entry,
-                                 "", "", "", "", "")
-
-                    counter += 1
-                    dialog_transcripts_added += 1
-                    conversation_turns += 1
-
+                    # increment and get new doc_id
                     if write_to_db_on == 1:
-                        output = self.add_create_new_record(self.library, new_entry, meta, coords_dict,
-                                                            dialog_value="true")
-                        self.library.block_ID += 1
-                    else:
-                        entry_output = self.create_one_parsing_output_dict(block_id,new_entry,meta,coords_dict,
-                                                                           dialog_value="true")
-                        block_id += 1
-                        self.parser_output.append(output)
+                        self.library.doc_ID = self.library.get_and_increment_doc_id()
+
+                    logging.info(f"update: dialog file - {file}")
+
+                    dp_parse_output = DialogParser(self).parse_aws_json_file_format(input_folder, file)
+
+                    block_id = 0
+
+                    for i, blocks in enumerate(dp_parse_output):
+
+                        logging.info(f"update: dialog turn - {i} {blocks}")
+
+                        # iterate thru each block -> add to metadata
+                        speaker_name = blocks["speaker_name"]
+
+                        meta = {"author": speaker_name, "modified_date": "", "created_date": "", "creator_tool": ""}
+
+                        coords_dict = {"coords_x": blocks["start_time"], "coords_y": blocks["stop_time"],
+                                       "coords_cx": 0, "coords_cy": 0}
+
+                        text_entry = blocks["text"]
+
+                        # conforming file format with full path of dialog intake path
+
+                        format_type = "aws_json"
+
+                        new_entry = ("text", format_type, (1, 0), counter, "", "", input_folder + file,
+                                     text_entry, text_entry, "", "", text_entry, text_entry, "", text_entry,
+                                     "", "", "", "", "")
+
+                        counter += 1
+                        dialog_transcripts_added += 1
+                        conversation_turns += 1
+
+                        if write_to_db_on == 1:
+                            entry_output = self.add_create_new_record(self.library, new_entry, meta, coords_dict,
+                                                                      dialog_value="true")
+                            self.library.block_ID += 1
+                        else:
+                            entry_output = self.create_one_parsing_output_dict(block_id,new_entry,meta,coords_dict,
+                                                                               dialog_value="true")
+                            block_id += 1
+                            self.parser_output.append(entry_output)
+
+                        # return output in either case
                         output.append(entry_output)
 
         pages_added = dialog_transcripts_added
@@ -1984,7 +2059,9 @@ class Parser:
                                                                     added_images=0,
                                                                     added_pages=pages_added)
 
-            self.uploads(input_folder)
+            # by default copies transcripts to upload folder
+            if copy_to_library:
+                self.uploads(input_folder)
 
         if save_history and write_to_db_on == 0:
             ParserState().save_parser_output(self.parser_job_id, self.parser_output)
@@ -2188,7 +2265,7 @@ class Parser:
 
         return output
 
-    def uploads(self, tmp_dir):
+    def uploads(self, tmp_dir, overwrite=False):
 
         """ Utility method that handles 'uploads' of input files into library structure. """
 
@@ -2201,14 +2278,17 @@ class Parser:
             return -1
 
         upload_fp = self.library.file_copy_path
-
+        library_files = os.listdir(upload_fp)
         files = os.listdir(tmp_dir)
         for x in range(0, len(files)):
             safe_name = self.prep_filename(files[x])
 
             # exclude any folders
             if not os.path.isdir(os.path.join(tmp_dir,files[x])):
-                shutil.copy(os.path.join(tmp_dir, files[x]), os.path.join(upload_fp, files[x]))
+
+                #   will not over-write an existing file unless overwrite flag set
+                if overwrite or files[x] not in library_files:
+                    shutil.copy(os.path.join(tmp_dir, files[x]), os.path.join(upload_fp, files[x]))
 
         return len(files)
 
