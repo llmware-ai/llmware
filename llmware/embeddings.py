@@ -2106,7 +2106,7 @@ class EmbeddingChromaDB:
         host = ChromaDBConfig.get_config('host')
 
         # Instantiate client.
-        if uri is None and persistent_path is None:
+        if host is None and persistent_path is None:
             self.client = chromadb.EphemeralClient()
 
         if persistent_path is not None:
