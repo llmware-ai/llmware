@@ -48,26 +48,33 @@ def msa_processing(library_name, llm_model_name):
 
     #   results_only = False will return a dictionary with 4 keys:  {"query", "results", "doc_ID", "file_source"}
     msa_docs = results["file_source"]
+    msa_doc_ids = results["doc_ID"]
 
     #   load prompt/llm locally
     prompter = Prompt().load_model(llm_model_name)
 
-    print("update: identified the following msa docs: ", msa_docs)
+    print("update: identified the following msa doc id: ", msa_doc_ids)
 
     #   analyze each MSA - "query" & "llm prompt"
-    for i, docs in enumerate(msa_docs):
+    for i, doc_id in enumerate(msa_doc_ids):
 
         print("\n")
-        print (i+1, "Reviewing MSA - ", docs)
+        docs = msa_docs[i]
+        if os.sep in docs:
+            # handles difference in windows file formats vs. Mac/Linux
+            docs = docs.split(os.sep)[-1]
+
+        print (i+1, "Reviewing MSA - ", doc_id, docs)
 
         #   look for the termination provisions in each document
-        doc_filter = {"file_source": [docs]}
+        doc_filter = {"doc_ID": [doc_id]}
         termination_provisions = q.text_query_with_document_filter("termination", doc_filter)
 
         #   package the provisions as a source to a prompt
         sources = prompter.add_source_query_results(termination_provisions)
 
-        print("update: sources - ", sources)
+        #   if you want to see more details about how the sources are packaged: uncomment this line-
+        #   print("update: sources - ", sources)
 
         #   call the LLM and ask our question
         response = prompter.prompt_with_source("What is the notice for termination for convenience?")
