@@ -44,41 +44,49 @@ def example_4a_contract_analysis_from_library (model_name, verbose=False):
     print (f"\n > Loading model {model_name}...")
 
     q = Query(contracts_lib)
+
+    # get a list of all of the unique documents in the library
+
+    # doc id list
+    doc_list = q.list_doc_id()
+    print("update: document id list - ", doc_list)
+
+    # filename list
+    fn_list = q.list_doc_fn()
+    print("update: filename list - ", fn_list)
+
     prompter = Prompt().load_model(model_name)
 
-    for i, contract in enumerate(os.listdir(contracts_path)):
+    for i, doc_id in enumerate(doc_list):
 
-        # exclude potential mac os created file artifact in the samples folder path
-        if contract != ".DS_Store":
-            
-            print("\nAnalyzing contract: ", str(i+1), contract)
+        print("\nAnalyzing contract: ", str(i+1), doc_id, fn_list[i])
 
-            print("LLM Responses:")
-            
-            for question in question_list:
+        print("LLM Responses:")
 
-                query_topic = question["topic"]
-                llm_question = question["llm_query"]
+        for question in question_list:
 
-                doc_filter = {"file_source": [contract]}
-                query_results = q.text_query_with_document_filter(query_topic,doc_filter,result_count=5,exact_mode=True)
+            query_topic = question["topic"]
+            llm_question = question["llm_query"]
 
-                if verbose:
-                    # this will display the query results from the query above
-                    for j, qr in enumerate(query_results):
-                        print("update: querying document - ", query_topic, j, doc_filter, qr)
+            doc_filter = {"doc_ID": [doc_id]}
+            query_results = q.text_query_with_document_filter(query_topic,doc_filter,result_count=5,exact_mode=True)
 
-                source = prompter.add_source_query_results(query_results)
+            if verbose:
+                # this will display the query results from the query above
+                for j, qr in enumerate(query_results):
+                    print("update: querying document - ", query_topic, j, doc_filter, qr)
 
-                #   *** this is the call to the llm with the source packaged in the context automatically ***
-                responses = prompter.prompt_with_source(llm_question, prompt_name="default_with_context", temperature=0.3)
+            source = prompter.add_source_query_results(query_results)
 
-                #   unpacking the results from the LLM
-                for r, response in enumerate(responses):
-                    print("update: llm response -  ", llm_question, re.sub("[\n]"," ", response["llm_response"]).strip())
+            #   *** this is the call to the llm with the source packaged in the context automatically ***
+            responses = prompter.prompt_with_source(llm_question, prompt_name="default_with_context", temperature=0.3)
 
-                # We're done with this contract, clear the source from the prompt
-                prompter.clear_source_materials()
+            #   unpacking the results from the LLM
+            for r, response in enumerate(responses):
+                print("update: llm response -  ", llm_question, re.sub("[\n]"," ", response["llm_response"]).strip())
+
+            # We're done with this contract, clear the source from the prompt
+            prompter.clear_source_materials()
 
     #   Save jsonl report to jsonl to /prompt_history folder
     print("\nPrompt state saved at: ", os.path.join(LLMWareConfig.get_prompt_path(),prompter.prompt_id))
