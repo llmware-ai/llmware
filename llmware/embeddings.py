@@ -2071,6 +2071,9 @@ class EmbeddingNeo4j:
 class EmbeddingChromaDB:
 
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
+        #
+        # General llmware set up code
+        #
 
         # look up model card
         if not model and not model_name:
@@ -2088,6 +2091,11 @@ class EmbeddingChromaDB:
         if self.model:
             self.model_name = self.model.model_name
             self.embedding_dims = model.embedding_dims
+
+
+        #
+        # ChromaDB instantiation
+        #
 
         # Get environment variables to decide which client to use.
         persistent_path = ChromaDBConfig.get_config('persistent_path')
@@ -2110,6 +2118,10 @@ class EmbeddingChromaDB:
         # If the collection already exists, it is returned.
         _ = client.create_collection(name=collection_name, get_or_create=True)
 
+
+        #
+        # Embedding utils
+        #
         self.utils = _EmbeddingUtils(library_name=self.library_name,
                                      model_name=self.model_name,
                                      account_name=self.account_name,
