@@ -2089,11 +2089,11 @@ class EmbeddingChromaDB:
             self.model_name = self.model.model_name
             self.embedding_dims = model.embedding_dims
 
-        # user and password names are taken from environmen variables.
+        # Get environment variables to decide which client to use.
         persistent_path = ChromaDBConfig.get_config('persistent_path')
         host = ChromaDBConfig.get_config('host')
 
-        # Connect to chroma and verify connection.
+        # Instantiate client.
         if uri is None and persistent_path is None:
             self.client = chromadb.EphemeralClient()
 
