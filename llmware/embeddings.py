@@ -2189,3 +2189,17 @@ class EmbeddingChromaDB:
         logging.info(f'update: EmbeddingHandler - ChromaDB - embedding_summary - {embedding_summary}')
 
         return embedding_summary
+
+    def search_index(self, query_embedding_vector, sample_count=10):
+        block_list = []
+
+        results = self.client.get_collection(name=ChromaDBConfig.get_config('collection')).query(query_embeddings=query_embedding_vector, n_results=sample_count)
+
+        for idx_result, result in enumerate(results):
+            block_id = result['metadatas']['block_id']
+            block_result_list = self.utils.lookup_text_index(block_id)
+
+            for block in block_result_list:
+                block_list.append((block, result['distances'][idx_result]))
+
+        return block_list
