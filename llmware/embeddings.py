@@ -2170,14 +2170,14 @@ class EmbeddingChromaDB:
                 data = [block_ids, doc_ids, vectors]
 
                 # Insert into ChromaDB
-                ids = [f'{doc_id}-block_id' for doc_id, block_id in zip(doc_id, block_id)]
-                metadats = [{'doc_id': doc_id, 'block_id': block_id, 'sentence': sentence}
-                            for doc_id, block_id, sentence in zip(doc_ids, block_ids, sentences)]
+                ids = [f'{doc_id}-block_id' for doc_id, block_id in zip(doc_ids, block_ids)]
+                metadatas = [{'doc_id': doc_id, 'block_id': block_id, 'sentence': sentence}
+                             for doc_id, block_id, sentence in zip(doc_ids, block_ids, sentences)]
 
                 self._collection.add(ids=ids,
                                      documents=doc_ids,
                                      embeddings=vectors,
-                                     metadats=metadatas)
+                                     metadatas=metadatas)
 
 
                 current_index = self.utils.update_text_index(block_ids, current_index)
