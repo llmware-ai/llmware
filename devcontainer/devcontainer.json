@@ -1,0 +1,30 @@
+{
+	"name": "LLMWARE Dev",
+  "build": { "dockerfile": "../Dockerfile" },
+	//"image": "provocoai/llmware:dev-01",
+
+  // "runArgs": [
+  //   "--name",
+  //   "${localWorkspaceFolderBasename}", // Container name
+  //   "-it",
+  //   "-l",
+  //   "com.docker.compose.project=devcontainers" // Container group name
+  // ],
+  "mounts" : [
+    //"source=${localWorkspaceFolder}/.vscode-server/,target=/root/.vscode-server/,type=bind,consistency=cached",
+    "source=${localEnv:HOME},target=/code,type=bind,consistency=cached"
+  ],
+  "features": {
+   "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "dockerDashComposeVersion": "v2"
+    },
+   "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "esbenp.prettier-vscode"
+      ]
+    }
+  }
+}
