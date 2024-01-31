@@ -2806,11 +2806,11 @@ class Parser:
 
         ext = input_fn.split(".")[-1].lower()
 
-        if ext == ".json":
+        if ext == "json":
 
-            output = DialogParser(self).parse_aws_json_file_format(input_fp, input_fn)
+            dp_output = DialogParser(self).parse_aws_json_file_format(input_fp, input_fn)
 
-            for i, blocks in enumerate(output):
+            for i, blocks in enumerate(dp_output):
 
                 # iterate thru each block -> add to metadata
                 speaker_name = blocks["speaker_name"]
