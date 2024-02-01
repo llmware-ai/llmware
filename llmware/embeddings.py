@@ -2202,12 +2202,12 @@ class EmbeddingChromaDB:
 
         results = self._collection.query(query_embeddings=query_embedding_vector, n_results=sample_count)
 
-        for idx_result, result in enumerate(results):
-            block_id = result['metadatas']['block_id']
+        for idx_result, _ in enumerate(results['ids']):
+            block_id = results['metadatas'][0][idx_result]['block_id']
             block_result_list = self.utils.lookup_text_index(block_id)
 
             for block in block_result_list:
-                block_list.append((block, result['distances'][idx_result]))
+                block_list.append((block, results['distances'][0][idx_result]))
 
         return block_list
 
