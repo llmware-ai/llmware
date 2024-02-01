@@ -2167,7 +2167,6 @@ class EmbeddingChromaDB:
             if len(sentences) > 0:
                 # Process the batch
                 vectors = self.model.embedding(sentences)
-                data = [block_ids, doc_ids, vectors]
 
                 # Insert into ChromaDB
                 ids = [f'{doc_id}-{block_id}' for doc_id, block_id in zip(doc_ids, block_ids)]
