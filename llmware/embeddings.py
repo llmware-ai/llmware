@@ -2197,6 +2197,9 @@ class EmbeddingChromaDB:
     def search_index(self, query_embedding_vector, sample_count=10):
         block_list = []
 
+        # add one dimension because chroma expects two dimensions - a list of lists
+        query_embedding_vector = query_embedding_vector.reshape(1, -1)
+
         results = self._collection.query(query_embeddings=query_embedding_vector, n_results=sample_count)
 
         for idx_result, result in enumerate(results):
