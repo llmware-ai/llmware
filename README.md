@@ -606,7 +606,7 @@ LLMWareConfig().set_vector_db("milvus")
 </details>  
 
 <details>
-<summary><b>Postgres</b>:  use Postgres for both both text collection and vector DB - install with Docker Compose </summary> 
+<summary><b>Postgres</b>:  use Postgres for both text collection and vector DB - install with Docker Compose </summary> 
 
 ```bash
 curl -o docker-compose.yaml https://raw.githubusercontent.com/llmware-ai/llmware/main/docker-compose-pgvector.yaml
