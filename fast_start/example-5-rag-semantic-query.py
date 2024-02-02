@@ -78,7 +78,12 @@ def semantic_rag (library_name, embedding_model_name, llm_model_name):
             #   we will look through the list of semantic query results, and pull the top results for each file
             for j, entries in enumerate(results):
 
-                if entries["file_source"] == contract:
+                library_fn = entries["file_source"]
+                if os.sep in library_fn:
+                    # handles difference in windows file formats vs. mac / linux
+                    library_fn = library_fn.split(os.sep)[-1]
+
+                if library_fn == contract:
                     print("Top Retrieval: ", j, entries["distance"], entries["text"])
                     qr.append(entries)
 
