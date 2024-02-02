@@ -2194,6 +2194,7 @@ class EmbeddingChromaDB:
         return embedding_summary
 
     def search_index(self, query_embedding_vector, sample_count=10):
+
         block_list = []
 
         # add one dimension because chroma expects two dimensions - a list of lists
