@@ -36,6 +36,10 @@ def test_neo4j_embedding_and_query():
     assert len(results) > 0
     library.delete_library(confirm_delete=True)
 
+# TODO: add test for permanent mode.
+# TODO: add test for client/server mode with password auth.
+# TODO: add test for client/server mode with token auth.
+# TODO: investigate why test failes when library name is set to test_embedding_chromadb
 def test_chromadb_embedding_and_query():
     sample_files_path = Setup().load_sample_files()
     library = Library().create_new_library("test_embedding_neo4j") # if this is set to chromadb, it fails
