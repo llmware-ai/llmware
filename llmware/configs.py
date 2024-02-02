@@ -741,7 +741,30 @@ class Neo4jConfig:
 
 
 class ChromaDBConfig:
-    """Configuration object for chroma"""
+    """Configuration object for chroma.
+
+    The default is to use chroma as an in-memory (ephemeral) store.
+
+    Chroma can be used with or without (default) a client/server architecture. If it is used with a client/server
+    architecture, you have to set the authentication meachanism. The authentication mechanism can be either
+    username/password or token.
+    - env variable CHROMA_HOST is None -> not client/server mode (default),
+    - env variable CHROMA_HOST is set -> client/server mode
+
+    If you want to use Chroma without the client/server architecture, the env variable CHROMA_HOST has to be
+    None (default). In this mode, you can choos between in-memory (also called ephemeral, non-persistent) and
+    persistent.
+    - env variable CHROMA_PERSISTENT_PATH is None -> in-memory (non-persistent),
+    - env variable CHROMA_PERSISTENT_PATH is set -> persistent storage.
+
+    If you want to use Chroma in client/server mode, the env variable CHROMA_HOST needs to be set. In addition,
+    you have to set
+    - env variable CHROMA_SERVER_AUTH_PROVIDER, and
+    - env variable CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER
+    the value depends on the authentication mechanism you want to use.
+
+    For more information, please visit https://docs.trychroma.com/getting-started
+    """
 
     _conf = {
         'collection': os.environ.get('CHROMA_COLLECTION', 'llmware'),
