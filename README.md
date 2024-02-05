@@ -623,7 +623,7 @@ LLMWareConfig().set_vector_db("postgres")
 
 <details>
 <summary><b>Mix-and-Match</b>: LLMWare supports 3 text collection databases (Mongo, Postgres, SQLite) and 
-7 vector databases (Milvus, PGVector-Postgres, Redis, Mongo-Atlas, Qdrant, Faiss, and Pinecone)  </summary>
+10 vector databases (Milvus, PGVector-Postgres, Neo4j, Redis, Mongo-Atlas, Qdrant, Faiss, LanceDB, ChromaDB and Pinecone)  </summary>
 
 ```bash
 # scripts to deploy other options
