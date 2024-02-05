@@ -79,6 +79,26 @@ class _ModelRegistry:
     prompt_wrappers = ["alpaca", "human_bot", "chatgpt", "<INST>", "open_chat", "hf_chat", "chat_ml"]
     registered_wrappers = global_model_finetuning_prompt_wrappers_lookup
 
+    #   list of function calling classifier tools
+
+    llm_fx_tools = ["ner", "sentiment", "topics", "function_call", "ratings", "emotions", "nli",
+                    "legal_topics", "intent", "xsum", "sql", "answer",
+                    "category", "highlighter"]
+
+    llm_fx_tools_map = {"ner": "slim-ner-tool",
+                        "sentiment": "slim-sentiment-tool",
+                        "topics": "slim-topics-tool",
+                        "legal_topics": "slim-legal-topics-tool",
+                        "function_call": "slim-fc-tool",
+                        "ratings": "slim-ratings-tool",
+                        "emotions": "slim-emotions-tool",
+                        "xsum": "slim-xsum-tool",
+                        "nli": "slim-nli-tool",
+                        "sql": "slim-sql-tool",
+                        "highlighter": "slim-highlighter-tool",
+                        "answer": "bling-answer-tool",
+                        "category": "slim-category-tool",
+                        "intent": "slim-intent-tool"}
     @classmethod
     def get_model_list(cls):
         """ List current view of registered models """
@@ -88,6 +108,16 @@ class _ModelRegistry:
     def get_wrapper_list(cls):
         """ List current registered wrapper formats """
         return cls.registered_wrappers
+
+    @classmethod
+    def get_llm_fx_tools_list (cls):
+        """ List of function calling model tools available """
+        return cls.llm_fx_tools
+
+    @classmethod
+    def get_llm_fx_mapping (cls):
+        """ List of function calling model tools to repo name """
+        return cls.llm_fx_tools_map
 
     @classmethod
     def add_wrapper(cls, wrapper_name, wrapper_dict):
@@ -441,7 +471,7 @@ class ModelCatalog:
 
         return model_card
 
-    def locate_and_retrieve_model_bits (self, model_card):
+    def locate_and_retrieve_model_bits (self, model_card, api_key=None):
 
         """ For models requiring instantiation locally, this utility method retrieves the model bits using the
         instructions provided in the model card entry. """
@@ -479,10 +509,15 @@ class ModelCatalog:
 
             CloudBucketManager().pull_single_model_from_llmware_public_repo(model_folder_name)
         else:
+
             #   GGUF models pulled directly from HF repos
             logging.info("update: pulling GGUF model from HF - %s - %s", model_location, model_card)
 
-            self.pull_model_from_hf(model_card, model_location)
+            if "snapshot" in model_card:
+                self.pull_snapshot_from_hf(model_card["model_name"], model_location, api_key=api_key)
+            else:
+                # general case
+                self.pull_model_from_hf(model_card, model_location, api_key=api_key)
 
         logging.info("update: ModelCatalog - done pulling model into local folder - %s ", model_location)
 
@@ -633,7 +668,7 @@ class ModelCatalog:
 
         # step 3- if physical model, then find the location on local server, and if not available, then pull from s3
         if model_card["model_location"] == "llmware_repo":
-            loading_directions = self.locate_and_retrieve_model_bits(model_card)
+            loading_directions = self.locate_and_retrieve_model_bits(model_card, api_key=api_key)
             my_model = my_model.load_model_for_inference(loading_directions, model_card=model_card)
         else:
             # if api_key passed, save as environ variable
@@ -852,6 +887,7 @@ class ModelCatalog:
 
         from huggingface_hub import snapshot_download
 
+        # note: by default, assumes that model_name is a "tool" from llmware, with the 'llmware/' implicit
         model_name = "llmware/" + model_name
 
         snapshot = snapshot_download(model_name, local_dir=local_model_repo_path, token=api_key,
@@ -859,6 +895,289 @@ class ModelCatalog:
 
         return local_model_repo_path
 
+    def get_llm_toolkit(self, tool_list=None, api_key=None):
+
+        """ Caches all SLIM tools by default, or if list provided, then selected tools only. """
+
+        model_repo_path = LLMWareConfig.get_model_repo_path()
+
+        if not os.path.exists(model_repo_path):
+            os.makedirs(model_repo_path)
+
+        if not tool_list:
+            tool_list = _ModelRegistry().get_llm_fx_tools_list()
+
+        logging.info("update: ModelCatalog - get_toolset - %s ", tool_list)
+
+        for tool in tool_list:
+
+            tool_name = _ModelRegistry().get_llm_fx_mapping()[tool]
+
+            logging.info("update: ModelCatalog - get_toolset - %s - %s", tool, tool_name)
+
+            found_model = False
+            local_model_repo_path = os.path.join(model_repo_path, tool_name)
+
+            if os.path.exists(local_model_repo_path):
+                model_parts_in_folder = os.listdir(local_model_repo_path)
+                if len(model_parts_in_folder) > 0:
+                    found_model = True
+
+            if not found_model:
+                self.pull_snapshot_from_hf(tool_name, local_model_repo_path, api_key=api_key)
+
+        return 0
+
+    def list_llm_tools(self):
+        """Provides a list of the currently available SLIM tools available in the catalog. """
+        return _ModelRegistry().get_llm_fx_tools_list()
+
+    def get_llm_fx_mapping(self):
+        """Provides a current mapping of Tools to LLM Function Call - this mapping is used by LLMfx class to
+        orchestrate among multiple models deployed locally as tools. """
+        return _ModelRegistry().get_llm_fx_mapping()
+
+    def get_test_script(self, model_name):
+
+        """ Checks if a test script is available with the model repo - and if so,
+        retrieves the test set as a json dictionary """
+
+        test_set = None
+
+        model_repo_path = LLMWareConfig().get_model_repo_path()
+        local_model_path = os.path.join(model_repo_path, model_name)
+        if os.path.exists(local_model_path):
+            model_files = os.listdir(local_model_path)
+            if "config.json" in model_files:
+                config_json = json.load(open(os.path.join(local_model_path, "config.json"), "r",
+                                             encoding="utf-8"))
+                if "test_set" in config_json:
+                    test_set = config_json["test_set"]
+
+        return test_set
+
+    def tool_test_run(self, model_name, api_key=None, verbose=False):
+
+        """ Loads a tool, if required, and executes a series of test runs.
+        Note: only available for 'tool' implementation models. """
+
+        model_card = self.lookup_model_card(model_name)
+
+        if not model_card:
+            raise ModelNotFoundException(model_name)
+
+        if "snapshot" in model_card:
+
+            model = self.load_model(model_name, api_key=api_key)
+            test_set = self.get_test_script(model_name)
+
+            if test_set:
+
+                if "function_call" not in model_card:
+
+                    # run traditional inference on test set
+                    print("\nTest: ", model_name)
+
+                    for i, entries in enumerate(test_set):
+
+                        print("\nupdate: query - ", i, entries["query"])
+
+                        response = model.inference(entries["query"],add_context=entries["context"],
+                                                   add_prompt_engineering="default_with_context")
+                        print("update: llm_response - ", i, response["llm_response"])
+                        if "answer" in entries:
+                            print("update: gold answer -  ", i, entries["answer"])
+
+                else:
+
+                    print("\nTest: ", model_name)
+
+                    for i, entries in enumerate(test_set):
+
+                        text = entries["context"]
+
+                        # special case for nli
+                        if "conclusion" in entries:
+                            text = "Evidence: " + text + "\nConclusion: " + entries["conclusion"]
+
+                        response = model.function_call(text, get_logits=True)
+
+                        if verbose:
+                            print(f"\nupdate: context - test - {i} - {text}")
+
+                        print("update: 'llm_response' - test - ", i, response["llm_response"])
+
+                        # print("update: 'output_tokens' - test - ", i, response["output_tokens"])
+
+                        logit_analysis = self.logit_analysis(response, model_card, model.hf_tokenizer_name,
+                                                             api_key=api_key)
+
+                        for keys, values in logit_analysis.items():
+                            print("update: logit analysis - ", keys, values)
+
+        return 0
+
+    def list_function_call_models(self):
+
+        """ Returns a list of model card dictionaries for models that implement function_calls."""
+
+        fc_model_list = []
+        for models in self.global_model_list:
+            if "function_call" in models:
+                # confirm that value is positive
+                if models["function_call"]:
+                    fc_model_list.append(models)
+
+        return fc_model_list
+
+    def logit_analysis(self, response, model_card, hf_tokenizer_name,api_key=None):
+
+        """ Analyzes logits from llm response - currently exposed only as option for function
+        call inferences in HFGenerative and GGUFGenerative models. """
+
+        logit_analysis = []
+        ryg_string = ""
+        vz_choices = []
+        marker_token_probs = []
+        low_confidence_choices = []
+        confidence_score = -1
+
+        # only go ahead if logits found in response
+        if "logits" not in response:
+            logging.warning("update: logit_analysis requires a response dictionary with 'logits' key- skipping")
+            return logit_analysis
+
+        try:
+            from colorama import Fore
+            red = Fore.RED
+            green = Fore.GREEN
+            yellow = Fore.YELLOW
+            color_reset = Fore.RESET
+        except:
+            logging.warning("update: logit analysis - could not import colorama - please import to see color coded"
+                            "visualization of the output string confidence level.")
+
+            # setting color inserts to empty
+            red = ""
+            green = ""
+            yellow = ""
+            color_reset = ""
+
+        try:
+            #   tokenizer used as part of building confidence level string
+            from transformers import AutoTokenizer
+        except:
+            raise DependencyNotInstalledException("transformers")
+
+        """ Analyzes logits from llm response """
+
+        # value zone markers
+        vz_start = []
+        vz_stop = []
+
+        if "value_zone_markers" in model_card:
+            vz_start = model_card["value_zone_markers"]["start"]
+            vz_stop = model_card["value_zone_markers"]["stop"]
+
+        # marker tokens for sentiment analysis
+        marker_tokens = []
+        marker_token_lookup = {}
+
+        if "marker_tokens" in model_card:
+            marker_tokens = model_card["marker_tokens"]
+        if "marker_token_lookup" in model_card:
+            marker_token_lookup = model_card["marker_token_lookup"]
+
+        if "logits" in response:
+
+            logits = response["logits"]
+
+            # hf tokenizer name
+            tokenizer = AutoTokenizer.from_pretrained(hf_tokenizer_name, token=api_key)
+
+            ryg_string = ""
+
+            token_probs = []
+            marker_token_probs = []
+            vz_choices = []
+            vz_capture_on = False
+
+            for i, toks in enumerate(response["output_tokens"]):
+
+                if toks in vz_stop:
+                    vz_capture_on = False
+
+                if toks in marker_tokens:
+
+                    for x in range(0, len(logits[i])):
+                        if logits[i][x][0] in marker_tokens:
+                            new_entry = (marker_token_lookup[logits[i][x][0]],
+                                         logits[i][x][0],
+                                         logits[i][x][1])
+                            marker_token_probs.append(new_entry)
+
+                if vz_capture_on:
+
+                    new_entry = {}
+                    for x in range(0,3):
+                        key = "choice_" + str(x+1)
+                        new_entry.update({key: [tokenizer.decode(logits[i][x][0]),
+                                                logits[i][x][1],logits[i][x][0]]})
+
+                        # set confidence score as normalized logit value of first token in value zone
+                        #TODO:  need to assess whether averaging across multiple tokens more effective
+
+                        if len(vz_choices) == 0:
+                            if logits[i][x][0] == toks:
+                                confidence_score = logits[i][x][1]
+
+                    vz_choices.append(new_entry)
+
+                if toks in vz_start:
+                    vz_capture_on = True
+
+                if toks == 2:
+                    break
+
+                for x in range(0, len(logits[i])):
+
+                    if toks == logits[i][x][0]:
+
+                        token_probs.append(logits[i][x][1])
+
+                        if logits[i][x][1] > 0.70:
+                            ryg_string += green + tokenizer.decode([1, logits[i][x][0]])
+
+                        if 0.3 <= logits[i][x][1] <= 0.70:
+                            ryg_string += yellow + tokenizer.decode([1, logits[i][x][0]])
+
+                            new_entry = {}
+                            for y in range(0, 3):
+                                key = "choice_" + str(y + 1)
+                                new_entry.update({key: [tokenizer.decode(logits[i][y][0]),
+                                                        logits[i][y][1], logits[i][y][0]]})
+
+                            low_confidence_choices.append(new_entry)
+
+                        if logits[i][x][1] < 0.3:
+                            ryg_string += red + tokenizer.decode([1, logits[i][x][0]])
+
+                            new_entry = {}
+                            for y in range(0, 3):
+                                key = "choice_" + str(y + 1)
+                                new_entry.update({key: [tokenizer.decode(logits[i][y][0]),
+                                                        logits[i][y][1], logits[i][y][0]]})
+
+                            low_confidence_choices.append(new_entry)
+
+            ryg_string = ryg_string.replace("<s>", "")
+
+        logit_analysis = {"ryg_string": ryg_string + color_reset, "choices": vz_choices,
+                          "marker_tokens": marker_token_probs,
+                          "low_confidence_choices": low_confidence_choices,
+                          "confidence_score": confidence_score}
+
+        return logit_analysis
 
 
 class PromptCatalog:
@@ -3141,7 +3460,6 @@ class HFEmbeddingModel:
 
         return embeddings_normalized
 
-
 class HFGenerativeModel:
 
     """ HFGenerativeModel class implements the HuggingFace generative model API, and is used generally for
@@ -3157,13 +3475,35 @@ class HFGenerativeModel:
 
         # pull in expected hf input
         self.model_name = model_name
+        self.hf_tokenizer_name = model_name
         self.model = model
-        self.tokenizer= tokenizer
-        
+        self.tokenizer = tokenizer
+
+        # *** NEW INSERT - Function Calls ***
+        self.model_card = model_card
+        self.logits_record = []
+        self.get_logits = False
+        self.output_tokens = []
+        self.top_logit_count = 10
+        self.primary_keys = None
+        self.function = None
+        self.fc_supported = False
+
+        if model_card:
+
+            if "primary_keys" in model_card:
+                self.primary_keys = model_card["primary_keys"]
+
+            if "function" in model_card:
+                self.function = model_card["function"]
+
+            if "function_call" in model_card:
+                self.fc_supported = model_card["function_call"]
+
         # note - these two parameters will control how prompts are handled - model-specific
         self.prompt_wrapper = prompt_wrapper
         self.instruction_following = instruction_following
-        
+
         # instantiate if model_name passed without actual model and tokenizer
         if model_name and not model and not tokenizer:
 
@@ -3175,25 +3515,30 @@ class HFGenerativeModel:
 
             if api_key:
                 if torch.cuda.is_available():
-                    self.model = AutoModelForCausalLM.from_pretrained(model_name,token=api_key, trust_remote_code=trust_remote_code, torch_dtype="auto")
+                    self.model = AutoModelForCausalLM.from_pretrained(model_name, token=api_key,
+                                                                      trust_remote_code=trust_remote_code,
+                                                                      torch_dtype="auto")
                 else:
-                    self.model = AutoModelForCausalLM.from_pretrained(model_name,token=api_key, trust_remote_code=trust_remote_code)
-             
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name,token=api_key, trust_remote_code=trust_remote_code)
+                    self.model = AutoModelForCausalLM.from_pretrained(model_name, token=api_key,
+                                                                      trust_remote_code=trust_remote_code)
+
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=api_key,
+                                                               trust_remote_code=trust_remote_code)
             else:
                 if torch.cuda.is_available():
-                    self.model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=trust_remote_code, torch_dtype="auto")
+                    self.model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=trust_remote_code,
+                                                                      torch_dtype="auto")
                 else:
                     self.model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=trust_remote_code)
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=trust_remote_code)
-            
+
             # set to defaults for HF models in Model Catalog
             # this can be over-ridden post initiation if needed for custom models
             self.prompt_wrapper = "human_bot"
             self.instruction_following = False
-            
+
         self.trailing_space = ""
-        
+
         self.model_type = None
         self.config = None
         self.max_total_len = context_window
@@ -3215,10 +3560,10 @@ class HFGenerativeModel:
                 self.config = self.model.config
             else:
                 self.config = self.model.config.to_dict()
-            
+
             if "trailing_space" in self.config:
                 self.trailing_space = self.config["trailing_space"]
-                
+
             if "eos_token_id" in self.config:
                 # only use to set if value is not None
                 if self.config["eos_token_id"]:
@@ -3234,7 +3579,7 @@ class HFGenerativeModel:
                 self.max_total_len = self.config["max_position_embeddings"]
 
             if "architectures" in self.config:
-                if isinstance(self.config["architectures"],list):
+                if isinstance(self.config["architectures"], list):
                     self.model_architectures = self.config["architectures"][0]
                 else:
                     self.model_architectures = self.config["architectures"]
@@ -3260,15 +3605,18 @@ class HFGenerativeModel:
         self.add_prompt_engineering = False
         self.add_context = ""
 
-    def set_api_key (self, api_key, env_var="USER_MANAGED_HF_API_KEY"):
+    def set_api_key(self, api_key, env_var="USER_MANAGED_HF_API_KEY"):
 
-        # set api_key
+        """ Sets the API key - generally not needed for public HF repositories. """
+
         os.environ[env_var] = api_key
         logging.info("update: added and stored HF api_key in environmental variable- %s", env_var)
 
         return self
 
-    def _get_api_key (self, env_var="USER_MANAGED_HF_API_KEY"):
+    def _get_api_key(self, env_var="USER_MANAGED_HF_API_KEY"):
+
+        """ Gets API key from os.environ variable. """
 
         self.api_key = os.environ.get(env_var)
 
@@ -3278,11 +3626,18 @@ class HFGenerativeModel:
         return self.api_key
 
     def token_counter(self, text_sample):
+
+        """ Quick approximate token counter - uses default tokenizer so may have minor differences from the
+        model's actual tokenization. """
+
         tokenizer = Utilities().get_default_tokenizer()
         toks = tokenizer.encode(text_sample).ids
+
         return len(toks)
 
-    def prompt_engineer (self, query, context, inference_dict):
+    def prompt_engineer(self, query, context, inference_dict):
+
+        """ Applies prompt and templating preparation. """
 
         # if loaded model was not pretrained on instruction_following, then skip any instructions
         if not self.instruction_following:
@@ -3334,9 +3689,12 @@ class HFGenerativeModel:
 
         return prompt_engineered
 
+
     @torch.no_grad()
     def inference(self, prompt, add_context=None, add_prompt_engineering=None, api_key=None,
                   inference_dict=None):
+
+        """ Executes generation inference on model. """
 
         # first prepare the prompt
 
@@ -3345,6 +3703,22 @@ class HFGenerativeModel:
 
         if add_prompt_engineering:
             self.add_prompt_engineering = add_prompt_engineering
+
+        #   add defaults if add_prompt_engineering not set
+        if not self.add_prompt_engineering:
+
+            if self.add_context:
+                self.add_prompt_engineering = "default_with_context"
+            else:
+                self.add_prompt_engineering = "default_no_context"
+
+        #   end - defaults update
+
+        #   show warning if function calling model
+        if self.fc_supported:
+            logging.warning("warning: this is a function calling model - using .inference may lead to unexpected "
+                            "results.   Recommended to use the .function_call method to ensure correct prompt "
+                            "template packaging.")
 
         if inference_dict:
 
@@ -3359,17 +3733,17 @@ class HFGenerativeModel:
         if self.add_prompt_engineering:
             prompt_enriched = self.prompt_engineer(prompt, self.add_context, inference_dict=inference_dict)
             prompt_final = prompt_enriched
-            
+
             # text_prompt = prompt_final + "\n"
-            
+
             # most models perform better with no trailing space or line-break at the end of prompt
             #   -- in most cases, the trailing space will be ""
             #   -- yi model prefers a trailing "\n"
             #   -- keep as parameterized option to maximize generation performance
             #   -- can be passed either thru model_card or model config from HF
-            
+
             text_prompt = prompt_final + self.trailing_space
-            
+
         # second - tokenize to get the input_ids
 
         tokenizer_output = self.tokenizer.encode(text_prompt)
@@ -3405,7 +3779,7 @@ class HFGenerativeModel:
 
         # default settings
         pad_token_id = 0
-        
+
         # for most models, eos_token_id = 0, but llama and mistral = 2
         eos_token_id = [self.eos_token_id]
         # eos_token_id = [0]
@@ -3452,12 +3826,17 @@ class HFGenerativeModel:
             # need to invoke forward pass on model
             # outputs = self.model(inp0,inp1,pkv)
 
-            outputs = self.model(input_ids=inp0,attention_mask=inp1, past_key_values=pkv,
+            outputs = self.model(input_ids=inp0, attention_mask=inp1, past_key_values=pkv,
                                  return_dict=True)
 
             new_tokens_generated += 1
 
-            next_token_logits = outputs.logits[:,-1,:]
+            next_token_logits = outputs.logits[:, -1, :]
+
+            # capture top logits - not currently activated for inference
+            # self.register_top_logits(next_token_logits)
+            # shape of next_token_logits = torch.Size([1, 32000])
+            # print("next token logits shape - ", next_token_logits.shape)
 
             if self.temperature:
                 next_token_scores = next_token_logits / self.temperature
@@ -3519,12 +3898,12 @@ class HFGenerativeModel:
         # print("update: output only - ", output_only)
 
         output_str = self.tokenizer.decode(output_only)
-        
+
         # post-processing clean-up - stop at endoftext
         eot = output_str.find("<|endoftext|>")
         if eot > -1:
             output_str = output_str[:eot]
-        
+
         # new post-processing clean-up - stop at </s>
         eots = output_str.find("</s>")
         if eots > -1:
@@ -3533,15 +3912,15 @@ class HFGenerativeModel:
         # post-processing clean-up - start after bot wrapper
         bot = output_str.find("<bot>:")
         if bot > -1:
-            output_str = output_str[bot+len("<bot>:"):]
-        
+            output_str = output_str[bot + len("<bot>:"):]
+
         # new post-processing cleanup - skip repeating starting <s>
         boss = output_str.find("<s>")
         if boss > -1:
-            output_str = output_str[boss+len("<s>"):]
-        
+            output_str = output_str[boss + len("<s>"):]
+
         # end - post-processing
-        
+
         total_len = len(outputs_np)
 
         usage = {"input": input_token_len,
@@ -3551,6 +3930,304 @@ class HFGenerativeModel:
                  "processing_time": time.time() - time_start}
 
         output_response = {"llm_response": output_str, "usage": usage}
+
+        return output_response
+
+    def fc_prompt_engineer(self, context, params=None, function=None):
+
+        """ Prompt engineering for Function Call prompts. """
+
+        if not params:
+            params = self.primary_keys
+
+        if not function:
+            function = self.function[0]
+
+        # prepare SLIM prompt
+        class_str = ""
+        for key in params:
+            class_str += str(key) + ", "
+        if class_str.endswith(", "):
+            class_str = class_str[:-2]
+
+        f = str(function)
+
+        # key templating format for SLIM function calls
+        full_prompt = "<human>: " + context + "\n" + "<{}> {} </{}>".format(f, class_str, f) + "\n<bot>:"
+
+        full_prompt = full_prompt + self.trailing_space
+
+        return full_prompt
+
+    def register_top_logits(self, next_token_logit):
+
+        """ Retrieves the logits for current sample, and packages into indexed top list and
+        registers in self.logit_record. """
+
+        #   assumes input of next_token_logit from generation script
+        #   will be a tensor of shape [1,vocab_size]
+
+        logit_size = next_token_logit.shape[-1]
+        logit = torch.squeeze(next_token_logit)
+
+        if self.use_gpu:
+            logit_array = np.array(logit.to('cpu'))
+        else:
+            logit_array = np.array(logit)
+
+        sm = np.exp(logit_array) / sum(np.exp(logit_array))
+
+        sm_sorted = np.sort(sm)
+        sm_args_sorted = np.argsort(sm)
+
+        top_logits = []
+        # by default, self.top_logit_count = 10, will get the top 10 highest values in logit output
+        for x in range(0, self.top_logit_count):
+            pair = (sm_args_sorted[logit_size - x - 1], sm_sorted[logit_size - x - 1])
+            top_logits.append(pair)
+
+        self.logits_record.append(top_logits)
+
+        return top_logits
+
+    @torch.no_grad()
+    def function_call(self, context, function=None, params=None, get_logits=True):
+
+        """ This is the key inference method for SLIM models - takes a context passage and a key list
+        which is packaged in the prompt as the keys for the dictionary output"""
+
+        if not self.fc_supported:
+            logging.warning("warning: HFGenerativeModel - loaded model does not support function calls.  "
+                            "Please either use the standard .inference method with this model, or use a  "
+                            "model that has 'function_calls' key set to True in its model card.")
+            return []
+
+        # reset and start from scratch with new function call
+        self.output_tokens = []
+        self.logits_record = []
+
+        if get_logits:
+            self.get_logits = get_logits
+
+        if params:
+            self.primary_keys = params
+
+        if not self.primary_keys:
+            logging.warning("warning: function call - no keys provided - function call may yield unpredictable results")
+
+        prompt = self.fc_prompt_engineer(context, params=self.primary_keys, function=function)
+
+        # second - tokenize to get the input_ids
+
+        tokenizer_output = self.tokenizer.encode(prompt)
+        input_token_len = len(tokenizer_output)
+        input_ids = torch.tensor(tokenizer_output).unsqueeze(0)
+
+        #   explicit check and setting to facilitate debugging
+        if self.use_gpu:
+            input_ids = input_ids.to('cuda')
+        else:
+            input_ids = input_ids.to('cpu')
+
+        # time start
+        time_start = time.time()
+
+        #   Note: this is a simplified 'sampling' generation loop, derived from the far more
+        #   sophisticated Generation capabilities provided by the Transformers library
+        #   It is included here to enable transformers users to easily extend llmware to include
+        #   their favorite generative models in the transformers library.
+
+        #   The code below contains code copied from, derived from or inspired from the Huggingface
+        #   transformers generation code.
+        #   (https: // github.com / huggingface / transformers / src / transformers / generation)
+
+        #   Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc.team.
+        #   Copyright(c) 2018, NVIDIA CORPORATION.All rights reserved.
+        #   Licensed under the Apache License, Version 2.0(the "License"); you may not use this
+        #   file except in compliance with the License. You may obtain a copy of the License at
+        #   http: // www.apache.org / licenses / LICENSE - 2.0 Unless required by applicable law or agreed
+        #   to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
+        #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+        #   for the specific language governing permissions and limitations under the License.
+
+        # default settings
+        pad_token_id = 0
+
+        # for most models, eos_token_id = 0, but llama and mistral = 2
+        eos_token_id = [self.eos_token_id]
+        # eos_token_id = [0]
+
+        eos_token_id_tensor = torch.tensor(eos_token_id).to(input_ids.device)
+
+        # keep track of which sequences are already finished
+        unfinished_sequences = torch.ones(input_ids.shape[0], dtype=torch.long, device=input_ids.device)
+
+        this_peer_finished = False  # used by synced_gpus only
+        # auto-regressive generation
+        new_tokens_generated = 0
+
+        attn_mask = torch.ones(input_ids.shape[1]).unsqueeze(0)
+
+        #   explicit check and setting to facilitate debugging, if needed
+        if self.use_gpu:
+            attn_mask = attn_mask.to('cuda')
+        else:
+            attn_mask = attn_mask.to('cpu')
+
+        batch_size = input_ids.shape[0]
+        seq_len = input_ids.shape[1]
+
+        pkv = None
+
+        while True:
+
+            inp_one_time: torch.LongTensor = input_ids
+
+            if new_tokens_generated > 0:
+                inp_one_time = input_ids[:, -1:]
+
+            #   explicit check and setting to facilitate debugging, if needed
+            if self.use_gpu:
+                inp0 = inp_one_time.to('cuda')
+                inp1 = attn_mask.to('cuda')
+            else:
+                inp0 = inp_one_time.to('cpu')
+                inp1 = attn_mask.to('cpu')
+
+            # inp3 = torch.LongTensor([new_tokens_generated])
+
+            # need to invoke forward pass on model
+            # outputs = self.model(inp0,inp1,pkv)
+
+            outputs = self.model(input_ids=inp0, attention_mask=inp1, past_key_values=pkv,
+                                 return_dict=True)
+
+            new_tokens_generated += 1
+
+            next_token_logits = outputs.logits[:, -1, :]
+
+            # option to capture logits for analysis
+            # if self.get_logits: self.register_top_logits(next_token_logits)
+
+            if self.temperature:
+                next_token_scores = next_token_logits / self.temperature
+            else:
+                next_token_scores = next_token_logits
+
+            # sample
+            probs = nn.functional.softmax(next_token_scores, dim=-1)
+            next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
+
+            # option to capture logits and output tokens for analysis
+            if self.get_logits:
+                self.register_top_logits(next_token_logits)
+
+                # capture the output tokens
+                if self.use_gpu:
+                    next_tokens_np = np.array(next_tokens.to('cpu'))
+                else:
+                    next_tokens_np = np.array(next_tokens)
+
+                self.output_tokens.append(next_tokens_np[0])
+
+            # finished sentences should have their next token be a padding token
+            if eos_token_id is not None:
+                next_tokens = next_tokens * unfinished_sequences + pad_token_id * (1 - unfinished_sequences)
+
+            # update generated ids, model inputs, and length for next step
+            input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=-1)
+
+            #   testing output in progress starts here
+            """
+            print("update: input_ids -", input_ids)
+            # outputs_detached = outputs.to('cpu')
+            outputs_np = np.array(input_ids[0])
+            output_str = self.tokenizer.decode(outputs_np)
+            print("update: output string - ", output_str)
+            """
+            #   end - testing output in progress
+
+            pkv = outputs.past_key_values
+
+            # update attention mask
+            attn_mask = torch.cat([attn_mask, attn_mask.new_ones((attn_mask.shape[0], 1))], dim=-1)
+
+            # if eos_token was found in one sentence, set sentence to finished
+            if eos_token_id_tensor is not None:
+                unfinished_sequences = unfinished_sequences.mul(
+                    next_tokens.tile(eos_token_id_tensor.shape[0], 1).ne(eos_token_id_tensor.unsqueeze(1)).prod(
+                        dim=0)
+                )
+
+                # stop when each sentence is finished
+                if unfinished_sequences.max() == 0:
+                    this_peer_finished = True
+
+            # stop if we exceed the maximum length
+            if new_tokens_generated > self.target_requested_output_tokens:
+                this_peer_finished = True
+
+            if this_peer_finished:
+                break
+
+        #   Generation completed - prepare the output
+
+        if self.use_gpu:
+            outputs_np = np.array(input_ids[0].to('cpu'))
+        else:
+            outputs_np = np.array(input_ids[0])
+
+        output_only = outputs_np[input_token_len:]
+
+        # print("update: output only - ", output_only)
+
+        output_str = self.tokenizer.decode(output_only)
+
+        # post-processing clean-up - stop at endoftext
+        eot = output_str.find("<|endoftext|>")
+        if eot > -1:
+            output_str = output_str[:eot]
+
+        # new post-processing clean-up - stop at </s>
+        eots = output_str.find("</s>")
+        if eots > -1:
+            output_str = output_str[:eots]
+
+        # post-processing clean-up - start after bot wrapper
+        bot = output_str.find("<bot>:")
+        if bot > -1:
+            output_str = output_str[bot + len("<bot>:"):]
+
+        # new post-processing cleanup - skip repeating starting <s>
+        boss = output_str.find("<s>")
+        if boss > -1:
+            output_str = output_str[boss + len("<s>"):]
+
+        # end - post-processing
+
+        total_len = len(outputs_np)
+
+        usage = {"input": input_token_len,
+                 "output": total_len - input_token_len,
+                 "total": total_len,
+                 "metric": "tokens",
+                 "processing_time": time.time() - time_start}
+
+        try:
+            output_dict = ast.literal_eval(output_str)
+            usage.update({"type": "dict"})
+
+        except:
+            logging.warning("warning: automatic function call conversion to "
+                            "python dictionary failed - %s", output_str)
+            output_dict = output_str
+            usage.update({"type": "string"})
+
+        output_response = {"llm_response": output_dict, "usage": usage}
+
+        if get_logits:
+            output_response.update({"logits": self.logits_record})
+            output_response.update({"output_tokens": self.output_tokens})
 
         return output_response
 
@@ -3574,7 +4251,7 @@ class GGUFGenerativeModel:
     #   This implementation of GGUFGenerativeModel includes code derived, inspired, and modified from ctransformers
     #   For more information on ctransformers: please see https://github.com/marella/ctransformers
     #
-    #   ctransformers is a a Python and CPP wrapper on llama.cpp
+    #   ctransformers is a Python and CPP wrapper on llama.cpp
     #   note:  we have attempted to conform with the ctransformers interface specification, for easy portability to
     #   integrate with llmware - over time, this interface specification may evolve
     #
@@ -3601,6 +4278,38 @@ class GGUFGenerativeModel:
         self.add_context = ""
         self.temperature = 0.3
         self.model_type = "gguf"
+        self.model_card = model_card
+
+        self.gguf_file = None
+        self.gguf_repo = None
+
+        # *** NEW INSERT - Function Calls ***
+
+        self.logits_record = []
+        self.get_logits = False
+        self.output_tokens = []
+        self.top_logit_count = 10
+
+        self.primary_keys = None
+        self.function = None
+        self.hf_tokenizer_name = None
+        self.fc_supported = False
+
+        if model_card:
+
+            if "primary_keys" in model_card:
+                self.primary_keys = model_card["primary_keys"]
+
+            if "function" in model_card:
+                self.function = model_card["function"]
+
+            if "tokenizer" in model_card:
+                self.hf_tokenizer_name = model_card["tokenizer"]
+
+            if "function_call" in model_card:
+                self.fc_supported = model_card["function_call"]
+
+        # *** END - INSERT ***
 
         if model_card:
 
@@ -3619,9 +4328,14 @@ class GGUFGenerativeModel:
             if "prompt_wrapper" in model_card:
                 self.prompt_wrapper = model_card["prompt_wrapper"]
 
+            if "gguf_file" in model_card:
+                self.gguf_file = model_card["gguf_file"]  # e.g., "ggml-model-q4_k_m.gguf"
+
+            if "gguf_repo" in model_card:
+                self.gguf_repo = model_card["gguf_repo"]  # e.g., "llmware/dragon-mistral-7b-v0-gguf"
+
         #   gguf specific attributes
-        self.gguf_file = None
-        self.gguf_repo = None
+
         self.config = config
         self._model_path = None
         self._config = config
@@ -3644,13 +4358,13 @@ class GGUFGenerativeModel:
         self.top_k = 40
         self.top_p = 0.95
         self.temperature = 0.3
-        self.repetition_penalty= 1.1
-        self.last_n_tokens= 64
+        self.repetition_penalty = 1.1
+        self.last_n_tokens = 64
         self.seed = -1
 
         # eval
-        self.batch_size= 8
-        self.threads= -1
+        self.batch_size = 8
+        self.threads = -1
 
         # generate
         self.max_new_tokens = 256
@@ -3662,6 +4376,7 @@ class GGUFGenerativeModel:
         self.context_length = 2048
         self.gpu_layers = 50
         self.mmap = True
+
         self.mlock = False
 
         self.model_path = None
@@ -3672,10 +4387,12 @@ class GGUFGenerativeModel:
 
     def load_model_for_inference(self, file_loading_path, model_card=None):
 
+        """ Loads GGUF model for inference. """
+
         if model_card:
             self.model_name = model_card["model_name"].split("/")[-1]
-            self.gguf_file = model_card["gguf_file"]     # e.g., "ggml-model-q4_k_m.gguf",
-            self.gguf_repo = model_card["gguf_repo"]     # e.g., "llmware/dragon-mistral-7b-v0-gguf"
+            self.gguf_file = model_card["gguf_file"]  # e.g., "ggml-model-q4_k_m.gguf",
+            self.gguf_repo = model_card["gguf_repo"]  # e.g., "llmware/dragon-mistral-7b-v0-gguf"
 
         model_file = os.path.join(file_loading_path, self.gguf_file)
 
@@ -3704,6 +4421,8 @@ class GGUFGenerativeModel:
 
     def __getattr__(self, name):
 
+        """ Maps class methods to ctransformers ctypes dynamic lib methods. """
+
         #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
         #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
 
@@ -3711,7 +4430,9 @@ class GGUFGenerativeModel:
             return partial(getattr(self._lib, name), self._llm)
         raise AttributeError(f"'LLM' object has no attribute '{name}'")
 
-    def tokenize(self, text, add_bos_token = None):
+    def tokenize(self, text, add_bos_token=None):
+
+        """ Tokenizes text. """
 
         #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
         #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
@@ -3724,6 +4445,8 @@ class GGUFGenerativeModel:
         return tokens[:n_tokens]
 
     def detokenize(self, tokens, decode):
+
+        """ Encodes text. """
 
         #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
         #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
@@ -3787,10 +4510,16 @@ class GGUFGenerativeModel:
         n_last = len(last_tokens)
         last_tokens = (c_int * n_last)(*last_tokens)
 
+        #  new option to save logits
+        if self.get_logits:
+            self.register_top_logits()
+
         return self.ctransformers_llm_sample(last_tokens, n_last, top_k, top_p, temperature,
                                              repetition_penalty, seed)
 
     def prepare_inputs_for_generation(self, tokens):
+
+        """ Prepares inputs for generation as part of inference sampling. """
 
         if not self.reset:
             return tokens
@@ -3808,6 +4537,8 @@ class GGUFGenerativeModel:
 
     def generate(self, tokens):
 
+        """ Generation loop. """
+
         #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
         #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
 
@@ -3818,6 +4549,10 @@ class GGUFGenerativeModel:
 
             token = self.sample()
 
+            if self.get_logits:
+                # print("max arg token - ", token)
+                self.output_tokens.append(token)
+
             self.eval([token])
 
             if self.ctransformers_llm_is_eos_token(token):
@@ -3826,6 +4561,8 @@ class GGUFGenerativeModel:
             yield token
 
     def _stream(self, prompt):
+
+        """ Sampling method used in inference generation. """
 
         #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
         #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
@@ -3894,6 +4631,8 @@ class GGUFGenerativeModel:
 
     def find_library(self):
 
+        """ Identifies correct library by platform. """
+
         #   current implementation support in core library - will expand/evaluate over time
 
         lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "gguf")
@@ -3939,6 +4678,8 @@ class GGUFGenerativeModel:
 
     def load_library(self):
 
+        """ Loads dynamic library to enable GGUF llama_cpp inferences. """
+
         c_int_p = POINTER(c_int)
         c_float_p = POINTER(c_float)
         llm_p = c_void_p
@@ -3966,6 +4707,9 @@ class GGUFGenerativeModel:
 
         lib.ctransformers_llm_create.argtypes = [c_char_p, c_char_p, ConfigStruct]
         lib.ctransformers_llm_create.restype = llm_p
+
+        # new insert - assigning llm_p to c_void_p
+        llm_p = c_void_p
 
         lib.ctransformers_llm_delete.argtypes = [llm_p]
         lib.ctransformers_llm_delete.restype = None
@@ -4015,7 +4759,54 @@ class GGUFGenerativeModel:
 
         return lib
 
+    def unload_model(self):
+
+        """ Unloads a model to release memory """
+
+        # print("starting to unload")
+
+        if self._llm is not None:
+            self.ctransformers_llm_delete()
+
+        # print("done - unloaded model")
+
+        return 0
+
+    def register_top_logits(self):
+
+        """ Retrieves the logits for current sample, and packages into indexed top list and
+        registers in self.logit_record. """
+
+        logit_pointer = self.ctransformers_llm_logits_data()
+        # sm = np.exp(logit_pointer) / sum(np.exp(logit_pointer))
+        logit_size = self.ctransformers_llm_logits_size()
+
+        logit_array = np.zeros(logit_size)
+
+        for x in range(0, logit_size):
+            # print("logit selection: ", x, logit_pointer[x])
+            logit_array[x] = logit_pointer[x]
+
+        sm = np.exp(logit_array) / sum(np.exp(logit_array))
+
+        sm_sorted = np.sort(sm)
+        sm_args_sorted = np.argsort(sm)
+
+        top_logits = []
+        # by default, self.top_logit_count = 10 - so gets top 10 highest values in logit
+
+        for x in range(0, self.top_logit_count):
+            # generally for llama-based models, logit_size = 32000
+            pair = (sm_args_sorted[logit_size - x - 1], sm_sorted[logit_size - x - 1])
+            top_logits.append(pair)
+
+        self.logits_record.append(top_logits)
+
+        return top_logits
+
     def set_api_key(self, api_key, env_var="USER_MANAGED_HF_API_KEY"):
+
+        """ Sets API key - generally not used in GGUF models. """
 
         # set api_key
         os.environ[env_var] = api_key
@@ -4025,6 +4816,8 @@ class GGUFGenerativeModel:
 
     def _get_api_key(self, env_var="USER_MANAGED_HF_API_KEY"):
 
+        """ Gets API key - generally not used in GGUF models. """
+
         self.api_key = os.environ.get(env_var)
 
         if not self.api_key:
@@ -4033,11 +4826,16 @@ class GGUFGenerativeModel:
         return self.api_key
 
     def token_counter(self, text_sample):
+
+        """ Fast approximate token counter. """
+
         tokenizer = Utilities().get_default_tokenizer()
         toks = tokenizer.encode(text_sample).ids
         return len(toks)
 
     def prompt_engineer(self, query, context, inference_dict):
+
+        """ Prompt engineering, packaging and templating. """
 
         # if loaded model was not pretrained on instruction_following, then skip any instructions
         if not self.instruction_following:
@@ -4089,7 +4887,10 @@ class GGUFGenerativeModel:
 
         return prompt_engineered
 
-    def inference(self, prompt, add_context=None, add_prompt_engineering=None,api_key=None,inference_dict=None):
+    def inference(self, prompt, add_context=None, add_prompt_engineering=None, api_key=None, inference_dict=None,
+                  get_logits=False):
+
+        """ Main method for inference generation. """
 
         # first prepare the prompt
 
@@ -4098,6 +4899,29 @@ class GGUFGenerativeModel:
 
         if add_prompt_engineering:
             self.add_prompt_engineering = add_prompt_engineering
+
+        #   update default handling for no add_prompt_engineering
+        """
+        if not self.add_prompt_engineering:
+            if self.add_context:
+                self.add_prompt_engineering = "default_with_context"
+            else:
+                self.add_prompt_engineering = "default_no_context"
+        """
+        #   end - update
+
+        #   show warning if function calling model
+        if self.fc_supported:
+            logging.warning("warning: this is a function calling model - using .inference may lead to unexpected "
+                            "results.   Recommended to use the .function_call method to ensure correct prompt "
+                            "template packaging.")
+
+        # start with clean logits_record and output_tokens for each function call
+        self.logits_record = []
+        self.output_tokens = []
+
+        if get_logits:
+            self.get_logits = get_logits
 
         if inference_dict:
 
@@ -4122,6 +4946,8 @@ class GGUFGenerativeModel:
             #   -- can be passed either thru model_card or model config from HF
 
             text_prompt = prompt_final + self.trailing_space
+
+        # print("update: GGUFGenerative - inference - text_prompt - ", text_prompt)
 
         time_start = time.time()
 
@@ -4160,6 +4986,127 @@ class GGUFGenerativeModel:
                  "processing_time": time.time() - time_start}
 
         output_response = {"llm_response": output_str, "usage": usage}
+
+        #   experimental - add get_logits in inference
+
+        if get_logits:
+            output_response.update({"logits": self.logits_record})
+            output_response.update({"output_tokens": self.output_tokens})
+
+        #   end - experimental
+
+        return output_response
+
+    @torch.no_grad()
+    def function_call(self, context, function=None, params=None, get_logits=True):
+
+        """ This is the key inference method for SLIM models - takes a context passage and a key list
+        which is packaged in the prompt as the keys for python dictionary output"""
+
+        if not self.fc_supported:
+            logging.warning("warning: GGUFGenerativeModel - loaded model does not support function calls.  "
+                            "Please either use the standard .inference method with this model, or use a GGUF "
+                            "model that has 'function_calls' key set to True in its model card.")
+            return []
+
+        # start with clean logits_record and output_tokens for each function call
+        self.logits_record = []
+        self.output_tokens = []
+
+        if get_logits:
+            self.get_logits = get_logits
+
+        if params:
+            self.primary_keys = params
+
+        if not self.primary_keys:
+            print("warning: GGUF - function call - no keys provided - function call may yield unpredictable results")
+
+        if not params:
+            params = self.primary_keys
+
+        if not function:
+            function = self.function[0]
+
+        # prepare SLIM prompt
+        class_str = ""
+        for key in params:
+            class_str += str(key) + ", "
+        if class_str.endswith(", "):
+            class_str = class_str[:-2]
+
+        f = str(function)
+
+        full_prompt = "<human>: " + context + "\n" + "<{}> {} </{}>".format(f, class_str, f) + "\n<bot>:"
+        full_prompt = full_prompt + self.trailing_space
+
+        text_prompt = full_prompt
+
+        # call inference here
+        time_start = time.time()
+
+        text = self._stream(text_prompt)
+        output_str = "".join(text)
+
+        # post-processing clean-up - stop at endoftext
+        eot = output_str.find("<|endoftext|>")
+        if eot > -1:
+            output_str = output_str[:eot]
+
+        # new post-processing clean-up - stop at </s>
+        eots = output_str.find("</s>")
+        if eots > -1:
+            output_str = output_str[:eots]
+
+        # post-processing clean-up - start after bot wrapper
+        bot = output_str.find("<bot>:")
+        if bot > -1:
+            output_str = output_str[bot + len("<bot>:"):]
+
+        # new post-processing cleanup - skip repeating starting <s>
+        boss = output_str.find("<s>")
+        if boss > -1:
+            output_str = output_str[boss + len("<s>"):]
+
+        # end - post-processing
+
+        input_toks = self.token_counter(text_prompt)
+        output_toks = self.token_counter(output_str)
+
+        usage = {"input": input_toks,
+                 "output": output_toks,
+                 "total": input_toks + output_toks,
+                 "metric": "tokens",
+                 "processing_time": time.time() - time_start}
+
+
+        try:
+            output_dict = ast.literal_eval(output_str)
+            usage.update({"type": "dict"})
+            convert_to_dict = True
+        except:
+            logging.warning("warning: automatic conversion of function call output to "
+                            "python dictionary failed -%s.", output_str)
+            output_dict = output_str
+            usage.update({"type": "string"})
+            convert_to_dict = False
+
+        # quick remediation attempt - usually source of error is cut-off at end
+        if not convert_to_dict:
+            triage_terminus = "]'}"
+            output_str_triage = output_str + triage_terminus
+            try:
+                output_dict = ast.literal_eval(output_str_triage)
+                usage.update({"type": "dict"})
+            except:
+                logging.warning("update: first remediation attempt did not fix dictionary - %s", output_str_triage)
+        # end - remediation attempt
+
+        output_response = {"llm_response": output_dict, "usage": usage}
+
+        if get_logits:
+            output_response.update({"logits": self.logits_record})
+            output_response.update({"output_tokens": self.output_tokens})
 
         return output_response
 
