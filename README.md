@@ -672,7 +672,9 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 **Supported Operating Systems**: MacOS (Metal and x86), Linux (x86 and aarch64), Windows **  
 
-**Supported Vector Databases**: Milvus, Postgres (PGVector), Redis, FAISS, Pinecone, Mongo Atlas Vector Search, FAISS
+**Supported Vector Databases**: Milvus, Postgres (PGVector), Neo4j, Redis, LanceDB, ChromaDB, Qdrant, FAISS, Pinecone, Mongo Atlas Vector Search
+
+**Supported Text Index Databases**: MongoDB, Postgres, SQLite  
 
 <details>
 <summary><b>Optional</b></summary>
