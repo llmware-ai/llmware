@@ -2202,7 +2202,7 @@ class EmbeddingChromaDB:
 
         results = self._collection.query(query_embeddings=query_embedding_vector, n_results=sample_count)
 
-        for idx_result, _ in enumerate(results['ids']):
+        for idx_result, _ in enumerate(results['ids'][0]):
             block_id = results['metadatas'][0][idx_result]['block_id']
             block_result_list = self.utils.lookup_text_index(block_id)
 
