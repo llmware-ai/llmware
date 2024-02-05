@@ -55,13 +55,6 @@ class LLMWareConfig:
              "llmware_public_models_bucket": "llmware-public-models",
              "shared_lib_path": os.path.join(os.path.dirname(os.path.realpath(__file__)), "lib")
 
-             # "collection_db_uri": os.environ.get("COLLECTION_DB_URI", "mongodb://localhost:27017/"),
-             # "collection_db_username": "", # Not used for now
-             # "collection_db_password": "", # Not used for now
-             # "milvus_host": os.environ.get("MILVUS_HOST","localhost"),
-             # "milvus_port": int(os.environ.get("MILVUS_PORT",19530)),
-             # "milvus_db": os.environ.get("MILVUS_DB", "default"),
-
              }
 
     @classmethod
@@ -518,7 +511,9 @@ class SQLiteConfig:
              "sqlite_db_folder_path": LLMWareConfig().get_library_path(),
              "user_name": "",
              "pw": "",
-             "db_name": "sqlite_llmware.db"}
+             "db_name": "sqlite_llmware.db",
+             # add new parameter for SQLTables
+             "db_experimental": "sqlite_experimental.db"}
 
     @classmethod
     def get_config(cls, name):
@@ -535,6 +530,14 @@ class SQLiteConfig:
         """For SQLite the URI string is the local file with full absolute path"""
         db_file = os.path.join(cls._conf["sqlite_db_folder_path"], cls._conf["db_name"])
         return db_file
+
+    #   new method for SQLTables DB
+    @classmethod
+    def get_uri_string_experimental_db(cls):
+        """For SQLite the URI string is the local file with full absolute path"""
+        db_file = os.path.join(cls._conf["sqlite_db_folder_path"], cls._conf["db_experimental"])
+        return db_file
+    #   end method
 
     @classmethod
     def get_db_configs(cls):
