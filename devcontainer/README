@@ -1,0 +1,4 @@
+If you wish to use devcontainers for development in vscode.   You will need to rename or create a symlink of this directory to .devcontainer and reload your window.   This will trigger the an option to open the code in a container.   Once the code is opened in a container you will be able to contribute like normally without having to install all the dependencies on your local system.   Also, the development container provides access to your local home directory via the /code directory.   
+
+quick how-to:
+run this command on linux from the root llmware: ln -s devcontainer .devcontainer
