@@ -43,7 +43,7 @@ class LLMWareConfig:
            "tmp_path_name": "tmp" + os.sep}
 
     # note: two alias for postgres vector db - "postgres" and "pg_vector" are the same
-    _supported = {"vector_db": ["neo4j", "milvus", "pg_vector", "postgres", "redis", "pinecone", "faiss", "qdrant", "mongo_atlas","lancedb"],
+    _supported = {"vector_db": ["chromadb", "neo4j", "milvus", "pg_vector", "postgres", "redis", "pinecone", "faiss", "qdrant", "mongo_atlas","lancedb"],
                   "collection_db": ["mongo", "postgres", "sqlite"],
                   "table_db": ["postgres", "sqlite"]}
 
@@ -741,3 +741,120 @@ class Neo4jConfig:
     @classmethod
     def get_database_name(cls):
         return cls._conf["database"]
+
+
+class ChromaDBConfig:
+    """Configuration object for chroma.
+
+    The default is to use chroma as an in-memory (ephemeral) store.
+
+    Chroma can be used with or without (default) a client/server architecture. If it is used with a client/server
+    architecture, you have to set the authentication meachanism. The authentication mechanism can be either
+    username/password or token.
+    - env variable CHROMA_HOST is None -> not client/server mode (default),
+    - env variable CHROMA_HOST is set -> client/server mode
+
+    If you want to use Chroma without the client/server architecture, the env variable CHROMA_HOST has to be
+    None (default). In this mode, you can choos between in-memory (also called ephemeral, non-persistent) and
+    persistent.
+    - env variable CHROMA_PERSISTENT_PATH is None -> in-memory (non-persistent),
+    - env variable CHROMA_PERSISTENT_PATH is set -> persistent storage.
+
+    If you want to use Chroma in client/server mode, the env variable CHROMA_HOST needs to be set. In addition,
+    you have to set
+    - env variable CHROMA_SERVER_AUTH_PROVIDER, and
+    - env variable CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER
+    the value depends on the authentication mechanism you want to use.
+
+    For more information, please visit https://docs.trychroma.com/getting-started
+    """
+
+    _conf = {
+        'collection': os.environ.get('CHROMA_COLLECTION', 'llmware'),
+
+        #
+        # Persistent path to make chroma persistent.
+        # If this is None, then an in-memory only chroma instance will be created.
+        #
+        'persistent_path': os.environ.get('CHROMA_PERSISTENT_PATH', None),
+
+        #
+        # Configs below are only relevant when chromadb is run in client/server mode.
+        #
+        'host': os.environ.get('CHROMA_HOST', None),
+        'port': os.environ.get('CHROMA_PORT', 8000),
+        'ssl': os.environ.get('CHROMA_SSL', False),
+        'headers': os.environ.get('CHROMA_HEADERS', {}),
+
+        # The provider decides whether we use authentication via username and password, or via a token.
+        # - For the username and password, this has to be set to chromadb.auth.basic.BasicAuthServerProvider
+        # - For the token, this has to be set to chromadb.auth.token.TokenAuthServerProvider
+        'auth_provider': os.environ.get('CHROMA_SERVER_AUTH_PROVIDER', None),
+
+        # The credential provider supplies the username and password or the token. This setting hence
+        # depends on the variable just above.
+        # - For the username and password, this has to be set to chromadb.auth.providers.HtpasswdFileServerAuthCredentialsProvider
+        # - For the token, this has to be set to chromadb.auth.token.TokenAuthServerProvider
+        'auth_credentials_provider': os.environ.get('CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER', None),
+
+        # Settings for authentication via username and password.
+        'user': os.environ.get('CHROMA_USERNAME', 'admin'),
+        'password': os.environ.get('CHROMA_PASSWORD', 'admin'),
+        'auth_credentials_file': os.environ.get('CHROMA_SERVER_AUTH_CREDENTIALS_FILE', 'server.htpasswd'),
+
+        # Settings for authentication via token.
+        'auth_credentials': os.environ.get('CHROMA_SERVER_AUTH_CREDENTIALS', None),
+        'auth_token_transport_header': os.environ.get('CHROMA_SERVER_AUTH_TOKEN_TRANSPORT_HEADER', None),
+    }
+
+    @classmethod
+    def get_db_configs(cls):
+        configs = {}
+        for keys, values in cls._conf.items():
+            configs.update({keys:values})
+        return configs
+
+    @classmethod
+    def get_config(cls, name):
+        if name in cls._conf:
+            return cls._conf[name]
+        raise ConfigKeyException(name)
+
+    @classmethod
+    def set_config(cls, name, value):
+        cls._conf[name] = value
+
+    @classmethod
+    def get_uri_string(cls):
+        return cls._conf["uri"]
+
+    @classmethod
+    def get_user_name(cls):
+        return cls._conf["user"]
+
+    @classmethod
+    def get_db_pw(cls):
+        return cls._conf["password"]
+
+    @classmethod
+    def get_collection_name(cls):
+        return cls._conf["collection"]
+    @classmethod
+    def get_auth_provider(cls):
+        return cls._conf["auth_provider"]
+
+    @classmethod
+    def get_auth_credentials_provider(cls):
+        return cls._conf["auth_credentials_provider"]
+
+    @classmethod
+    def get_auth_credentials_file(cls):
+        return cls._conf["auth_credentials_file"]
+
+    @classmethod
+    def get_auth_credentials(cls):
+        return cls._conf["auth_credentials"]
+
+    @classmethod
+    def get_auth_token_transport_header(cls):
+        return cls._conf["auth_token_transport_header"]
