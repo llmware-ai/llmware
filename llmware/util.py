@@ -1422,10 +1422,12 @@ class TextChunker:
                 if x+1 == stopper or ord(self.text_chunk[x + 1]) in [32, 13, 10]:
 
                     # exclude 'several edge cases where '.' is not a reliable sentence end
-                    short_window = self.text_chunk[x-5:x-1]
+                    short_window = self.text_chunk
+                    if x > 5:
+                        short_window = self.text_chunk[x-5:x-1]
 
                     # (A) first edge case - "two periods close to each other", e.g., "x.y."
-                    if "." not in short_window:
+                    if "." not in short_window and short_window != "":
 
                         # (B) second edge case - "period after number in list", e.g., "point 2."
                         if not 47 < ord(short_window[-1]) < 58:
