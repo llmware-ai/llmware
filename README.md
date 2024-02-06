@@ -564,7 +564,11 @@ Check out:  [llmware examples](https://github.com/llmware-ai/llmware/blob/main/e
 <details>
 <summary><b>Step 3 - Tutorial Videos</b> - check out our Youtube channel for high-impact 5-10 minute tutorials on the latest examples.   </summary>
 
-🎬 Check out these videos on how to quickly get started with RAG:
+🎬 Check out these videos to get started quickly:    
+- [Install and Compare Multiple Embeddings on Postgres](https://www.youtube.com/watch?v=Bncvggy6m5Q)
+- [Using LM Studio Models](https://www.youtube.com/watch?v=h2FDjUyvsKE)
+- [Using Ollama Models](https://www.youtube.com/watch?v=qITahpVDuV0)
+- [Use any GGUF Model](https://www.youtube.com/watch?v=9wXJgld7Yow)  
 - [Use small LLMs for RAG for Contract Analysis (feat. LLMWare)](https://www.youtube.com/watch?v=8aV5p3tErP0)
 - [Invoice Processing with LLMware](https://www.youtube.com/watch?v=VHZSaBBG-Bo&t=10s)
 - [Ingest PDFs at Scale](https://www.youtube.com/watch?v=O0adUfrrxi8&t=10s)
