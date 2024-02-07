@@ -523,7 +523,7 @@ class LLMfx:
         else:
             raise ModelNotFoundException(tool_type)
 
-        print("\nupdate: output_response - ", output_response)
+        # print("update: output_response - ", output_response)
 
         # replacing output_response with value_output which is a dictionary "subset" of the full output response
 
@@ -572,21 +572,6 @@ class LLMfx:
             params = [params]
 
         return self.exec_function_call("topics", text=text, params=params)
-
-    def legal_topics(self, text=None, params=None):
-
-        """ Executes legal topics classification analysis on a text, if passed directly, or will pull current
-        work item from the queue.   Returns value output dictionary with legal topic classification and
-        confidence score. """
-
-        if not params:
-            # default parameter key
-            params = ["legal_topic"]
-
-        if isinstance(params, str):
-            params = [params]
-
-        return self.exec_function_call("legal_topics", text=text, params=params)
 
     def named_entity_extraction(self, text=None, params=None):
 
@@ -665,42 +650,20 @@ class LLMfx:
 
         return self.exec_function_call("intent", text=text, params=params)
 
-    def xsum(self, text=None, params=None):
+    def tags(self, text=None, params=None):
 
-        """ Generates a 'headline' description or 'extreme summary' of a text, if passed directly, or will pull current
-        work item from the queue.   Returns value output dictionary with summary. """
+        """ Generates a list of relevant 'tag' information data points from a text, if passed directly, or
+        will pull current work item from the queue.   Returns value output dictionary with list of key
+        highlighted points. """
 
         if not params:
             # default parameter key
-            params = ["xsum"]
+            params = ["tags"]
 
         if isinstance(params, str):
             params = [params]
 
-        response = self.exec_function_call("xsum", text=text, params=params)
-
-        # need to run token match fact check
-        output_str = response["llm_response"]["xsum"][0]
-
-        fc = self.token_comparison(output_str, self.work_queue[self.work_iteration]["text"])
-
-        print("fc: ", fc)
-
-        return response
-
-    def highlighter(self, text=None, params=None):
-
-        """ Extracts a list of key information data points from a text, if passed directly, or will pull current
-        work item from the queue.   Returns value output dictionary with list of key highlighted points. """
-
-        if not params:
-            # default parameter key
-            params = ["highlights"]
-
-        if isinstance(params, str):
-            params = [params]
-
-        return self.exec_function_call("highlighter", text=text, params=params)
+        return self.exec_function_call("tags", text=text, params=params)
 
     def nli(self, text1, text2, params=None):
 
@@ -725,7 +688,7 @@ class LLMfx:
 
         return self.nli(input_context, llm_response)
 
-    def answer(self, question, context=None):
+    def answer(self, question, context=None, key=None):
 
         """ Executes an inference """
 
@@ -746,7 +709,12 @@ class LLMfx:
 
         llm_response = re.sub("[\n\r]", "\t", response["llm_response"])
 
-        self.report[work_iter].update({"answer": [llm_response]})
+        if not key:
+            self.report[work_iter].update({"answer": [llm_response]})
+            answer_key = "answer"
+        else:
+            self.report[work_iter].update({key:[llm_response]})
+            answer_key = key
 
         usage = response["usage"]
 
@@ -754,7 +722,7 @@ class LLMfx:
 
         # start journaling update
         journal_update = f"executing function call - " \
-                         f"getting response - question - answer\n"
+                         f"getting response - question - {answer_key}\n"
         journal_update += f"\t\t\t\t -- llm_response - {str(llm_response)}\n"
         journal_update += f"\t\t\t\t -- output type - text\n"
         journal_update += f"\t\t\t\t -- usage - {usage}"
