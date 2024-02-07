@@ -81,21 +81,17 @@ class _ModelRegistry:
 
     #   list of function calling classifier tools
 
-    llm_fx_tools = ["ner", "sentiment", "topics", "function_call", "ratings", "emotions", "nli",
-                    "legal_topics", "intent", "xsum", "sql", "answer",
-                    "category", "highlighter"]
+    llm_fx_tools = ["ner", "sentiment", "topics", "ratings", "emotions", "nli",
+                    "intent", "sql", "answer", "category", "tags"]
 
     llm_fx_tools_map = {"ner": "slim-ner-tool",
                         "sentiment": "slim-sentiment-tool",
                         "topics": "slim-topics-tool",
-                        "legal_topics": "slim-legal-topics-tool",
-                        "function_call": "slim-fc-tool",
                         "ratings": "slim-ratings-tool",
                         "emotions": "slim-emotions-tool",
-                        "xsum": "slim-xsum-tool",
                         "nli": "slim-nli-tool",
                         "sql": "slim-sql-tool",
-                        "highlighter": "slim-highlighter-tool",
+                        "tags": "slim-tags-tool",
                         "answer": "bling-answer-tool",
                         "category": "slim-category-tool",
                         "intent": "slim-intent-tool"}
