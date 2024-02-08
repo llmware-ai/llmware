@@ -241,12 +241,24 @@ class LLMfx:
                 for key, value in self.report[n].items():
                     journal_update += f"\t\t\t\t -- {key.ljust(20)} - {str(value).ljust(40)}\n"
 
+                source_info = ""
+                if "file_source" in self.work_queue[n]:
+                    source_info += self.work_queue[n]["file_source"]
+                if "page_num" in self.work_queue[n]:
+                    source_info += " - page: " + str(self.work_queue[n]["page_num"])
+
+                key= "source_info"
+                value = source_info
+                if source_info:
+                    journal_update += f"\t\t\t\t -- {key.ljust(20)} - {str(value).ljust(40)}\n"
+
                 base_report = self.report[n]
                 if add_source:
                     base_report.update({"source": self.work_queue[n]})
 
-                self.write_to_journal(journal_update)
                 output_report.append(base_report)
+
+            self.write_to_journal(journal_update)
 
         else:
             # show all reports
@@ -693,6 +705,13 @@ class LLMfx:
         """ Executes an inference """
 
         model = getattr(self, "answer" + "_model")
+
+        # insert change - load model in-line
+        #   if model not yet loaded, then load in-line
+        if not model:
+            model = self.load_tool("answer")
+        # end - insert change
+
         inference = getattr(model, "inference")
 
         journal_update = f"executing function call - deploying - question-answer tool "
@@ -759,6 +778,13 @@ class LLMfx:
         """ Executes Text2Sql tool to convert query into SQL """
 
         model = getattr(self, "sql" + "_model")
+
+        # insert change - load model in-line
+        #   if model not yet loaded, then load in-line
+        if not model:
+            model = self.load_tool("sql")
+        # end - insert change
+
         inference = getattr(model, "inference")
 
         if table_schema:
@@ -962,11 +988,11 @@ class SQLTables:
 
         if experimental:
             self.db_file = SQLiteConfig().get_uri_string_experimental_db()
-            logging.warning("update: connecting to experimental sqlite db - %s", self.db_file)
+            logging.info("update: connecting to experimental sqlite db - %s", self.db_file)
 
         else:
             self.db_file = SQLiteConfig().get_uri_string()
-            logging.warning("warning: connecting to main sqlite db - %s", self.db_file)
+            logging.info("warning: connecting to main sqlite db - %s", self.db_file)
 
         self.conn = sqlite3.connect(self.db_file)
 
