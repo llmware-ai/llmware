@@ -998,8 +998,8 @@ class ModelCatalog:
 
                         response = model.function_call(text, get_logits=True)
 
-                        if verbose:
-                            print(f"\nupdate: context - test - {i} - {text}")
+                        # if verbose:
+                        print(f"\nupdate: context - test - {i} - {text}")
 
                         print("update: 'llm_response' - test - ", i, response["llm_response"])
 
@@ -1008,8 +1008,27 @@ class ModelCatalog:
                         logit_analysis = self.logit_analysis(response, model_card, model.hf_tokenizer_name,
                                                              api_key=api_key)
 
+                        if "ryg_string" in logit_analysis:
+                            print("update: red-yellow-green confidence - ", logit_analysis["ryg_string"])
+
+                        if "confidence_score" in logit_analysis:
+                            print("update: confidence score - ", logit_analysis["confidence_score"])
+
+                        if "marker_tokens" in logit_analysis:
+                            if logit_analysis["marker_tokens"]:
+                                print("update: marker tokens - ", logit_analysis["marker_tokens"])
+
+                        if "choices" in logit_analysis:
+                            choices = logit_analysis["choices"]
+                            if len(choices) > 0:
+                                choices = choices[0]
+
+                            print("update: choices - ", choices)
+
+                        """ 
                         for keys, values in logit_analysis.items():
                             print("update: logit analysis - ", keys, values)
+                        """
 
         return 0
 
