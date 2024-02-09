@@ -77,7 +77,8 @@ setup(
         'yfinance==0.2.28',
         'psycopg-binary==3.1.17',
         'psycopg==3.1.17',
-        'pgvector==0.2.4'
+        'pgvector==0.2.4',
+        'colorama==0.4.6'
     ],
 
     extras_require={
