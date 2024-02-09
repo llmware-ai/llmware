@@ -495,6 +495,12 @@ class LLMfx:
                         confidence_score = logit_analysis["confidence_score"]
                         ryg = logit_analysis["ryg_string"]
                         choices = logit_analysis["choices"]
+
+                        #   will display and add to journal only the 'first' token choice
+                        #   choices for each token captured in 'logit_analysis' metadata
+                        if len(choices) > 1:
+                            choices = choices[0]
+
                         marker_tokens = logit_analysis["marker_tokens"]
                         output_response.update({"logit_analysis": logit_analysis})
 
