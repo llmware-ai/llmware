@@ -1046,7 +1046,9 @@ class SQLTables:
             result = self.conn.cursor().execute(sql_query)
         except:
             logging.warning("update: query generated error - not successful - %s", sql_query)
-            result = None
+
+            # if sql query generates error, then an empty result is returned
+            result = []
 
         return result
 
