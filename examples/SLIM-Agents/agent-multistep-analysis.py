@@ -10,29 +10,56 @@
     7.  Finally, we will assemble the follow-up analysis into a list of detailed reports.
 """
 
+import os
+import shutil
+
 from llmware.agents import LLMfx
 from llmware.library import Library
 from llmware.retrieval import Query
 from llmware.configs import LLMWareConfig
+from llmware.setup import Setup
 
 
-def analyze_document():
+def multistep_analysis():
 
     """ In this example, our objective is to research Microsoft history and rivalry in the 1980s with IBM. """
 
     #   step 1 - assemble source documents and create library
-    #   note: TBD - we will be adding sample Microsoft documents into sample files - coming soon
-    fp = "/path/to/files/"
+
+    print("update: Starting example - agent-multistep-analysis")
+
+    #   note:  lines 38-49 attempt to automatically pull sample document into local path
+    #   depending upon permissions in your environment, you may need to set up directly
+    #   if you pull down the samples files with Setup().load_sample_files(), in the Books folder,
+    #   you will find the source: "Bill-Gates-Biography.pdf"
+    #   if you have pulled sample documents in the past, then to update to latest: set over_write=True
+
+    print("update: Loading sample files")
+
+    sample_files_path = Setup().load_sample_files(over_write=False)
+    bill_gates_bio = "Bill-Gates-Biography.pdf"
+    path_to_bill_gates_bio = os.path.join(sample_files_path, "Books", bill_gates_bio)
+
+    microsoft_folder = os.path.join(LLMWareConfig().get_tmp_path(), "example_microsoft")
+
+    print("update: attempting to create source input folder at path: ", microsoft_folder)
+
+    if not os.path.exists(microsoft_folder):
+        os.mkdir(microsoft_folder)
+        os.chmod(microsoft_folder, 0o777)
+        shutil.copy(path_to_bill_gates_bio,os.path.join(microsoft_folder, bill_gates_bio))
 
     #   create library
+    print("update: creating library and parsing source document")
+
     LLMWareConfig().set_active_db("sqlite")
-    my_lib = Library().create_new_library("microsoft_history_001")
-    my_lib.add_files(fp)
+    my_lib = Library().create_new_library("microsoft_history_0210_1")
+    my_lib.add_files(microsoft_folder)
 
     #   run our first query - "ibm"
     query = "ibm"
     search_results = Query(my_lib).text_query(query)
-    print(f"query results: found query - {query} - ", len(search_results))
+    print(f"update: executing query to filter to key passages - {query} - results found - {len(search_results)}")
 
     #   create an agent and load several tools that we will be using
     agent = LLMfx()
@@ -69,6 +96,7 @@ def analyze_document():
 
 
 if __name__ == "__main__":
-    analyze_document()
+
+    multistep_analysis()
 
 
