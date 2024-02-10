@@ -1104,7 +1104,9 @@ class SQLTables:
         """ Opens CSV file at folder_path fp and file_name fn and returns array-like output in memory """
 
         in_path = os.path.join(fp,fn)
-        record_file = open(in_path, encoding='utf-8')# encoding='ISO-8859-1', )
+
+        # csv encoding can vary - utf-8-sig and errors='ignore' seems to be the most resilient for wide range of csv
+        record_file = open(in_path, encoding='utf-8-sig',errors='ignore')
         c = csv.reader(record_file, dialect='excel', doublequote=False, delimiter=',')
         output = []
         for lines in c:
