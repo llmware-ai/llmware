@@ -93,13 +93,13 @@ def step5_run_automated_tests():
             "slim-category-tool", "slim-nli-tool"]
 
     # run tests for one tool
-    ModelCatalog().tool_test_run("slim-sentiment-tool", verbose=True)
+    ModelCatalog().tool_test_run("slim-sentiment-tool")
 
     # run tests for a bunch of tools
     for tool in tools:
         # excluding sentiment, since ran above as separate test
         if tool != "slim-sentiment-tool":
-            ModelCatalog().tool_test_run(tool, verbose=True)
+            ModelCatalog().tool_test_run(tool)
 
     return 0
 
