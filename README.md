@@ -5,9 +5,20 @@
 
 `llmware` is a unified framework for developing LLM-based application patterns including Retrieval Augmented Generation (RAG).  This project provides an integrated set of tools that anyone can use - from a beginner to the most sophisticated AI developer - to rapidly build industrial-grade, knowledge-based enterprise LLM applications with specific focus on making it easy to integrate open source small specialized models and connecting enterprise knowledge safely and securely. 
 
-[Join us on Discord](https://discord.gg/MhZn5Nc39h)   |  [Watch Youtube Tutorials](https://www.youtube.com/@llmware)  | [Explore our Model Families on Huggingface](https://www.huggingface.co/llmware)
+[Join us on Discord](https://discord.gg/MhZn5Nc39h)   |  [Watch Youtube Tutorials](https://www.youtube.com/@llmware)  | [Explore our Model Families on Huggingface](https://www.huggingface.co/llmware)   
 
-## 🎯  Key features
+
+🔥🔥🔥 [**Multi-Model Agents with SLIM Models**](examples/SLIM-Agents/) 🔥🔥🔥  
+Can't wait?  Get SLIMs right away:  
+
+```python 
+from llmware.models import ModelCatalog
+
+ModelCatalog().get_llm_toolkit()  # get all SLIM models, delivered as small, fast quantized tools 
+ModelCatalog().tool_test_run("slim-sentiment-tool") # see the model in action with test script included  
+```
+
+## 🎯  Key features 
 Writing code with`llmware` is based on a few main concepts:
 
 <details>
@@ -66,10 +77,10 @@ lib.install_new_embedding(embedding_model_name="industry-bert-sec", vector_db="f
 #   easy to create multiple libraries for different projects and groups
 
 finance_lib = Library().create_new_library("finance_q4_2023")
-finance_lib.add_files("/finance_folder/"
+finance_lib.add_files("/finance_folder/")
 
 hr_lib = Library().create_new_library("hr_policies")
-hr_lib.add_files("/hr_folder/"
+hr_lib.add_files("/hr_folder/")
 
 #    pull library card with key metadata - documents, text chunks, images, tables, embedding record
 lib_card = Library().get_library_card("my_library")
@@ -520,6 +531,8 @@ if __name__ == "__main__":
 
 ## 🔥 What's New? 🔥
 
+-**Multi-Model Agents with SLIM models** - next generation of multi-step Agents implemented with SLIMs on CPU - [example](examples/SLIM-Agents)  
+
 -**Fast start with no db installation** - SQLite (text collection) and FAISS (vector file database) - [example](examples/Getting_Started/configure_db.py) 
 
 -**Postgres integration** as option for text collection with PGVector support ([example](examples/Embedding/using_pg_vector.py))  
@@ -539,23 +552,26 @@ if __name__ == "__main__":
 <details>
 <summary><b>Step 2- Go to Examples</b> - Get Started Fast with 50+ 'Cut-and-Paste' Recipes </summary>
 
+## 🔥 Top New Examples 🔥  
+
+New to LLMWare - [**Fast Start tutorial series**](https://github.com/llmware-ai/llmware/tree/main/fast_start)  
+SLIM Examples -  [**SLIM Models**](SLIM-Agents/)
+
 | Example     |  Detail      |
 |-------------|--------------|
-| 1.   Getting Started ([code](examples/Getting_Started/getting_started_with_rag.py) / [video](https://www.youtube.com/watch?v=0naqpH93eEU)) | End-to-end Basic RAG Recipe illustrating key LLMWare classes. |
-| 2.   Prompts ([code](examples/Prompts/llm_prompts.py)) | Prompt LLMs with various sources, explore the out-of-the-box Prompt Catalog, and use different prompt styles.|
-| 3.   Retrieval ([code](examples/Retrieval/semantic_retrieval.py)) | Explore the breadth of retrieval capabilities and persisting, loading and saving retrieval history.|
-| 4.   Embedding ([code](examples/Embedding/embeddings_fast_start.py)) | Simple access to multiple embedding models and vector DBs (“mix and match”). 
-| 5.   Parsing ([code](examples/Parsing/parse_documents.py)) | Ingest at scale into library and ‘at runtime' into any Prompt.
-| 6.   Prompts With Sources ([code](examples/Prompts/prompt_with_sources.py)) | Attach wide range of knowledge sources directly into Prompts.
-| 7.   BLING models ([code](examples/Models/bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU))   | Explore `llmware`'s BLING model series ("Best Little Instruction-following No-GPU-required").  See how they perform in common RAG scenarios - question-answering, key-value extraction, and basic summarization.   |
-| 8.   RAG with BLING ([code](examples/RAG/contract_analysis_on_laptop_with_bling_models.py) / [video](https://www.youtube.com/watch?v=8aV5p3tErP0)) | Using contract analysis as an example, experiment with RAG for complex document analysis and text extraction using `llmware`'s BLING ~1B parameter GPT model running on your laptop.   |
-| 9.   DRAGON RAG benchmark testing with huggingface ([code](examples/Models/dragon_rag_benchmark_tests_huggingface.py)) | Run RAG instruct benchmark tests against the `llmware` DRAGON models to find the best one for your RAG workflow.  This example uses basic Transformer APIs. |
-| 10.  DRAGON RAG benchmark testing with llmware ([code](examples/Models/dragon_rag_benchmark_tests_llmware.py)) | Run RAG instruct benchmark tests against the `llmware` DRAGON models to find the best one for your RAG workflow. This example uses the llmware Prompt API which provides additional capabilities such as evidence/fact checking |
-| 11.  Fact Checking ([code](examples/Prompts/fact_checking.py))  | Explore the full set of evidence methods in this example script that analyzes a set of contracts. |
-| 12.  Working with Prompts ([code](examples/Getting_Started/working_with_prompts.py)) |  Inspection of Prompt history which is useful in AI Audit scenarios.|
-| 13.  Hugging Face Integration ([code](examples/Models/huggingface_integration.py)) | How to bring your favorite HF model into llmware seamlessly.  Customize a generative model with weights from a custom fine-tuned model. |
-| 14.  Working with Datasets ([code](examples/Datasets/working_with_datasets.py)) | Dataset generation streamlined for fine-tuning generative and embedding models and formats such as Alpaca, ChatGPT, Human-Bot.  |
-| 15.  Working without Databases ([code](examples/Getting_Started/working_without_a_database.py) / [video](https://www.youtube.com/watch?v=tAGz6yR14lw))| Parse, Prompt and generate Datasets from Prompt history without installing MongoDB or a vector database.|  
+| 1.   BLING models fast start ([code](Models/bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU)) | Get started with fast, accurate, CPU-based models - question-answering, key-value extraction, and basic summarization.  |
+| 2.   Parse and Embed 500 PDF Documents ([code](Embedding/docs2vecs_with_milvus-un_resolutions.py))  | End-to-end example for Parsing, Embedding and Querying UN Resolution documents with Milvus  |
+| 3.  Hybrid Retrieval - Semantic + Text ([code](Retrieval/dual_pass_with_custom_filter.py)) | Using 'dual pass' retrieval to combine best of semantic and text search |  
+| 4.   Multiple Embeddings with PG Vector ([code](Embedding/using_multiple_embeddings.py) / [video](https://www.youtube.com/watch?v=Bncvggy6m5Q)) | Comparing Multiple Embedding Models using Postgres / PG Vector |
+| 5.   DRAGON GGUF Models ([code](Models/dragon_gguf_fast_start.py) / [video](https://www.youtube.com/watch?v=BI1RlaIJcsc&t=130s)) | State-of-the-Art 7B RAG GGUF Models.  | 
+| 6.   RAG with BLING ([code](RAG/contract_analysis_on_laptop_with_bling_models.py) / [video](https://www.youtube.com/watch?v=8aV5p3tErP0)) | Using contract analysis as an example, experiment with RAG for complex document analysis and text extraction using `llmware`'s BLING ~1B parameter GPT model running on your laptop. |  
+| 7.   Master Service Agreement Analysis with DRAGON ([code](RAG/msa_processing.py) / [video](https://www.youtube.com/watch?v=Cf-07GBZT68&t=2s)) | Analyzing MSAs using DRAGON YI 6B Model.   |                                                                                                                         
+| 8.   Streamlit Example ([code](Getting_Started/ui_without_a_database.py))  | Upload pdfs, and run inference on llmware BLING models.  |  
+| 9.   Integrating LM Studio ([code](Models/using-open-chat-models.py) / [video](https://www.youtube.com/watch?v=h2FDjUyvsKE&t=101s)) | Integrating LM Studio Models with LLMWare  |                                                                                                                                       
+| 10.  Prompts With Sources ([code](Prompts/prompt_with_sources.py))  | Attach wide range of knowledge sources directly into Prompts.   |   
+| 11.  Fact Checking ([code](Prompts/fact_checking.py))  | Explore the full set of evidence methods in this example script that analyzes a set of contracts.   |
+| 12.  Using 7B GGUF Chat Models ([code](Models/chat_models_gguf_fast_start.py)) | Using 4 state of the art 7B chat models in minutes running locally |  
+
 
 Check out:  [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md)  
 
@@ -564,8 +580,12 @@ Check out:  [llmware examples](https://github.com/llmware-ai/llmware/blob/main/e
 <details>
 <summary><b>Step 3 - Tutorial Videos</b> - check out our Youtube channel for high-impact 5-10 minute tutorials on the latest examples.   </summary>
 
-🎬 Check out these videos to get started quickly:    
-- [Install and Compare Multiple Embeddings on Postgres](https://www.youtube.com/watch?v=Bncvggy6m5Q)
+🎬 Check out these videos to get started quickly:  
+- [SLIM Models Intro](...)  
+- [RAG with BLING on your laptop](https://www.youtube.com/watch?v=JjgqOZ2v5oU)
+- [DRAGON-7B-Models](https://www.youtube.com/watch?v=d_u7VaKu6Qk&t=37s)
+- [Install and Compare Multiple Embeddings with Postgres and PGVector](https://www.youtube.com/watch?v=Bncvggy6m5Q)
+- [Background on GGUF Quantization & DRAGON Model Example](https://www.youtube.com/watch?v=ZJyQIZNJ45E)
 - [Using LM Studio Models](https://www.youtube.com/watch?v=h2FDjUyvsKE)
 - [Using Ollama Models](https://www.youtube.com/watch?v=qITahpVDuV0)
 - [Use any GGUF Model](https://www.youtube.com/watch?v=9wXJgld7Yow)  
@@ -575,13 +595,12 @@ Check out:  [llmware examples](https://github.com/llmware-ai/llmware/blob/main/e
 - [Evaluate LLMs for RAG with LLMWare](https://www.youtube.com/watch?v=s0KWqYg5Buk&t=105s)
 - [Fast Start to RAG with LLMWare Open Source Library](https://www.youtube.com/watch?v=0naqpH93eEU)
 - [Use Retrieval Augmented Generation (RAG) without a Database](https://www.youtube.com/watch?v=tAGz6yR14lw)
-- [RAG using CPU-based (No-GPU required) Hugging Face Models with LLMWare on your laptop](https://www.youtube.com/watch?v=JjgqOZ2v5oU)
 - [Pop up LLMWare Inference Server](https://www.youtube.com/watch?v=qiEmLnSRDUA&t=20s)
-- [DRAGON-7B-Models](https://www.youtube.com/watch?v=d_u7VaKu6Qk&t=37s)
+
 
 </details>  
 
-## Data Store Options: 
+## Data Store Options
 
 <details>
 <summary><b>Fast Start</b>:  use SQLite3 and FAISS out-of-the-box - no install required </summary>  
@@ -636,10 +655,17 @@ curl -o docker-compose.yaml https://raw.githubusercontent.com/llmware-ai/llmware
 
 </details>  
 
+## Meet our Models   
 
-## Accessing LLMs and setting-up API keys & secrets
+- **SLIM model series:** small, specialized models fine-tuned for function calling and multi-step, multi-model Agent workflows.  
+- **DRAGON model series:**  Production-grade RAG-optimized 6-7B parameter models - "Delivering RAG on ..." the leading foundation base models.
+- **BLING model series:**  Small CPU-based RAG-optimized, instruct-following 1B-3B parameter models.
+- **Industry BERT models:**  out-of-the-box custom trained sentence transformer embedding models fine-tuned for the following industries:  Insurance, Contracts, Asset Management, SEC.  
+- **GGUF Quantization:** we provide 'gguf' and 'tool' versions of many SLIM, DRAGON and BLING models, optimized for CPU deployment.  
 
-To use LLMWare, you do not need to use any proprietary LLM - we would encourage you to experiment with [BLING](https://huggingface.co/llmware), [DRAGON](https://huggingface.co/llmware), [Industry-BERT](https://huggingface.co/llmware), the GGUF examples, along with bringing in your favorite models from HuggingFace and Sentence Transformers. 
+## Using LLMs and setting-up API keys & secrets
+
+LLMWare is an open platform and supports a wide range of open source and proprietary models.  To use LLMWare, you do not need to use any proprietary LLM - we would encourage you to experiment with [SLIM](https://www.huggingface.co/llmware/), [BLING](https://huggingface.co/llmware), [DRAGON](https://huggingface.co/llmware), [Industry-BERT](https://huggingface.co/llmware), the GGUF examples, along with bringing in your favorite models from HuggingFace and Sentence Transformers. 
 
 If you would like to use a proprietary model, you will need to provide your own API Keys.   API keys and secrets for models, aws, and pinecone can be set-up for use in environment variables or passed directly to method calls. 
 
@@ -662,7 +688,9 @@ git clone git@github.com:llmware-ai/llmware.git
 - 💡 Developing small specialized RAG optimized LLMs between 1B-7B parameters
 - 💡 Industry-specific LLMs, embedding models and processes to support core knowledge-based use cases
 - 💡 Enterprise scalability - containerization, worker deployments and Kubernetes
-- 💡 Integration of SQL and other scale enterprise data sources
+- 💡 Integration of SQL and other scale enterprise data sources  
+- 💡 Multi-step, multi-model Agent-based workflows with small, specialized function-calling models  
+
 
 Like our models, we aspire for llmware to be "small, but mighty" - easy to use and get started, but packing a powerful punch!
 
@@ -674,7 +702,10 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log
 
-**Supported Operating Systems**: MacOS (Metal and x86), Linux (x86 and aarch64), Windows **  
+**Supported Operating Systems**: MacOS (Metal and x86), Linux (x86 and aarch64), Windows  
+- note on Linux: we test most extensively on Ubuntu 22 and recommend where possible  
+- if you need another Linux version, please raise an issue - we will prioritize testing and ensure support.  
+
 
 **Supported Vector Databases**: Milvus, Postgres (PGVector), Neo4j, Redis, LanceDB, ChromaDB, Qdrant, FAISS, Pinecone, Mongo Atlas Vector Search
 
