@@ -1,11 +1,11 @@
-# Top New Examples 
+## 🔥 Top New Examples 🔥  
 
-Looking for the Fast Start tutorial series? [Click here](./fast_start/)  
-Looking for SLIM Models?  [Click here](SLIM-Agents/)  
+New to LLMWare - Looking for the Fast Start tutorial series? [**Click here**](https://github.com/llmware-ai/llmware/fast_start/)  
+Looking for SLIM Models?  [**Click here**](SLIM-Agents/)  
 
 | Example                                                                                                                    | Detail                                                                                                                                                                                                                          |
 |----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1.   BLING models fast start ([code](Models/bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU)    | Explore `llmware`'s BLING model series ("Best Little Instruction-following No-GPU-required").  See how they perform in common RAG scenarios - question-answering, key-value extraction, and basic summarization.                |
+| 1.   BLING models fast start ([code](Models/bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU)    | Get started with fast, accurate, CPU-based models - question-answering, key-value extraction, and basic summarization.                |
 | 2.   DRAGON GGUF Models ([code](Models/dragon_gguf_fast_start.py) / [video](https://www.youtube.com/watch?v=BI1RlaIJcsc&t=130s) | State-of-the-Art 7B RAG GGUF Models.                                                                                                                                                                                            |   
 | 3.   Using Custom GGUF Models([code](Models/using-custom-gguf-models.py) / [video](https://www.youtube.com/watch?v=9wXJgld7Yow) | Building RAG with any GGUF model                                                                                                                                                                                                |  
 | 4.   Multiple Embeddings with PG Vector ([code](Embedding/using_multiple_embeddings.py) / [video](https://www.youtube.com/watch?v=Bncvggy6m5Q) | Comparing Multiple Embedding Models using Postgres / PG Vector                                                                                                                                                                  |  
