@@ -3,14 +3,14 @@
 
 **What is a SLIM?**    
 
-SLIMs are **S**tructured **L**anguage **I**nstruction **M**odels, which are small, specialized 1B parameter LLMs, 
+**SLIMs** are **S**tructured **L**anguage **I**nstruction **M**odels, which are small, specialized 1B parameter LLMs, 
 finetuned to generate structured outputs (Python dictionaries, JSON and SQL) that can be handled programmatically, and 
 stacked together in multi-step, multi-model Agent workflows - all running on a local CPU.  
 
 **Check out the Intro videos**  
-[SLIMS Intro Video](https://www.youtube.com/watch?v=0naqpH93eEU)  
+[SLIMS Intro Video](https://www.youtube.com/watch?v=cQfdaTcmBpY)  
 
-There are 10 SLIM models, each delivered in two packages - a traditional Pytorch/Huggingface full model, and a  
+There are 10 SLIM models, each delivered in two packages - a Pytorch/Huggingface FP16 model, and a  
 quantized "tool" designed for fast inference on a CPU, using LLMWare's embedded GGUF inference engine.  In most cases, 
 we would recommend that you start with the "tools" version of the models.
 
@@ -20,7 +20,7 @@ We have several ready-to-run examples in this repository:
 
 | Example                                                                                                                                             | Detail                                                                       |
 |-----------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
-| 1.   Getting Started with SLIM Models ([code](slims-getting-started.py) / [video]())                                                    | Install the models and run hello world tests to see the models in action.    |
+| 1.   Getting Started with SLIM Models ([code](slims-getting-started.py) / [video](https://www.youtube.com/watch?v=cQfdaTcmBpY) | Install the models and run hello world tests to see the models in action.    |
 | 2.   Getting Started with Function-Calling Agent ([code](agent-llmfx-getting-started.py) / [video]())                                   | Generate a Structured Report with LLMfx                                      |                                                                                                                                              |   
 | 3.   Multi-step Complex Analysis with Agent ([code](agent-multistep-analysis.py))                                                       | Delivering Complex Research Analysis with SLIM Agents                        |                                                                                                                               |  
 | 4.   Document Clustering ([code](document-clustering.py) / [video](https://www.youtube.com/watch?v=Bncvggy6m5Q))                    | Multi-faceted automated document analysis with Topics, Tags and NER          |  
