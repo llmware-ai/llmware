@@ -12,7 +12,7 @@ SLIM Examples -  [**SLIM Models**](SLIM-Agents/)
 | 5.   DRAGON GGUF Models ([code](Models/dragon_gguf_fast_start.py) / [video](https://www.youtube.com/watch?v=BI1RlaIJcsc&t=130s)) | State-of-the-Art 7B RAG GGUF Models.  | 
 | 6.   RAG with BLING ([code](RAG/contract_analysis_on_laptop_with_bling_models.py) / [video](https://www.youtube.com/watch?v=8aV5p3tErP0)) | Using contract analysis as an example, experiment with RAG for complex document analysis and text extraction using `llmware`'s BLING ~1B parameter GPT model running on your laptop. |  
 | 7.   Master Service Agreement Analysis with DRAGON ([code](RAG/msa_processing.py) / [video](https://www.youtube.com/watch?v=Cf-07GBZT68&t=2s)) | Analyzing MSAs using DRAGON YI 6B Model.   |                                                                                                                         
-| 8.   Streamlit Example ([code](Getting_Started/ui_without_a_database.py)  | Upload pdfs, and run inference on llmware BLING models.  |  
+| 8.   Streamlit Example ([code](Getting_Started/ui_without_a_database.py))  | Upload pdfs, and run inference on llmware BLING models.  |  
 | 9.   Integrating LM Studio ([code](Models/using-open-chat-models.py) / [video](https://www.youtube.com/watch?v=h2FDjUyvsKE&t=101s)) | Integrating LM Studio Models with LLMWare  |                                                                                                                                       
 | 10.  Prompts With Sources ([code](Prompts/prompt_with_sources.py))  | Attach wide range of knowledge sources directly into Prompts.   |   
 | 11.  Fact Checking ([code](Prompts/fact_checking.py))  | Explore the full set of evidence methods in this example script that analyzes a set of contracts.   |
