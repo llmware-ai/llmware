@@ -1,5 +1,3 @@
-
-
  🚀 Get Started with SLIMs & Start Building Multi-Model Agents Locally on a Laptop 🚀
 ===============
 
@@ -11,16 +9,6 @@ stacked together in multi-step, multi-model Agent workflows - all running on a l
 
 **Check out the Intro videos**  
 [SLIMS Intro Video](https://www.youtube.com/watch?v=0naqpH93eEU)  
-
-
-Set up  
-No special setup for SLIMs is required other than to install llmware >=0.2.2, e.g., `pip3 install llmware`.  
-
-Platforms: 
-- Mac M1, Mac x86, Windows, Linux (Ubuntu 22 preferred)  
-- RAM: 16 GB minimum 
-- Python 3.9, 3.10, 3.11 (note: not supported on 3.12 yet)
-- llmware >= 0.2.2 version
 
 There are 10 SLIM models, each delivered in two packages - a traditional Pytorch/Huggingface full model, and a  
 quantized "tool" designed for fast inference on a CPU, using LLMWare's embedded GGUF inference engine.  In most cases, 
@@ -64,6 +52,16 @@ You may also want to check out these quantized 'answer' tools, which work well i
 - dragon-mistral-answer-tool - 7b quantized RAG model - [dragon-mistral-answer-tool](www.huggingface.co/llmware/dragon-mistral-answer-tool)  
 - dragon-llama-answer-tool - 7b quantized RAG model - [dragon-llama-answer-tool](www.huggingface.co/llmware/dragon-llama-answer-tool)  
 
+
+**Set up**  
+No special setup for SLIMs is required other than to install llmware >=0.2.2, e.g., `pip3 install llmware`.  
+
+**Platforms:**   
+- Mac M1, Mac x86, Windows, Linux (Ubuntu 22 preferred)  
+- RAM: 16 GB minimum 
+- Python 3.9, 3.10, 3.11 (note: not supported on 3.12 yet)
+- llmware >= 0.2.2 version
+  
 
 ### **Let's get started!  🚀**
 
