@@ -8,7 +8,7 @@
 [Join us on Discord](https://discord.gg/MhZn5Nc39h)   |  [Watch Youtube Tutorials](https://www.youtube.com/@llmware)  | [Explore our Model Families on Huggingface](https://www.huggingface.co/llmware)   
 
 
-🔥🔥🔥 [**Multi-Model Agents with SLIM Models**](examples/SLIM-Agents/) 🔥🔥🔥  
+🔥🔥🔥 [**Multi-Model Agents with SLIM Models**](examples/SLIM-Agents/) - [**Intro-Video**](https://www.youtube.com/watch?v=cQfdaTcmBpY) 🔥🔥🔥   
 Can't wait?  Get SLIMs right away:  
 
 ```python 
@@ -531,7 +531,7 @@ if __name__ == "__main__":
 
 ## 🔥 What's New? 🔥
 
--**Multi-Model Agents with SLIM models** - next generation of multi-step Agents implemented with SLIMs on CPU - [example](examples/SLIM-Agents)  
+-**Multi-Model Agents with SLIM models** - multi-step Agents with SLIMs on CPU - [video](https://www.youtube.com/watch?v=cQfdaTcmBpY) - [example](examples/SLIM-Agents)  
 
 -**Fast start with no db installation** - SQLite (text collection) and FAISS (vector file database) - [example](examples/Getting_Started/configure_db.py) 
 
@@ -555,22 +555,22 @@ if __name__ == "__main__":
 ## 🔥 Top New Examples 🔥  
 
 New to LLMWare - [**Fast Start tutorial series**](https://github.com/llmware-ai/llmware/tree/main/fast_start)  
-SLIM Examples -  [**SLIM Models**](SLIM-Agents/)
+SLIM Examples -  [**SLIM Models**](examples/SLIM-Agents/)
 
 | Example     |  Detail      |
 |-------------|--------------|
-| 1.   BLING models fast start ([code](Models/bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU)) | Get started with fast, accurate, CPU-based models - question-answering, key-value extraction, and basic summarization.  |
-| 2.   Parse and Embed 500 PDF Documents ([code](Embedding/docs2vecs_with_milvus-un_resolutions.py))  | End-to-end example for Parsing, Embedding and Querying UN Resolution documents with Milvus  |
-| 3.  Hybrid Retrieval - Semantic + Text ([code](Retrieval/dual_pass_with_custom_filter.py)) | Using 'dual pass' retrieval to combine best of semantic and text search |  
-| 4.   Multiple Embeddings with PG Vector ([code](Embedding/using_multiple_embeddings.py) / [video](https://www.youtube.com/watch?v=Bncvggy6m5Q)) | Comparing Multiple Embedding Models using Postgres / PG Vector |
-| 5.   DRAGON GGUF Models ([code](Models/dragon_gguf_fast_start.py) / [video](https://www.youtube.com/watch?v=BI1RlaIJcsc&t=130s)) | State-of-the-Art 7B RAG GGUF Models.  | 
-| 6.   RAG with BLING ([code](RAG/contract_analysis_on_laptop_with_bling_models.py) / [video](https://www.youtube.com/watch?v=8aV5p3tErP0)) | Using contract analysis as an example, experiment with RAG for complex document analysis and text extraction using `llmware`'s BLING ~1B parameter GPT model running on your laptop. |  
-| 7.   Master Service Agreement Analysis with DRAGON ([code](RAG/msa_processing.py) / [video](https://www.youtube.com/watch?v=Cf-07GBZT68&t=2s)) | Analyzing MSAs using DRAGON YI 6B Model.   |                                                                                                                         
-| 8.   Streamlit Example ([code](Getting_Started/ui_without_a_database.py))  | Upload pdfs, and run inference on llmware BLING models.  |  
-| 9.   Integrating LM Studio ([code](Models/using-open-chat-models.py) / [video](https://www.youtube.com/watch?v=h2FDjUyvsKE&t=101s)) | Integrating LM Studio Models with LLMWare  |                                                                                                                                       
-| 10.  Prompts With Sources ([code](Prompts/prompt_with_sources.py))  | Attach wide range of knowledge sources directly into Prompts.   |   
-| 11.  Fact Checking ([code](Prompts/fact_checking.py))  | Explore the full set of evidence methods in this example script that analyzes a set of contracts.   |
-| 12.  Using 7B GGUF Chat Models ([code](Models/chat_models_gguf_fast_start.py)) | Using 4 state of the art 7B chat models in minutes running locally |  
+| 1.   BLING models fast start ([code](examples/Models/bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU)) | Get started with fast, accurate, CPU-based models - question-answering, key-value extraction, and basic summarization.  |
+| 2.   Parse and Embed 500 PDF Documents ([code](examples/Embedding/docs2vecs_with_milvus-un_resolutions.py))  | End-to-end example for Parsing, Embedding and Querying UN Resolution documents with Milvus  |
+| 3.  Hybrid Retrieval - Semantic + Text ([code](examples/Retrieval/dual_pass_with_custom_filter.py)) | Using 'dual pass' retrieval to combine best of semantic and text search |  
+| 4.   Multiple Embeddings with PG Vector ([code](examples/Embedding/using_multiple_embeddings.py) / [video](https://www.youtube.com/watch?v=Bncvggy6m5Q)) | Comparing Multiple Embedding Models using Postgres / PG Vector |
+| 5.   DRAGON GGUF Models ([code](examples/Models/dragon_gguf_fast_start.py) / [video](https://www.youtube.com/watch?v=BI1RlaIJcsc&t=130s)) | State-of-the-Art 7B RAG GGUF Models.  | 
+| 6.   RAG with BLING ([code](examples/RAG/contract_analysis_on_laptop_with_bling_models.py) / [video](https://www.youtube.com/watch?v=8aV5p3tErP0)) | Using contract analysis as an example, experiment with RAG for complex document analysis and text extraction using `llmware`'s BLING ~1B parameter GPT model running on your laptop. |  
+| 7.   Master Service Agreement Analysis with DRAGON ([code](examples/RAG/msa_processing.py) / [video](https://www.youtube.com/watch?v=Cf-07GBZT68&t=2s)) | Analyzing MSAs using DRAGON YI 6B Model.   |                                                                                                                         
+| 8.   Streamlit Example ([code](examples/Getting_Started/ui_without_a_database.py))  | Upload pdfs, and run inference on llmware BLING models.  |  
+| 9.   Integrating LM Studio ([code](examples/Models/using-open-chat-models.py) / [video](https://www.youtube.com/watch?v=h2FDjUyvsKE&t=101s)) | Integrating LM Studio Models with LLMWare  |                                                                                                                                       
+| 10.  Prompts With Sources ([code](examples/Prompts/prompt_with_sources.py))  | Attach wide range of knowledge sources directly into Prompts.   |   
+| 11.  Fact Checking ([code](examples/Prompts/fact_checking.py))  | Explore the full set of evidence methods in this example script that analyzes a set of contracts.   |
+| 12.  Using 7B GGUF Chat Models ([code](examples/Models/chat_models_gguf_fast_start.py)) | Using 4 state of the art 7B chat models in minutes running locally |  
 
 
 Check out:  [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md)  
@@ -581,13 +581,13 @@ Check out:  [llmware examples](https://github.com/llmware-ai/llmware/blob/main/e
 <summary><b>Step 3 - Tutorial Videos</b> - check out our Youtube channel for high-impact 5-10 minute tutorials on the latest examples.   </summary>
 
 🎬 Check out these videos to get started quickly:  
-- [SLIM Models Intro](...)  
-- [RAG with BLING on your laptop](https://www.youtube.com/watch?v=JjgqOZ2v5oU)
-- [DRAGON-7B-Models](https://www.youtube.com/watch?v=d_u7VaKu6Qk&t=37s)
-- [Install and Compare Multiple Embeddings with Postgres and PGVector](https://www.youtube.com/watch?v=Bncvggy6m5Q)
-- [Background on GGUF Quantization & DRAGON Model Example](https://www.youtube.com/watch?v=ZJyQIZNJ45E)
-- [Using LM Studio Models](https://www.youtube.com/watch?v=h2FDjUyvsKE)
-- [Using Ollama Models](https://www.youtube.com/watch?v=qITahpVDuV0)
+- [SLIM Models Intro] (https://www.youtube.com/watch?v=cQfdaTcmBpY)  
+- [RAG with BLING on your laptop](https://www.youtube.com/watch?v=JjgqOZ2v5oU)    
+- [DRAGON-7B-Models](https://www.youtube.com/watch?v=d_u7VaKu6Qk&t=37s)  
+- [Install and Compare Multiple Embeddings with Postgres and PGVector](https://www.youtube.com/watch?v=Bncvggy6m5Q)  
+- [Background on GGUF Quantization & DRAGON Model Example](https://www.youtube.com/watch?v=ZJyQIZNJ45E)  
+- [Using LM Studio Models](https://www.youtube.com/watch?v=h2FDjUyvsKE)  
+- [Using Ollama Models](https://www.youtube.com/watch?v=qITahpVDuV0)  
 - [Use any GGUF Model](https://www.youtube.com/watch?v=9wXJgld7Yow)  
 - [Use small LLMs for RAG for Contract Analysis (feat. LLMWare)](https://www.youtube.com/watch?v=8aV5p3tErP0)
 - [Invoice Processing with LLMware](https://www.youtube.com/watch?v=VHZSaBBG-Bo&t=10s)
