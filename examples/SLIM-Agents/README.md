@@ -8,7 +8,7 @@ finetuned to generate structured outputs (Python dictionaries, JSON and SQL) tha
 stacked together in multi-step, multi-model Agent workflows - all running on a local CPU.  
 
 **Check out the Intro videos**  
-[SLIMS Intro Video](https://www.youtube.com/watch?v=cQfdaTcmBpY)  
+[SLIM Intro Video](https://www.youtube.com/watch?v=cQfdaTcmBpY)  
 
 There are 10 SLIM models, each delivered in two packages - a Pytorch/Huggingface FP16 model, and a  
 quantized "tool" designed for fast inference on a CPU, using LLMWare's embedded GGUF inference engine.  In most cases, 
@@ -20,12 +20,12 @@ We have several ready-to-run examples in this repository:
 
 | Example                                                                                                                                             | Detail                                                                       |
 |-----------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
-| 1.   Getting Started with SLIM Models ([code](slims-getting-started.py) / [video](https://www.youtube.com/watch?v=cQfdaTcmBpY) | Install the models and run hello world tests to see the models in action.    |
-| 2.   Getting Started with Function-Calling Agent ([code](agent-llmfx-getting-started.py) / [video]())                                   | Generate a Structured Report with LLMfx                                      |                                                                                                                                              |   
+| 1.   Getting Started with SLIM Models ([code](slims-getting-started.py) / [video](https://www.youtube.com/watch?v=cQfdaTcmBpY)) | Install the models and run hello world tests to see the models in action.    |
+| 2.   Getting Started with Function-Calling Agent ([code](agent-llmfx-getting-started.py) / [video](https://www.youtube.com/watch?v=cQfdaTcmBpY)) | Generate a Structured Report with LLMfx  |   
 | 3.   Multi-step Complex Analysis with Agent ([code](agent-multistep-analysis.py))                                                       | Delivering Complex Research Analysis with SLIM Agents                        |                                                                                                                               |  
-| 4.   Document Clustering ([code](document-clustering.py) / [video](https://www.youtube.com/watch?v=Bncvggy6m5Q))                    | Multi-faceted automated document analysis with Topics, Tags and NER          |  
-| 5.   Two-Step NER Retrieval ([code](ner-retrieval.py) / [video](https://www.youtube.com/watch?v=Cf-07GBZT68&t=2s))                          | Using NER to extract name, and then using as basis for retrieval.            |                                                                                                                                        | 
-| 6.   Using Sentiment Analysis ([code](sentiment-analysis.py) / [video](https://www.youtube.com/watch?v=8aV5p3tErP0)) | Using sentiment analysis on earnings transcripts and a 'if...then' condition |
+| 4.   Document Clustering ([code](document-clustering.py))                    | Multi-faceted automated document analysis with Topics, Tags and NER          |  
+| 5.   Two-Step NER Retrieval ([code](ner-retrieval.py))                          | Using NER to extract name, and then using as basis for retrieval.            |                                                                                                                                        | 
+| 6.   Using Sentiment Analysis ([code](sentiment-analysis.py)) | Using sentiment analysis on earnings transcripts and a 'if...then' condition |
 | 7.   Text2SQL - Intro ([code](text2sql-getting-started.py))                                                                             | Getting Started with SLIM-SQL-TOOL and Basic Text2SQL Inference              |                                                                                                                   |
 | 8.   Text2SQL - E2E ([code](text2sql-end-to-end-2.py))                                                                                  | End-to-End Natural Langugage Query to SQL DB Query                           |                                                                                                                     |
 | 9.   Text2SQL - MultiStep ([code](text2sql-multistep-example-3.py))                                                                     | Extract a customer name using NER and use in a Text2SQL query                |
