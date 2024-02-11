@@ -1,13 +1,14 @@
-## 🔥 Top New Examples 🔥  
+### 🔥 Top New Examples 🔥  
 
 New to LLMWare - [**Fast Start tutorial series**](https://github.com/llmware-ai/llmware/tree/main/fast_start)  
 Looking for [**SLIM Models**](SLIM-Agents/)
 
-| Example                                                                                                                    | Detail                                                                                                                                                                                                                          |
-|----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1.   BLING models fast start ([code](Models/bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU)    | Get started with fast, accurate, CPU-based models - question-answering, key-value extraction, and basic summarization.                |  
+| Example                                                                                                                    | Detail     |
+|----------------------------------------------------------------------------------------------------------------------------|------------- |  
 
-| 2.   Parse and Embed 500 PDF Documents ([code](Embedding/docs2vecs_with_milvus_un_resolutions)                                    | End-to-end example for Parsing, Embedding and Querying UN Resolution documents with Milvus     |   
+| 1.   BLING models fast start ([code](Models/bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU))    | Get started with fast, accurate, CPU-based models - question-answering, key-value extraction, and basic summarization.                |  
+
+| 2.   Parse and Embed 500 PDF Documents ([code](Embedding/docs2vecs_with_milvus-un_resolutions.py))                                   | End-to-end example for Parsing, Embedding and Querying UN Resolution documents with Milvus     |   
 
 | 3.  Hybrid Retrieval - Semantic + Text ([code](Retrieval/dual_pass_with_custom_filter.py)) | Using 'dual pass' retrieval to combine best of semantic and text search |  
 
