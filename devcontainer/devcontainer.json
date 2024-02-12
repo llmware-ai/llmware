@@ -1,18 +1,20 @@
 {
-	"name": "LLMWARE Dev",
-  "build": { "dockerfile": "../Dockerfile" },
-	//"image": "provocoai/llmware:dev-01",
+  "name": "LLMWARE Dev",
+  //"build": { "dockerfile": "../Dockerfile" },
+  "image": "provocoai/llmware:dev-01", // 
+  "RemoteUser": "${localEnv:USER}",
 
-  // "runArgs": [
-  //   "--name",
-  //   "${localWorkspaceFolderBasename}", // Container name
-  //   "-it",
-  //   "-l",
-  //   "com.docker.compose.project=devcontainers" // Container group name
-  // ],
+
+  "runArgs": [
+     "--name",
+     "${localWorkspaceFolderBasename}", // Container name
+     "-it",
+     "-l",
+     "com.docker.compose.project=devcontainers" // Container group name
+  ],
+	// you can setup your local directory in the devcontainer here.   The mount line is an example and mounts your home directory into the /code directory  
   "mounts" : [
-    //"source=${localWorkspaceFolder}/.vscode-server/,target=/root/.vscode-server/,type=bind,consistency=cached",
-    "source=${localEnv:HOME},target=/code,type=bind,consistency=cached"
+    //"source=${localEnv:HOME},target=/code,type=bind,consistency=cached"
   ],
   "features": {
    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
@@ -23,7 +25,9 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode", // prettify the code extension
+	"ms-python.python", //python code extensions
+	"ms-python.vscode-pylance" / vscode python extension
       ]
     }
   }
