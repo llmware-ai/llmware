@@ -11,6 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The llmware package provides tools to build large language model (LLM) applications, this includes
+a custom set of LLMs that are small and open source.
+
+The llmware package aspires to be a middleware in LLM applications. In other words, it provides the
+infrastructure between the components, such as the models, the prompts, the text databases, and
+the vector databases.
+"""
+
 
 __version__ = '0.2.2'
 __author__ = 'llmware'
