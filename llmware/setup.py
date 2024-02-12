@@ -13,7 +13,7 @@
 # permissions and limitations under the License.
 """The setup module implements the init process.
 
-The module implements the Setup class, which as one static method - load_sample_files. This method
+The module implements the Setup class, which has one static method - load_sample_files. This method
 creates the necessary directory if they do not exist and downloads the sample files from an AWS S3 instance.
 """
 
