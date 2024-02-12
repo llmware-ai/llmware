@@ -1,3 +1,11 @@
+"""The agents module implements the two classes LLMfx and SQLTables, where LLMfx manages
+Structured Language Instruction Models (SLIMs), the agents and SQLTables handels
+creating and accessing external SQL data. LLmfx currently only supports SLIM models, other model
+classes will be added over time. And SQLTables is an experimantal feature for creating and accessing SQLite.
+
+A Structured Language Instruction Model, SLIM for short, is a small specialized multi-modal LLM for function
+calling and multi-step workflows.
+"""
 
 import shutil
 import logging
