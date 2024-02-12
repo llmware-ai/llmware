@@ -1,5 +1,3 @@
-
-
 # Copyright 2023 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -13,7 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The configs module implements the configuration logic using classes for llmware.
 
+The implementation includes the central llmware config class LLMWareConfig, and the config classes for all
+supported text index databases and vector databases.
+"""
 
 import os
 import platform
