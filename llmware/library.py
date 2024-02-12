@@ -1,4 +1,3 @@
-
 # Copyright 2023 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -12,7 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The library module implements the logic for managing unstructured information (the text).
 
+The module implements the two classes Library and LibraryCatalog. Library is responsible for organising a
+collection of text and is the interface for the Parser and Embedding classes. In addition, the Library object
+is passed to the Query and Prompt objects. The Library class uses the LibraryCatalog for creating, deleting,
+updating, and other tasks pertaining to Libraries via the Library Card.
+"""
 
 from werkzeug.utils import secure_filename
 import shutil
