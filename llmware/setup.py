@@ -1,4 +1,3 @@
-
 # Copyright 2023 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -12,6 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The setup module implements the init process.
+
+The module implements the Setup class, which as one static method - load_sample_files. This method
+creates the necessary directory if they do not exist and downloads the sample files from an AWS S3 instance.
+"""
 
 
 import shutil
