@@ -1,4 +1,3 @@
-
 # Copyright 2023 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -12,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The parsers module implements all parsers, i.e. all conversions fom a modality to bloacks in a database.
+
+The module currently implements parsers for websites, images, voices, texts, wikis, and dialogs.
+"""
 
 
 import time

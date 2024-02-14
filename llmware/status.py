@@ -1,3 +1,9 @@
+"""The status module implements the Status class, which provides an interface for callers to read and write
+a status.
+
+The callers can for example be a UI or a SQL datacase.
+"""
+
 import time
 from threading import Thread
 

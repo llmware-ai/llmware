@@ -12,6 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The util module implements general helper functions with the Utilties class, and more specialized
+ other classes.
+
+Among the more specializes other classes is whole word tokenizer with CorpTokenizer, and statistical
+NLP functions to calculate relationships between key words and concepts in a library.
+"""
 
 
 import csv

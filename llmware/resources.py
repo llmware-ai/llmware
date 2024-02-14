@@ -1,4 +1,3 @@
-
 # Copyright 2023 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -12,6 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The resources module implements the text index databases that are used in conjunction with the vector
+databases.
+
+Currently, llmware supports MongoDB, Postgres, and SQLite as text index databases.
+"""
 
 
 import platform

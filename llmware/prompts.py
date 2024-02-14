@@ -1,4 +1,3 @@
-
 # Copyright 2023 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -12,6 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The prompts module implements the Prompt class, which manages the inference process. This includes
+pre-processing, executing, and post-processing of inferences and tracking the state of related inferences,
+e.g. in conversational language models.
+
+The module also implements the Sources, QualityCheck, and HumanInTheLoop classes. The Sources class packages
+retrieved sources and appends them to a prompt. The QualityCheck class compares (i.e. verifies) the LLMs'
+response against the context information. Finally, the HumanInTheLoop class provides mechanisms for reviews,
+which includes access to the prompt history for corrections, as well as user ratings.
+"""
 
 
 # from bson import ObjectId

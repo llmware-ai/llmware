@@ -1,6 +1,8 @@
+"""Global Default Configs for Models, Finetune Wrappers and Prompt Instructions Catalog.
 
-""" Global Default Configs for Models, Finetune Wrappers and Prompt Instructions Catalog.  These configs generally
- do not need to be accessed directly, but can be viewed and updated through ModelCatalog and PromptCatalog classes."""
+These configs generally do not need to be accessed directly, but can be viewed and updated through
+ModelCatalog and PromptCatalog classes.
+"""
 
 global_model_repo_catalog_list = [
 

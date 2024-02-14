@@ -1,4 +1,3 @@
-
 # Copyright 2023 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -12,6 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The embeddings module implements the supported vector databases.
+
+The common abstraction for all supported vector databases is the EmbeddingHandler class, which supports
+creating a new embedding, as well as searching and deleting the vector index. The module also implements the
+_EmbeddingUtils class, which provides a set of of funtions used by all vector database classes.
+"""
 
 
 import os

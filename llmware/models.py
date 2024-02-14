@@ -1,4 +1,3 @@
-
 # Copyright 2023 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -12,6 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The models module implements the model registry, the catalog for models and prompts, and all the currently
+supported models, which includes the SLIM model series, the DRAGON model series, the BLING model series,
+and the BERT model series.
+
+Besides the logic mentioned above, this module also implements the configuration for BERT and the
+inference server of llmware.
+"""
 
 import logging
 import json
