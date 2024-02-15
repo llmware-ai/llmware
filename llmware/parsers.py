@@ -567,7 +567,7 @@ class Parser:
 
         # test script for parsing txt file
         try:
-            output_file = open(os.path.join(file_path, fn), "r", encoding="utf-8").read()
+            output_file = open(os.path.join(file_path, fn), "r", encoding="utf-8-sig",errors="ignore").read()
 
         except Exception as e:
             print (e)
@@ -3075,7 +3075,7 @@ class Parser:
         input_csv = os.path.join(fp, fn)
 
         import csv
-        record_file = open(input_csv, encoding='ISO-8859-1')
+        record_file = open(input_csv, "r", encoding='utf-8-sig',errors='ignore')
         c = csv.reader(record_file, dialect='excel', doublequote=False, delimiter=',')
         output = []
 
@@ -3216,7 +3216,7 @@ class WebSiteParser:
         if from_file:
             # interpret url as file_path and file_name
             try:
-                html = open(url_or_fp, encoding='utf-8', errors='ignore').read()
+                html = open(url_or_fp, encoding='utf-8-sig', errors='ignore').read()
                 bs = BeautifulSoup(html, features="lxml")
                 self.html = bs.findAll()
                 success_code = 1
@@ -4014,7 +4014,7 @@ class TextParser:
         #   --based on key_list and interpret_as_table
 
         output = []
-        my_file = open(os.path.join(dir_fp, sample_file), 'r', encoding='utf-8')
+        my_file = open(os.path.join(dir_fp, sample_file), 'r', encoding='utf-8-sig',errors='ignore')
 
         if not key_list:
             # as default, if no key_list, then look for "text" attribute in jsonl by default
@@ -4044,7 +4044,7 @@ class TextParser:
 
         """ Parse .txt file. """
 
-        text_out = open(os.path.join(dir_fp,sample_file), encoding='utf-8', errors='ignore').read()
+        text_out = open(os.path.join(dir_fp,sample_file), "r", encoding='utf-8-sig', errors='ignore').read()
 
         # will chop up the long text into individual text chunks
         text_chunks = TextChunker(text_chunk=text_out,
@@ -4081,7 +4081,7 @@ class TextParser:
 
         else:
             # chunk and split as a big piece of text
-            raw_csv = open(os.path.join(dir_fp,sample_file), encoding='utf-8', errors='ignore').read()
+            raw_csv = open(os.path.join(dir_fp,sample_file), "r", encoding='utf-8-sig', errors='ignore').read()
             # replace ',' & '\n' & '\r' with spaces
             text_out = re.sub("[,\n\r]", " ", raw_csv)
 
@@ -4179,7 +4179,7 @@ class DialogParser:
 
         """ Parse AWS JSON file. """
 
-        f = json.load(open(os.path.join(input_folder, fn_json), "r", encoding='utf-8'))
+        f = json.load(open(os.path.join(input_folder, fn_json), "r", encoding='utf-8-sig',errors='ignore'))
 
         # aws standard call transcript format:  ["results"]["items"] -> key conversation elements to aggregate
         #   note:  we will need many more documents for testing
