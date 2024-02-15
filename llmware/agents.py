@@ -691,6 +691,21 @@ class LLMfx:
 
         return self.exec_function_call("tags", text=text, params=params)
 
+    def category(self, text=None, params=None):
+
+        """ Generates a list of relevant business category information data points from a text, if passed
+        directly, or will pull current work item from the queue.   Returns value output dictionary with list of
+        business category classification (usually a single entry, but possible for multiple entries). """
+
+        if not params:
+            # default parameter key
+            params = ["category"]
+
+        if isinstance(params, str):
+            params = [params]
+
+        return self.exec_function_call("category", text=text, params=params)
+
     def nli(self, text1, text2, params=None):
 
         """ Executes a natural language inference classification on a text, if passed directly, or will pull current
