@@ -1200,6 +1200,47 @@ class ModelCatalog:
 
         return logit_analysis
 
+    def fc_output_values(self, model_name):
+
+        """ Takes as input a model_name, and if the model is function-calling, then will output a list
+        of the expected function calling output values for the model.  If no value provided, or no specific
+        expected 'constraints' on output values, then returns an empty list. """
+
+        output_values = []
+
+        model_card = self.lookup_model_card(model_name)
+
+        if model_card:
+            if "fc_output_values" in model_card:
+                output_values = model_card["fc_output_values"]
+
+        else:
+            logging.error("error: ModelCatalog - could not identify model card for selected model - %s ", model_name)
+
+            raise ModelNotFoundException(model_name)
+
+        return output_values
+
+    def fc_primary_keys(self, model_name):
+
+        """ Takes as input a model_name, and if the model is function-calling, then will output a list of the
+        primary keys, if any, to be passed as parameters to the model.  If no primary keys, then returns an
+        empty list.  """
+
+        output_keys = []
+
+        model_card = self.lookup_model_card(model_name)
+
+        if model_card:
+            if "primary_keys" in model_card:
+                output_keys = model_card["primary_keys"]
+        else:
+            logging.error("error: ModelCatalog - could not identify model card for selected model - %s ", model_name)
+
+            raise ModelNotFoundException(model_name)
+
+        return output_keys
+
 
 class PromptCatalog:
     """ PromptCatalog manages prompt styles and prompt wrappers. """
