@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+
 """The models module implements the model registry, the catalog for models and prompts, and all the currently
 supported models, which includes the SLIM model series, the DRAGON model series, the BLING model series,
 and the BERT model series.
@@ -54,10 +55,6 @@ from llmware.exceptions import (ModelNotFoundException, DependencyNotInstalledEx
 
 from llmware.model_configs import (global_model_repo_catalog_list, global_model_finetuning_prompt_wrappers_lookup,
                                    global_default_prompt_catalog)
-
-
-# api model imports
-import openai, anthropic, ai21, cohere
 
 
 class _ModelRegistry:
@@ -1642,10 +1639,17 @@ class OpenChatModel:
 
         # expect that .api_base will route to local open chat inference server
         #   -- assumed that *** api_key likely not used ***
+        #   -- in openai >= 1.0:  .api_base replaced with 'base_url' attribute
+
+        try:
+            from openai import OpenAI
+        except ImportError:
+            raise DependencyNotInstalledException("openai >= 1.0")
+
         if not self.api_key:
-            openai.api_key = "not-used"
+            client = OpenAI(api_key="not-used",base_url=self.api_base)
         else:
-            openai.api_key = self.api_key
+            client = OpenAI(api_key=self.api_key,base_url=self.api_base)
 
         # default case - pass the prompt received without change
         prompt_enriched = prompt
@@ -1653,24 +1657,20 @@ class OpenChatModel:
         usage = {}
         time_start = time.time()
 
-        # save current state of openai.api_base
-        openai_api_base_entering_state = openai.api_base
-
-        # set api_base based on configs
-        openai.api_base = self.api_base
-
         try:
 
             if self.model_type == "chat":
 
                 messages = self.prompt_engineer_chat(prompt_enriched, self.add_context, inference_dict)
 
-                response = openai.ChatCompletion.create(model=self.model_name,messages=messages,
-                                                        max_tokens=self.target_requested_output_tokens)
+                #   using openai >1.0 api -> create client object, and output is pydantic, not dicts
+
+                response = client.chat.completions.create(model=self.model_name,messages=messages,
+                                                          max_tokens=self.target_requested_output_tokens)
 
                 """ assume 'minimal' api output conformance with OpenAI """
 
-                text_out = response["choices"][0]["message"]["content"]
+                text_out = response.choices[0].message.content
 
                 """ note: some openchat api do not support providing usage output consistent with OpenAI API """
 
@@ -1680,16 +1680,16 @@ class OpenChatModel:
 
                 """ best effort to gather usage data if conforms with OpenAI """
 
-                if "usage" in response:
+                if hasattr(response, "usage"):
 
-                    if "prompt_tokens" in response["usage"]:
-                        pt = response["usage"]["prompt_tokens"]
+                    if hasattr(response.usage, "prompt_tokens"):
+                        pt = response.usage.prompt_tokens
 
-                    if "completion_tokens" in response["usage"]:
-                        ct = response["usage"]["completion_tokens"]
+                    if hasattr(response.usage, "completion_tokens"):
+                        ct = response.usage.completion_tokens
 
-                    if "total_tokens" in response["usage"]:
-                        tt = response["usage"]["total_tokens"]
+                    if hasattr(response.usage, "total_tokens"):
+                        tt = response.usage.total_tokens
 
                 usage = {"input": pt,
                          "output": ct,
@@ -1709,13 +1709,13 @@ class OpenChatModel:
 
                 text_prompt = prompt_final + self.separator
 
-                response = openai.Completion.create(model=self.model_name, prompt=text_prompt,
-                                                    temperature=self.temperature,
-                                                    max_tokens=self.target_requested_output_tokens)
+                response = client.completions.create(model=self.model_name, prompt=text_prompt,
+                                                     temperature=self.temperature,
+                                                     max_tokens=self.target_requested_output_tokens)
 
                 """ assume 'minimal' api output conformance with OpenAI """
 
-                text_out = response["choices"][0]["text"]
+                text_out = response.choices[0].text
 
                 """ note: some openchat api do not support providing usage output consistent with OpenAI API """
 
@@ -1725,16 +1725,16 @@ class OpenChatModel:
 
                 """ best effort to gather usage data if conforms with OpenAI API """
 
-                if "usage" in response:
+                if hasattr(response, "usage"):
 
-                    if "prompt_tokens" in response["usage"]:
-                        pt = response["usage"]["prompt_tokens"]
+                    if hasattr(response.usage, "prompt_tokens"):
+                        pt = response.usage.prompt_tokens
 
-                    if "completion_tokens" in response["usage"]:
-                        ct = response["usage"]["completion_tokens"]
+                    if hasattr(response.usage, "completion_tokens"):
+                        ct = response.usage.completion_tokens
 
-                    if "total_tokens" in response["usage"]:
-                        tt = response["usage"]["total_tokens"]
+                    if hasattr(response.usage, "total_tokens"):
+                        tt = response.usage.total_tokens
 
                 usage = {"input": pt,
                          "output": ct,
@@ -1750,13 +1750,9 @@ class OpenChatModel:
 
             logging.error("error: Open Chat model inference produced error - %s ", e)
 
-        # reset openai.api_base
-        openai.api_base = openai_api_base_entering_state
-
         output_response = {"llm_response": text_out, "usage": usage}
 
         return output_response
-
 
 
 class OllamaModel:
@@ -2142,9 +2138,11 @@ class OpenAIGenModel:
         # default case - pass the prompt received without change
         prompt_enriched = prompt
 
-        # set as default openai base
-        openai_api_base_entering_state = openai.api_base
-        openai.api_base = "https://api.openai.com/v1"
+        # new - change with openai v1 api
+        try:
+            from openai import OpenAI
+        except ImportError:
+            raise DependencyNotInstalledException("openai >= 1.0")
 
         usage = {}
         time_start = time.time()
@@ -2155,42 +2153,39 @@ class OpenAIGenModel:
 
                 messages = self.prompt_engineer_chatgpt3(prompt_enriched, self.add_context, inference_dict)
 
-                # different api for "chat completion" -> only applies to ChatGPT = 'gpt-3.5-turbo'
-                openai.api_key = self.api_key
-                response = openai.ChatCompletion.create(model=self.model_name,messages=messages,
-                                                        max_tokens=self.target_requested_output_tokens)
+                # updated OpenAI client to >v1.0 API - create client, and returns pydantic objects
 
-                text_out = response["choices"][0]["message"]["content"]
+                client = OpenAI(api_key=self.api_key)
+                response = client.chat.completions.create(model=self.model_name,messages=messages,
+                                                          max_tokens=self.target_requested_output_tokens)
 
-                usage = {"input": response["usage"]["prompt_tokens"],
-                         "output": response["usage"]["completion_tokens"],
-                         "total": response["usage"]["total_tokens"],
+                text_out = response.choices[0].message.content
+
+                usage = {"input": response.usage.prompt_tokens,
+                         "output": response.usage.completion_tokens,
+                         "total": response.usage.total_tokens,
                          "metric": "tokens",
                          "processing_time": time.time() - time_start}
 
-                # logging.info("update: open ai response: %s ", response)
-
             else:
-                # 'instruct gpt' models
+                # openai traditional 'instruct gpt' completion models
 
                 prompt_enriched = self.prompt_engineer(prompt_enriched, self.add_context, inference_dict=inference_dict)
 
                 prompt_final = prompt_enriched
 
                 text_prompt = prompt_final + self.separator
-                logging.info("update: openai model - FINAL PROMPT: %s %s ", self.model_name, prompt_final)
-                openai.api_key = self.api_key
-                response = openai.Completion.create(model=self.model_name, prompt=text_prompt,
-                                                    temperature=self.temperature,
-                                                    max_tokens=self.target_requested_output_tokens)
 
-                logging.info("update: open ai response: %s ", response["choices"])
-                text_out = response["choices"][0]["text"]
-                # openai response "usage" dict - {"completion_tokens" | "prompt_tokens" | total_tokens"}
+                client = OpenAI(api_key=self.api_key)
+                response = client.completions.create(model=self.model_name, prompt=text_prompt,
+                                                     temperature=self.temperature,
+                                                     max_tokens=self.target_requested_output_tokens)
 
-                usage = {"input": response["usage"]["prompt_tokens"],
-                         "output": response["usage"]["completion_tokens"],
-                         "total": response["usage"]["total_tokens"],
+                text_out = response.choices[0].text
+
+                usage = {"input": response.usage.prompt_tokens,
+                         "output": response.usage.completion_tokens,
+                         "total": response.usage.total_tokens,
                          "metric": "tokens",
                          "processing_time": time.time() - time_start}
 
@@ -2202,12 +2197,6 @@ class OpenAIGenModel:
 
             # raise LLMInferenceResponseException(e)
             logging.error("error: OpenAI model inference produced error - %s ", e)
-
-        # reset openai api_base
-        openai.api_base = openai_api_base_entering_state
-
-        # will look to capture usage metadata
-        #   "usage" = {"completion_tokens", "prompt_tokens", "total_tokens"}
 
         output_response = {"llm_response": text_out, "usage": usage}
 
@@ -2318,6 +2307,11 @@ class ClaudeModel:
         if not self.api_key:
             logging.error("error: invoking Anthropic Claude Generative model with no api_key")
 
+        try:
+            import anthropic
+        except ImportError:
+            raise DependencyNotInstalledException("anthropic")
+
         client = anthropic.Client(api_key=self.api_key)
 
         # prototype prompt sample:   prompt_enriched = "\n\nHuman:" + " please read the following- " +
@@ -2368,13 +2362,6 @@ class GoogleGenModel:
     Note: to use GoogleModels does require a separate import of Google SDKs - vertexai and google.cloud.platform """
 
     def __init__(self, model_name=None, api_key=None, context_window=8192):
-
-        try:
-            from vertexai.preview.language_models import TextGenerationModel, TextEmbeddingModel
-            from vertexai import init
-            import google.cloud.aiplatform as aiplatform
-        except:
-            raise DependencyNotInstalledException("google-cloud-aiplatform")
 
         self.api_key = api_key
         self.model_name = model_name
@@ -2458,6 +2445,13 @@ class GoogleGenModel:
 
             if "max_tokens" in inference_dict:
                 self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        try:
+            from vertexai.preview.language_models import TextGenerationModel, TextEmbeddingModel
+            from vertexai import init
+            import google.cloud.aiplatform as aiplatform
+        except ImportError:
+            raise DependencyNotInstalledException("google-cloud-aiplatform")
 
         # api_key
         if api_key:
@@ -2633,6 +2627,11 @@ class JurassicModel:
         if not self.api_key:
             logging.error("error: invoking AI21 Jurassic model with no api_key")
 
+        try:
+            import ai21
+        except ImportError:
+            raise DependencyNotInstalledException("ai21")
+
         prompt_enriched = prompt
 
         prompt_enriched = self.prompt_engineer(prompt_enriched,self.add_context, inference_dict=inference_dict)
@@ -2799,6 +2798,11 @@ class CohereGenModel:
 
         if not self.api_key:
             logging.error("error: invoking Cohere Generative model with no api_key")
+
+        try:
+            import cohere
+        except ImportError:
+            raise DependencyNotInstalledException("cohere")
 
         co = cohere.Client(self.api_key)
 
@@ -3196,6 +3200,9 @@ class OpenAIEmbeddingModel:
 
     def embedding(self, text_sample, api_key=None):
 
+        """ Currently only test and support OpenAI text-embedding-ada-002 """
+
+        # hard-coded
         model = "text-embedding-ada-002"
 
         if api_key:
@@ -3215,31 +3222,23 @@ class OpenAIEmbeddingModel:
             text_prompt = [text_sample]
             input_len = 1
 
-        # set as default openai base
-        openai_api_base_entering_state = openai.api_base
-        openai.api_base = "https://api.openai.com/v1"
+        try:
+            from openai import OpenAI
+        except ImportError:
+            raise DependencyNotInstalledException("openai >= 1.0")
 
-        openai.api_key = self.api_key
-        response = openai.Embedding.create(model=model, input=text_prompt)
+        # update to open >v1.0 api - create client and output is pydantic objects
+        client = OpenAI(api_key=self.api_key)
+        response = client.embeddings.create(model=model, input=text_prompt)
 
-        logging.info("update: response: %s ", response)
+        # logging.info("update: response: %s ", response)
 
         if input_len == 1:
-            embedding = response['data'][0]['embedding']
+            embedding = response.data[0].embedding
         else:
             embedding = []
-            for i, entries in enumerate(response['data']):
-                embedding.append(response['data'][i]['embedding'])
-
-        # logging.info("update: embedding only: %s ", embedding)
-        logging.info("update: embedding dims: %s ", len(embedding))
-
-        # embedding = np.array(embedding)
-        # embedding_2d = np.expand_dims(embedding, 0)
-
-        # reset global environment variable to state before the inference
-        #   --in most cases, this will be the same, but allows for overloaded use of this var with OpenChat
-        openai.api_base = openai_api_base_entering_state
+            for i, entries in enumerate(response.data):
+                embedding.append(response.data[i].embedding)
 
         return embedding
 
@@ -3288,6 +3287,11 @@ class CohereEmbeddingModel:
         if not self.api_key:
             logging.error("error: invoking Cohere embedding model with no api_key")
 
+        try:
+            import cohere
+        except ImportError:
+            raise DependencyNotInstalledException("cohere")
+
         co = cohere.Client(self.api_key)
 
         # need safety check on length of text_sample
@@ -3322,13 +3326,6 @@ class GoogleEmbeddingModel:
     requires a separate install of the Google SDKs, e.g., vertexai and google.cloud.platform """
 
     def __init__(self, model_name=None, api_key=None, embedding_dims=None):
-
-        try:
-            from vertexai.preview.language_models import TextGenerationModel, TextEmbeddingModel
-            from vertexai import init
-            import google.cloud.aiplatform as aiplatform
-        except:
-            raise DependencyNotInstalledException("google-cloud-aiplatform")
 
         self.api_key = api_key
         self.model_name = model_name
@@ -3381,6 +3378,13 @@ class GoogleEmbeddingModel:
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_json_credentials
 
         embeddings_output = []
+
+        try:
+            from vertexai.preview.language_models import TextGenerationModel, TextEmbeddingModel
+            from vertexai import init
+            import google.cloud.aiplatform as aiplatform
+        except ImportError:
+            raise DependencyNotInstalledException("google-cloud-aiplatform")
 
         try:
 
