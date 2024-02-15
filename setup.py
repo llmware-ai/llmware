@@ -61,7 +61,7 @@ setup(
         'huggingface-hub==0.19.4',
         'lxml==4.9.3',
         'numpy>=1.23.2',
-        'openai==0.27.7',
+        'openai>=1.0.0',
         'pdf2image==1.16.0',
         'pymilvus==2.3.0',
         'pymongo==4.5.0',
