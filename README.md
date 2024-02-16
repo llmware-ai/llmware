@@ -703,13 +703,13 @@ Questions and discussions are welcome in our [github discussions](https://github
 ## 📣  Release notes and Change Log
 
 **Friday, February 16 - v0.2.3 WIP Update**  
-- Added 10+ Huggingface embedding models to default model catalog - including nomic, jina, bge, gte, ember and uae-large.  
-- Updated OpenAI support - using OpenAI Python >= 1.0 SDK, and support for the new text-3 embedding models.  
+- Added 10+ embedding models to ModelCatalog - nomic, jina, bge, gte, ember and uae-large.   
+- Updated OpenAI support >=1.0 and new text-3 embedding models.    
 - SLIM model keys and output_values now accessible in ModelCatalog.  
 - Updating encodings to 'utf-8-sig' to better handle txt/csv files with bom.  
 
 **Reported notable issues on priority resolution path**  
-(1)  stablelm-based models using gguf 
+(1)  stablelm-based models using gguf  
 (2)  older linux versions with GLIBC < 2.34  
 (3)  3.12 python support - waiting on one last dependency (coming soon)  
 
