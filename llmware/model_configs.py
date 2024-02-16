@@ -7,29 +7,100 @@ ModelCatalog and PromptCatalog classes.
 global_model_repo_catalog_list = [
 
     # embedding models
-    {"model_name": 'mini-lm-sbert', "display_name": "Sentence_Transformers (MPNet-Base)", "model_family": "LLMWareSemanticModel",
+    {"model_name": 'mini-lm-sbert', "display_name": "mini-lm-sbert", "model_family": "LLMWareSemanticModel",
      "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 384, "context_window":512,
      "link": "","custom_model_files": [], "custom_model_repo": ""},
 
-    {"model_name": 'industry-bert-insurance', "display_name": "Insurance_LLMWare_Accelerator", "model_family": "LLMWareSemanticModel",
+    {"model_name": 'industry-bert-insurance', "display_name": "industry-bert-insurance", "model_family": "LLMWareSemanticModel",
      "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window":512,
      "link": "https://huggingface.co/llmware/industry-bert-insurance-v0.1", "custom_model_files":[],
-     "custom_model_repo": ""},
+     "custom_model_repo": "",
+     "hf_repo": "llmware/industry-bert-insurance-v0.1"},
 
-    {"model_name": 'industry-bert-contracts', "display_name": "Contracts_LLMWare_Accelerator", "model_family": "LLMWareSemanticModel",
+    {"model_name": 'industry-bert-contracts', "display_name": "industry-bert-contracts", "model_family": "LLMWareSemanticModel",
      "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window":512,
      "link": "https://huggingface.co/llmware/industry-bert-contracts-v0.1", "custom_model_files":[],
-     "custom_model_repo": ""},
+     "custom_model_repo": "",
+     "hf_repo": "llmware/industry-bert-contracts-v0.1"},
 
-    {"model_name": 'industry-bert-asset-management', "display_name": "Asset_Management_LLMWare_Accelerator",
+    {"model_name": 'industry-bert-asset-management', "display_name": "industry-bert-asset-management",
      "model_family": "LLMWareSemanticModel", "model_category": "embedding", "model_location": "llmware_repo",
      "embedding_dims": 768, "context_window":512,
      "link": "https://huggingface.co/llmware/industry-bert-asset-management-v0.1", "custom_model_files":[],
-     "custom_model_repo": ""},
+     "custom_model_repo": "",
+     "hf_repo": "llmware/industry-bert-asset-management-v0.1"},
 
-    {"model_name": 'industry-bert-sec', "display_name": "SEC_LLMWare_Accelerator", "model_family": "LLMWareSemanticModel",
+    {"model_name": 'industry-bert-sec', "display_name": "industry-bert-sec", "model_family": "LLMWareSemanticModel",
      "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window":512,
-     "link": "https://huggingface.co/llmware/industry-bert-sec-v0.1", "custom_model_files": [], "custom_model_repo": ""},
+     "link": "https://huggingface.co/llmware/industry-bert-sec-v0.1", "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/industry-bert-sec-v0.1"},
+
+ # feb 2024 - add new embedding model options - starts here
+
+ {"model_name": 'nomic-ai/nomic-embed-text-v1', "display_name": "nomic-text-v1",
+  "model_family": "HFEmbeddingModel",
+  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window": 8192,
+  "link": "https://huggingface.co/nomic-ai/nomic-embed-text-v1", "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "nomic-ai/nomic-embed-text-v1"},
+
+ {"model_name": 'jinaai/jina-embeddings-v2-base-en', "display_name": "jina-base-en-v2",
+  "model_family": "HFEmbeddingModel",
+  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window": 8192,
+  "link": "https://huggingface.co/jinaai/jina-embeddings-v2-base-en", "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "jinaai/jina-embeddings-v2-base-en"},
+
+ {"model_name": 'jinaai/jina-embeddings-v2-small-en', "display_name": "jina-small-en-v2",
+  "model_family": "HFEmbeddingModel",
+  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 512, "context_window": 8192,
+  "link": "https://huggingface.co/jinaai/jina-embeddings-v2-small-en", "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "jinaai/jina-embeddings-v2-small-en"},
+
+ {"model_name": 'BAAI/bge-small-en-v1.5', "display_name": "bge-small-en-v1.5", "model_family": "HFEmbeddingModel",
+  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 384, "context_window": 512,
+  "link": "https://huggingface.co/BAAI/bge-small-en-v1.5", "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "BAAI/bge-small-en-v1.5"},
+
+ {"model_name": 'BAAI/bge-large-en-v1.5', "display_name": "bge-large-en-v1.5", "model_family": "HFEmbeddingModel",
+  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 1024, "context_window": 512,
+  "link": "https://huggingface.co/BAAI/bge-large-en-v1.5", "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "BAAI/bge-large-en-v1.5"},
+
+ {"model_name": 'BAAI/bge-base-en-v1.5', "display_name": "bge-base-en-v1.5", "model_family": "HFEmbeddingModel",
+  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window": 512,
+  "link": "https://huggingface.co/BAAI/bge-base-en-v1.5", "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "BAAI/bge-base-en-v1.5"},
+
+{"model_name": "thenlper/gte-small", "display_name": "gte-small",
+  "model_family": "HFEmbeddingModel",
+  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 384, "context_window": 512,
+  "link": "https://huggingface.co/thenlper/gte-small", "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "thenlper/gte-small"},
+
+ {"model_name": "thenlper/gte-base", "display_name": "gte-base",
+  "model_family": "HFEmbeddingModel",
+  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window": 512,
+  "link": "https://huggingface.co/thenlper/gte-base", "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "thenlper/gte-base"},
+
+ {"model_name": "thenlper/gte-large", "display_name": "gte-large",
+  "model_family": "HFEmbeddingModel",
+  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 1024, "context_window": 512,
+  "link": "https://huggingface.co/thenlper/gte-large", "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "thenlper/gte-large"},
+
+ {"model_name": 'llmrails/ember-v1', "display_name": "ember-v1",
+  "model_family": "HFEmbeddingModel",
+  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 1024, "context_window": 512,
+  "link": "https://huggingface.co/llmrails/ember-v1", "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "llmrails/ember-v1"},
+
+ {"model_name": "WhereIsAI/UAE-Large-V1", "display_name": "uae-large-v1",
+  "model_family": "HFEmbeddingModel",
+  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 1024, "context_window": 512,
+  "link": "https://huggingface.co/WhereIsAI/UAE-Large-V1", "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "WhereIsAI/UAE-Large-V1"},
+
+ # end - add new embedding model options - ends here
 
     # add open ai embeddings
     {"model_name": 'text-embedding-ada-002', "display_name": "OpenAI-Embedding", "model_family": "OpenAIEmbeddingModel",
@@ -121,10 +192,10 @@ global_model_repo_catalog_list = [
      "model_category": "generative-api", "model_location": "api", "context_window": 4000},
 
     # new gpt-4 models announced in November 2023
-    {"model_name": "gpt-4-1106-preview", "display_name": "GPT-4-Turbo", "model_family": "OpenAIGenModel",
+    {"model_name": "gpt-4-1106-preview", "display_name": "GPT-4-Turbo-1106", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 128000},
 
-    {"model_name": "gpt-3.5-turbo-1106", "display_name": "GPT-3.5-Turbo", "model_family": "OpenAIGenModel",
+    {"model_name": "gpt-3.5-turbo-1106", "display_name": "GPT-3.5-Turbo-1106", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 16385},
     # end - gpt-4 model update
 
@@ -145,115 +216,132 @@ global_model_repo_catalog_list = [
      "model_category": "generative-api", "model_location": "api", "context_window": 2048},
 
     # core llmware bling open source models available in catalog directly
-    {"model_name": "llmware/bling-1.4b-0.1", "display_name": "Bling-Pythia-1.4B", "model_family": "HFGenerativeModel",
+    {"model_name": "llmware/bling-1.4b-0.1", "display_name": "bling-1.4b", "model_family": "HFGenerativeModel",
      "model_category": "generative_local", "model_location": "hf_repo", "context_window": 2048,
      "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space":"",
      "link": "https://huggingface.co/llmware/bling-1.4b-0.1",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/bling-1.4b-0.1"},
 
-    {"model_name": "llmware/bling-1b-0.1", "display_name": "Bling-Pythia-1.0B", "model_family": "HFGenerativeModel",
+    {"model_name": "llmware/bling-1b-0.1", "display_name": "bling-1b", "model_family": "HFGenerativeModel",
      "model_category": "generative_local", "model_location": "hf_repo", "context_window": 2048,
      "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space": "",
      "link": "https://huggingface.co/llmware/bling-1b-0.1",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/bling-1b-0.1"},
 
-    {"model_name": "llmware/bling-falcon-1b-0.1", "display_name": "Bling-Falcon-1.3B", "model_family": "HFGenerativeModel",
+    {"model_name": "llmware/bling-falcon-1b-0.1", "display_name": "bling-falcon-1.3b", "model_family": "HFGenerativeModel",
      "model_category": "generative_local", "model_location": "hf_repo", "context_window": 2048,
      "instruction_following": False, "prompt_wrapper": "human_bot", "temperature": 0.3, "trailing_space": "",
      "link": "https://huggingface.co/llmware/bling-falcon-1b-0.1",
-     "custom_model_files": [], "custom_model_repo": ""
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/bling-falcon-1b-0.1"
      },
 
-    {"model_name": "llmware/bling-sheared-llama-1.3b-0.1", "display_name": "Bling-Sheared-LLama-1.3B",
+    {"model_name": "llmware/bling-sheared-llama-1.3b-0.1", "display_name": "bling-sheared-llama-1.3b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-sheared-llama-1.3b-0.1",
-     "custom_model_files": [], "custom_model_repo": ""
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/bling-sheared-llama-1.3b-0.1"
      },
 
-    {"model_name": "llmware/bling-red-pajamas-3b-0.1", "display_name": "Bling-Pythia-1.4B",
+    {"model_name": "llmware/bling-red-pajamas-3b-0.1", "display_name": "bling-red-pajamas-3b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-red-pajamas-3b-0.1",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/bling-red-pajamas-3b-0.1"},
 
-    {"model_name": "llmware/bling-sheared-llama-2.7b-0.1", "display_name": "Bling-Sheared-Llama-2.7B",
+    {"model_name": "llmware/bling-sheared-llama-2.7b-0.1", "display_name": "bling-sheared-llama-2.7b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-sheared-llama-2.7b-0.1",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/bling-sheared-llama-2.7b-0.1"},
 
-    {"model_name": "llmware/bling-stable-lm-3b-4e1t-v0", "display_name": "Bling-Stable-LM-3B",
+    {"model_name": "llmware/bling-stable-lm-3b-4e1t-v0", "display_name": "bling-stablelm-3b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-stable-lm-3b-4e1t-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/bling-stable-lm-3b-4e1t-v0"},
 
-    {"model_name": "llmware/bling-cerebras-1.3b-0.1", "display_name": "Bling-Cerebras-1.3B",
+    {"model_name": "llmware/bling-cerebras-1.3b-0.1", "display_name": "bling-cerebras-1.3b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-cerebras-1.3b-0.1",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/bling-cerebras-1.3b-0.1"},
 
-    {"model_name": "llmware/bling-tiny-llama-v0", "display_name": "Bling-Tiny-Llama-v0",
+    {"model_name": "llmware/bling-tiny-llama-v0", "display_name": "bling-tiny-llama-1b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-tiny-llama-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/bling-tiny-llama-v0"},
 
     # create dragon models
-    {"model_name": "llmware/dragon-yi-6b-v0", "display_name": "Dragon-Yi-6B",
+    {"model_name": "llmware/dragon-yi-6b-v0", "display_name": "dragon-yi-6b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "\n", "link": "https://huggingface.co/llmware/dragon-yi-6b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/dragon-yi-6b-v0"},
 
-    {"model_name": "llmware/dragon-stablelm-7b-v0", "display_name": "Dragon-StableLM-7B",
+    {"model_name": "llmware/dragon-stablelm-7b-v0", "display_name": "dragon-stablelm-7b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-stablelm-7b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/dragon-stablelm-7b-v0"},
 
-    {"model_name": "llmware/dragon-mistral-7b-v0", "display_name": "Dragon-Mistral-7B",
+    {"model_name": "llmware/dragon-mistral-7b-v0", "display_name": "dragon-mistral-7b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-mistral-7b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/dragon-mistral-7b-v0"},
 
-    {"model_name": "llmware/dragon-red-pajama-7b-v0", "display_name": "Dragon-Red-Pajama-7B",
+    {"model_name": "llmware/dragon-red-pajama-7b-v0", "display_name": "dragon-red-pajama-7b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-red-pajama-7b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/dragon-red-pajama-7b-v0"},
 
-    {"model_name": "llmware/dragon-deci-6b-v0", "display_name": "Dragon-Deci-6B",
+    {"model_name": "llmware/dragon-deci-6b-v0", "display_name": "dragon-deci-6b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-deci-6b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/dragon-deci-6b-v0"},
 
-    {"model_name": "llmware/dragon-falcon-7b-v0", "display_name": "Dragon-Falcon-7B",
+    {"model_name": "llmware/dragon-falcon-7b-v0", "display_name": "dragon-falcon-7b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-falcon-7b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/dragon-falcon-7b-v0"},
 
-    {"model_name": "llmware/dragon-llama-7b-v0", "display_name": "Dragon-Llama-7B",
+    {"model_name": "llmware/dragon-llama-7b-v0", "display_name": "dragon-llama-7b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-llama-7b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/dragon-llama-7b-v0"},
 
-    {"model_name": "llmware/dragon-deci-7b-v0", "display_name": "Dragon-Deci-7B",
+    {"model_name": "llmware/dragon-deci-7b-v0", "display_name": "dragon-deci-7b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-deci-7b-v0",
-     "custom_model_files": [], "custom_model_repo": ""},
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/dragon-deci-7b-v0"},
 
     # gguf models
 
     # deprecated access to dragon-mistral-7b-gguf -> replaced by dragon-mistral-answer-tool
-    {"model_name": "llmware/dragon-mistral-7b-gguf", "display_name": "Dragon-Mistral-7B-GGUF",
+    {"model_name": "llmware/dragon-mistral-7b-gguf", "display_name": "dragon-mistral-7b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "",
@@ -263,7 +351,7 @@ global_model_repo_catalog_list = [
      "custom_model_files": ["dragon-mistral-7b-q4_k_m.gguf"], "custom_model_repo": "llmware/dragon-mistral-7b-v0"},
 
     # deprecated access to dragon-llama-7b-gguf -> replaced by dragon-llama-answer-tool
-    {"model_name": "llmware/dragon-llama-7b-gguf", "display_name": "Dragon-Llama-7B-GGUF",
+    {"model_name": "llmware/dragon-llama-7b-gguf", "display_name": "dragon-llama-7b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "",
@@ -273,7 +361,7 @@ global_model_repo_catalog_list = [
      "custom_model_files": ["dragon-llama-7b-q4_k_m.gguf"], "custom_model_repo": "llmware/dragon-llama-7b-v0"},
 
     # deprecated access to dragon-yi-6b-gguf -> replaced by dragon-yi-answer-tool
-    {"model_name": "llmware/dragon-yi-6b-gguf", "display_name": "Dragon-Yi-6B-GGUF",
+    {"model_name": "llmware/dragon-yi-6b-gguf", "display_name": "dragon-yi-6b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "\n",
@@ -317,7 +405,7 @@ global_model_repo_catalog_list = [
     # end insert
 
     # selected top HF open source chat models - gguf
-    {"model_name": "TheBloke/Llama-2-7B-Chat-GGUF", "display_name": "Llama-2-7B-Chat-GGUF",
+    {"model_name": "TheBloke/Llama-2-7B-Chat-GGUF", "display_name": "llama-2-7b-chat-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "<INST>",
      "temperature": 0.3, "trailing_space": "",
@@ -326,7 +414,7 @@ global_model_repo_catalog_list = [
      "link": "https://huggingface.co/llmware/bonchon",
      "custom_model_files": ["llama-2-7b-chat.Q4_K_M.gguf"], "custom_model_repo": "llmware/bonchon"},
 
-    {"model_name": "TheBloke/OpenHermes-2.5-Mistral-7B-GGUF", "display_name": "OpenHermes-Mistral-7B-GGUF",
+    {"model_name": "TheBloke/OpenHermes-2.5-Mistral-7B-GGUF", "display_name": "openhermes-mistral-7b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "chat_ml",
      "temperature": 0.3, "trailing_space": "",
@@ -335,7 +423,7 @@ global_model_repo_catalog_list = [
      "link": "https://huggingface.co/llmware/bonchon",
      "custom_model_files": ["openhermes-2.5-mistral-7b.Q4_K_M.gguf"], "custom_model_repo": "llmware/bonchon"},
 
-    {"model_name": "TheBloke/zephyr-7B-beta-GGUF", "display_name": "Zephyr-7B-GGUF",
+    {"model_name": "TheBloke/zephyr-7B-beta-GGUF", "display_name": "zephyr-7b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "hf_chat",
      "temperature": 0.3, "trailing_space": "",
@@ -344,7 +432,7 @@ global_model_repo_catalog_list = [
      "link": "https://huggingface.co/llmware/bonchon",
      "custom_model_files": ["zephyr-7b-beta.Q4_K_M.gguf"], "custom_model_repo": "llmware/bonchon"},
 
-    {"model_name": "TheBloke/Starling-LM-7B-alpha-GGUF", "display_name": "Berkeley-Starling-7B-GGUF",
+    {"model_name": "TheBloke/Starling-LM-7B-alpha-GGUF", "display_name": "starling-7b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "open_chat",
      "temperature": 0.3, "trailing_space": "",
@@ -562,6 +650,7 @@ global_model_repo_catalog_list = [
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "gguf_file": "", "gguf_repo": "",
      "link": "https://huggingface.co/llmware/slim-intent",
+     "hf_repo": "llmware/slim-intent",
      "custom_model_files": [""], "custom_model_repo": "",
      "function_call": True,
      "primary_keys": ["intent"],
@@ -579,6 +668,7 @@ global_model_repo_catalog_list = [
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "gguf_file": "", "gguf_repo": "",
      "link": "https://huggingface.co/llmware/slim-sentiment",
+     "hf_repo": "llmware/slim-sentiment",
      "custom_model_files": [""], "custom_model_repo": "",
      "function_call": True,
      "primary_keys": ["sentiment"],
@@ -593,6 +683,7 @@ global_model_repo_catalog_list = [
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "gguf_file": "", "gguf_repo": "",
      "link": "https://huggingface.co/llmware/slim-emotions",
+     "hf_repo": "llmware/slim-emotions",
      "custom_model_files": [""], "custom_model_repo": "",
      "function_call": True,
      "primary_keys": ["emotions"],
@@ -613,6 +704,7 @@ global_model_repo_catalog_list = [
      "temperature": 0.3, "trailing_space": "", "gguf_file": "", "gguf_repo": "",
      "link": "https://huggingface.co/llmware/slim-ner",
      "custom_model_files": [""], "custom_model_repo": "",
+     "hf_repo": "llmware/slim-ner",
      "function_call": True,
      "primary_keys": ["person", "organization", "place", "misc"],
      "fc_output_values": [],
@@ -627,6 +719,7 @@ global_model_repo_catalog_list = [
      "temperature": 0.3, "trailing_space": "", "gguf_file": "", "gguf_repo": "",
      "link": "https://huggingface.co/llmware/slim-nli",
      "custom_model_files": [""], "custom_model_repo": "",
+     "hf_repo": "llmware/slim-nli",
      "function_call": True,
      "primary_keys": ["evidence"],
      "fc_output_values": ["supports", "neutral", "contradicts"],
@@ -640,6 +733,7 @@ global_model_repo_catalog_list = [
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "gguf_file": "", "gguf_repo": "",
      "link": "https://huggingface.co/llmware/slim-ratings",
+     "hf_repo": "llmware/slim-ratings",
      "custom_model_files": [""], "custom_model_repo": "",
      "function_call": True,
      "primary_keys": ["rating"],
@@ -655,6 +749,7 @@ global_model_repo_catalog_list = [
      "temperature": 0.3, "trailing_space": "", "gguf_file": "", "gguf_repo": "",
      "link": "https://huggingface.co/llmware/slim-category",
      "custom_model_files": [""], "custom_model_repo": "",
+     "hf_repo": "llmware/slim-category",
      "function_call": True,
      "primary_keys": ["category"],
      "fc_output_values": ["analyst", "announcements", "bonds", "business", "central bank", "commentary",
@@ -673,6 +768,7 @@ global_model_repo_catalog_list = [
      "temperature": 0.3, "trailing_space": "", "gguf_file": "", "gguf_repo": "",
      "link": "https://huggingface.co/llmware/slim-tags",
      "custom_model_files": [""], "custom_model_repo": "",
+     "hf_repo": "llmware/slim-tags",
      "function_call": True,
      "value_zone_markers": {"start": [6024, 6796,3366], "stop": [2033, 3108]},
      "marker_tokens": [],
@@ -686,6 +782,7 @@ global_model_repo_catalog_list = [
     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
     "temperature": 0.3, "trailing_space": "", "gguf_file": "", "gguf_repo": "",
     "link": "https://huggingface.co/llmware/slim-topics",
+    "hf_repo": "llmware/slim-topics",
     "custom_model_files": [""], "custom_model_repo": "",
     "function_call": True,
     "value_zone_markers": {"start": [6024, 6796, 3366], "stop": [2033, 3108]},
@@ -701,6 +798,7 @@ global_model_repo_catalog_list = [
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/slim-sql-1b-v0",
      "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "llmware/slim-sql-1b-v0",
      #TODO: assess how to handle SQL models with function call parameters
      "function_call": False,
      "fc_output_values": [],
