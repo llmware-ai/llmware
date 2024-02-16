@@ -43,6 +43,9 @@ from llmware.retrieval import Query
 #  example with using ChromaDB as an in-memory database
 os.environ["CHROMADB_COLLECTION"] = "llmware"
 
+#  note: in default mode, Chroma will persist in memory only - to persist to disk, then uncomment the following line and add local folder path:
+#  os.environ["CHROMA_PERSISTENT_PATH"] = "/local/folder/path/to/save/chromadb/"
+
 
 def build_lib (library_name, folder="Agreements"):
 
