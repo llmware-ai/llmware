@@ -582,15 +582,18 @@ class ModelCatalog:
 
             if model_class == "OpenAIEmbeddingModel": my_model = OpenAIEmbeddingModel(model_name=model_name,
                                                                                       embedding_dims=embedding_dims,
-                                                                                      api_key=api_key)
+                                                                                      api_key=api_key,
+                                                                                      model_card=model_card)
 
             if model_class == "CohereEmbeddingModel": my_model = CohereEmbeddingModel(model_name=model_name,
                                                                                       embedding_dims=embedding_dims,
-                                                                                      api_key=api_key)
+                                                                                      api_key=api_key,
+                                                                                      model_card=model_card)
 
             if model_class == "GoogleEmbeddingModel": my_model = GoogleEmbeddingModel(model_name=model_name,
                                                                                       embedding_dims=embedding_dims,
-                                                                                      api_key=api_key)
+                                                                                      api_key=api_key,
+                                                                                      model_card=model_card)
 
             if model_class == "LLMWareSemanticModel": my_model = LLMWareSemanticModel(model_name=model_name,
                                                                                       embedding_dims=embedding_dims,
@@ -641,7 +644,9 @@ class ModelCatalog:
 
             if model_class == "HFEmbeddingModel": my_model = HFEmbeddingModel(model_name=model_name,
                                                                               api_key=api_key,
-                                                                              model_card=model_card)
+                                                                              embedding_dims=embedding_dims,
+                                                                              model_card=model_card,
+                                                                              trust_remote_code=True)
 
         return my_model
 
@@ -708,11 +713,11 @@ class ModelCatalog:
         model = LLMWareSemanticModel(model=model,model_name=model_name)
         return model
 
-    def load_hf_embedding_model(self, model, tokenizer):
+    def load_hf_embedding_model(self, model, tokenizer,trust_remote_code=False):
 
         """ Loads and integrates a Huggingface embedding model """
 
-        model = HFEmbeddingModel(model, tokenizer)
+        model = HFEmbeddingModel(model, tokenizer, trust_remote_code=trust_remote_code)
         return model
 
     def load_hf_generative_model(self, model,tokenizer,prompt_wrapper=None,
@@ -740,7 +745,7 @@ class ModelCatalog:
 
             # first, check for 'from_hf' flag and load as HuggingFace model
             if from_hf:
-                loaded_model = ModelCatalog().load_hf_embedding_model(model,tokenizer)
+                loaded_model = ModelCatalog().load_hf_embedding_model(model,tokenizer, trust_remote_code=True)
             else:
                 # second, check for 'from_sentence_transformer' flag and load as SBERT model
                 if from_sentence_transformers:
@@ -3163,20 +3168,29 @@ class LLMWareModel:
 
 class OpenAIEmbeddingModel:
 
-    """ OpenaIEmbeddingModel class implements the OpenAI API for embedding models, specifically text-ada. """
+    """ OpenaIEmbeddingModel class implements the OpenAI API for embedding models. """
 
-    def __init__(self, model_name=None, api_key=None, embedding_dims=None):
+    def __init__(self, model_name=None, api_key=None, embedding_dims=None, model_card=None):
 
         # must have elements for embedding model
         self.model_name = model_name
         self.api_key = api_key
+        self.model_card = model_card
 
         if not embedding_dims:
             self.embedding_dims = 1536
         else:
             self.embedding_dims = embedding_dims
 
-        self.max_total_len = 2048
+        #   openai standard for embeddings is 8191 as of feb 2024
+        self.max_total_len = 8191
+
+        if model_card:
+            if "embedding_dims" in model_card:
+                self.embedding_dims = model_card["embedding_dims"]
+
+            if "context_window" in model_card:
+                self.max_total_len = model_card["context_window"]
 
         self.error_message = "\nUnable to connect to OpenAI. Please try again later."
 
@@ -3199,11 +3213,6 @@ class OpenAIEmbeddingModel:
         return len(toks)
 
     def embedding(self, text_sample, api_key=None):
-
-        """ Currently only test and support OpenAI text-embedding-ada-002 """
-
-        # hard-coded
-        model = "text-embedding-ada-002"
 
         if api_key:
             self.api_key = api_key
@@ -3229,7 +3238,7 @@ class OpenAIEmbeddingModel:
 
         # update to open >v1.0 api - create client and output is pydantic objects
         client = OpenAI(api_key=self.api_key)
-        response = client.embeddings.create(model=model, input=text_prompt)
+        response = client.embeddings.create(model=self.model_name, input=text_prompt)
 
         # logging.info("update: response: %s ", response)
 
@@ -3247,10 +3256,11 @@ class CohereEmbeddingModel:
 
     """ CohereEmbeddingModel implements the Cohere API for embedding models. """
 
-    def __init__(self, model_name = None, api_key=None, embedding_dims=None):
+    def __init__(self, model_name = None, api_key=None, embedding_dims=None, model_card=None):
 
         self.api_key = api_key
         self.model_name = model_name
+        self.model_card = model_card
 
         if not embedding_dims:
             self.embedding_dims = 4096
@@ -3325,10 +3335,11 @@ class GoogleEmbeddingModel:
     """ GoogleEmbeddingModel implements the Google API for text embedding models.  Note: to use Google models
     requires a separate install of the Google SDKs, e.g., vertexai and google.cloud.platform """
 
-    def __init__(self, model_name=None, api_key=None, embedding_dims=None):
+    def __init__(self, model_name=None, api_key=None, embedding_dims=None, model_card=None):
 
         self.api_key = api_key
         self.model_name = model_name
+        self.model_card = model_card
 
         self.max_total_len = 3072
 
@@ -3441,7 +3452,7 @@ class HFEmbeddingModel:
     """HFEmbeddingModel class implements the API for HuggingFace embedding models. """
 
     def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None, model_card=None,
-                 embedding_dims=None):
+                 embedding_dims=None, trust_remote_code=False):
 
         # pull in expected hf input
         self.model_name = model_name
@@ -3451,12 +3462,54 @@ class HFEmbeddingModel:
         self.model_type = None
         self.max_total_len = 2048
         self.model_architecture = None
+        self.model_card = model_card
 
-        logging.info("update - loading HF Model - %s", model.config.to_dict())
+        if self.model_card:
+            if "embedding_dims" in self.model_card:
+                self.embedding_dims = self.model_card["embedding_dims"]
+
+        # print("update: test - HFEmbeddingModel - ", self.model_name, self.embedding_dims, self.model_card)
+
+        if self.model_name and not model:
+            # pull from HF
+            try:
+                # will wrap in Exception if import fails and move to model catalog class
+                from transformers import AutoModel, AutoTokenizer
+            except:
+                raise DependencyNotInstalledException("transformers")
+
+            hf_repo_name = self.model_name
+
+            if not self.model_card:
+                self.model_card = ModelCatalog().lookup_model_card(model_name)
+
+            if self.model_card:
+                if "hf_repo" in self.model_card:
+                    hf_repo_name = self.model_card["hf_repo"]
+
+            if api_key:
+                if torch.cuda.is_available():
+                    self.model = AutoModel.from_pretrained(hf_repo_name, token=api_key,
+                                                           trust_remote_code=trust_remote_code,
+                                                           torch_dtype="auto")
+                else:
+                    self.model = AutoModel.from_pretrained(hf_repo_name, token=api_key,
+                                                           trust_remote_code=trust_remote_code)
+
+                self.tokenizer = AutoTokenizer.from_pretrained(hf_repo_name, token=api_key,
+                                                               trust_remote_code=trust_remote_code)
+            else:
+                if torch.cuda.is_available():
+                    self.model = AutoModel.from_pretrained(hf_repo_name, trust_remote_code=trust_remote_code,
+                                                           torch_dtype="auto")
+                else:
+                    self.model = AutoModel.from_pretrained(hf_repo_name, trust_remote_code=trust_remote_code)
+
+                self.tokenizer = AutoTokenizer.from_pretrained(hf_repo_name, trust_remote_code=trust_remote_code)
 
         if self.model:
 
-            self.config = model.config.to_dict()
+            self.config = self.model.config.to_dict()
 
             if "hidden_size" in self.config:
                 self.embedding_dims = self.config["hidden_size"]
@@ -3504,21 +3557,13 @@ class HFEmbeddingModel:
         else:
             sequence = [text_sample]
 
-        logging.info("update: HFEmbedding.embedding() - %s ", len(text_sample))
-
         # shorter than 512
         model_inputs = self.tokenizer(sequence, truncation=True, max_length=500, return_tensors="pt",padding=True)
 
-        model_outputs = self.model(model_inputs.input_ids,
-                                   attention_mask=model_inputs.attention_mask, output_hidden_states=True)
+        model_outputs = self.model(model_inputs.input_ids,attention_mask=model_inputs.attention_mask)
 
-        # the [cls] aggregated embedding is in the last hidden state
-        # dims of [1, 768]
-
-        embedding = model_outputs.hidden_states[-1][:,0]
-
-        # embedding = embedding.detach().numpy()
-        logging.info("update: hf embeddings output shape - %s ", embedding.shape)
+        # embedding = model_outputs.hidden_states[-1][:,0]
+        embedding = model_outputs.last_hidden_state[:,0]
 
         # normalize hf embeddings
         embeddings_normalized = torch.nn.functional.normalize(embedding, p=2, dim=1)
@@ -3579,24 +3624,33 @@ class HFGenerativeModel:
             except:
                 raise DependencyNotInstalledException("transformers")
 
+            hf_repo_name = self.model_name
+
+            if not self.model_card:
+                self.model_card = ModelCatalog().lookup_model_card(self.model_name)
+
+            if self.model_card:
+                if "hf_repo" in self.model_card:
+                    hf_repo_name = self.model_card["hf_repo"]
+
             if api_key:
                 if torch.cuda.is_available():
-                    self.model = AutoModelForCausalLM.from_pretrained(model_name, token=api_key,
+                    self.model = AutoModelForCausalLM.from_pretrained(hf_repo_name, token=api_key,
                                                                       trust_remote_code=trust_remote_code,
                                                                       torch_dtype="auto")
                 else:
-                    self.model = AutoModelForCausalLM.from_pretrained(model_name, token=api_key,
+                    self.model = AutoModelForCausalLM.from_pretrained(hf_repo_name, token=api_key,
                                                                       trust_remote_code=trust_remote_code)
 
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=api_key,
+                self.tokenizer = AutoTokenizer.from_pretrained(hf_repo_name, token=api_key,
                                                                trust_remote_code=trust_remote_code)
             else:
                 if torch.cuda.is_available():
-                    self.model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=trust_remote_code,
+                    self.model = AutoModelForCausalLM.from_pretrained(hf_repo_name, trust_remote_code=trust_remote_code,
                                                                       torch_dtype="auto")
                 else:
-                    self.model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=trust_remote_code)
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=trust_remote_code)
+                    self.model = AutoModelForCausalLM.from_pretrained(hf_repo_name, trust_remote_code=trust_remote_code)
+                self.tokenizer = AutoTokenizer.from_pretrained(hf_repo_name, trust_remote_code=trust_remote_code)
 
             # set to defaults for HF models in Model Catalog
             # this can be over-ridden post initiation if needed for custom models
