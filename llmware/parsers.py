@@ -279,6 +279,9 @@ class Parser:
             # the counter is the length of the array
             dup_counter = len(duplicate_files)
             # We are done with this and we don't need to n times loop as before
+            # we set the imput_file_names to be the reduced list to not to process dupe files
+            input_file_names = duplicate_files_tmp
+
 
 
 
