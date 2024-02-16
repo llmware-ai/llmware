@@ -269,17 +269,24 @@ class Parser:
         files_to_be_processed = []
         duplicate_files = []
 
+
+        if dupe_check:
+            # we get a reduced list of input_file_names if in existing_files is files we try to process
+            duplicate_files_tmp = list(set(input_file_names) - set(existing_files))
+            # the duplicates are those that where not in duplicate_files_tmp so we take out the tmp from the input_file_names
+            # what's left is the duplicates
+            duplicate_files =  list(set(input_file_names) - set(duplicate_files_tmp))
+            # the counter is the length of the array
+            dup_counter = len(duplicate_files)
+            # We are done with this and we don't need to n times loop as before
+
+
+
         for filename in input_file_names:
 
             filetype = filename.split(".")[-1]
 
             go_ahead = True
-
-            if dupe_check:
-                if filename in existing_files:
-                    go_ahead= False
-                    dup_counter += 1
-                    duplicate_files.append(filename)
 
             if go_ahead:
 
