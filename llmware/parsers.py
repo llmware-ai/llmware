@@ -2347,6 +2347,9 @@ class Parser:
         for i, file in enumerate(doc_fn_raw_list):
             if file.split(os.sep)[-1] in file_list:
                 found_list.append(file.split(os.sep)[-1])
+            # if found_list is equal length of file_list we don't need to look any further
+            if len(found_list) == len(file_list):
+                break
 
         not_found_list = list(set(file_list) - set(found_list))
 
