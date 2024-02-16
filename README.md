@@ -709,10 +709,10 @@ Questions and discussions are welcome in our [github discussions](https://github
 - Updating encodings to 'utf-8-sig' to better handle txt/csv files with bom.  
 
 **Reported notable issues on priority resolution path**  
-(1)  stablelm-based models using gguf  
-(2)  older linux versions with GLIBC < 2.34  
-(3)  3.12 python support - waiting on one last dependency (coming soon)  
-
+- stablelm-based models using gguf  
+- older linux versions with GLIBC < 2.34  
+- 3.12 python support - waiting on one last dependency (coming soon)
+  
 **Supported Operating Systems**: MacOS (Metal and x86), Linux (x86 and aarch64), Windows  
 - note on Linux: we test most extensively on Ubuntu 22 and recommend where possible  
 - if you need another Linux version, please raise an issue - we will prioritize testing and ensure support.  
