@@ -705,17 +705,8 @@ class MongoRetrieval:
     def get_distinct_list(self, key):
 
         """Returns distinct list of items by key"""
-        # not using distinct operation
-        # distinct can break due to the number of entries in the library
-        # to prevent this from happen we use a aggregate which does not produce a document but a cursor
-        # we loop the cursor and so we overcome the distinct operation 16mb document cap
 
-        group = self.collection.aggregate([{ "$group": {"_id": f'${key}',}}])
-
-        distinct_list = []
-        for entry in group:
-            distinct_list.append(entry['_id'])
-
+        distinct_list = list(self.collection.distinct(key))
         return distinct_list
 
     def filter_by_key_dict (self, key_dict):
