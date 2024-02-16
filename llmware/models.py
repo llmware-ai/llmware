@@ -582,15 +582,18 @@ class ModelCatalog:
 
             if model_class == "OpenAIEmbeddingModel": my_model = OpenAIEmbeddingModel(model_name=model_name,
                                                                                       embedding_dims=embedding_dims,
-                                                                                      api_key=api_key)
+                                                                                      api_key=api_key,
+                                                                                      model_card=model_card)
 
             if model_class == "CohereEmbeddingModel": my_model = CohereEmbeddingModel(model_name=model_name,
                                                                                       embedding_dims=embedding_dims,
-                                                                                      api_key=api_key)
+                                                                                      api_key=api_key,
+                                                                                      model_card=model_card)
 
             if model_class == "GoogleEmbeddingModel": my_model = GoogleEmbeddingModel(model_name=model_name,
                                                                                       embedding_dims=embedding_dims,
-                                                                                      api_key=api_key)
+                                                                                      api_key=api_key,
+                                                                                      model_card=model_card)
 
             if model_class == "LLMWareSemanticModel": my_model = LLMWareSemanticModel(model_name=model_name,
                                                                                       embedding_dims=embedding_dims,
@@ -3163,20 +3166,29 @@ class LLMWareModel:
 
 class OpenAIEmbeddingModel:
 
-    """ OpenaIEmbeddingModel class implements the OpenAI API for embedding models, specifically text-ada. """
+    """ OpenaIEmbeddingModel class implements the OpenAI API for embedding models. """
 
-    def __init__(self, model_name=None, api_key=None, embedding_dims=None):
+    def __init__(self, model_name=None, api_key=None, embedding_dims=None, model_card=None):
 
         # must have elements for embedding model
         self.model_name = model_name
         self.api_key = api_key
+        self.model_card = model_card
 
         if not embedding_dims:
             self.embedding_dims = 1536
         else:
             self.embedding_dims = embedding_dims
 
-        self.max_total_len = 2048
+        #   openai standard for embeddings is 8191 as of feb 2024
+        self.max_total_len = 8191
+
+        if model_card:
+            if "embedding_dims" in model_card:
+                self.embedding_dims = model_card["embedding_dims"]
+
+            if "context_window" in model_card:
+                self.max_total_len = model_card["context_window"]
 
         self.error_message = "\nUnable to connect to OpenAI. Please try again later."
 
@@ -3199,11 +3211,6 @@ class OpenAIEmbeddingModel:
         return len(toks)
 
     def embedding(self, text_sample, api_key=None):
-
-        """ Currently only test and support OpenAI text-embedding-ada-002 """
-
-        # hard-coded
-        model = "text-embedding-ada-002"
 
         if api_key:
             self.api_key = api_key
@@ -3229,7 +3236,7 @@ class OpenAIEmbeddingModel:
 
         # update to open >v1.0 api - create client and output is pydantic objects
         client = OpenAI(api_key=self.api_key)
-        response = client.embeddings.create(model=model, input=text_prompt)
+        response = client.embeddings.create(model=self.model_name, input=text_prompt)
 
         # logging.info("update: response: %s ", response)
 
@@ -3247,10 +3254,11 @@ class CohereEmbeddingModel:
 
     """ CohereEmbeddingModel implements the Cohere API for embedding models. """
 
-    def __init__(self, model_name = None, api_key=None, embedding_dims=None):
+    def __init__(self, model_name = None, api_key=None, embedding_dims=None, model_card=None):
 
         self.api_key = api_key
         self.model_name = model_name
+        self.model_card = model_card
 
         if not embedding_dims:
             self.embedding_dims = 4096
@@ -3325,10 +3333,11 @@ class GoogleEmbeddingModel:
     """ GoogleEmbeddingModel implements the Google API for text embedding models.  Note: to use Google models
     requires a separate install of the Google SDKs, e.g., vertexai and google.cloud.platform """
 
-    def __init__(self, model_name=None, api_key=None, embedding_dims=None):
+    def __init__(self, model_name=None, api_key=None, embedding_dims=None, model_card=None):
 
         self.api_key = api_key
         self.model_name = model_name
+        self.model_card = model_card
 
         self.max_total_len = 3072
 

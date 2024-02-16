@@ -33,9 +33,15 @@ global_model_repo_catalog_list = [
 
     # add open ai embeddings
     {"model_name": 'text-embedding-ada-002', "display_name": "OpenAI-Embedding", "model_family": "OpenAIEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 1536},
+     "model_category": "embedding", "model_location": "api", "context_window": 8191, "embedding_dims": 1536},
 
-    # add cohere embeddings
+    {"model_name": 'text-embedding-3-small', "display_name": "OpenAI-Embedding", "model_family": "OpenAIEmbeddingModel",
+     "model_category": "embedding", "model_location": "api", "context_window": 8191, "embedding_dims": 1536},
+
+    {"model_name": 'text-embedding-3-large', "display_name": "OpenAI-Embedding", "model_family": "OpenAIEmbeddingModel",
+     "model_category": "embedding", "model_location": "api", "context_window": 8191, "embedding_dims": 3072},
+
+ # add cohere embeddings
     {"model_name": 'medium', "display_name": "Cohere-Medium-Embedding", "model_family": "CohereEmbeddingModel",
      "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 4096},
 
