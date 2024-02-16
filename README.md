@@ -702,14 +702,26 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log
 
+**Friday, February 16 - v0.2.3 WIP Update**  
+- Added 10+ embedding models to ModelCatalog - nomic, jina, bge, gte, ember and uae-large.   
+- Updated OpenAI support >=1.0 and new text-3 embedding models.    
+- SLIM model keys and output_values now accessible in ModelCatalog.  
+- Updating encodings to 'utf-8-sig' to better handle txt/csv files with bom.  
+
+**Reported notable issues on priority resolution path**  
+(1)  stablelm-based models using gguf  
+(2)  older linux versions with GLIBC < 2.34  
+(3)  3.12 python support - waiting on one last dependency (coming soon)  
+
 **Supported Operating Systems**: MacOS (Metal and x86), Linux (x86 and aarch64), Windows  
 - note on Linux: we test most extensively on Ubuntu 22 and recommend where possible  
 - if you need another Linux version, please raise an issue - we will prioritize testing and ensure support.  
 
-
 **Supported Vector Databases**: Milvus, Postgres (PGVector), Neo4j, Redis, LanceDB, ChromaDB, Qdrant, FAISS, Pinecone, Mongo Atlas Vector Search
 
 **Supported Text Index Databases**: MongoDB, Postgres, SQLite  
+
+
 
 <details>
 <summary><b>Optional</b></summary>
@@ -723,7 +735,7 @@ Questions and discussions are welcome in our [github discussions](https://github
 <details>
   <summary><b>🚧 Change Log</b></summary>
 
-**Latest Updates - 19 Jan 2024 - Coming soon!: llmware v0.2.0**
+**Latest Updates - 19 Jan 2024 - llmware v0.2.0**
   - Added new database integration options - Postgres and SQlite
   - Improved status update and parser event logging options for parallelized parsing
   - Significant enhancements to interactions between Embedding + Text collection databases
