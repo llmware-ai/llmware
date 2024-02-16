@@ -289,37 +289,33 @@ class Parser:
 
             filetype = filename.split(".")[-1]
 
-            go_ahead = True
+            files_to_be_processed.append(filename)
 
-            if go_ahead:
+            # copy file into specific channel for targeted parser
 
-                files_to_be_processed.append(filename)
+            if filetype.lower() in self.office_types:
+                shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.office_work_folder,filename))
+                office_found += 1
 
-                # copy file into specific channel for targeted parser
+            if filetype.lower() in self.pdf_types:
+                shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.pdf_work_folder, filename))
+                pdf_found += 1
 
-                if filetype.lower() in self.office_types:
-                    shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.office_work_folder,filename))
-                    office_found += 1
+            if filetype.lower() in self.text_types:
+                shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.text_work_folder,filename))
+                text_found += 1
 
-                if filetype.lower() in self.pdf_types:
-                    shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.pdf_work_folder, filename))
-                    pdf_found += 1
+            if filetype.lower() in self.ocr_types:
+                shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.ocr_work_folder,filename))
+                ocr_found += 1
 
-                if filetype.lower() in self.text_types:
-                    shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.text_work_folder,filename))
-                    text_found += 1
+            if filetype.lower() in self.voice_types:
+                shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.voice_work_folder,filename))
+                voice_found += 1
 
-                if filetype.lower() in self.ocr_types:
-                    shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.ocr_work_folder,filename))
-                    ocr_found += 1
-
-                if filetype.lower() in self.voice_types:
-                    shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.voice_work_folder,filename))
-                    voice_found += 1
-
-                if filetype.lower() in self.zip_types:
-                    shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.zip_work_folder,filename))
-                    zip_found += 1
+            if filetype.lower() in self.zip_types:
+                shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.zip_work_folder,filename))
+                zip_found += 1
 
         logging.info("update:  Duplicate files (skipped): %s ", dup_counter)
         logging.info("update:  Total uploaded: %s ", len(input_file_names))
