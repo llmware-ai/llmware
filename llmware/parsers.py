@@ -2329,6 +2329,10 @@ class Parser:
 
     def input_ingestion_comparison (self, file_list):
 
+        # shortcut if file_list is just empty
+        if len(file_list) < 1:
+            return [],[]
+
         """ Compares input with parsed output to identify any rejected files. """
 
         # simple approach - compares input file_list from ingestion 'work_order' with state of library collection
@@ -2341,26 +2345,19 @@ class Parser:
             return -1
 
         found_list = []
-        not_found_list = []
 
         doc_fn_raw_list = CollectionRetrieval(self.library_name,
                                               account_name=self.account_name).get_distinct_list("file_source")
 
-        doc_fn_out = []
+
         for i, file in enumerate(doc_fn_raw_list):
-            doc_fn_out.append(file.split(os.sep)[-1])
+            if file.split(os.sep)[-1] in file_list:
+                found_list.append(file.split(os.sep)[-1])
+            # if found_list is equal length of file_list we don't need to look any further
+            if len(found_list) == len(file_list):
+                break
 
-        for i, input_file in enumerate(file_list):
-            found_file = -1
-            for j, ingested_file in enumerate(doc_fn_out):
-
-                # need to confirm 'symmetrical' transformations, e.g., secure_filename and any prepend/postpend
-                if input_file == ingested_file:
-                    found_file = 1
-                    found_list.append(input_file)
-                    break
-            if found_file == -1:
-                not_found_list.append(input_file)
+        not_found_list = list(set(file_list) - set(found_list))
 
         return found_list, not_found_list
 
