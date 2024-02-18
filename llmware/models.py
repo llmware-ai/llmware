@@ -331,7 +331,7 @@ class ModelCatalog:
 
     def register_gguf_model(self, model_name, gguf_model_repo, gguf_model_file_name, prompt_wrapper=None,
                             eos_token_id=0, display_name=None,trailing_space="", temperature=0.3,
-                            context_window=2048, instruction_following=False):
+                            context_window=2048, instruction_following=True):
 
         """ Registers a new GGUF model in model catalog - alternative to adding directly in the ModelRegistry """
 
@@ -4454,6 +4454,9 @@ class GGUFGenerativeModel:
             if "gguf_repo" in model_card:
                 self.gguf_repo = model_card["gguf_repo"]  # e.g., "llmware/dragon-mistral-7b-v0-gguf"
 
+            if "instruction_following" in model_card:
+                self.instruction_following = model_card["instruction_following"]
+
         #   gguf specific attributes
 
         self.config = config
@@ -4970,6 +4973,8 @@ class GGUFGenerativeModel:
                 output = PromptCatalog().apply_prompt_wrapper(output, self.prompt_wrapper,
                                                               instruction=None)
 
+            print("TEST - FALSE instruction_following: ", output)
+
             return output
 
         # move ahead to add instructions and prompt engineering
@@ -5004,6 +5009,8 @@ class GGUFGenerativeModel:
         if self.prompt_wrapper:
             prompt_engineered = PromptCatalog().apply_prompt_wrapper(prompt_engineered, self.prompt_wrapper,
                                                                      instruction=None)
+
+        print("TEST: TRUE - instruction_following: ", selected_prompt, prompt_engineered)
 
         return prompt_engineered
 
