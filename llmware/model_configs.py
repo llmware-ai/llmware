@@ -407,7 +407,7 @@ global_model_repo_catalog_list = [
     # selected top HF open source chat models - gguf
     {"model_name": "TheBloke/Llama-2-7B-Chat-GGUF", "display_name": "llama-2-7b-chat-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "<INST>",
+     "context_window": 2048, "instruction_following": True, "prompt_wrapper": "<INST>",
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "llama-2-7b-chat.Q4_K_M.gguf",
      "gguf_repo": "llmware/bonchon",
@@ -416,7 +416,7 @@ global_model_repo_catalog_list = [
 
     {"model_name": "TheBloke/OpenHermes-2.5-Mistral-7B-GGUF", "display_name": "openhermes-mistral-7b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "chat_ml",
+     "context_window": 2048, "instruction_following": True, "prompt_wrapper": "chat_ml",
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "openhermes-2.5-mistral-7b.Q4_K_M.gguf",
      "gguf_repo": "llmware/bonchon",
@@ -425,7 +425,7 @@ global_model_repo_catalog_list = [
 
     {"model_name": "TheBloke/zephyr-7B-beta-GGUF", "display_name": "zephyr-7b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "hf_chat",
+     "context_window": 2048, "instruction_following": True, "prompt_wrapper": "hf_chat",
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "zephyr-7b-beta.Q4_K_M.gguf",
      "gguf_repo": "llmware/bonchon",
@@ -434,7 +434,7 @@ global_model_repo_catalog_list = [
 
     {"model_name": "TheBloke/Starling-LM-7B-alpha-GGUF", "display_name": "starling-7b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "open_chat",
+     "context_window": 2048, "instruction_following": True, "prompt_wrapper": "open_chat",
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "starling-lm-7b-alpha.Q4_K_M.gguf",
      "gguf_repo": "llmware/bonchon",
