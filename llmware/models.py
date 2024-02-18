@@ -4973,8 +4973,6 @@ class GGUFGenerativeModel:
                 output = PromptCatalog().apply_prompt_wrapper(output, self.prompt_wrapper,
                                                               instruction=None)
 
-            print("TEST - FALSE instruction_following: ", output)
-
             return output
 
         # move ahead to add instructions and prompt engineering
@@ -5009,8 +5007,6 @@ class GGUFGenerativeModel:
         if self.prompt_wrapper:
             prompt_engineered = PromptCatalog().apply_prompt_wrapper(prompt_engineered, self.prompt_wrapper,
                                                                      instruction=None)
-
-        print("TEST: TRUE - instruction_following: ", selected_prompt, prompt_engineered)
 
         return prompt_engineered
 
