@@ -269,47 +269,53 @@ class Parser:
         files_to_be_processed = []
         duplicate_files = []
 
+
+        if dupe_check:
+            # we get a reduced list of input_file_names if in existing_files is files we try to process
+            duplicate_files_tmp = list(set(input_file_names) - set(existing_files))
+            # the duplicates are those that where not in duplicate_files_tmp so we take out the tmp from the input_file_names
+            # what's left is the duplicates
+            duplicate_files =  list(set(input_file_names) - set(duplicate_files_tmp))
+            # the counter is the length of the array
+            dup_counter = len(duplicate_files)
+            # We are done with this and we don't need to n times loop as before
+            # we set the imput_file_names to be the reduced list to not to process dupe files
+            input_file_names = duplicate_files_tmp
+
+
+
+
         for filename in input_file_names:
 
             filetype = filename.split(".")[-1]
 
-            go_ahead = True
+            files_to_be_processed.append(filename)
 
-            if dupe_check:
-                if filename in existing_files:
-                    go_ahead= False
-                    dup_counter += 1
-                    duplicate_files.append(filename)
+            # copy file into specific channel for targeted parser
 
-            if go_ahead:
+            if filetype.lower() in self.office_types:
+                shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.office_work_folder,filename))
+                office_found += 1
 
-                files_to_be_processed.append(filename)
+            if filetype.lower() in self.pdf_types:
+                shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.pdf_work_folder, filename))
+                pdf_found += 1
 
-                # copy file into specific channel for targeted parser
+            if filetype.lower() in self.text_types:
+                shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.text_work_folder,filename))
+                text_found += 1
 
-                if filetype.lower() in self.office_types:
-                    shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.office_work_folder,filename))
-                    office_found += 1
+            if filetype.lower() in self.ocr_types:
+                shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.ocr_work_folder,filename))
+                ocr_found += 1
 
-                if filetype.lower() in self.pdf_types:
-                    shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.pdf_work_folder, filename))
-                    pdf_found += 1
+            if filetype.lower() in self.voice_types:
+                shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.voice_work_folder,filename))
+                voice_found += 1
 
-                if filetype.lower() in self.text_types:
-                    shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.text_work_folder,filename))
-                    text_found += 1
-
-                if filetype.lower() in self.ocr_types:
-                    shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.ocr_work_folder,filename))
-                    ocr_found += 1
-
-                if filetype.lower() in self.voice_types:
-                    shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.voice_work_folder,filename))
-                    voice_found += 1
-
-                if filetype.lower() in self.zip_types:
-                    shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.zip_work_folder,filename))
-                    zip_found += 1
+            if filetype.lower() in self.zip_types:
+                shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.zip_work_folder,filename))
+                zip_found += 1
 
         logging.info("update:  Duplicate files (skipped): %s ", dup_counter)
         logging.info("update:  Total uploaded: %s ", len(input_file_names))
