@@ -183,7 +183,8 @@ class _ModelRegistry:
         updated=False
 
         for i, models in enumerate(cls.registered_models):
-            if models["model_name"] == model_name_lookup:
+            # added option to match with display name
+            if models["model_name"] == model_name_lookup or models["display_name"] == model_name_lookup:
                 del cls.registered_models[i]
                 cls.registered_models.append(new_model_card_dict)
                 updated = True
@@ -198,7 +199,8 @@ class _ModelRegistry:
         model_found=False
 
         for i, models in enumerate(cls.registered_models):
-            if models["model_name"] == model_name:
+            # added option to match with display name
+            if models["model_name"] == model_name or models["display_name"] == model_name:
                 del cls.registered_models[i]
                 model_found = True
                 break
@@ -459,7 +461,8 @@ class ModelCatalog:
 
         # first check in the global_model_repo + confirm location
         for models in self.global_model_list:
-            if models["model_name"] == selected_model_name:
+            # add option to match with display_name as alternative alias for model
+            if models["model_name"] == selected_model_name or models["display_name"] == selected_model_name:
                 model_card = models
                 model_card.update({"standard":True})
                 break
@@ -513,7 +516,10 @@ class ModelCatalog:
             logging.info("update: pulling GGUF model from HF - %s - %s", model_location, model_card)
 
             if "snapshot" in model_card:
-                self.pull_snapshot_from_hf(model_card["model_name"], model_location, api_key=api_key)
+                # pull snapshot from gguf repo in model card
+                model_repo = model_card["gguf_repo"]
+                # replacing:  model_repo = model_card["model_name"]
+                self.pull_snapshot_from_hf(model_repo, model_location, api_key=api_key)
             else:
                 # general case
                 self.pull_model_from_hf(model_card, model_location, api_key=api_key)
@@ -836,7 +842,8 @@ class ModelCatalog:
         my_model = None
 
         for models in self.global_model_list:
-            if models["model_name"] == model_name:
+            # add check for match with display_name as alias
+            if models["model_name"] == model_name or models["display_name"] == model_name:
                 my_model = models
                 break
 
@@ -850,7 +857,8 @@ class ModelCatalog:
 
         for models in self.global_model_list:
 
-            if models["model_name"] == model_name:
+            #   add check for display name match
+            if models["model_name"] == model_name or models["display_name"] == model_name:
                 selected_model = models
                 my_model = self._instantiate_model_class_from_string(selected_model["model_family"],
                                                                      model_name, models,api_key=api_key)
@@ -885,16 +893,13 @@ class ModelCatalog:
 
         return local_model_repo_path
 
-    def pull_snapshot_from_hf(self, model_name, local_model_repo_path, api_key=None):
+    def pull_snapshot_from_hf(self, repo_name, local_model_repo_path, api_key=None):
 
         """ Pulls snapshot of HF model repository and saves into local folder path. """
 
         from huggingface_hub import snapshot_download
 
-        # note: by default, assumes that model_name is a "tool" from llmware, with the 'llmware/' implicit
-        model_name = "llmware/" + model_name
-
-        snapshot = snapshot_download(model_name, local_dir=local_model_repo_path, token=api_key,
+        snapshot = snapshot_download(repo_name, local_dir=local_model_repo_path, token=api_key,
                                      local_dir_use_symlinks=False)
 
         return local_model_repo_path
@@ -928,7 +933,14 @@ class ModelCatalog:
                     found_model = True
 
             if not found_model:
-                self.pull_snapshot_from_hf(tool_name, local_model_repo_path, api_key=api_key)
+
+                model_card = self.lookup_model_card(tool_name)
+                if "gguf_repo" in model_card:
+                    repo_name = model_card["gguf_repo"]
+                else:
+                    repo_name = tool_name
+
+                self.pull_snapshot_from_hf(repo_name, local_model_repo_path, api_key=api_key)
 
         return 0
 
