@@ -3176,6 +3176,7 @@ class OpenAIEmbeddingModel:
         self.model_name = model_name
         self.api_key = api_key
         self.model_card = model_card
+        self.tokenizer = None
 
         if not embedding_dims:
             self.embedding_dims = 1536
@@ -3207,10 +3208,12 @@ class OpenAIEmbeddingModel:
         self.api_key = os.environ.get(env_var)
         return self.api_key
 
+    def get_tokenizer(self):
+        self.tokenizer = Utilities().get_default_tokenizer()
+        return self.tokenizer
+
     def token_counter(self, text_sample):
-        tokenizer = Utilities().get_default_tokenizer()
-        toks = tokenizer.encode(text_sample).ids
-        return len(toks)
+        return len(self.tokenizer.encode(text_sample).ids)
 
     def embedding(self, text_sample, api_key=None):
 
@@ -3235,6 +3238,40 @@ class OpenAIEmbeddingModel:
             from openai import OpenAI
         except ImportError:
             raise DependencyNotInstalledException("openai >= 1.0")
+
+        # insert safety check here
+        safe_samples = []
+        safety_buffer = 200
+        if self.max_total_len < 8191:
+            self.max_total_len = 8191
+
+        tokenizer = self.get_tokenizer()
+
+        for sample in text_prompt:
+
+            tok_len = self.token_counter(sample)
+
+            if tok_len < (self.max_total_len - safety_buffer):
+                safe_samples.append(sample)
+
+            else:
+
+                if len(sample) > 300:
+                    display_sample = sample[0:300] + " ... "
+                else:
+                    display_sample = sample
+
+                logging.warning(f"warning: OpenAI Embedding - input sample len - {tok_len} > context_window size "
+                                f"\ninput_sample - {display_sample} "
+                                f"\n\nSample is being truncated.")
+
+                tok = tokenizer.encode(sample).ids
+                tok = tok[0:(self.max_total_len - safety_buffer)]
+                sample = tokenizer.decode(tok)
+                safe_samples.append(sample)
+
+        text_prompt = safe_samples
+        # end - safety check
 
         # update to open >v1.0 api - create client and output is pydantic objects
         client = OpenAI(api_key=self.api_key)
