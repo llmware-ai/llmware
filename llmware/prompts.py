@@ -884,7 +884,9 @@ class Prompt:
         output_dict.update({"evidence_metadata": [{"evidence_start_char":0,
                                                    "evidence_stop_char": evidence_stop_char,
                                                    "page_num": "NA",
-                                                   "source_name": "NA"}]})
+                                                   "source_name": "NA",
+                                                   "doc_id": "NA",
+                                                   "block_id": "NA"}]})
 
         if register_trx:
             self.register_llm_inference(output_dict,prompt_id,trx_dict)
