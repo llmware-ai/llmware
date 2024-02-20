@@ -6,101 +6,139 @@ ModelCatalog and PromptCatalog classes.
 
 global_model_repo_catalog_list = [
 
+  # embedding models - direct pull from llmware repo - deprecated for HF pull
+  {"model_name": 'mini-lm-sbert-llmware', "display_name": "mini-lm-sbert-llmware", "model_family": "LLMWareSemanticModel",
+   "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 384, "context_window": 512,
+   "link": "", "custom_model_files": [], "custom_model_repo": ""},
+
+  {"model_name": 'industry-bert-insurance-llmware', "display_name": "industry-bert-insurance-llmware",
+   "model_family": "LLMWareSemanticModel",
+   "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window": 512,
+   "link": "https://huggingface.co/llmware/industry-bert-insurance-v0.1", "custom_model_files": [],
+   "custom_model_repo": "",
+   "hf_repo": "llmware/industry-bert-insurance-v0.1"},
+
+  {"model_name": 'industry-bert-contracts-llmware', "display_name": "industry-bert-contracts-llmware",
+   "model_family": "LLMWareSemanticModel",
+   "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window": 512,
+   "link": "https://huggingface.co/llmware/industry-bert-contracts-v0.1", "custom_model_files": [],
+   "custom_model_repo": "",
+   "hf_repo": "llmware/industry-bert-contracts-v0.1"},
+
+  {"model_name": 'industry-bert-asset-management-llmware', "display_name": "industry-bert-asset-management-llmware",
+   "model_family": "LLMWareSemanticModel", "model_category": "embedding", "model_location": "llmware_repo",
+   "embedding_dims": 768, "context_window": 512,
+   "link": "https://huggingface.co/llmware/industry-bert-asset-management-v0.1", "custom_model_files": [],
+   "custom_model_repo": "",
+   "hf_repo": "llmware/industry-bert-asset-management-v0.1"},
+
+  {"model_name": 'industry-bert-sec-llmware', "display_name": "industry-bert-sec-llmware", "model_family": "LLMWareSemanticModel",
+   "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window": 512,
+   "link": "https://huggingface.co/llmware/industry-bert-sec-v0.1", "custom_model_files": [], "custom_model_repo": "",
+   "hf_repo": "llmware/industry-bert-sec-v0.1"},
+
     # embedding models
-    {"model_name": 'mini-lm-sbert', "display_name": "mini-lm-sbert", "model_family": "LLMWareSemanticModel",
-     "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 384, "context_window":512,
-     "link": "","custom_model_files": [], "custom_model_repo": ""},
 
-    {"model_name": 'industry-bert-insurance', "display_name": "industry-bert-insurance", "model_family": "LLMWareSemanticModel",
-     "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window":512,
-     "link": "https://huggingface.co/llmware/industry-bert-insurance-v0.1", "custom_model_files":[],
-     "custom_model_repo": "",
-     "hf_repo": "llmware/industry-bert-insurance-v0.1"},
+    {"model_name": "all-MiniLM-L6-v2", "display_name": "mini-lm-sbert", "model_family": "HFEmbeddingModel",
+     "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 384, "context_window": 512,
+     "link": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2",
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "sentence-transformers/all-MiniLM-L6-v2"},
 
-    {"model_name": 'industry-bert-contracts', "display_name": "industry-bert-contracts", "model_family": "LLMWareSemanticModel",
-     "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window":512,
-     "link": "https://huggingface.co/llmware/industry-bert-contracts-v0.1", "custom_model_files":[],
-     "custom_model_repo": "",
-     "hf_repo": "llmware/industry-bert-contracts-v0.1"},
+    {"model_name": 'all-mpnet-base-v2', "display_name": "mpnet-base", "model_family": "HFEmbeddingModel",
+     "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window": 514,
+     "link": "https://huggingface.co/sentence-transformers/all-mpnet-base-v2",
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "sentence-transformers/all-mpnet-base-v2"},
+
+  {"model_name": 'industry-bert-insurance', "display_name": "industry-bert-insurance",
+      "model_family": "HFEmbeddingModel",
+      "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window":512,
+      "link": "https://huggingface.co/llmware/industry-bert-insurance-v0.1", "custom_model_files":[],
+      "custom_model_repo": "",
+      "hf_repo": "llmware/industry-bert-insurance-v0.1"},
+
+     {"model_name": 'industry-bert-contracts', "display_name": "industry-bert-contracts",
+      "model_family": "HFEmbeddingModel",
+      "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window":512,
+      "link": "https://huggingface.co/llmware/industry-bert-contracts-v0.1", "custom_model_files":[],
+      "custom_model_repo": "",
+      "hf_repo": "llmware/industry-bert-contracts-v0.1"},
 
     {"model_name": 'industry-bert-asset-management', "display_name": "industry-bert-asset-management",
-     "model_family": "LLMWareSemanticModel", "model_category": "embedding", "model_location": "llmware_repo",
-     "embedding_dims": 768, "context_window":512,
-     "link": "https://huggingface.co/llmware/industry-bert-asset-management-v0.1", "custom_model_files":[],
-     "custom_model_repo": "",
-     "hf_repo": "llmware/industry-bert-asset-management-v0.1"},
+      "model_family": "HFEmbeddingModel", "model_category": "embedding", "model_location": "hf_repo",
+      "embedding_dims": 768, "context_window":512,
+      "link": "https://huggingface.co/llmware/industry-bert-asset-management-v0.1", "custom_model_files":[],
+      "custom_model_repo": "",
+      "hf_repo": "llmware/industry-bert-asset-management-v0.1"},
 
-    {"model_name": 'industry-bert-sec', "display_name": "industry-bert-sec", "model_family": "LLMWareSemanticModel",
-     "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window":512,
-     "link": "https://huggingface.co/llmware/industry-bert-sec-v0.1", "custom_model_files": [], "custom_model_repo": "",
-     "hf_repo": "llmware/industry-bert-sec-v0.1"},
+     {"model_name": 'industry-bert-sec', "display_name": "industry-bert-sec", "model_family": "HFEmbeddingModel",
+      "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window":512,
+      "link": "https://huggingface.co/llmware/industry-bert-sec-v0.1", "custom_model_files": [], "custom_model_repo": "",
+      "hf_repo": "llmware/industry-bert-sec-v0.1"},
 
- # feb 2024 - add new embedding model options - starts here
+  {"model_name": 'nomic-ai/nomic-embed-text-v1', "display_name": "nomic-text-v1",
+   "model_family": "HFEmbeddingModel",
+   "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window": 8192,
+   "link": "https://huggingface.co/nomic-ai/nomic-embed-text-v1", "custom_model_files": [], "custom_model_repo": "",
+   "hf_repo": "nomic-ai/nomic-embed-text-v1"},
 
- {"model_name": 'nomic-ai/nomic-embed-text-v1', "display_name": "nomic-text-v1",
-  "model_family": "HFEmbeddingModel",
-  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window": 8192,
-  "link": "https://huggingface.co/nomic-ai/nomic-embed-text-v1", "custom_model_files": [], "custom_model_repo": "",
-  "hf_repo": "nomic-ai/nomic-embed-text-v1"},
+  {"model_name": 'jinaai/jina-embeddings-v2-base-en', "display_name": "jina-base-en-v2",
+   "model_family": "HFEmbeddingModel",
+   "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window": 8192,
+   "link": "https://huggingface.co/jinaai/jina-embeddings-v2-base-en", "custom_model_files": [], "custom_model_repo": "",
+   "hf_repo": "jinaai/jina-embeddings-v2-base-en"},
 
- {"model_name": 'jinaai/jina-embeddings-v2-base-en', "display_name": "jina-base-en-v2",
-  "model_family": "HFEmbeddingModel",
-  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window": 8192,
-  "link": "https://huggingface.co/jinaai/jina-embeddings-v2-base-en", "custom_model_files": [], "custom_model_repo": "",
-  "hf_repo": "jinaai/jina-embeddings-v2-base-en"},
+  {"model_name": 'jinaai/jina-embeddings-v2-small-en', "display_name": "jina-small-en-v2",
+   "model_family": "HFEmbeddingModel",
+   "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 512, "context_window": 8192,
+   "link": "https://huggingface.co/jinaai/jina-embeddings-v2-small-en", "custom_model_files": [], "custom_model_repo": "",
+   "hf_repo": "jinaai/jina-embeddings-v2-small-en"},
 
- {"model_name": 'jinaai/jina-embeddings-v2-small-en', "display_name": "jina-small-en-v2",
-  "model_family": "HFEmbeddingModel",
-  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 512, "context_window": 8192,
-  "link": "https://huggingface.co/jinaai/jina-embeddings-v2-small-en", "custom_model_files": [], "custom_model_repo": "",
-  "hf_repo": "jinaai/jina-embeddings-v2-small-en"},
+  {"model_name": 'BAAI/bge-small-en-v1.5', "display_name": "bge-small-en-v1.5", "model_family": "HFEmbeddingModel",
+   "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 384, "context_window": 512,
+   "link": "https://huggingface.co/BAAI/bge-small-en-v1.5", "custom_model_files": [], "custom_model_repo": "",
+   "hf_repo": "BAAI/bge-small-en-v1.5"},
 
- {"model_name": 'BAAI/bge-small-en-v1.5', "display_name": "bge-small-en-v1.5", "model_family": "HFEmbeddingModel",
-  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 384, "context_window": 512,
-  "link": "https://huggingface.co/BAAI/bge-small-en-v1.5", "custom_model_files": [], "custom_model_repo": "",
-  "hf_repo": "BAAI/bge-small-en-v1.5"},
+  {"model_name": 'BAAI/bge-large-en-v1.5', "display_name": "bge-large-en-v1.5", "model_family": "HFEmbeddingModel",
+   "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 1024, "context_window": 512,
+   "link": "https://huggingface.co/BAAI/bge-large-en-v1.5", "custom_model_files": [], "custom_model_repo": "",
+   "hf_repo": "BAAI/bge-large-en-v1.5"},
 
- {"model_name": 'BAAI/bge-large-en-v1.5', "display_name": "bge-large-en-v1.5", "model_family": "HFEmbeddingModel",
-  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 1024, "context_window": 512,
-  "link": "https://huggingface.co/BAAI/bge-large-en-v1.5", "custom_model_files": [], "custom_model_repo": "",
-  "hf_repo": "BAAI/bge-large-en-v1.5"},
+  {"model_name": 'BAAI/bge-base-en-v1.5', "display_name": "bge-base-en-v1.5", "model_family": "HFEmbeddingModel",
+   "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window": 512,
+   "link": "https://huggingface.co/BAAI/bge-base-en-v1.5", "custom_model_files": [], "custom_model_repo": "",
+   "hf_repo": "BAAI/bge-base-en-v1.5"},
 
- {"model_name": 'BAAI/bge-base-en-v1.5', "display_name": "bge-base-en-v1.5", "model_family": "HFEmbeddingModel",
-  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window": 512,
-  "link": "https://huggingface.co/BAAI/bge-base-en-v1.5", "custom_model_files": [], "custom_model_repo": "",
-  "hf_repo": "BAAI/bge-base-en-v1.5"},
+ {"model_name": "thenlper/gte-small", "display_name": "gte-small",
+   "model_family": "HFEmbeddingModel",
+   "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 384, "context_window": 512,
+   "link": "https://huggingface.co/thenlper/gte-small", "custom_model_files": [], "custom_model_repo": "",
+   "hf_repo": "thenlper/gte-small"},
 
-{"model_name": "thenlper/gte-small", "display_name": "gte-small",
-  "model_family": "HFEmbeddingModel",
-  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 384, "context_window": 512,
-  "link": "https://huggingface.co/thenlper/gte-small", "custom_model_files": [], "custom_model_repo": "",
-  "hf_repo": "thenlper/gte-small"},
+  {"model_name": "thenlper/gte-base", "display_name": "gte-base",
+   "model_family": "HFEmbeddingModel",
+   "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window": 512,
+   "link": "https://huggingface.co/thenlper/gte-base", "custom_model_files": [], "custom_model_repo": "",
+   "hf_repo": "thenlper/gte-base"},
 
- {"model_name": "thenlper/gte-base", "display_name": "gte-base",
-  "model_family": "HFEmbeddingModel",
-  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window": 512,
-  "link": "https://huggingface.co/thenlper/gte-base", "custom_model_files": [], "custom_model_repo": "",
-  "hf_repo": "thenlper/gte-base"},
+  {"model_name": "thenlper/gte-large", "display_name": "gte-large",
+   "model_family": "HFEmbeddingModel",
+   "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 1024, "context_window": 512,
+   "link": "https://huggingface.co/thenlper/gte-large", "custom_model_files": [], "custom_model_repo": "",
+   "hf_repo": "thenlper/gte-large"},
 
- {"model_name": "thenlper/gte-large", "display_name": "gte-large",
-  "model_family": "HFEmbeddingModel",
-  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 1024, "context_window": 512,
-  "link": "https://huggingface.co/thenlper/gte-large", "custom_model_files": [], "custom_model_repo": "",
-  "hf_repo": "thenlper/gte-large"},
+  {"model_name": 'llmrails/ember-v1', "display_name": "ember-v1",
+   "model_family": "HFEmbeddingModel",
+   "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 1024, "context_window": 512,
+   "link": "https://huggingface.co/llmrails/ember-v1", "custom_model_files": [], "custom_model_repo": "",
+   "hf_repo": "llmrails/ember-v1"},
 
- {"model_name": 'llmrails/ember-v1', "display_name": "ember-v1",
-  "model_family": "HFEmbeddingModel",
-  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 1024, "context_window": 512,
-  "link": "https://huggingface.co/llmrails/ember-v1", "custom_model_files": [], "custom_model_repo": "",
-  "hf_repo": "llmrails/ember-v1"},
-
- {"model_name": "WhereIsAI/UAE-Large-V1", "display_name": "uae-large-v1",
-  "model_family": "HFEmbeddingModel",
-  "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 1024, "context_window": 512,
-  "link": "https://huggingface.co/WhereIsAI/UAE-Large-V1", "custom_model_files": [], "custom_model_repo": "",
-  "hf_repo": "WhereIsAI/UAE-Large-V1"},
-
- # end - add new embedding model options - ends here
+  {"model_name": "WhereIsAI/UAE-Large-V1", "display_name": "uae-large-v1",
+   "model_family": "HFEmbeddingModel",
+   "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 1024, "context_window": 512,
+   "link": "https://huggingface.co/WhereIsAI/UAE-Large-V1", "custom_model_files": [], "custom_model_repo": "",
+   "hf_repo": "WhereIsAI/UAE-Large-V1"},
 
     # add open ai embeddings
     {"model_name": 'text-embedding-ada-002', "display_name": "OpenAI-Embedding", "model_family": "OpenAIEmbeddingModel",
@@ -112,7 +150,7 @@ global_model_repo_catalog_list = [
     {"model_name": 'text-embedding-3-large', "display_name": "OpenAI-Embedding", "model_family": "OpenAIEmbeddingModel",
      "model_category": "embedding", "model_location": "api", "context_window": 8191, "embedding_dims": 3072},
 
- # add cohere embeddings
+    # add cohere embeddings
     {"model_name": 'medium', "display_name": "Cohere-Medium-Embedding", "model_family": "CohereEmbeddingModel",
      "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 4096},
 
@@ -183,7 +221,7 @@ global_model_repo_catalog_list = [
     {"model_name": "gpt-3.5-turbo", "display_name": "ChatGPT", "model_family": "OpenAIGenModel",
      "model_category": "generative-api","model_location": "api", "context_window": 4000},
 
-    # gpt-4 add
+    # gpt-4
     {"model_name": "gpt-4", "display_name": "GPT-4", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 8000},
 
@@ -370,8 +408,6 @@ global_model_repo_catalog_list = [
      "link": "https://huggingface.co/llmware/dragon-yi-6b-v0",
      "custom_model_files": ["dragon-yi-6b-q4_k_m.gguf"], "custom_model_repo": "llmware/dragon-yi-6b-v0"},
 
-   # insert new dragon gguf tools
-
    {"model_name": "dragon-yi-answer-tool", "display_name": "dragon-yi-6b-answer-tool",
     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -401,8 +437,6 @@ global_model_repo_catalog_list = [
     "snapshot": True,
     "link": "https://huggingface.co/llmware/dragon-mistral-answer-tool",
     "custom_model_files": ["dragon-mistral.gguf"], "custom_model_repo": "llmware/dragon-mistral-answer-tool"},
-
-    # end insert
 
     # selected top HF open source chat models - gguf
     {"model_name": "TheBloke/Llama-2-7B-Chat-GGUF", "display_name": "llama-2-7b-chat-gguf",

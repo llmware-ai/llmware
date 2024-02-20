@@ -3182,7 +3182,7 @@ class OpenAIEmbeddingModel:
 
     """ OpenaIEmbeddingModel class implements the OpenAI API for embedding models. """
 
-    def __init__(self, model_name=None, api_key=None, embedding_dims=None, model_card=None):
+    def __init__(self, model_name=None, api_key=None, embedding_dims=None, model_card=None, max_len=None):
 
         # must have elements for embedding model
         self.model_name = model_name
@@ -3197,6 +3197,7 @@ class OpenAIEmbeddingModel:
 
         #   openai standard for embeddings is 8191 as of feb 2024
         self.max_total_len = 8191
+        self.max_len = self.max_total_len
 
         if model_card:
             if "embedding_dims" in model_card:
@@ -3206,6 +3207,10 @@ class OpenAIEmbeddingModel:
                 self.max_total_len = model_card["context_window"]
 
         self.error_message = "\nUnable to connect to OpenAI. Please try again later."
+
+        if max_len:
+            if max_len < self.max_total_len:
+                self.max_len = max_len
 
     def set_api_key(self, api_key,env_var="USER_MANAGED_OPENAI_API_KEY"):
 
@@ -3305,7 +3310,7 @@ class CohereEmbeddingModel:
 
     """ CohereEmbeddingModel implements the Cohere API for embedding models. """
 
-    def __init__(self, model_name = None, api_key=None, embedding_dims=None, model_card=None):
+    def __init__(self, model_name = None, api_key=None, embedding_dims=None, model_card=None,max_len=None):
 
         self.api_key = api_key
         self.model_name = model_name
@@ -3318,6 +3323,11 @@ class CohereEmbeddingModel:
 
         self.max_total_len = 2048
         self.error_message = "\nUnable to connect to Cohere. Please try again later."
+
+        self.max_len = self.max_total_len
+        if max_len:
+            if max_len < self.max_total_len:
+                self.max_len = max_len
 
     def set_api_key(self, api_key, env_var="USER_MANAGED_COHERE_API_KEY"):
 
@@ -3384,7 +3394,7 @@ class GoogleEmbeddingModel:
     """ GoogleEmbeddingModel implements the Google API for text embedding models.  Note: to use Google models
     requires a separate install of the Google SDKs, e.g., vertexai and google.cloud.platform """
 
-    def __init__(self, model_name=None, api_key=None, embedding_dims=None, model_card=None):
+    def __init__(self, model_name=None, api_key=None, embedding_dims=None, model_card=None, max_len=None):
 
         self.api_key = api_key
         self.model_name = model_name
@@ -3400,6 +3410,11 @@ class GoogleEmbeddingModel:
             self.embedding_dims = embedding_dims
 
         self.error_message = "\nUnable to connect to Google/Text Embedding Model. Please try again later."
+
+        self.max_len = self.max_total_len
+        if max_len:
+            if max_len < self.max_total_len:
+                self.max_len = max_len
 
     def set_api_key(self, api_key, env_var="USER_MANAGED_GOOGLE_API_KEY"):
 
@@ -3501,7 +3516,7 @@ class HFEmbeddingModel:
     """HFEmbeddingModel class implements the API for HuggingFace embedding models. """
 
     def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None, model_card=None,
-                 embedding_dims=None, trust_remote_code=False):
+                 embedding_dims=None, trust_remote_code=False, use_gpu_if_available=True, max_len=None):
 
         # pull in expected hf input
         self.model_name = model_name
@@ -3512,19 +3527,24 @@ class HFEmbeddingModel:
         self.max_total_len = 2048
         self.model_architecture = None
         self.model_card = model_card
+        self.safe_buffer = 12
+
+        # default for HF embedding model -> will be over-ridden by model card / configs, if available
+        self.context_window = 512
 
         if self.model_card:
             if "embedding_dims" in self.model_card:
                 self.embedding_dims = self.model_card["embedding_dims"]
 
-        # print("update: test - HFEmbeddingModel - ", self.model_name, self.embedding_dims, self.model_card)
+            if "context_window" in self.model_card:
+                self.context_window = self.model_card["context_window"]
 
         if self.model_name and not model:
             # pull from HF
             try:
                 # will wrap in Exception if import fails and move to model catalog class
                 from transformers import AutoModel, AutoTokenizer
-            except:
+            except ImportError:
                 raise DependencyNotInstalledException("transformers")
 
             hf_repo_name = self.model_name
@@ -3556,23 +3576,27 @@ class HFEmbeddingModel:
 
                 self.tokenizer = AutoTokenizer.from_pretrained(hf_repo_name, trust_remote_code=trust_remote_code)
 
+        self.use_gpu = torch.cuda.is_available() and use_gpu_if_available
+
         if self.model:
 
             self.config = self.model.config.to_dict()
 
             if "hidden_size" in self.config:
                 self.embedding_dims = self.config["hidden_size"]
-                logging.info("warning: embedding_dims - from config - %s ", self.embedding_dims)
 
             if "model_type" in self.config:
                 self.model_type = self.config["model_type"]
 
             if "max_position_embeddings" in self.config:
-                self.max_total_len = self.config["max_position_embeddings"]
+
+                try:
+                    self.context_window = int(self.config["max_position_embeddings"])
+                except:
+                    pass
 
             if "_name_or_path" in self.config:
                 self.model_name = self.config["_name_or_path"]
-                logging.info("update: model_name - from config - %s ", self.model_name)
 
             if "architectures" in self.config:
                 if isinstance(self.config["architectures"],list):
@@ -3580,23 +3604,34 @@ class HFEmbeddingModel:
                 else:
                     self.model_architectures = self.config["architectures"]
 
+            self.model.eval()
+
+            if self.use_gpu:
+                self.model.to('cuda')
+
         else:
             raise ModelNotFoundException(model_name)
 
         # no api key expected or required
         self.api_key = api_key
 
+        # set max len for tokenizer truncation with 'safe_buffer' below context_window size
+        if self.context_window > self.safe_buffer:
+            self.max_len = self.context_window - self.safe_buffer
+        else:
+            self.max_len = self.context_window
+
+        # option to set smaller size than model context window
+        if max_len:
+            if max_len < self.context_window:
+                self.max_len = max_len
+
     def token_counter(self, text_sample):
         #   need to support HF tokenizer
         toks = self.tokenizer.encode(text_sample).ids
         return len(toks)
 
-    # this is here for temporary reference - will be removed
-    def stransformer_embedding(self, sentence):
-        embedding = self.model.encode(sentence, convert_to_tensor=True)
-        embedding_2d = embedding.unsqueeze(0)
-        return embedding_2d
-
+    @torch.no_grad()
     def embedding (self, text_sample, api_key=None):
 
         # return embeddings only
@@ -3606,19 +3641,29 @@ class HFEmbeddingModel:
         else:
             sequence = [text_sample]
 
-        # shorter than 512
-        model_inputs = self.tokenizer(sequence, truncation=True, max_length=500, return_tensors="pt",padding=True)
+        model_inputs = self.tokenizer(sequence, truncation=True, max_length=self.max_len, return_tensors="pt",padding=True)
 
-        model_outputs = self.model(model_inputs.input_ids,attention_mask=model_inputs.attention_mask)
+        if self.use_gpu:
+            input_ids = model_inputs.input_ids.to('cuda')
+            attn_mask = model_inputs.attention_mask.to('cuda')
+        else:
+            input_ids = model_inputs.input_ids.to('cpu')
+            attn_mask = model_inputs.attention_mask.to('cpu')
 
-        # embedding = model_outputs.hidden_states[-1][:,0]
+        model_outputs = self.model(input_ids, attention_mask=attn_mask)
+
         embedding = model_outputs.last_hidden_state[:,0]
 
         # normalize hf embeddings
         embeddings_normalized = torch.nn.functional.normalize(embedding, p=2, dim=1)
-        embeddings_normalized = embeddings_normalized.detach().numpy()
+
+        if self.use_gpu:
+            embeddings_normalized = np.array(embeddings_normalized.detach().to('cpu'))
+        else:
+            embeddings_normalized = embeddings_normalized.detach().numpy()
 
         return embeddings_normalized
+
 
 class HFGenerativeModel:
 
@@ -5288,7 +5333,7 @@ class LLMWareSemanticModel:
     """ LLMWareSemanticModel class implements the LLMWareSemanticModel API, which is based on the SentenceTransformer
     architecture. """
 
-    def __init__(self, model_name=None, model=None, embedding_dims=None, max_seq_length=150,
+    def __init__(self, model_name=None, model=None, embedding_dims=None, max_len=150,
                  model_card=None, api_key=None):
 
         self.model_name = model_name
@@ -5296,7 +5341,7 @@ class LLMWareSemanticModel:
 
         self.max_input_len = 512
         self.max_output_len = 512
-        self.max_seq_length = max_seq_length
+        self.max_len = max_len
 
         # to be applied to 'passed-in' Sentence Transformers model
         self.normalize_embeddings = True
@@ -5376,7 +5421,7 @@ class LLMWareSemanticModel:
             self.model_repo_location = fp
 
         self.model = STransformer(self.model_repo_location, model_size=self.model_size,
-                                  max_seq_length=self.max_seq_length)
+                                  max_seq_length=self.max_len)
 
         return self
 
