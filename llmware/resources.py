@@ -869,7 +869,7 @@ class PGRetrieval:
                         new_dict.update({key: row[counter]})
                         counter += 1
                     else:
-                        logging.info("update: pg_retriever - outputs not matching - %s - %s", counter, row[counter])
+                        logging.warning("update: pg_retriever - outputs not matching - %s", counter)
 
             output.append(new_dict)
 
@@ -899,7 +899,7 @@ class PGRetrieval:
                         new_dict.update({key: row[counter]})
                         counter += 1
                     else:
-                        logging.info ("update: pg_retriever - outputs not matching - %s - %s ", counter, row[counter])
+                        logging.warning ("update: pg_retriever - outputs not matching - %s ", counter)
 
             output.append(new_dict)
 
@@ -1020,11 +1020,7 @@ class PGRetrieval:
         results = self.conn.cursor().execute(sql_query)
 
         if results:
-
-            if self.text_retrieval:
-                output = self.unpack_search_result(results)
-            else:
-                output = self.unpack(results)
+            output = self.unpack(results)
 
         self.conn.close()
 
@@ -1159,17 +1155,16 @@ class PGRetrieval:
 
         conditions_clause = " WHERE"
         for key, value in key_dict.items():
-            conditions_clause += f" AND {key} = {value}"
+            conditions_clause += f" {key} = '{value}' AND "
 
+        if conditions_clause.endswith(' AND '):
+            conditions_clause = conditions_clause[:-5]
         if len(conditions_clause) > len(" WHERE"):
             sql_query += conditions_clause + ";"
 
         results = self.conn.cursor().execute(sql_query)
 
-        if self.text_retrieval:
-            output = self.unpack_search_result(results)
-        else:
-            output = self.unpack(results)
+        output = self.unpack(results)
 
         self.conn.close()
 
@@ -1186,14 +1181,11 @@ class PGRetrieval:
             value_range_str = value_range_str[:-2]
         value_range_str += ")"
 
-        sql_query = f"SELECT * from {self.library_name} WHERE '{key}' IN {value_range_str};"
+        sql_query = f"SELECT * from {self.library_name} WHERE {key} IN {value_range_str};"
 
         results = self.conn.cursor().execute(sql_query)
 
-        if self.text_retrieval:
-            output = self.unpack_search_result(results)
-        else:
-            output = self.unpack(results)
+        output = self.unpack(results)
 
         self.conn.close()
 
@@ -1203,14 +1195,11 @@ class PGRetrieval:
 
         """Filter by col (key) not equal to specified value"""
 
-        sql_query = f"SELECT * from {self.library_name} WHERE NOT '{key}' = {value};"
+        sql_query = f"SELECT * from {self.library_name} WHERE NOT {key} = {value};"
 
         results = self.conn.cursor().execute(sql_query)
 
-        if self.text_retrieval:
-            output = self.unpack_search_result(results)
-        else:
-            output = self.unpack(results)
+        output = self.unpack(results)
 
         self.conn.close()
 
@@ -1884,7 +1873,7 @@ class SQLiteRetrieval:
                         counter += 1
 
                     else:
-                        logging.info("update: sqlite_retriever - outputs not matching - %s - %s", counter, len(row))
+                        logging.warning("update: sqlite_retriever - outputs not matching - %s ", counter)
 
             output.append(new_dict)
 
@@ -1921,8 +1910,9 @@ class SQLiteRetrieval:
 
                         new_dict.update({key: row[counter]})
                         counter += 1
+
                     else:
-                        logging.info("update: sqlite_retriever - outputs not matching - %s - %s", counter, row[counter])
+                        logging.warning("update: sqlite_retriever - outputs not matching - %s", counter)
 
             output.append(new_dict)
 
@@ -2039,26 +2029,7 @@ class SQLiteRetrieval:
         sql_query = f"SELECT rowid, * FROM {self.library_name} WHERE {key} = {value};"
         results = self.conn.cursor().execute(sql_query)
 
-        # lib_card = {}
-
-        if self.text_retrieval:
-            output = self.unpack_search_result(results)
-        else:
-            output = self.unpack(results)
-
-        """
-        if self.library_name == "library":
-
-            # repackage library card
-            library_schema = LLMWareTableSchema.get_library_card_schema()
-            lib_card = {}
-            counter = 0
-            results = list(results)
-            for keys in library_schema:
-                # print("update: keys / sql - ", keys, results[0][counter])
-                lib_card.update({keys:results[0][counter]})
-                counter += 1
-        """
+        output = self.unpack(results)
 
         self.conn.close()
 
@@ -2187,17 +2158,17 @@ class SQLiteRetrieval:
 
         conditions_clause = " WHERE"
         for key, value in key_dict.items():
-            conditions_clause += f" AND {key} = {value}"
+            conditions_clause += f" {key} = {value} AND "
+
+        if conditions_clause.endswith(" AND "):
+            conditions_clause = conditions_clause[:-5]
 
         if len(conditions_clause) > len(" WHERE"):
             sql_query += conditions_clause + ";"
 
         results = self.conn.cursor().execute(sql_query)
 
-        if self.text_retrieval:
-            output = self.unpack_search_result(results)
-        else:
-            output = self.unpack(results)
+        output = self.unpack(results)
 
         self.conn.close()
 
@@ -2221,10 +2192,7 @@ class SQLiteRetrieval:
 
         results = self.conn.cursor().execute(sql_query)
 
-        if self.text_retrieval:
-            output = self.unpack_search_result(results)
-        else:
-            output = self.unpack(results)
+        output = self.unpack(results)
 
         self.conn.close()
 
@@ -2238,10 +2206,7 @@ class SQLiteRetrieval:
 
         results = self.conn.cursor().execute(sql_query)
 
-        if self.text_retrieval:
-            output = self.unpack_search_result(results)
-        else:
-            output = self.unpack(results)
+        output = self.unpack(results)
 
         self.conn.close()
 
