@@ -231,10 +231,35 @@ class EmbeddingHandler:
 
 
 class _EmbeddingUtils:
+    """Provides functions to vector stores, such as creating names for the text collection database as well
+    as creating names for vector such, and creating a summary of an embedding process.
 
-    """ Common utilities invoked by all of the individual embedding classes to preserve consistency,
-        especially in interaction and synchronization with the underlying text collection database """
+    ``_EmbeddingUTils`` provides utilities used by all vector stores, especially in interaction and
+    synchronization with the underlying text collection database. In short, it has functions for
+    creating names, the text index, the embedding flag, the block curser, and the embedding summary.
 
+    Parameters
+    ----------
+    library_name : str, default=None
+        Name of the library.
+
+    model_name : str, default=None
+        Name of the model.
+
+    account_name : str, default=None
+        Name of the account.
+
+    db_name : str, default=None
+        Name of the vector store.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_utils : _EmbeddingUtils
+        A new ``_EmbeddingUtils`` object.
+    """
     def __init__(self, library_name=None, model_name=None, account_name=None,db_name=None,
                  embedding_dims=None):
 
