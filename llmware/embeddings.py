@@ -90,12 +90,23 @@ from llmware.util import Utilities
 
 
 class EmbeddingHandler:
+    """Provides an interface to all supported vector dabases, which is used by the ``Library`` class.
 
-    """ Main class abstraction to handle Embeddings - this is the primary entry point for calling methods-
-    and handles all embedding-related interactions with a library - creation, insertion/updates, queries
-    and deletion + synchronization with the text collection database for incremental updates and ability to
-    have multiple embeddings on each library. """
+    ``EmbeddingHandler`` is responsible for embedding-related interactions between a library and a vector
+    store. This includes creating, reading, updating, and deleting (CRUD) embeddings. The ``EmbeddingHandler``,
+    in addition, synchronizes the vector store with the text collection database, this includes incremental
+    updates to the embeddings. Finally, it also allows one library to have multiple embeddings.
 
+    Parameters
+    ----------
+    library : Library
+        The library with which the ``EmbeddingHandler`` interacts.
+
+    Returns
+    -------
+    embedding_handler : EmbeddingHandler
+        A new ``EmbeddingHandler`` object.
+    """
     def __init__(self, library):
 
         self.supported_embedding_dbs = LLMWareConfig().get_supported_vector_db()
