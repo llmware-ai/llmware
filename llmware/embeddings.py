@@ -740,8 +740,29 @@ class EmbeddingFAISS:
         return 1
 
 class EmbeddingLanceDB:
-    """ 
-    LanceDB vector database object - executes all operations on LanceDB
+    """Implements the vector database LanceDB.
+
+    ``EmbeddingLancDB`` implements the interface to the ``LanceDB`` vector database. It is used by the
+    ``EmbeddingHandler``.
+
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_lancedb : EmbeddingLanceDB
+        A new ``EmbeddingLanceDB`` object.
     """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
             self.uri = LanceDBConfig().get_config("uri")
