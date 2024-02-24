@@ -1562,9 +1562,30 @@ class EmbeddingRedis:
 
 
 class EmbeddingQdrant:
+    """Implements the Qdrant vector database.
 
-    """ Qdrant vector database object - executes all operations on Qdrant endpoint """
+    ``EmbeddingQdrant`` implements the interface to ``Qdrant``. It is used by the
+    ``EmbeddingHandler``.
 
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_qdrant : EmbeddingQdrant
+        A new ``EmbeddingQdrant`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.library = library
