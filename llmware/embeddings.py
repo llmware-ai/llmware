@@ -379,9 +379,30 @@ class _EmbeddingUtils:
 
 
 class EmbeddingMilvus:
+    """Implements the vector database Milvius.
 
-    """ Milvus vector database object - executes all operations on Milvus """
+    ``EmbeddingMivlus`` implements the interface to the ``Milvus`` vector store. It is used by the
+    ``EmbeddingHandler``.
 
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_milvus : EmbeddingMilvus
+        A new ``EmbeddingMilvus`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.library = library
