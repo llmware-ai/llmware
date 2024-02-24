@@ -1742,9 +1742,30 @@ class EmbeddingQdrant:
 
 
 class EmbeddingPGVector:
+    """Implements the interface to the PGVector vector database.
 
-    """ PGVector (Postgres) vector database object - executes all operations associated with PGVector endpoint """
+    ``EmbeddingPGVector`` implements the interface to ``PGVector``. It is used by the
+    ``EmbeddingHandler``.
 
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_pgvector : EmbeddingPGVector
+        A new ``EmbeddingPGVector`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None, full_schema=False):
 
         self.library = library
