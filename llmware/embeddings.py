@@ -571,9 +571,30 @@ class EmbeddingMilvus:
 
 
 class EmbeddingFAISS:
+    """Implements the vector database FAISS.
 
-    """ FAISS vector file database object - executes all operations on FAISS """
+    ``EmbeddingFAISS`` implements the interface to the ``FAISS`` vector database. It is used by the
+    ``EmbeddingHandler``.
 
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_faiss : EmbeddingFAISS
+        A new ``EmbeddingFAISS`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.library = library
