@@ -2305,7 +2305,30 @@ class EmbeddingNeo4j:
 
 
 class EmbeddingChromaDB:
+    """Implements the interface to the ChromaDB vector database.
 
+    ``EmbeddingChromaDB`` implements the interface to ``ChromaDB``. It is used by the
+    ``EmbeddingHandler``.
+
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_chromadb : EmbeddingChromaDB
+        A new ``EmbeddingPGVector`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
         #
         # General llmware set up code
