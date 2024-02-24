@@ -930,9 +930,30 @@ class EmbeddingLanceDB:
 
 
 class EmbeddingPinecone:
+    """Implements the vector database Pinecone.
 
-    """ Pinecone vector database object - executes all operations on Pinecone """
+    ``EmbeddingPinecone`` implements the interface to the ``Pinecone`` vector database. It is used by the
+    ``EmbeddingHandler``.
 
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_pinecone : EmbeddingPinecone
+        A new ``EmbeddingPinecone`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.api_key = PineconeConfig().get_config("pinecone_api_key")
