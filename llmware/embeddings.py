@@ -1095,9 +1095,30 @@ class EmbeddingPinecone:
 
 
 class EmbeddingMongoAtlas:
+    """Implements the use of MongoDB Atlas as a vector database.
 
-    """ Mongo Atlas vector database object - executes all vector db operations on Mongo Atlas """
+    ``EmbeddingMongoAtlas`` implements the interface to ``MongoDB Atlas``. It is used by the
+    ``EmbeddingHandler``.
 
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_mongoatlas : EmbeddingMongoAtlas
+        A new ``EmbeddingMongoAtlas`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
         
         # Use a specified Mongo Atlas connection string if supplied.
