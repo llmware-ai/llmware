@@ -1346,9 +1346,30 @@ class EmbeddingMongoAtlas:
 
 
 class EmbeddingRedis:
+    """Implements the use of Redis as a vector database.
 
-    """ Redis vector database object - executes all operations on Redis endpoint """
+    ``EmbeddingRedis`` implements the interface to ``Redis``. It is used by the
+    ``EmbeddingHandler``.
 
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_redis : EmbeddingRedis
+        A new ``EmbeddingRedis`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.library = library
