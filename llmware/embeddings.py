@@ -2076,7 +2076,30 @@ class EmbeddingPGVector:
 
 
 class EmbeddingNeo4j:
+    """Implements the interface to Neo4j as a vector database.
 
+    ``EmbeddingNeo4j`` implements the interface to ``Neo4j``. It is used by the
+    ``EmbeddingHandler``.
+
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_Neo4j : EmbeddingNeo4j
+        A new ``EmbeddingNeo4j`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         # look up model card
