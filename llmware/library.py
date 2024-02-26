@@ -37,11 +37,28 @@ from llmware.exceptions import LibraryNotFoundException, SetUpLLMWareWorkspaceEx
 
 
 class Library:
+    """Implements the interface to manage a collection of texts and images as a ``Library``.
 
-    """ Library is the main class abstraction for organizing a collection of unstructured information, and is the
-        primary interface into the Parser and Embedding classes.  Libraries are passed to Query objects, and
-        can be passed in whole, or as part of a query, to a Prompt object. """
+    ``Library`` is responsible for managing a collection of unstructured inofrmation, i.e. a library is a
+    collection of texts and images.
 
+    Returns
+    -------
+    library : Library
+        A new ``Library`` object.
+
+    Examples
+    ----------
+    >>> import os
+    >>> import llmware.library
+    >>> import llmware.setup
+    >>> sample_files_path = llmware.setup.Setup().load_sample_files(over_write=True)
+    >>> agreements_path = os.path.join(sample_files_path, 'Agreements')
+    >>> library = llmare.library.Library().create_new_library('my-new-library')
+    >>> library.add_files(agreements_path)
+    >>> library_card = library.get_library_card()
+    >>> library_card['documents']
+    """
     def __init__(self):
 
         # default settings for basic parameters
