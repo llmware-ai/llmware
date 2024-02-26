@@ -761,12 +761,30 @@ class Library:
 
 
 class LibraryCatalog:
+    """Implements the management of tracking details for libraries via the library card, which is stored
+    in the `library` table of the text collection database. It is used by the ``Library`` class.
 
-    """ LibraryCatalog is a supporting class for Library that handles the creation, deletion, updating and
-    general administration of tracking details of specific Libraries through 'Library Card' entries in the
-    'library' table of the text collection database.  In most cases, LibraryCatalog does not need to be directly
-     invoked, and can be accessed through the methods of Library. """
+    ``LibraryCatalog`` is responsible for managing tracking details. This includes creating,
+    reading, updating, and deleting library cards. The library card is stored in the table library
+    of the chosen text collection database. In most cases, ``LibraryCatalog`` does not need to be directly
+    invoked, instead it is used indirectly through the methods of ``Library``.
 
+    Parameters
+    ----------
+    library : Library, default=None
+        The library with which the ``LibraryCatalog`` interacts.
+
+    library_path : str or pathlib.Path object, default=None
+        The path to the llmware directory. If set, then the default from ``LLMWareconfig`` is used.
+
+    account_name : str, default='llmware'
+        Name of the account.
+
+    Returns
+    -------
+    library_catalog : LibraryCatalog
+        A new ``LibraryCatalog`` object.
+    """
     def __init__(self, library=None, library_path=None, account_name="llmware"):
 
         self.library = library
