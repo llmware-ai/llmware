@@ -41,7 +41,6 @@ class Status:
     >>> llmware_status.account_name 
     "my_account"
     """
-
     def __init__ (self, account_name="llmware"):
 
         self.account_name = account_name
