@@ -12,12 +12,35 @@ from llmware.configs import LLMWareTableSchema
 
 
 class Status:
+    """Provides callers with an interface on the status of the parsing and embedding process.
 
-    """ Centralized reading/writing of status that provides a consistent interface for callers (e.g UI).
-        Status consists of a summary string and key metrics that can be used to provide graphical widget
-        update of progress.   If written to sql collection database, then will use the
-        Status schema defined in configs.py"""
+    ``Status`` is the central class for accessing (reading and writting) the status of processes.
+    The intended use case is to be an interface for non-llmware components (the callers) that need
+    information on llmware progress, e.g user interface components may need to change depending on the
+    progress of parsing. A status consists of a summary string and metrics that can be used to provide
+    graphical widgets an update. If a status is written to SQL collection database, then it will use the
+    Status schema defined in configs.py.
 
+    Parameters
+    ----------
+    account_name : str, optional, default='llmware'
+        Sets the name of the account, which is used for writting and retrieving a status.
+
+    Returns
+    -------
+    status : Status
+        A new ``Status`` object.
+
+    Examples
+    ----------
+    >>> import llmware.status
+    >>> llmware_status = llmare.status.Status()
+    >>> llmware_status.account_name 
+    "llmware"
+    >>> llmware_status = llmware.status.Status(account_name="my_account")
+    >>> llmware_status.account_name 
+    "my_account"
+    """
     def __init__ (self, account_name="llmware"):
 
         self.account_name = account_name

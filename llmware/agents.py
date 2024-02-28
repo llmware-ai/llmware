@@ -22,13 +22,47 @@ from llmware.exceptions import ModelNotFoundException
 
 
 class LLMfx:
+    """Provides an interface to models to interact with text, e.g. to first perform named entity recogintion
+    (ner) and then answer a question you want to have answered.
 
-    """ LLMfx provides a high-level orchestration abstraction that implements multi-model, multi-step processes
-    with the ability to load and orchestrate multiple SLIM classifier models as 'tools' with centralized journaling,
-    structured work management and information aggregation.  The initial implementation of LLMfx is designed
-    to support SLIM classifier models, with support for additional model classes to come over time. """
+    ``LLMfx`` provides a high-level orchestration abstraction that implements multi-model, multi-step processes
+    with the ability to load and orchestrate multiple SLIM classifier models as tools with centralized journaling,
+    structured work management and information aggregation. Currently, LLMfx only supports SLIM classifier
+    models, support for additional model classes will be added over time.
 
-    def __init__(self, api_key=None, verbose=True, analyze_mode=True):
+    Parameters
+    ----------
+    api_key : str, optional, default=None
+        Sets the API key that used by the ``ModelCatalog`` to load models and logs.
+
+    verbose : bool, optional, default=True
+        Sets whether ``print`` statements should be executed or not, e.g. if ```verbose=True```, then new
+        events that are written to the journal are printed to stdout.
+
+    analyze_mode : bool, optional, default=True
+        Sets whether logits should be retrieved when a tool is called with ``exec_function_call``.
+
+    Returns
+    -------
+    llmfx : LLMfx
+        A new ``LLMfx`` object.
+
+    Examples
+    ----------
+    >>> import llmware.agents
+    >>> llmware_agent = llmare.agents.LLMfx()
+    >>> llmware_agent.load_work(
+        'My name is Michael Jones, and I am a long-time customer. '
+        'The Mixco product is not working currently, and it is having a negative impact '
+        'on my business, as we can not deliver our products while it is down. '
+        'This is the fourth time that I have called.  My account number is 93203, and '
+        'my user name is mjones. Our company is based in Tampa, Florida.')
+    >>> llmware_agent.exec_function_call('ratings')
+    >>> llmware_agent.answer('What is a short shummary?', key='summary')
+    >>> llmware_agent.answer('What is the customer\'s account number and user name?', key='customer_info')
+    >>> llmware_agent.show_report()
+    """
+    def __init__(self, api_key=None, verbose=True, analyze_mode=True): if verbose:
 
         if verbose:
             print("update: Launching LLMfx process")
