@@ -51,19 +51,16 @@ setup(
     python_requires=">=3.9",
     zip_safe=True,
     install_requires=[
-        'ai21==1.0.3',
-        'anthropic==0.3.11',
         'beautifulsoup4==4.11.1',
         'boto3==1.24.53',
-        'cohere==4.1.3',
         'datasets==2.15.0',
         'faiss-cpu==1.7.4',
         'huggingface-hub==0.19.4',
         'lxml==4.9.3',
         'numpy>=1.23.2',
-        'openai==0.27.7',
+        'openai>=1.0.0',
         'pdf2image==1.16.0',
-        'pymilvus==2.3.0',
+        'pymilvus>=2.3.0',
         'pymongo==4.5.0',
         'pytesseract==0.3.10',
         'sentence-transformers==2.2.2',
@@ -77,7 +74,9 @@ setup(
         'yfinance==0.2.28',
         'psycopg-binary==3.1.17',
         'psycopg==3.1.17',
-        'pgvector==0.2.4'
+        'pgvector==0.2.4',
+        'colorama==0.4.6',
+        'einops==0.7.0'
     ],
 
     extras_require={
@@ -85,6 +84,7 @@ setup(
         'lancedb' :['lancedb==0.5.0'],
         'qdrant': ['qdrant-client==1.7.0'],
         'redis': ['redis==5.0.1'],
-        'neo4j': ['neo4j==5.16.0']
+        'neo4j': ['neo4j==5.16.0'],
+        'chromadb': ['chromadb==0.4.22']
     },
 )

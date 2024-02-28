@@ -1,4 +1,3 @@
-
 # Copyright 2023 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -12,6 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The embeddings module implements the supported vector databases.
+
+The common abstraction for all supported vector databases is the EmbeddingHandler class, which supports
+creating a new embedding, as well as searching and deleting the vector index. The module also implements the
+_EmbeddingUtils class, which provides a set of of funtions used by all vector database classes.
+"""
 
 
 import os
@@ -68,9 +73,15 @@ try:
 except:
     pass
 
+#   optional import of chromadb - not in project requirements
+try:
+    import chromadb
+except:
+    pass
+
 
 from llmware.configs import LLMWareConfig, MongoConfig, MilvusConfig, PostgresConfig, RedisConfig, \
-    PineconeConfig, QdrantConfig, Neo4jConfig, LanceDBConfig
+    PineconeConfig, QdrantConfig, Neo4jConfig, LanceDBConfig, ChromaDBConfig
 from llmware.exceptions import (UnsupportedEmbeddingDatabaseException, EmbeddingModelNotFoundException,
                                 DependencyNotInstalledException)
 from llmware.resources import CollectionRetrieval, CollectionWriter
@@ -183,6 +194,10 @@ class EmbeddingHandler:
 
         if embedding_db == "neo4j":
             return EmbeddingNeo4j(self.library, model=model, model_name=model_name,
+                                   embedding_dims=embedding_dims)
+
+        if embedding_db == "chromadb":
+            return EmbeddingChromaDB(self.library, model=model, model_name=model_name,
                                    embedding_dims=embedding_dims)
 
     def generate_index_name(self, account_name, library_name, model_name, max_component_length=19):
@@ -2060,3 +2075,148 @@ class EmbeddingNeo4j:
                 return [d.data() for d in data]
             except CypherSyntaxError as e:
                 raise ValueError(f'Cypher Statement is not valid\n{e}')
+
+
+class EmbeddingChromaDB:
+
+    def __init__(self, library, model=None, model_name=None, embedding_dims=None):
+        #
+        # General llmware set up code
+        #
+
+        # look up model card
+        if not model and not model_name:
+            raise EmbeddingModelNotFoundException("no-model-or-model-name-provided")
+
+
+        self.library = library
+        self.library_name = library.library_name
+        self.model = model
+        self.model_name = model_name
+        self.embedding_dims = embedding_dims
+        self.account_name = library.account_name
+
+        # if model passed (not None), then use model name
+        if self.model:
+            self.model_name = self.model.model_name
+            self.embedding_dims = model.embedding_dims
+
+
+        #
+        # ChromaDB instantiation
+        #
+
+        # Get environment variables to decide which client to use.
+        persistent_path = ChromaDBConfig.get_config('persistent_path')
+        host = ChromaDBConfig.get_config('host')
+
+        # Instantiate client.
+        if host is None and persistent_path is None:
+            self.client = chromadb.EphemeralClient()
+
+        if persistent_path is not None:
+            self.client = chromadb.PersistentClient(path=persistent_path)
+
+        if host is not None:
+            self.client = chromadb.HttpClient(host=host,
+                                              port=ChromaDBConfig.get_config('port'),
+                                              ssl=ChromaDBConfig.get_config('ssl'),
+                                              headers=ChromaDBConfig.get_config('headers'))
+
+        collection_name = ChromaDBConfig.get_config('collection')
+        # If the collection already exists, it is returned.
+        self._collection = self.client.create_collection(name=collection_name, get_or_create=True)
+
+
+        #
+        # Embedding utils
+        #
+        self.utils = _EmbeddingUtils(library_name=self.library_name,
+                                     model_name=self.model_name,
+                                     account_name=self.account_name,
+                                     db_name="chromadb",
+                                     embedding_dims=self.embedding_dims)
+
+    def create_new_embedding(self, doc_ids=None, batch_size=500):
+
+        all_blocks_cursor, num_of_blocks = self.utils.get_blocks_cursor(doc_ids=doc_ids)
+
+        # Initialize a new status
+        status = Status(self.library.account_name)
+        status.new_embedding_status(self.library.library_name, self.model_name, num_of_blocks)
+
+        embeddings_created = 0
+        current_index = 0
+        finished = False
+
+        # all_blocks_iter = all_blocks_cursor.pull_one()
+
+        while not finished:
+            block_ids, doc_ids, sentences = [], [], []
+
+            # Build the next batch
+            for i in range(batch_size):
+                block = all_blocks_cursor.pull_one()
+                if not block:
+                    finished = True
+                    break
+
+                text_search = block["text_search"].strip()
+                if not text_search or len(text_search) < 1:
+                    continue
+
+                block_ids.append(str(block["_id"]))
+                doc_ids.append(int(block["doc_ID"]))
+                sentences.append(text_search)
+
+            if len(sentences) > 0:
+                # Process the batch
+                vectors = self.model.embedding(sentences)
+
+                # Insert into ChromaDB
+                ids = [f'{doc_id}-{block_id}' for doc_id, block_id in zip(doc_ids, block_ids)]
+                metadatas = [{'doc_id': doc_id, 'block_id': block_id, 'sentence': sentence}
+                             for doc_id, block_id, sentence in zip(doc_ids, block_ids, sentences)]
+
+                self._collection.add(ids=ids,
+                                     documents=doc_ids,
+                                     embeddings=vectors,
+                                     metadatas=metadatas)
+
+
+                current_index = self.utils.update_text_index(block_ids, current_index)
+
+                # Update statistics
+                embeddings_created += len(sentences)
+                status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
+
+                print(f"update: embedding_handler - ChromaDB - Embeddings Created: {embeddings_created} of {num_of_blocks}")
+
+
+        embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
+        logging.info(f'update: EmbeddingHandler - ChromaDB - embedding_summary - {embedding_summary}')
+
+        return embedding_summary
+
+    def search_index(self, query_embedding_vector, sample_count=10):
+
+        block_list = []
+
+        # add one dimension because chroma expects two dimensions - a list of lists
+        query_embedding_vector = query_embedding_vector.reshape(1, -1)
+
+        results = self._collection.query(query_embeddings=query_embedding_vector, n_results=sample_count)
+
+        for idx_result, _ in enumerate(results['ids'][0]):
+            block_id = results['metadatas'][0][idx_result]['block_id']
+            block_result_list = self.utils.lookup_text_index(block_id)
+
+            for block in block_result_list:
+                block_list.append((block, results['distances'][0][idx_result]))
+
+        return block_list
+
+    def delete_index(self):
+
+        self.client.delete_collection(self._collection.name)
+        self.utils.unset_text_index()

@@ -1,4 +1,3 @@
-
 # Copyright 2023 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -12,6 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The prompts module implements the Prompt class, which manages the inference process. This includes
+pre-processing, executing, and post-processing of inferences and tracking the state of related inferences,
+e.g. in conversational language models.
+
+The module also implements the Sources, QualityCheck, and HumanInTheLoop classes. The Sources class packages
+retrieved sources and appends them to a prompt. The QualityCheck class compares (i.e. verifies) the LLMs'
+response against the context information. Finally, the HumanInTheLoop class provides mechanisms for reviews,
+which includes access to the prompt history for corrections, as well as user ratings.
+"""
 
 
 # from bson import ObjectId
@@ -876,7 +884,9 @@ class Prompt:
         output_dict.update({"evidence_metadata": [{"evidence_start_char":0,
                                                    "evidence_stop_char": evidence_stop_char,
                                                    "page_num": "NA",
-                                                   "source_name": "NA"}]})
+                                                   "source_name": "NA",
+                                                   "doc_id": "NA",
+                                                   "block_id": "NA"}]})
 
         if register_trx:
             self.register_llm_inference(output_dict,prompt_id,trx_dict)
@@ -1238,7 +1248,7 @@ class Sources:
                             "batch_stats.chars", "batch_stats.samples"]
 
         self.source_metadata = ["batch_source_num", "evidence_start_char", "evidence_stop_char",
-                                "source_name", "page_num"]
+                                "source_name", "page_num", "doc_id", "block_id"]
 
     def token_counter(self, text_sample):
 
@@ -1346,6 +1356,18 @@ class Sources:
                     # if can not retrieve from metadata, then set as default - page 1
                     page_num = 1
 
+            if "doc_id" in samples[x]:
+                    doc_id = samples[x]["doc_id"]
+            else:
+                    # if can not retrieve from metadata, then set as default - doc_id 1
+                    doc_id = 1
+
+            if "block_id" in samples[x]:
+                    block_id = samples[x]["block_id"]
+            else:
+                    # if can not retrieve from metadata, then set as default - block_id 1
+                    block_id = 1
+
             # keep aggregating text batch up to the size of the target context_window for selected model
             if (t + token_counter) < self.prompt.context_window_size:
 
@@ -1359,6 +1381,8 @@ class Sources:
                               "evidence_stop_char": batch_char_len,
                               "source_name": source_fn,
                               "page_num": page_num,
+                              "doc_id": doc_id,
+                              "block_id": block_id,
                               }
 
                 batch_metadata.append(new_source)
@@ -1434,6 +1458,8 @@ class Sources:
                               "evidence_stop_char": len(samples[x]["text"]),
                               "source_name": source_fn,
                               "page_num": page_num,
+                              "doc_id": doc_id,
+                              "block_id": block_id,
                               }
 
                 batch_metadata = [new_source]
@@ -1834,7 +1860,7 @@ class QualityCheck:
 
             # min threshold to count as source -> % of total or absolute # of matching tokens
             if match_score > min_th or len(ev_match_tokens) > min_match_count:
-                matching_evidence_score.append([match_score, x, ev_match_tokens, evidence_tokens_tmp, evidence_metadata[x]["page_num"], evidence_metadata[x]["source_name"]])
+                matching_evidence_score.append([match_score, x, ev_match_tokens, evidence_tokens_tmp, evidence_metadata[x]["page_num"], evidence_metadata[x]["source_name"], evidence_metadata[x]["doc_id"], evidence_metadata[x]["block_id"]])
 
         mes = sorted(matching_evidence_score, key=lambda x: x[0], reverse=True)
 
@@ -1850,6 +1876,8 @@ class QualityCheck:
 
             page_num = mes[m][4]
             source_name = mes[m][5]
+            doc_id = mes[m][6]
+            block_id = mes[m][7]
             
             # text_snippet = "Page {}- ... ".format(str(page_num))
             text_snippet = ""
@@ -1877,7 +1905,7 @@ class QualityCheck:
 
                 # new_output = {"text": text_snippet, "match_score": mes[m][0],"source": evidence_metadata[mes[m][1]]}
                 new_output = {"text": text_snippet, "match_score": mes[m][0], "source": source_name,
-                              "page_num": page_num}
+                              "page_num": page_num, "doc_id": doc_id, "block_id": block_id}
 
                 sources_output.append(new_output)
 

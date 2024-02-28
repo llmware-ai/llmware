@@ -1,4 +1,3 @@
-
 # Copyright 2023 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -12,6 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The resources module implements the text index databases that are used in conjunction with the vector
+databases.
+
+Currently, llmware supports MongoDB, Postgres, and SQLite as text index databases.
+"""
 
 
 import platform
@@ -701,8 +705,17 @@ class MongoRetrieval:
     def get_distinct_list(self, key):
 
         """Returns distinct list of items by key"""
+        # not using distinct operation
+        # distinct can break due to the number of entries in the library
+        # to prevent this from happen we use a aggregate which does not produce a document but a cursor
+        # we loop the cursor and so we overcome the distinct operation 16mb document cap
 
-        distinct_list = list(self.collection.distinct(key))
+        group = self.collection.aggregate([{ "$group": {"_id": f'${key}',}}])
+
+        distinct_list = []
+        for entry in group:
+            distinct_list.append(entry['_id'])
+
         return distinct_list
 
     def filter_by_key_dict (self, key_dict):
@@ -856,7 +869,7 @@ class PGRetrieval:
                         new_dict.update({key: row[counter]})
                         counter += 1
                     else:
-                        logging.info("update: pg_retriever - outputs not matching - %s - %s", counter, row[counter])
+                        logging.warning("update: pg_retriever - outputs not matching - %s", counter)
 
             output.append(new_dict)
 
@@ -886,7 +899,7 @@ class PGRetrieval:
                         new_dict.update({key: row[counter]})
                         counter += 1
                     else:
-                        logging.info ("update: pg_retriever - outputs not matching - %s - %s ", counter, row[counter])
+                        logging.warning ("update: pg_retriever - outputs not matching - %s ", counter)
 
             output.append(new_dict)
 
@@ -1007,11 +1020,7 @@ class PGRetrieval:
         results = self.conn.cursor().execute(sql_query)
 
         if results:
-
-            if self.text_retrieval:
-                output = self.unpack_search_result(results)
-            else:
-                output = self.unpack(results)
+            output = self.unpack(results)
 
         self.conn.close()
 
@@ -1146,17 +1155,16 @@ class PGRetrieval:
 
         conditions_clause = " WHERE"
         for key, value in key_dict.items():
-            conditions_clause += f" AND {key} = {value}"
+            conditions_clause += f" {key} = '{value}' AND "
 
+        if conditions_clause.endswith(' AND '):
+            conditions_clause = conditions_clause[:-5]
         if len(conditions_clause) > len(" WHERE"):
             sql_query += conditions_clause + ";"
 
         results = self.conn.cursor().execute(sql_query)
 
-        if self.text_retrieval:
-            output = self.unpack_search_result(results)
-        else:
-            output = self.unpack(results)
+        output = self.unpack(results)
 
         self.conn.close()
 
@@ -1173,14 +1181,11 @@ class PGRetrieval:
             value_range_str = value_range_str[:-2]
         value_range_str += ")"
 
-        sql_query = f"SELECT * from {self.library_name} WHERE '{key}' IN {value_range_str};"
+        sql_query = f"SELECT * from {self.library_name} WHERE {key} IN {value_range_str};"
 
         results = self.conn.cursor().execute(sql_query)
 
-        if self.text_retrieval:
-            output = self.unpack_search_result(results)
-        else:
-            output = self.unpack(results)
+        output = self.unpack(results)
 
         self.conn.close()
 
@@ -1190,14 +1195,11 @@ class PGRetrieval:
 
         """Filter by col (key) not equal to specified value"""
 
-        sql_query = f"SELECT * from {self.library_name} WHERE NOT '{key}' = {value};"
+        sql_query = f"SELECT * from {self.library_name} WHERE NOT {key} = {value};"
 
         results = self.conn.cursor().execute(sql_query)
 
-        if self.text_retrieval:
-            output = self.unpack_search_result(results)
-        else:
-            output = self.unpack(results)
+        output = self.unpack(results)
 
         self.conn.close()
 
@@ -1871,7 +1873,7 @@ class SQLiteRetrieval:
                         counter += 1
 
                     else:
-                        logging.info("update: sqlite_retriever - outputs not matching - %s - %s", counter, len(row))
+                        logging.warning("update: sqlite_retriever - outputs not matching - %s ", counter)
 
             output.append(new_dict)
 
@@ -1908,8 +1910,9 @@ class SQLiteRetrieval:
 
                         new_dict.update({key: row[counter]})
                         counter += 1
+
                     else:
-                        logging.info("update: sqlite_retriever - outputs not matching - %s - %s", counter, row[counter])
+                        logging.warning("update: sqlite_retriever - outputs not matching - %s", counter)
 
             output.append(new_dict)
 
@@ -2026,26 +2029,7 @@ class SQLiteRetrieval:
         sql_query = f"SELECT rowid, * FROM {self.library_name} WHERE {key} = {value};"
         results = self.conn.cursor().execute(sql_query)
 
-        # lib_card = {}
-
-        if self.text_retrieval:
-            output = self.unpack_search_result(results)
-        else:
-            output = self.unpack(results)
-
-        """
-        if self.library_name == "library":
-
-            # repackage library card
-            library_schema = LLMWareTableSchema.get_library_card_schema()
-            lib_card = {}
-            counter = 0
-            results = list(results)
-            for keys in library_schema:
-                # print("update: keys / sql - ", keys, results[0][counter])
-                lib_card.update({keys:results[0][counter]})
-                counter += 1
-        """
+        output = self.unpack(results)
 
         self.conn.close()
 
@@ -2174,17 +2158,17 @@ class SQLiteRetrieval:
 
         conditions_clause = " WHERE"
         for key, value in key_dict.items():
-            conditions_clause += f" AND {key} = {value}"
+            conditions_clause += f" {key} = {value} AND "
+
+        if conditions_clause.endswith(" AND "):
+            conditions_clause = conditions_clause[:-5]
 
         if len(conditions_clause) > len(" WHERE"):
             sql_query += conditions_clause + ";"
 
         results = self.conn.cursor().execute(sql_query)
 
-        if self.text_retrieval:
-            output = self.unpack_search_result(results)
-        else:
-            output = self.unpack(results)
+        output = self.unpack(results)
 
         self.conn.close()
 
@@ -2208,10 +2192,7 @@ class SQLiteRetrieval:
 
         results = self.conn.cursor().execute(sql_query)
 
-        if self.text_retrieval:
-            output = self.unpack_search_result(results)
-        else:
-            output = self.unpack(results)
+        output = self.unpack(results)
 
         self.conn.close()
 
@@ -2225,10 +2206,7 @@ class SQLiteRetrieval:
 
         results = self.conn.cursor().execute(sql_query)
 
-        if self.text_retrieval:
-            output = self.unpack_search_result(results)
-        else:
-            output = self.unpack(results)
+        output = self.unpack(results)
 
         self.conn.close()
 

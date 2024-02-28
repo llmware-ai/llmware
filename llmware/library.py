@@ -1,4 +1,3 @@
-
 # Copyright 2023 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -12,7 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The library module implements the logic for managing unstructured information (the text).
 
+The module implements the two classes Library and LibraryCatalog. Library is responsible for organising a
+collection of text and is the interface for the Parser and Embedding classes. In addition, the Library object
+is passed to the Query and Prompt objects. The Library class uses the LibraryCatalog for creating, deleting,
+updating, and other tasks pertaining to Libraries via the Library Card.
+"""
 
 from werkzeug.utils import secure_filename
 import shutil
@@ -540,7 +545,7 @@ class Library:
 
     def install_new_embedding (self, embedding_model_name=None, vector_db=None,
                                from_hf= False, from_sentence_transformer=False, model=None, tokenizer=None, model_api_key=None,
-                               vector_db_api_key=None, batch_size=500):
+                               vector_db_api_key=None, batch_size=500, max_len=None, use_gpu=True):
 
         """ Main method for installing a new embedding on a library """
 
@@ -578,6 +583,9 @@ class Library:
 
         if vector_db not in LLMWareConfig().get_supported_vector_db():
             raise UnsupportedEmbeddingDatabaseException(vector_db)
+
+        if my_model and max_len:
+            my_model.max_len = max_len
 
         # step 2 - pass loaded embedding model to EmbeddingHandler, which will route to the appropriate resource
         embeddings = EmbeddingHandler(self).create_new_embedding(vector_db, my_model, batch_size=batch_size)

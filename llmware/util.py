@@ -12,6 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+"""The util module implements general helper functions with the Utilties class, and more specialized
+ other classes.
+
+Among the more specializes other classes is whole word tokenizer with CorpTokenizer, and statistical
+NLP functions to calculate relationships between key words and concepts in a library.
+"""
 
 
 import csv
@@ -1422,10 +1428,12 @@ class TextChunker:
                 if x+1 == stopper or ord(self.text_chunk[x + 1]) in [32, 13, 10]:
 
                     # exclude 'several edge cases where '.' is not a reliable sentence end
-                    short_window = self.text_chunk[x-5:x-1]
+                    short_window = self.text_chunk
+                    if x > 5:
+                        short_window = self.text_chunk[x-5:x-1]
 
                     # (A) first edge case - "two periods close to each other", e.g., "x.y."
-                    if "." not in short_window:
+                    if "." not in short_window and short_window != "":
 
                         # (B) second edge case - "period after number in list", e.g., "point 2."
                         if not 47 < ord(short_window[-1]) < 58:
