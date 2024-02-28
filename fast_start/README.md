@@ -37,7 +37,7 @@ Examples:
 
 4.  **RAG with Text Query** - start integrating documents into prompts.  [Video](https://youtu.be/6oALi67HP7U?si=pAbvio4ULXTIXKdL)
   
-5.  **RAG with Semantic Query** - use natural language queries on documents and integrate with prompts.  [Video][https://youtu.be/XT4kIXA9H3Q?si=EBCAxVXBt5vgYY8s)
+5.  **RAG with Semantic Query** - use natural language queries on documents and integrate with prompts.  [Video](https://youtu.be/XT4kIXA9H3Q?si=EBCAxVXBt5vgYY8s)
     
 6.  **RAG with more complex retrieval** - start integrating more complex retrieval patterns.  [Video](https://youtu.be/G1Q6Ar8THbo?si=vIVAv35uXAcnaUJy)  
    
