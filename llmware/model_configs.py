@@ -838,6 +838,16 @@ global_model_repo_catalog_list = [
      "fc_output_values": [],
      "primary_keys": ["sql"], "function": ["sql"]},
 
+  {"model_name": "bling-stablelm-3b-tool", "display_name": "llmware/bling-stablelm-3b-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+  "temperature": 0.3, "trailing_space": "",
+  "gguf_file": "bling-stablelm.gguf",
+  "gguf_repo": "llmware/bling-stablelm-3b-gguf",
+  "snapshot": True,
+  "link": "https://huggingface.co/llmware/bling-stablelm-3b-gguf",
+  "custom_model_files": ["bling-stablelm.gguf"], "custom_model_repo": "llmware/bling-stablelm-3b-gguf"},
+
 ]
 
 """ Fine-tuning Prompt Wrappers - virtually all instruct fine-tuned models will have a special 'prompt wrapper' 
