@@ -62,7 +62,7 @@ class LLMfx:
     >>> llmware_agent.answer('What is the customer\'s account number and user name?', key='customer_info')
     >>> llmware_agent.show_report()
     """
-    def __init__(self, api_key=None, verbose=True, analyze_mode=True): if verbose:
+    def __init__(self, api_key=None, verbose=True, analyze_mode=True): 
 
         if verbose:
             print("update: Launching LLMfx process")
