@@ -4,15 +4,11 @@ services:
   llmware:
     container_name: llmware
     image: provocoai/llmware:dev-01
-    volumes: 
-      - $HOME/code/provoco:/code:Z
-      - $HOME/.vscode:/root/.vscode:Z
-    network_mode: service:mongodb
-      # - service:milvus
-      # - service:etcd
-      # - service:minio
-      # - service:devneo4j
+    depends_on:
+      - "milvus"
+      - "mongodb"
     command: sleep infinity
+    network_mode: host
 
   mongodb:
     container_name: mongodb
@@ -110,5 +106,3 @@ volumes:
       driver: local
     llmware-milvus:
       driver: local
-    
-
