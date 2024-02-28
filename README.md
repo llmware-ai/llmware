@@ -704,17 +704,21 @@ Interested in contributing to llmware? Information on ways to participate can be
 
 Questions and discussions are welcome in our [github discussions](https://github.com/llmware-ai/llmware/discussions).  
 
-## 📣  Release notes and Change Log
+## 📣  Release notes and Change Log  
 
-**Friday, February 16 - v0.2.3 WIP Update**  
+**Wednesday, Februray 28 - v0.2.4 Update**
+- Major upgrade of GGUF Generative Model class - support for Stable-LM-3B, CUDA build options, and better control over sampling strategies.
+- Note: new GGUF llama.cpp built libs packaged with build starting in v0.2.4.  
+- Improved GPU support for HF Embedding Models.   
+  
+**Friday, February 16 - v0.2.3 Update**  
 - Added 10+ embedding models to ModelCatalog - nomic, jina, bge, gte, ember and uae-large.   
 - Updated OpenAI support >=1.0 and new text-3 embedding models.    
 - SLIM model keys and output_values now accessible in ModelCatalog.  
 - Updating encodings to 'utf-8-sig' to better handle txt/csv files with bom.  
 
 **Reported notable issues on priority resolution path**  
-- stablelm-based models using gguf  
-- older linux versions with GLIBC < 2.34  
+- older linux versions with GLIBC < 2.34  (especially Ubuntu20)  
 - 3.12 python support - waiting on one last dependency (coming soon)
   
 **Supported Operating Systems**: MacOS (Metal and x86), Linux (x86 and aarch64), Windows  
