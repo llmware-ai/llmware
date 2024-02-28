@@ -266,14 +266,6 @@ def add_ctypes_declarations (_lib):
     llama_supports_gpu_offload.argtypes = []
     llama_supports_gpu_offload.restype = ctypes.c_bool
 
-    llama_mmap_supported = _lib.llama_mmap_supported
-    llama_mmap_supported.argtypes = []
-    llama_mmap_supported.restype = ctypes.c_bool
-
-    llama_mlock_supported = _lib.llama_mlock_supported
-    llama_mlock_supported.argtypes = []
-    llama_mlock_supported.restype = ctypes.c_bool
-
     llama_get_model = _lib.llama_get_model
     llama_get_model.argtypes = [llama_context_p_ctypes]
     llama_get_model.restype = llama_model_p_ctypes
@@ -372,10 +364,6 @@ def add_ctypes_declarations (_lib):
     llama_kv_cache_seq_keep.argtypes = [llama_context_p_ctypes, llama_seq_id]
     llama_kv_cache_seq_keep.restype = None
 
-    llama_kv_cache_seq_shift = _lib.llama_kv_cache_seq_shift
-    llama_kv_cache_seq_shift.argtypes = [llama_context_p_ctypes, llama_seq_id, llama_pos, llama_pos, llama_pos, ]
-    llama_kv_cache_seq_shift.restype = None
-
     llama_kv_cache_seq_div = _lib.llama_kv_cache_seq_div
     llama_kv_cache_seq_div.argtypes = [llama_context_p_ctypes, llama_seq_id, llama_pos, llama_pos, ctypes.c_int, ]
     llama_kv_cache_seq_div.restype = None
@@ -392,9 +380,11 @@ def add_ctypes_declarations (_lib):
     llama_set_state_data.argtypes = [llama_context_p_ctypes, ctypes.POINTER(ctypes.c_uint8)]
     llama_set_state_data.restype = ctypes.c_size_t
 
+    """
     llama_eval = _lib.llama_eval
     llama_eval.argtypes = [llama_context_p_ctypes, llama_token_p, ctypes.c_int32, ctypes.c_int32]
     llama_eval.restype = ctypes.c_int
+    """
 
     llama_batch_get_one = _lib.llama_batch_get_one
     llama_batch_get_one.argtypes = [llama_token_p, ctypes.c_int, llama_pos, llama_seq_id, ]
@@ -517,10 +507,12 @@ def add_ctypes_declarations (_lib):
                                             ctypes.POINTER(ctypes.c_float), ctypes.c_float, ]
     llama_sample_apply_guidance.restype = None
 
+    """
     llama_sample_classifier_free_guidance = _lib.llama_sample_classifier_free_guidance
     llama_sample_classifier_free_guidance.argtypes = [llama_context_p_ctypes, llama_token_data_array_p,
                                                       llama_context_p_ctypes, ctypes.c_float, ]
     llama_sample_classifier_free_guidance.restype = None
+    """
 
     llama_sample_softmax = _lib.llama_sample_softmax
     llama_sample_softmax.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, ]
@@ -556,10 +548,6 @@ def add_ctypes_declarations (_lib):
     llama_sample_temp = _lib.llama_sample_temp
     llama_sample_temp.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, ctypes.c_float, ]
     llama_sample_temp.restype = None
-
-    llama_sample_temperature = _lib.llama_sample_temperature
-    llama_sample_temperature.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, ctypes.c_float, ]
-    llama_sample_temperature.restype = None
 
     llama_sample_grammar = _lib.llama_sample_grammar
     llama_sample_grammar.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, llama_grammar_p, ]
