@@ -4774,6 +4774,8 @@ class GGUFGenerativeModel:
                 if "CUDA_PATH" in os.environ:
                     os.add_dll_directory(os.path.join(os.environ["CUDA_PATH"], "bin"))
                     os.add_dll_directory(os.path.join(os.environ["CUDA_PATH"], "lib"))
+
+                # not supported currently
                 """
                 if "HIP_PATH" in os.environ:
                     os.add_dll_directory(os.path.join(os.environ["HIP_PATH"], "bin"))
@@ -4988,7 +4990,7 @@ class GGUFGenerativeModel:
         # removes a leading space if the first token is a beginning of sentence token
         return output[1:] if len(tokens) > 0 and tokens[0] == self.token_bos() else output
 
-    def sample(self, ctx_cfg=None, idx=0, logits_array=None):
+    def sample(self, idx=0, logits_array=None):
 
         """ Sample applies the correct sampling method/strategy to obtain a token id. """
 
@@ -5010,10 +5012,6 @@ class GGUFGenerativeModel:
 
         token_data_array = _LlamaTokenDataArray(n_vocab=n_vocab)
         token_data_array.copy_logits(logits_array)
-
-        if ctx_cfg is not None:
-            self._lib.llama_sample_classifier_free_guidance(self._ctx.ctx, ctypes.byref(token_data_array.candidates),
-                                                            ctx_cfg.ctx, self.cfg_scale, )
 
         # apply penalties
         if len(self.prev) > 0:
