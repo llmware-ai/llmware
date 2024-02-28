@@ -1,8 +1,11 @@
 {
   "name": "LLMWARE Dev",
   //"build": { "dockerfile": "../Dockerfile" },
-  "image": "provocoai/llmware:dev-01", // 
-  "RemoteUser": "${localEnv:USER}",
+  //"image": "provocoai/llmware:dev-01", // 
+  "dockerComposeFile": "../docker-compose.yaml",
+  "service": "llmware",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  //"remoteUser": "llmware",
 
 
   "runArgs": [
