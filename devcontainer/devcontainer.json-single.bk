@@ -1,0 +1,53 @@
+{
+  "name": "LLMWARE Dev",
+  //"build": { "dockerfile": "../Dockerfile" },
+  "containerUser": "llmware",
+  "updateRemoteUserUID": true,
+  "image": "provocoai/llmware:dev-01", 
+  "remoteUser": "llmware",
+  "runArgs": [
+  	"--userns=keep-id:uid=1000,gid=1000"
+  ],
+
+
+  // "runArgs": [
+  //    "--name",
+  //    "${localWorkspaceFolderBasename}", // Container name
+  //    "-it",
+  //    "-l",
+  //    "com.docker.compose.project=devcontainers" // Container group name
+  // ],
+	// you can setup your local directory in the devcontainer here.   The mount line is an example and mounts your home directory into the /code directory  
+  "mounts" : [
+    "source=/home/harrison/code/provoco,target=/code,type=bind,consistency=cached,Z",	
+    "source=/home/harrison/.vscode,target=/root/.vscode,type=bind,consistency=cached,Z"
+  ],    
+  "customizations": {
+    // Configure properties specific to VS Code.
+    "vscode": {
+            // Add the IDs of extensions you want installed when the container is created.
+            "extensions": [
+                    //"mongodb.mongodb-vscode",
+                    "ms-python.python"
+                    //"ms-azuretools.vscode-docker"
+            ]
+    }
+  },
+  "postCreateCommand": "apt-get install ",
+  "features": {}
+  // "features": {
+  //  "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+  //     "dockerDashComposeVersion": "v2"
+  //   },
+  //  "ghcr.io/devcontainers/features/github-cli:1": {}
+  // },
+  // "customizations": {
+  //   "vscode": {
+  //     "extensions": [
+  //       "esbenp.prettier-vscode", // prettify the code extension
+	// "ms-python.python", //python code extensions
+	// "ms-python.vscode-pylance" // vscode python extension
+  //     ]
+  //   }
+  // }
+}
