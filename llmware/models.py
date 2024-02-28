@@ -46,6 +46,9 @@ from ctypes import CDLL, c_bool, c_int, c_float, c_char_p, c_void_p, POINTER, St
 from pathlib import Path
 #   end - imports for ctransformers
 
+# new imports
+from collections import deque
+
 
 from llmware.util import Utilities
 from llmware.configs import LLMWareConfig
@@ -55,6 +58,9 @@ from llmware.exceptions import (ModelNotFoundException, DependencyNotInstalledEx
 
 from llmware.model_configs import (global_model_repo_catalog_list, global_model_finetuning_prompt_wrappers_lookup,
                                    global_default_prompt_catalog)
+
+from llmware.gguf_configs import *
+from llmware.gguf_configs import _LlamaModel, _LlamaContext, _LlamaBatch, _LlamaTokenDataArray
 
 
 class _ModelRegistry:
@@ -635,19 +641,6 @@ class ModelCatalog:
 
                 my_model = GGUFGenerativeModel(model_name=model_name, api_key=api_key, model_card=model_card)
 
-                if "prompt_wrapper" in model_card:
-                    my_model.prompt_wrapper = model_card["prompt_wrapper"]
-                else:
-                    my_model.prompt_wrapper = "human_bot"
-
-                if "temperature" in model_card:
-                    my_model.temperature = model_card["temperature"]
-                else:
-                    my_model.temperature = 0.3
-
-                if "trailing_space" in model_card:
-                    my_model.trailing_space = model_card["trailing_space"]
-
             if model_class == "HFEmbeddingModel": my_model = HFEmbeddingModel(model_name=model_name,
                                                                               api_key=api_key,
                                                                               embedding_dims=embedding_dims,
@@ -1016,7 +1009,8 @@ class ModelCatalog:
                         if "conclusion" in entries:
                             text = "Evidence: " + text + "\nConclusion: " + entries["conclusion"]
 
-                        response = model.function_call(text, get_logits=True)
+                        # note: testing with temp & max_output
+                        response = model.function_call(text, get_logits=True, temperature=0.3, max_output=100)
 
                         # if verbose:
                         print(f"\nupdate: context - test - {i} - {text}")
@@ -1254,6 +1248,40 @@ class ModelCatalog:
             raise ModelNotFoundException(model_name)
 
         return output_keys
+
+    def remediate_function_call_string(self, output_str):
+
+        """ Attempts to remediate a function call llm response string in most common exception case in
+        which the model output cut off before completing and closing out the dictionary properly. """
+
+        #   by default, returns the string and response_type = "string"
+        response_type = "string"
+        output = output_str
+
+        #   attempt to remediate
+        clean_stop_str = output_str
+
+        # attempt to 'close' the value list if too long
+        if output_str.endswith('"') or output_str.endswith(','):
+            clean_stop_str = output_str
+        else:
+            for x in range(len(output_str)-1,-1,-1):
+                if output_str[x] in ['"',"'",","]:
+                    clean_stop_str = output_str[0:x+1]
+                    break
+
+        triage_terminus = "]}"
+        output_str_triage = clean_stop_str + triage_terminus
+
+        try:
+            output = ast.literal_eval(output_str_triage)
+            response_type = "dict"
+        except:
+            logging.warning("update: first remediation attempt did not fix dictionary - %s", output_str_triage)
+
+        # end - remediation attempt
+
+        return response_type, output
 
 
 class PromptCatalog:
@@ -3626,6 +3654,26 @@ class HFEmbeddingModel:
             if max_len < self.context_window:
                 self.max_len = max_len
 
+    def set_api_key(self, api_key, env_var="USER_MANAGED_HF_API_KEY"):
+
+        """ Sets the API key - generally not needed for public HF repositories. """
+
+        os.environ[env_var] = api_key
+        logging.info("update: added and stored HF api_key in environmental variable- %s", env_var)
+
+        return self
+
+    def _get_api_key(self, env_var="USER_MANAGED_HF_API_KEY"):
+
+        """ Gets API key from os.environ variable. """
+
+        self.api_key = os.environ.get(env_var)
+
+        if not self.api_key:
+            logging.error("error: _get_api_key could not successfully retrieve value from: %s ", env_var)
+
+        return self.api_key
+
     def token_counter(self, text_sample):
         #   need to support HF tokenizer
         toks = self.tokenizer.encode(text_sample).ids
@@ -4205,7 +4253,8 @@ class HFGenerativeModel:
         return top_logits
 
     @torch.no_grad()
-    def function_call(self, context, function=None, params=None, get_logits=True):
+    def function_call(self, context, function=None, params=None, get_logits=True,
+                      temperature=-99, max_output=None):
 
         """ This is the key inference method for SLIM models - takes a context passage and a key list
         which is packaged in the prompt as the keys for the dictionary output"""
@@ -4219,6 +4268,12 @@ class HFGenerativeModel:
         # reset and start from scratch with new function call
         self.output_tokens = []
         self.logits_record = []
+
+        if temperature != -99:
+            self.temperature = temperature
+
+        if max_output:
+            self.target_requested_output_tokens = max_output
 
         if get_logits:
             self.get_logits = get_logits
@@ -4430,12 +4485,23 @@ class HFGenerativeModel:
         try:
             output_dict = ast.literal_eval(output_str)
             usage.update({"type": "dict"})
+            convert_to_dict = True
 
         except:
             logging.warning("warning: automatic function call conversion to "
                             "python dictionary failed - %s", output_str)
             output_dict = output_str
             usage.update({"type": "string"})
+            convert_to_dict = False
+
+        # quick remediation attempt - usually source of error is cut-off at end
+        if not convert_to_dict:
+
+            output_type, output_rem = ModelCatalog().remediate_function_call_string(output_str)
+
+            if output_type == "dict":
+                usage.update({"type": "dict"})
+                output_dict.update({"llm_response": output_rem})
 
         output_response = {"llm_response": output_dict, "usage": usage}
 
@@ -4446,63 +4512,59 @@ class HFGenerativeModel:
         return output_response
 
 
-class ConfigStruct(Structure):
-
-    """Utility method for managing ctypes/cpp interaction in GGUFGenerativeModel"""
-
-    _fields_ = [
-        ("context_length", c_int),
-        ("gpu_layers", c_int),
-        ("mmap", c_bool),
-        ("mlock", c_bool),
-    ]
-
-
 class GGUFGenerativeModel:
 
-    """ GGUFGenerativeModel implements interface into llama.cpp """
+    """ Implementation of GGUF Model class - instantiate and run inferences and function calls using
+    GGUF llama.cpp models """
 
-    #   This implementation of GGUFGenerativeModel includes code derived, inspired, and modified from ctransformers
-    #   For more information on ctransformers: please see https://github.com/marella/ctransformers
-    #
-    #   ctransformers is a Python and CPP wrapper on llama.cpp
-    #   note:  we have attempted to conform with the ctransformers interface specification, for easy portability to
-    #   integrate with llmware - over time, this interface specification may evolve
-    #
-    #   For more information on llama.cpp: please see https://github.com/ggerganov/llama.cpp - this is a pure C/C++
-    #   implementation of core LLM models for performance and portability, and easy integration of K-quantization
-    #
-    #   For more information on GGUF models available on HF: please see TheBloke @ https://huggingface.co/TheBloke
+    #   This implementation of GGUFGenerativeModel provides a fairly complete python API interface into
+    #   llama.cpp.  llama.cpp is a pure C/C++ implementation of tensor-level model operations, including
+    #   quantization and various sampling techniques to enable LLMs to run locally on a CPU (and without Pytorch).
+    #   For more information on llama.cpp:  please see https://github.com/ggerganov/llama.cpp
+
+    #   As of llmware 0.2.4 (~end Feb 2024), we have updated the interface to align with
+    #   llama_cpp_python (please see https://github.com/abetlen/llama-cpp-python)
+    #   to expose more llama.cpp interfaces and to build shared libraries directly
+    #   from llama_cpp, using a build script that is intended to be compatible with llama_cpp_python
+    #   with the primary objective of aligning to emerging standards and norms, and to enable advanced users
+    #   to "bring their own" pre-built llama_cpp libs in conjunction with llmware
 
     def __init__(self, model_name=None, model_card=None, api_key=None, prompt_wrapper=None, instruction_following=False,
-                 context_window=2048, use_gpu_if_available=True, config=None):
+                 context_window=2048, use_gpu_if_available=True, get_logits=True):
 
-        # defaults - "human_bot" & False
+        #   set verbose level in environ level - will be picked up by callback in llama_cpp
+        os.environ["llama_cpp_verbose"] = GGUFConfigs().get_config("llama_cpp_verbose")
+
+        #   key configs
+        self.temperature = GGUFConfigs().get_config("temperature_default")
+        self.n_seq_max = GGUFConfigs().get_config("max_output_tokens")
+
+        self.target_requested_output_tokens = self.n_seq_max
+
+        self.max_total_len = 2048
+        self.max_input_len = int(0.5 * context_window)
+        self.llm_max_output_len = int(0.5 * context_window)
+
         self.model_name = model_name
         self.prompt_wrapper = prompt_wrapper
         self.instruction_following = instruction_following
         self.trailing_space = ""
         self.separator = "\n"
         self.eos_token_id = 0
-        self.max_total_len = 2048
-        self.max_input_len = int(0.5 * context_window)
-        self.llm_max_output_len = int(0.5 * context_window)
-        self.target_requested_output_tokens = 100
+
         self.add_prompt_engineering = False
         self.add_context = ""
-        self.temperature = 0.3
         self.model_type = "gguf"
         self.model_card = model_card
 
         self.gguf_file = None
         self.gguf_repo = None
 
-        # *** NEW INSERT - Function Calls ***
-
         self.logits_record = []
-        self.get_logits = False
         self.output_tokens = []
         self.top_logit_count = 10
+        self.get_logits = get_logits
+        self.max_output_len = self.n_seq_max
 
         self.primary_keys = None
         self.function = None
@@ -4523,12 +4585,10 @@ class GGUFGenerativeModel:
             if "function_call" in model_card:
                 self.fc_supported = model_card["function_call"]
 
-        # *** END - INSERT ***
-
-        if model_card:
-
             if "trailing_space" in model_card:
                 self.trailing_space = model_card["trailing_space"]
+            else:
+                self.trailing_space = ""
 
             if "eos_token_id" in model_card:
                 self.eos_token_id = model_card["eos_token_id"]
@@ -4538,9 +4598,13 @@ class GGUFGenerativeModel:
 
             if "temperature" in model_card:
                 self.temperature = model_card["temperature"]
+            else:
+                self.temperature = 0.3
 
             if "prompt_wrapper" in model_card:
                 self.prompt_wrapper = model_card["prompt_wrapper"]
+            else:
+                self.prompt_wrapper = "human_bot"
 
             if "gguf_file" in model_card:
                 self.gguf_file = model_card["gguf_file"]  # e.g., "ggml-model-q4_k_m.gguf"
@@ -4553,455 +4617,510 @@ class GGUFGenerativeModel:
 
         #   gguf specific attributes
 
-        self.config = config
-        self._model_path = None
-        self._config = config
-        self._llm = None
         self._lib = None
-        self._context = []
+        self._model = None
+        self._ctx = None
+        self._batch = None
+        self.model_path = None
+        self.model_params = None
+        self.context_params = None
 
         #   if (a) CUDA available and (b) use_gpu_if_available set to True (default)
-        #   note: this parameter is not currently used for GGUFGenerativeModels
+        #   note: this parameter is used currently on Linux and Windows
         self.use_gpu = torch.cuda.is_available() and use_gpu_if_available
+
+        if self.use_gpu:
+            GGUFConfigs().set_config("use_gpu", True)
+        else:
+            GGUFConfigs().set_config("use_gpu", False)
+
+        # set default minimum
+        self.n_batch = 2048
+
+        self.last_n_tokens_size = 64
+
+        self._n_vocab = None
+        self._n_ctx = None
+        self._token_nl = None
+        self._token_eos = None
+        self._candidates = None
+        self.input_ids = None
+        self.scores = None
+        self.n_tokens = 0
+        self.prev = []
+        self.grammar = None
+
+        for key, value in GGUFConfigs().get_sampling_params().items():
+            setattr(self, key, value)
 
         # no api key expected or required
         self.api_key = api_key
 
         self.error_message = "\nUnable to identify and load GGUF Generative model."
 
-        #   note: default sampling parameters set to conform with ctransformers implementation
+    def load_model_for_inference(self, model_repo_path, model_card = None):
 
-        # sample
-        self.top_k = 40
-        self.top_p = 0.95
-        self.temperature = 0.3
-        self.repetition_penalty = 1.1
-        self.last_n_tokens = 64
-        self.seed = -1
+        """ Loads and instantiates model along with other required objects. """
 
-        # eval
-        self.batch_size = 8
-        self.threads = -1
+        # load shared library
+        self._lib = self._load_llama_cpp_shared_library()
+        self._lib = add_ctypes_declarations(self._lib)
 
-        # generate
-        self.max_new_tokens = 256
-        self.stop = None
-        self.stream = False
-        self.reset = True
+        if not GGUFConfigs().get_config("backend_initialized"):
+            # is this backend init required?
+            self._lib.llama_backend_init()
+            GGUFConfigs().set_config("backend_initialized", True)
 
-        # model
-        self.context_length = 2048
-        self.gpu_layers = 50
-        self.mmap = True
+        self._lib.llama_log_set(llama_log_callback, ctypes.c_void_p(0))
 
-        self.mlock = False
+        self.model_params = self._lib.llama_model_default_params()
 
-        self.model_path = None
+        # update model params parameters
+        self.model_params.n_gpu_layers = 0
+        self.model_params.split_mode = 1
+        self.model_params.main_gpu = 0
+        self.model_params.vocab_only = False
+        self.model_params.use_mmap = True
+        self.model_params.use_mlock = False
 
-        self._llm = None
-        self._lib = None
-        self._context = []
-
-    def load_model_for_inference(self, file_loading_path, model_card=None):
-
-        """ Loads GGUF model for inference. """
+        # update context parameters
+        self.context_params = self._lib.llama_context_default_params()
+        self.context_params.n_ctx = 2048
+        self.context_params.n_batch = self.n_batch
 
         if model_card:
             self.model_name = model_card["model_name"].split("/")[-1]
             self.gguf_file = model_card["gguf_file"]  # e.g., "ggml-model-q4_k_m.gguf",
             self.gguf_repo = model_card["gguf_repo"]  # e.g., "llmware/dragon-mistral-7b-v0-gguf"
 
-        model_file = os.path.join(file_loading_path, self.gguf_file)
+        self.model_path = os.path.join(model_repo_path, self.gguf_file)
 
-        if not Path(model_file).is_file():
-            raise ValueError(f"Model path '{model_file}' doesn't exist.")
+        #   loads and instantiates the key objects
+        self._model = _LlamaModel(self._lib, path_model=self.model_path, params=self.model_params)
+        self._ctx = _LlamaContext(self._lib,model=self._model, params=self.context_params)
+        self._batch = _LlamaBatch(self._lib,n_tokens=self.n_batch, embd=0, n_seq_max=self.context_params.n_ctx)
 
-        self.model_type = "gguf"
+        self._n_vocab = self.n_vocab()
+        self._n_ctx = self.n_ctx()
 
-        # self.gpu_layers = 50
-        config_struct = ConfigStruct(context_length=self.context_length, gpu_layers=self.gpu_layers,
-                                     mmap=self.mmap, mlock=self.mlock)
+        self._token_nl = self.token_nl()
+        self._token_eos = self.token_eos()
 
-        self._lib = self.load_library()
-        self._llm = self._lib.ctransformers_llm_create(model_file.encode(), self.model_type.encode(), config_struct)
+        self._candidates = _LlamaTokenDataArray(n_vocab=self._n_vocab)
 
-        if self._llm is None:
-            raise RuntimeError(
-                f"Failed to create LLM '{self.model_type}' from '{model_file}'.")
-
-        #   wip - over time, will support wider set of model architectures and types
-        # architecture = self.ctransformers_llm_architecture().decode()
-        # print("update: architecture - ", architecture)
-        # if architecture: self.model_type = architecture
+        self.input_ids = np.ndarray((self._n_ctx,), dtype=np.intc)
+        self.scores = np.ndarray((self._n_ctx, self._n_vocab), dtype=np.single)
 
         return self
 
-    def __getattr__(self, name):
+    def _load_llama_cpp_shared_library(self):
 
-        """ Maps class methods to ctransformers ctypes dynamic lib methods. """
+        """ Loads llama_cpp shared library - checks if a custom lib path has been configured - otherwise,
+        it loads the llmware provided dynamic libraries based on the platform/system. """
 
-        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
-        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
+        # check first if custom_lib_path - expected to be full path to custom so/dylib file
+        custom_path = GGUFConfigs().get_config("custom_lib_path")
+        cdll_args = dict()
 
-        if name.startswith("ctransformers_llm_") and hasattr(self._lib, name):
-            return partial(getattr(self._lib, name), self._llm)
-        raise AttributeError(f"'LLM' object has no attribute '{name}'")
+        if custom_path:
 
-    def tokenize(self, text, add_bos_token=None):
+            if os.path.exists(custom_path):
+                _lib_paths = [custom_path]
+            else:
+                raise "ModuleNotFound error: could not find location of custom lib"
+
+        else:
+
+            # general case - will look for llama.cpp dynamic library included with llmware
+
+            _base_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "gguf")
+
+            _lib_paths = []
+
+            system_platform = sys.platform.lower()
+
+            # Determine the file extension based on the platform
+            if system_platform.startswith("linux"):
+
+                if self.use_gpu:
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_cuda")))
+                else:
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_x86")))
+
+            elif system_platform == "darwin":
+
+                machine = os.uname().machine.lower()
+
+                if machine == 'x86_64':
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("mac_x86")))
+                else:
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("mac_metal")))
+
+            elif sys.platform == "win32":
+
+                if self.use_gpu:
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("windows_cuda")))
+                else:
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("windows")))
+
+            else:
+                raise ModuleNotFoundException(f"No Matching Llama.CPP binary for platform - {system_platform}")
+
+            # Add the library directory to the DLL search path on Windows (if needed)
+            if sys.platform == "win32" and sys.version_info >= (3, 8):
+                os.add_dll_directory(str(_base_path))
+
+                # need to review
+                if "CUDA_PATH" in os.environ:
+                    os.add_dll_directory(os.path.join(os.environ["CUDA_PATH"], "bin"))
+                    os.add_dll_directory(os.path.join(os.environ["CUDA_PATH"], "lib"))
+                """
+                if "HIP_PATH" in os.environ:
+                    os.add_dll_directory(os.path.join(os.environ["HIP_PATH"], "bin"))
+                    os.add_dll_directory(os.path.join(os.environ["HIP_PATH"], "lib"))
+                """
+                # end - review options
+
+                cdll_args["winmode"] = ctypes.RTLD_GLOBAL
+
+        # Try to load the shared library, handling potential errors
+        for _lib_path in _lib_paths:
+
+            if os.path.exists(_lib_path):
+
+                try:
+                    return ctypes.CDLL(str(_lib_path), **cdll_args)
+
+                except Exception as e:
+                    raise ModuleNotFoundException(f"llama_cpp_backend at {_lib_path} - {e}")
+
+        # if not loaded
+        raise ModuleNotFoundException("llama_cpp_backend")
+
+    def _inference (self, prompt):
+
+        """ Tokenizes the prompt and executes generation loop. """
+
+        t0 = time.time()
+
+        completion_tokens = [] if len(prompt) > 0 else [self.token_bos()]
+
+        prompt_tokens = (
+            (
+                self.tokenize(prompt.encode("utf-8"), special=True)
+                if prompt != ""
+                else [self.token_bos()]
+            )
+            if isinstance(prompt, str)
+            else prompt
+        )
+
+        # confirm that input is smaller than context_window
+        input_len = len(prompt_tokens)
+        context_window = self.n_ctx()
+
+        if input_len > context_window:
+            logging.warning("update: GGUFGenerativeModel - input is too long for model context window - truncating")
+            min_output_len = 10
+            prompt_tokens = prompt_tokens[0:context_window-min_output_len]
+            input_len = len(prompt_tokens)
+
+        text = b""
+
+        for token in self.generate(prompt_tokens):
+
+            if self.get_logits:
+                self.register_top_logits()
+                self.output_tokens.append(token)
+
+            if token == self._token_eos:
+                text = self.detokenize(completion_tokens)
+                break
+
+            completion_tokens.append(token)
+
+            #   stop at max output len
+            if len(completion_tokens) > self.max_output_len:
+                text = self.detokenize(completion_tokens)
+                break
+
+            #   stop if combined input + output at context window size
+            if (input_len + len(completion_tokens)) >= context_window:
+                text = self.detokenize(completion_tokens)
+                break
+
+        text_str = text.decode("utf-8", errors="ignore")
+
+        # post-processing clean-up - stop at endoftext
+        eot = text_str.find("<|endoftext|>")
+        if eot > -1:
+            text_str = text_str[:eot]
+
+        # new post-processing clean-up - stop at </s>
+        eots = text_str.find("</s>")
+        if eots > -1:
+            text_str = text_str[:eots]
+
+        # post-processing clean-up - start after bot wrapper
+        bot = text_str.find("<bot>:")
+        if bot > -1:
+            text_str = text_str[bot + len("<bot>:"):]
+
+        # new post-processing cleanup - skip repeating starting <s>
+        boss = text_str.find("<s>")
+        if boss > -1:
+            text_str = text_str[boss + len("<s>"):]
+
+        # end - post-processing
+
+        output = {"llm_response": text_str,
+                  "usage": {"input": len(prompt_tokens),"output": len(completion_tokens),
+                            "total": len(prompt_tokens) + len(completion_tokens), "metric": "tokens",
+                            "processing_time": time.time() - t0}}
+
+        if self.get_logits:
+            output.update({"logits": self.logits_record, "output_tokens": self.output_tokens})
+
+        return output
+
+    def generate(self, tokens, reset=True):
+
+        """ Generator that samples the model and yields tokens until stopped. """
+
+        # Reset the model state
+        if reset:
+            self.reset()
+
+        sample_idx = self.n_tokens + len(tokens) - 1
+        tokens = list(tokens)
+
+        tokens_created = 0
+        input_start_len = len(tokens)
+
+        # Eval and sample
+        while True:
+
+            self._lib.llama_kv_cache_seq_rm(self._ctx.ctx, -1, self.n_tokens, -1)
+
+            for i in range(0, len(tokens), self.n_batch):
+                batch = tokens[i: min(len(tokens), i + self.n_batch)]
+                n_past = self.n_tokens
+                n_tokens = len(batch)
+
+                self._batch.set_batch(batch=batch, n_past=n_past, logits_all=self.context_params.logits_all)
+
+                return_code = self._lib.llama_decode(self._ctx.ctx, self._batch.batch)
+
+                #TODO: add better error handling if return_code 1 - usually overflow of ctx
+                if return_code != 0:
+                    raise RuntimeError(f"error: llama_decode call returned {return_code} - in most cases, this "
+                                       f"is due to exceeding the maximum context window.")
+
+                self.input_ids[n_past: n_past + n_tokens] = batch
+                rows = n_tokens
+                cols = self._n_vocab
+                offset = (0 if self.context_params.logits_all else n_tokens - 1)
+
+                self.scores[n_past + offset: n_past + n_tokens, :].reshape(-1)[:] = self._lib.llama_get_logits(self._ctx.ctx)[
+                                                                                    offset * cols: rows * cols]
+                self.n_tokens += n_tokens
+
+            while sample_idx < self.n_tokens:
+
+                logits = self._scores[-1, :]
+
+                self.prev = list(self.eval_tokens)
+                token = self.sample(logits_array=logits)
+                self.accept(id=id,apply_grammar=None)
+
+                tokens_created += 1
+
+                sample_idx += 1
+
+                tokens_or_none = yield token
+                tokens.clear()
+                tokens.append(token)
+                if tokens_or_none is not None:
+                    tokens.extend(tokens_or_none)
+
+                if sample_idx < self.n_tokens and token != self._input_ids[sample_idx]:
+                    self.n_tokens = sample_idx
+
+                    self._lib.llama_kv_cache_seq_rm(self._ctx.ctx, -1, self.n_tokens, -1)
+
+                    break
+
+                if tokens_created > self.max_output_len:
+                    logging.info("update: GGUFGenerativeModel - stopping generation loop - reached limit of max output len")
+                    break
+
+    def tokenize(self, text, add_bos=True, special=False):
 
         """ Tokenizes text. """
 
-        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
-        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
+        n_ctx = self.n_ctx_train()
+        tokens = (ctypes.c_int32 * n_ctx)()
+        n_tokens = self._lib.llama_tokenize(self._model.model, text, len(text), tokens, n_ctx, add_bos, special)
 
-        if add_bos_token is None:
-            add_bos_token = self.model_type == "llama"
-        tokens = (c_int * (len(text) + 1))()
-        n_tokens = self.ctransformers_llm_tokenize(text.encode(), add_bos_token, tokens)
+        if n_tokens < 0:
+            n_tokens = abs(n_tokens)
+            tokens = (ctypes.c_int32 * n_tokens)()
+            n_tokens = self._lib.llama_tokenize(self._model.model, text, len(text), tokens, n_tokens, add_bos, special)
 
-        return tokens[:n_tokens]
+            if n_tokens < 0:
+                raise RuntimeError(f'error: GGUFGenerativeModel - tokenization error - "{text}" - n_tokens={n_tokens}')
 
-    def detokenize(self, tokens, decode):
+        return list(tokens[:n_tokens])
 
-        """ Encodes text. """
+    def detokenize(self, tokens, prev_tokens=None):
 
-        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
-        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
+        """ Detokenizes tokens, e.g., converts tokens back into a text string. """
 
-        if isinstance(tokens, int):
-            tokens = [tokens]
-        texts = []
+        output = b""
+        size = 32
+        buffer = (ctypes.c_char * size)()
         for token in tokens:
-            text = self.ctransformers_llm_detokenize(token)
-            texts.append(text)
-        texts = b"".join(texts)
-        if decode:
-            texts = texts.decode(errors="ignore")
+            n = self._lib.llama_token_to_piece(self._model.model, llama_token(token), buffer, size)
 
-            if tokens[:1] == [self.bos_token_id] and texts[:1] == " ":
-                texts = texts[1:]
+            assert n <= size
+            output += bytes(buffer[:n])
 
-        return texts
+        # removes a leading space if the first token is a beginning of sentence token
+        return output[1:] if len(tokens) > 0 and tokens[0] == self.token_bos() else output
 
-    def eval(self, tokens):
+    def sample(self, ctx_cfg=None, idx=0, logits_array=None):
 
-        """Evaluates a list of tokens.  Args:  tokens: The list of tokens to evaluate.  {params} """
+        """ Sample applies the correct sampling method/strategy to obtain a token id. """
 
-        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
-        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
+        n_vocab = self.n_vocab()
+        id = 0
 
-        # config = self.config
-        batch_size = self.batch_size
-        threads = self.threads
+        if logits_array is None:
 
-        n_past = len(self._context)
-        n_tokens = len(tokens)
+            logits = self._lib.llama_get_logits_ith(self._ctx.ctx, idx)
 
-        # if n_past + n_tokens > self.context_length:  no_action_taken_replacing_logger = 0
+            logits_array = np.array(
+                ctypes.cast(logits, ctypes.POINTER(ctypes.c_float * n_vocab)).contents,
+                dtype=np.single,
+            )
 
-        tokens = (c_int * n_tokens)(*tokens)
-        status = self.ctransformers_llm_batch_eval(tokens, n_tokens, n_past, batch_size, threads)
+        # apply logit_bias
+        for token, logit_bias in self.logit_bias.items():
+            logits_array[token] += logit_bias
 
-        if not status:
-            raise RuntimeError("Failed to evaluate tokens.")
-        self._context.extend(tokens)
+        token_data_array = _LlamaTokenDataArray(n_vocab=n_vocab)
+        token_data_array.copy_logits(logits_array)
 
-    def sample(self):
+        if ctx_cfg is not None:
+            self._lib.llama_sample_classifier_free_guidance(self._ctx.ctx, ctypes.byref(token_data_array.candidates),
+                                                            ctx_cfg.ctx, self.cfg_scale, )
 
-        """Samples a token from the model. Args: {params} Returns: The sampled token. """
+        # apply penalties
+        if len(self.prev) > 0:
 
-        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
-        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
+            nl_token = self.token_nl()
 
-        # config = self.config
-        top_k = self.top_k
-        top_p = self.top_p
-        temperature = self.temperature
-        repetition_penalty = self.repetition_penalty
-        last_n_tokens = self.last_n_tokens
-        seed = self.seed
+            nl_logit = logits_array[nl_token]
 
-        if last_n_tokens < 0:
-            last_n_tokens = self.context_length
-        last_tokens = self._context[-last_n_tokens:]
-        n_last = len(last_tokens)
-        last_tokens = (c_int * n_last)(*last_tokens)
+            if self.penalty_last_n > 0:
 
-        #  new option to save logits
-        if self.get_logits:
-            self.register_top_logits()
+                self._lib.llama_sample_repetition_penalties(self._ctx.ctx,
+                                                            ctypes.byref(token_data_array.candidates),
+                                                            (llama_token * len(self.prev))(*self.prev),
+                                                            self.penalty_last_n,
+                                                            self.penalty_repeat,
+                                                            self.penalty_freq,
+                                                            self.penalty_present,)
 
-        return self.ctransformers_llm_sample(last_tokens, n_last, top_k, top_p, temperature,
-                                             repetition_penalty, seed)
+            if not self.penalize_nl:
+                token_data_array.candidates_data["logit"][nl_token] = nl_logit
 
-    def prepare_inputs_for_generation(self, tokens):
+        #   note: grammar implementation options  will be expanded over time
+        if self.grammar is not None:
+            self._lib.llama_sample_grammar(self._ctx.ctx, ctypes.byref(token_data_array.candidates), self.grammar.grammar, )
 
-        """ Prepares inputs for generation as part of inference sampling. """
+        if self.temperature < 0:
+            assert self._ctx.ctx is not None
 
-        if not self.reset:
-            return tokens
+            self._lib.llama_sample_softmax(self._ctx.ctx, ctypes.byref(token_data_array.candidates), )
 
-        # Keep at least one input token to evaluate the logits.
-        n = min(len(tokens) - 1, len(self._context))
-        l = 0
-        while l < n and tokens[l] == self._context[l]:
-            l += 1
-        # Remove input tokens that are evaluated in the past and update context.
-        tokens = tokens[l:]
-        self._context = self._context[:l]
+            #TODO - need to check/confirm this
+            id = token_data_array.candidates_data["id"][0][0]
 
-        return tokens
+        elif self.temperature == 0:
+            assert self._ctx.ctx is not None
 
-    def generate(self, tokens):
-
-        """ Generation loop. """
-
-        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
-        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
-
-        tokens = self.prepare_inputs_for_generation(tokens)
-        self.eval(tokens)
-
-        while True:
-
-            token = self.sample()
-
-            if self.get_logits:
-                # print("max arg token - ", token)
-                self.output_tokens.append(token)
-
-            self.eval([token])
-
-            if self.ctransformers_llm_is_eos_token(token):
-                break
-
-            yield token
-
-    def _stream(self, prompt):
-
-        """ Sampling method used in inference generation. """
-
-        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
-        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
-
-        # config = self.config
-        max_new_tokens = self.max_new_tokens
-        stop = []
-        if isinstance(stop, str):
-            stop = [stop]
-
-        tokens = self.tokenize(prompt)
-
-        stop_regex = re.compile("|".join(map(re.escape, stop)))
-        count = 0
-        text = ""
-        incomplete = b""
-        for token in self.generate(tokens):
-
-            # Handle incomplete UTF-8 multi-byte characters.
-            incomplete += self.detokenize([token], decode=False)
-
-            # complete, incomplete = utf8_split_incomplete(incomplete)
-
-            """Splits a sequence of UTF-8 encoded bytes into complete and incomplete bytes."""
-            i = len(incomplete)
-
-            while i > 0 and (incomplete[i - 1] & 0b10000000) != 0:
-                # while i > 0 and utf8_is_continuation_byte(seq[i - 1]):
-                i -= 1
-            complete = incomplete[:i]
-            incomplete = incomplete[i:]
-
-            text += complete.decode(errors="ignore")
-
-            # https://github.com/abetlen/llama-cpp-python/blob/
-            # 1a13d76c487df1c8560132d10bda62d6e2f4fa93/llama_cpp/llama.py#L686-L706
-            # Check if one of the stop sequences is part of the text.
-            # Note that the stop sequence may not always be at the end of text.
-            if stop:
-                match = stop_regex.search(text)
-                if match:
-                    text = text[: match.start()]
-                    break
-
-            # Avoid sending the longest suffix of text which is also a prefix
-            # of a stop sequence, as it can form a stop sequence with the text
-            # generated later.
-            longest = 0
-            for s in stop:
-                for i in range(len(s), 0, -1):
-                    if text.endswith(s[:i]):
-                        longest = max(i, longest)
-                        break
-
-            end = len(text) - longest
-            if end > 0:
-                yield text[:end]
-                text = text[end:]
-
-            count += 1
-            if count >= max_new_tokens:
-                break
-
-        if text:
-            yield text
-
-    def find_library(self):
-
-        """ Identifies correct library by platform. """
-
-        #   current implementation support in core library - will expand/evaluate over time
-
-        lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "gguf")
-        system = platform.system()
-        lib_file = None
-
-        if platform.system() == "Windows":
-            lib_file = "lib_ctransformers.dll"
-        else:
-            machine = os.uname().machine.lower()
-
-            if system.lower() == "darwin":
-                if machine not in ['arm64', 'x86_64']:
-                    # default to arm64
-                    lib_file = "lib_ctransformers_mac_os_aarch64.dylib"
-                else:
-                    if machine == 'arm64':
-                        lib_file = "lib_ctransformers_mac_os_aarch64.dylib"
-                    else:
-                        lib_file = "lib_ctransformers_mac_os_x86_avx2.dylib"
-
-            if system.lower() == "linux":
-                if machine not in ['arm64', 'x86_64']:
-                    # default to x86
-                    lib_file = "lib_ctransformers_linux_x86_avx2.so"
-                else:
-                    if machine == 'x86_64':
-                        lib_file = "lib_ctransformers_linux_x86_avx2.so"
-                    else:
-
-                        # lib_file = "lib_ctransformer_linux_arm64.so"
-                        raise RuntimeError(f"No prebuilt llama.cpp lib for Linux Arm64 yet. "
-                                           f"Options: \n1. run on current prebuilt "
-                                           f"platforms - Mac Arch64, Mac x86, Linux x86, Windows; \n2. build lib "
-                                           f"from source - see instructions in repository.")
-
-        if not lib_file:
-            raise RuntimeError(f"Failed to find matching library for - '{system}'.")
-
-        path = os.path.join(lib_path, lib_file)
-
-        return path
-
-    def load_library(self):
-
-        """ Loads dynamic library to enable GGUF llama_cpp inferences. """
-
-        c_int_p = POINTER(c_int)
-        c_float_p = POINTER(c_float)
-        llm_p = c_void_p
-
-        if os.environ.get("GGUF_CUSTOM_LIB_PATH"):
-            #   allows user to build from source and pass as lib to use
-            #   note: there are several prebuilt shared libraries available for llama.cpp
-
-            path = os.environ.get("GGUF_CUSTOM_LIB_PATH")
-
-            logging.info("update: custom gguf lib path - %s ", path)
+            id = self._lib.llama_sample_token_greedy(self._ctx.ctx, ctypes.byref(token_data_array.candidates), )
 
         else:
-            # default case
-            path = self.find_library()
-            # if "cuda" in path: self.load_cuda()
 
-        #   note: this implementation of the CTYPES / CPP interface is intended to be conforming with:
-        #   -- https://github.com/marella/ctransformers/blob/main/models/llm.cc
+            # note: mirostat sampling options are left here for completeness, but not fully exposed or tested
+            #   --implementation of mirostat will be expanded over time
 
-        try:
-            lib = CDLL(path)
-        except:
-            raise ModuleNotFoundException("GGUF-Implementation")
+            if self.mirostat == 1:
+                mirostat_m = 100
 
-        lib.ctransformers_llm_create.argtypes = [c_char_p, c_char_p, ConfigStruct]
-        lib.ctransformers_llm_create.restype = llm_p
+                assert self._ctx.ctx is not None
 
-        # new insert - assigning llm_p to c_void_p
-        llm_p = c_void_p
+                self._lib.llama_sample_temp(self._ctx.ctx, ctypes.byref(token_data_array.candidates), self.temperature)
 
-        lib.ctransformers_llm_delete.argtypes = [llm_p]
-        lib.ctransformers_llm_delete.restype = None
+                self._lib.llama_sample_token_mirostat(self._ctx.ctx, ctypes.byref(token_data_array.candidates),
+                                                      self.mirostat_tau,
+                                                      self.mirostat_eta,
+                                                      mirostat_m,
+                                                      ctypes.pointer(self.mirostat_mu, ))
 
-        lib.ctransformers_llm_tokenize.argtypes = [llm_p, c_char_p, c_bool, c_int_p]
-        lib.ctransformers_llm_tokenize.restype = c_int
+            elif self.mirostat == 2:
 
-        lib.ctransformers_llm_detokenize.argtypes = [llm_p, c_int]
-        lib.ctransformers_llm_detokenize.restype = c_char_p
+                self._lib.llama_sample_temp(self._ctx.ctx, ctypes.byref(token_data_array.candidates), self.temperature)
 
-        lib.ctransformers_llm_is_eos_token.argtypes = [llm_p, c_int]
-        lib.ctransformers_llm_is_eos_token.restype = c_bool
+                id = self._lib.llama_sample_token_mirostat_v2(self._ctx.ctx, ctypes.byref(token_data_array.candidates),
+                                                         self.mirostat_tau,
+                                                         self.mirostat_eta,
+                                                         ctypes.pointer(self.mirostat_mu), )
 
-        lib.ctransformers_llm_eos_token_id.argtypes = [llm_p]
-        lib.ctransformers_llm_eos_token_id.restype = c_int
+            else:
+                min_keep = max(1, self.n_probs)
 
-        lib.ctransformers_llm_bos_token_id.argtypes = [llm_p]
-        lib.ctransformers_llm_bos_token_id.restype = c_int
+                self._lib.llama_sample_top_k(self._ctx.ctx, ctypes.byref(token_data_array.candidates), self.top_k,
+                                        min_keep)
 
-        lib.ctransformers_llm_vocab_size.argtypes = [llm_p]
-        lib.ctransformers_llm_vocab_size.restype = c_int
+                self._lib.llama_sample_tail_free(self._ctx.ctx, ctypes.byref(token_data_array.candidates), self.tfs_z,
+                                            min_keep)
 
-        lib.ctransformers_llm_context_length.argtypes = [llm_p]
-        lib.ctransformers_llm_context_length.restype = c_int
+                self._lib.llama_sample_typical(self._ctx.ctx, ctypes.byref(token_data_array.candidates), self.typical_p,
+                                          min_keep)
 
-        lib.ctransformers_llm_architecture.argtypes = [llm_p]
-        lib.ctransformers_llm_architecture.restype = c_char_p
+                self._lib.llama_sample_top_p(self._ctx.ctx, ctypes.byref(token_data_array.candidates), self.top_p,
+                                        min_keep)
 
-        lib.ctransformers_llm_batch_eval.argtypes = [llm_p, c_int_p, c_int, c_int, c_int, c_int]
-        lib.ctransformers_llm_batch_eval.restype = c_bool
+                self._lib.llama_sample_min_p(self._ctx.ctx, ctypes.byref(token_data_array.candidates), self.min_p,
+                                        min_keep)
 
-        lib.ctransformers_llm_logits_data.argtypes = [llm_p]
-        lib.ctransformers_llm_logits_data.restype = c_float_p
-        lib.ctransformers_llm_logits_size.argtypes = [llm_p]
-        lib.ctransformers_llm_logits_size.restype = c_int
+                self._lib.llama_sample_temp(self._ctx.ctx, ctypes.byref(token_data_array.candidates), self.temperature)
 
-        lib.ctransformers_llm_embeddings_data.argtypes = [llm_p]
-        lib.ctransformers_llm_embeddings_data.restype = c_float_p
-        lib.ctransformers_llm_embeddings_size.argtypes = [llm_p]
-        lib.ctransformers_llm_embeddings_size.restype = c_int
+                id = self._lib.llama_sample_token(self._ctx.ctx, ctypes.byref(token_data_array.candidates))
 
-        lib.ctransformers_llm_sample.argtypes = [llm_p, c_int_p, c_int, c_int, c_float, c_float, c_float, c_int]
-        lib.ctransformers_llm_sample.restype = c_int
+        return id
 
-        lib.ctransformers_llm_reset.argtypes = [llm_p]
-        lib.ctransformers_llm_reset.restype = None
+    def accept(self, id, apply_grammar):
 
-        return lib
+        """ Formal step post sampling that 'accepts' and adds the token id to the running generation. """
 
-    def unload_model(self):
+        if apply_grammar and self.grammar is not None:
+            self._lib.llama_grammar_accept_token(self._ctx.ctx, self.grammar.grammar, id)
 
-        """ Unloads a model to release memory """
-
-        # print("starting to unload")
-
-        if self._llm is not None:
-            self.ctransformers_llm_delete()
-
-        # print("done - unloaded model")
-
-        return 0
+        self.prev.append(id)
 
     def register_top_logits(self):
 
-        """ Retrieves the logits for current sample, and packages into indexed top list and
-        registers in self.logit_record. """
+        """ Gets the top logits and keeps a running log for output analysis. """
 
-        logit_pointer = self.ctransformers_llm_logits_data()
-        # sm = np.exp(logit_pointer) / sum(np.exp(logit_pointer))
-        logit_size = self.ctransformers_llm_logits_size()
+        logit_pointer = self._lib.llama_get_logits(self._ctx.ctx)
 
+        logit_size = self.n_vocab()
         logit_array = np.zeros(logit_size)
-
         for x in range(0, logit_size):
-            # print("logit selection: ", x, logit_pointer[x])
             logit_array[x] = logit_pointer[x]
 
         sm = np.exp(logit_array) / sum(np.exp(logit_array))
@@ -5010,28 +5129,26 @@ class GGUFGenerativeModel:
         sm_args_sorted = np.argsort(sm)
 
         top_logits = []
-        # by default, self.top_logit_count = 10 - so gets top 10 highest values in logit
 
-        for x in range(0, self.top_logit_count):
-            # generally for llama-based models, logit_size = 32000
-            pair = (sm_args_sorted[logit_size - x - 1], sm_sorted[logit_size - x - 1])
+        for x in range(0,self.top_logit_count):
+            pair = (sm_args_sorted[logit_size-x-1],sm_sorted[logit_size-x-1])
             top_logits.append(pair)
 
         self.logits_record.append(top_logits)
 
         return top_logits
 
-    def set_api_key(self, api_key, env_var="USER_MANAGED_HF_API_KEY"):
+    def set_api_key(self, api_key, env_var="USER_MANAGED_GGUF_API_KEY"):
 
         """ Sets API key - generally not used in GGUF models. """
 
         # set api_key
         os.environ[env_var] = api_key
-        logging.info("update: added and stored HF api_key in environmental variable- %s", env_var)
+        logging.info("update: added and stored GGUF api_key in environmental variable- %s", env_var)
 
         return self
 
-    def _get_api_key(self, env_var="USER_MANAGED_HF_API_KEY"):
+    def _get_api_key(self, env_var="USER_MANAGED_GGUF_API_KEY"):
 
         """ Gets API key - generally not used in GGUF models. """
 
@@ -5049,6 +5166,67 @@ class GGUFGenerativeModel:
         tokenizer = Utilities().get_default_tokenizer()
         toks = tokenizer.encode(text_sample).ids
         return len(toks)
+
+    @property
+    def ctx(self):
+        return self._ctx.ctx
+
+    @property
+    def model(self):
+        return self._model.model
+
+    @property
+    def _input_ids(self):
+        return self.input_ids[: self.n_tokens]
+
+    @property
+    def _scores(self):
+        return self.scores[: self.n_tokens, :]
+
+    @property
+    def eval_tokens(self):
+        return deque(self.input_ids[: self.n_tokens].tolist(), maxlen=self._n_ctx)
+
+    @property
+    def eval_logits(self):
+        return deque(
+            self.scores[: self.n_tokens, :].tolist(),
+            maxlen=self._n_ctx if self.context_params.logits_all else 1,
+        )
+
+    def reset(self):
+        self.n_tokens = 0
+
+    def n_ctx(self):
+        return self._lib.llama_n_ctx(self._ctx.ctx)
+
+    def n_ctx_train(self):
+        return self._lib.llama_n_ctx_train(self._model.model)
+
+    def n_vocab(self):
+        return self._lib.llama_n_vocab(self._model.model)
+
+    def token_eos(self):
+        return self._lib.llama_token_eos(self._model.model)
+
+    def token_bos(self):
+        return self._lib.llama_token_bos(self._model.model)
+
+    def token_nl(self):
+        return self._lib.llama_token_nl(self._model.model)
+
+    def unload_model(self):
+
+        """ Unloads a model to release memory """
+
+        # note: removing pointer seems to safely remove from Python reference tracking
+        #   --will evaluate under multiple scenarios if free explicitly needs to be called in llama.cpp engine
+
+        self._batch = None
+        self._ctx = None
+        self._model = None
+
+        return 0
 
     def prompt_engineer(self, query, context, inference_dict):
 
@@ -5164,58 +5342,12 @@ class GGUFGenerativeModel:
 
             text_prompt = prompt_final + self.trailing_space
 
-        # print("update: GGUFGenerative - inference - text_prompt - ", text_prompt)
-
-        time_start = time.time()
-
-        text = self._stream(text_prompt)
-        output_str = "".join(text)
-
-        # post-processing clean-up - stop at endoftext
-        eot = output_str.find("<|endoftext|>")
-        if eot > -1:
-            output_str = output_str[:eot]
-
-        # new post-processing clean-up - stop at </s>
-        eots = output_str.find("</s>")
-        if eots > -1:
-            output_str = output_str[:eots]
-
-        # post-processing clean-up - start after bot wrapper
-        bot = output_str.find("<bot>:")
-        if bot > -1:
-            output_str = output_str[bot + len("<bot>:"):]
-
-        # new post-processing cleanup - skip repeating starting <s>
-        boss = output_str.find("<s>")
-        if boss > -1:
-            output_str = output_str[boss + len("<s>"):]
-
-        # end - post-processing
-
-        input_toks = self.token_counter(text_prompt)
-        output_toks = self.token_counter(output_str)
-
-        usage = {"input": input_toks,
-                 "output": output_toks,
-                 "total": input_toks + output_toks,
-                 "metric": "tokens",
-                 "processing_time": time.time() - time_start}
-
-        output_response = {"llm_response": output_str, "usage": usage}
-
-        #   experimental - add get_logits in inference
-
-        if get_logits:
-            output_response.update({"logits": self.logits_record})
-            output_response.update({"output_tokens": self.output_tokens})
-
-        #   end - experimental
+        output_response = self._inference(text_prompt)
 
         return output_response
 
-    @torch.no_grad()
-    def function_call(self, context, function=None, params=None, get_logits=True):
+    def function_call(self, context, function=None, params=None, get_logits=True,
+                      temperature=-99, max_output=None):
 
         """ This is the key inference method for SLIM models - takes a context passage and a key list
         which is packaged in the prompt as the keys for python dictionary output"""
@@ -5237,7 +5369,8 @@ class GGUFGenerativeModel:
             self.primary_keys = params
 
         if not self.primary_keys:
-            print("warning: GGUF - function call - no keys provided - function call may yield unpredictable results")
+            logging.warning("warning: GGUF - function call - no keys provided - "
+                            "function call may yield unpredictable results")
 
         if not params:
             params = self.primary_keys
@@ -5259,71 +5392,45 @@ class GGUFGenerativeModel:
 
         text_prompt = full_prompt
 
+        if temperature != -99:
+            self.temperature = temperature
+
+        if max_output:
+            self.max_output_len = max_output
+
         # call inference here
-        time_start = time.time()
+        output_response = self._inference(text_prompt)
 
-        text = self._stream(text_prompt)
-        output_str = "".join(text)
-
-        # post-processing clean-up - stop at endoftext
-        eot = output_str.find("<|endoftext|>")
-        if eot > -1:
-            output_str = output_str[:eot]
-
-        # new post-processing clean-up - stop at </s>
-        eots = output_str.find("</s>")
-        if eots > -1:
-            output_str = output_str[:eots]
-
-        # post-processing clean-up - start after bot wrapper
-        bot = output_str.find("<bot>:")
-        if bot > -1:
-            output_str = output_str[bot + len("<bot>:"):]
-
-        # new post-processing cleanup - skip repeating starting <s>
-        boss = output_str.find("<s>")
-        if boss > -1:
-            output_str = output_str[boss + len("<s>"):]
-
-        # end - post-processing
-
-        input_toks = self.token_counter(text_prompt)
-        output_toks = self.token_counter(output_str)
-
-        usage = {"input": input_toks,
-                 "output": output_toks,
-                 "total": input_toks + output_toks,
-                 "metric": "tokens",
-                 "processing_time": time.time() - time_start}
-
+        output_str = output_response["llm_response"]
 
         try:
+            """
+            if output_str.startswith('"'):
+                output_str = output_str[1:]
+            if output_str.endswith('"'):
+                output_str = output_str[:-1]
+            """
+
             output_dict = ast.literal_eval(output_str)
-            usage.update({"type": "dict"})
+            output_response["usage"].update({"type": "dict"})
             convert_to_dict = True
+            output_response.update({"llm_response": output_dict})
+
         except:
             logging.warning("warning: automatic conversion of function call output to "
                             "python dictionary failed -%s.", output_str)
             output_dict = output_str
-            usage.update({"type": "string"})
+            output_response["usage"].update({"type": "string"})
             convert_to_dict = False
 
         # quick remediation attempt - usually source of error is cut-off at end
         if not convert_to_dict:
-            triage_terminus = "]'}"
-            output_str_triage = output_str + triage_terminus
-            try:
-                output_dict = ast.literal_eval(output_str_triage)
-                usage.update({"type": "dict"})
-            except:
-                logging.warning("update: first remediation attempt did not fix dictionary - %s", output_str_triage)
-        # end - remediation attempt
 
-        output_response = {"llm_response": output_dict, "usage": usage}
+            output_type, output_rem = ModelCatalog().remediate_function_call_string(output_str)
 
-        if get_logits:
-            output_response.update({"logits": self.logits_record})
-            output_response.update({"output_tokens": self.output_tokens})
+            if output_type == "dict":
+                output_response["usage"].update({"type": "dict"})
+                output_response["llm_response"].update({"llm_response": output_rem})
 
         return output_response
 
