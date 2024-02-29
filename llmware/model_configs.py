@@ -233,13 +233,17 @@ global_model_repo_catalog_list = [
     {"model_name": "gpt-4-1106-preview", "display_name": "GPT-4-Turbo-1106", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 128000},
 
+    # gpt-3.5 model announced in November 2023
+    {"model_name": "gpt-3.5-turbo-1106", "display_name": "GPT-3.5-Turbo-1106", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 16385},
+
     # gpt-4 model announced in January 2024
     {"model_name": "gpt-4-0125-preview", "display_name": "GPT-4-Turbo-0125", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 128000},
-
-    {"model_name": "gpt-3.5-turbo-1106", "display_name": "GPT-3.5-Turbo-1106", "model_family": "OpenAIGenModel",
+  
+    # gpt-3.5 model announced in January 2024
+    {"model_name": "gpt-3.5-turbo-0125", "display_name": "GPT-3.5-Turbo-0125", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 16385},
-    # end - gpt-4 model update
 
     # generative AIB models - aib-read-gpt - "main model"
     {"model_name": "aib-read-gpt", "display_name": "AIB-READ-GPT", "model_family": "AIBReadGPTModel",
