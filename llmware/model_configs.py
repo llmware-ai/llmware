@@ -229,8 +229,12 @@ global_model_repo_catalog_list = [
     {"model_name": "gpt-3.5-turbo-instruct", "display_name": "GPT-3.5-Instruct", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 4000},
 
-    # new gpt-4 models announced in November 2023
+    # gpt-4 model announced in November 2023
     {"model_name": "gpt-4-1106-preview", "display_name": "GPT-4-Turbo-1106", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
+
+    # gpt-4 model announced in January 2024
+    {"model_name": "gpt-4-0125-preview", "display_name": "GPT-4-Turbo-0125", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 128000},
 
     {"model_name": "gpt-3.5-turbo-1106", "display_name": "GPT-3.5-Turbo-1106", "model_family": "OpenAIGenModel",
