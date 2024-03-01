@@ -327,11 +327,11 @@ class Parser:
             #       --inside zip_extract_handler- will update counters
 
             zip_work_order = self.zip_extract_handler()
-            pdf_found += zip_work_order["pdf_found"]
-            office_found += zip_work_order["office_found"]
-            text_found += zip_work_order["text_found"]
-            voice_found += zip_work_order["voice_found"]
-            ocr_found += zip_work_order["ocr_found"]
+            pdf_found += zip_work_order["pdf"]
+            office_found += zip_work_order["office"]
+            text_found += zip_work_order["text"]
+            voice_found += zip_work_order["voice"]
+            ocr_found += zip_work_order["ocr"]
 
         work_order = {"pdf": pdf_found,
                       "office": office_found,

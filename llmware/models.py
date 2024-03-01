@@ -2194,7 +2194,8 @@ class OpenAIGenModel:
 
         try:
 
-            if self.model_name in ["gpt-3.5-turbo","gpt-4","gpt-4-1106-preview","gpt-3.5-turbo-1106"]:
+            if self.model_name in ["gpt-3.5-turbo","gpt-4","gpt-4-1106-preview","gpt-3.5-turbo-1106", 
+                                   "gpt-4-0125-preview", "gpt-3.5-turbo-0125"]:
 
                 messages = self.prompt_engineer_chatgpt3(prompt_enriched, self.add_context, inference_dict)
 
