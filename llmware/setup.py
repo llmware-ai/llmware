@@ -30,7 +30,42 @@ import logging
 
 
 class Setup:
+    """Implements the download of sample files from an AWS S3 bucket.
 
+    ``Setup`` implements the download of sample files from an AWS S3 bucket. Currently, there are samples
+    from eight domains. Which are
+
+    - AgreementsLarge (~80 sample contracts)
+    - Agreements (~15 sample employment agreements)
+    - UN-Resolutions-500 (500 United Nations Resolutions over ~2 years)
+    - Invoices (~40 invoice sample documents)
+    - FinDocs (~15 financial annual reports, earnings and 10Ks)
+    - AWS-Transcribe (~5 AWS-transcribe JSON files)
+    - SmallLibrary (~10 mixed document types for quick testing)
+    - Images (~3 images for OCR processing)
+
+    The sample files are updated continously. By calling ``Setup().load_sample_files(over_write=True)``
+    you will get the newest version of the sample files.
+
+    The sample files were prepared by LLMWare from public domain materials, or invented bespoke.
+    If you have any concerns about Personally Identifiable Information (PII), or the suitability of any material
+    we included, please contact us, e.g. either by raising an issue on GitHub or sending an E-Mail.
+    We reserve the right to withdraw documents at any time.
+
+    Examples
+    ----------
+    >>> import os
+    >>> from llmware.setup import Setup
+    >>> sample_files_path = Setup().load_sample_files()
+    >>> sample_files_path
+    '/home/user/llmware_data/sample_files'
+    >>> os.listdir(sample_files_path)
+    ['AWS-Transcribe', '.DS_Store', 'SmallLibrary', 'UN-Resolutions-500', 'Invoices', 'Images', 'AgreementsLarge', 'Agreements', 'FinDocs']
+
+    If you have called the function before but want to get the newest updates to the sample files, or you simply
+    want to get the newest sample files, you simply set ``over_write=True``.
+    >>> sample_files_path = Setup().load_sample_files(over_write=True)
+    """
     @staticmethod
     def load_sample_files(over_write=False):
 
