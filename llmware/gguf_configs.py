@@ -238,9 +238,9 @@ def add_ctypes_declarations (_lib):
     llama_new_context_with_model.argtypes = [llama_model_p_ctypes, llama_context_params]
     llama_new_context_with_model.restype = llama_context_p_ctypes
 
-    llama_numa_init = _lib.llama_numa_init
-    llama_numa_init.argtypes = [ctypes.c_int]
-    llama_numa_init.restype = None
+    # llama_numa_init = _lib.llama_numa_init
+    # llama_numa_init.argtypes = [ctypes.c_int]
+    # llama_numa_init.restype = None
 
     llama_free = _lib.llama_free
     llama_free.argtypes = [llama_context_p_ctypes]
@@ -809,6 +809,9 @@ class GGUFConfigs:
                   # --Mac:  uses Mac Metal GPU by default
                   # --Linux / Windows - checks for cuda availability
                   "use_gpu": True,
+
+                  # note this will be used on Windows and Linux, but not Mac
+                  "n_gpu_layers": 50,
 
                   "backend_initialized": False,
 
