@@ -4683,6 +4683,12 @@ class GGUFGenerativeModel:
         self.model_params.use_mmap = True
         self.model_params.use_mlock = False
 
+        if self.use_gpu:
+            # on darwin, keep at 0 - on win32 and linux - set to 50 by default (e.g., shift all model layers to GPU)
+            if sys.platform.lower() == "win32" or sys.platform.lower().startswith("linux"):
+
+                self.model_params.n_gpu_layers = GGUFConfigs().get_config("n_gpu_layers")
+
         # update context parameters
         self.context_params = self._lib.llama_context_default_params()
         self.context_params.n_ctx = 2048
