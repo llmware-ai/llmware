@@ -1374,6 +1374,9 @@ class Query:
         for x in range(0, len(core_text)):
             match = 0
             for key_term in query_tokens:
+                if len(key_term) == 0:
+                    continue
+                
                 if key_term.startswith('"'):
                     key_term = key_term[1:-1]
 
