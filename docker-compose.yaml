@@ -1,6 +1,19 @@
 version: "3.5"
 
 services:
+  llmware:
+    container_name: llmware
+    image: provocoai/llmware:dev-01
+    volumes: 
+      - $HOME/code/provoco:/code:Z
+      - $HOME/.vscode:/root/.vscode:Z
+    network_mode: service:mongodb
+      # - service:milvus
+      # - service:etcd
+      # - service:minio
+      # - service:devneo4j
+    command: sleep infinity
+
   mongodb:
     container_name: mongodb
     image: mongo:5.0.10
@@ -10,7 +23,7 @@ services:
     #   - MONGO_INITDB_ROOT_USERNAME=admin
     #   - MONGO_INITDB_ROOT_PASSWORD=changeme
     volumes:
-      - llmware-mongodb:/data/db
+      - llmware-mongodb:/data/db:Z
     ports:
       - '27017:27017'
 
@@ -23,7 +36,7 @@ services:
       - ETCD_QUOTA_BACKEND_BYTES=4294967296
       - ETCD_SNAPSHOT_COUNT=50000
     volumes:
-      - llmware-etcd:/etcd
+      - llmware-etcd:/etcd:Z
     command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
     healthcheck:
       test: ["CMD", "etcdctl", "endpoint", "health"]
@@ -41,7 +54,7 @@ services:
       - "9001:9001"
       - "9000:9000"
     volumes:
-      - llmware-minio:/minio_data
+      - llmware-minio:/minio_data:Z
     command: minio server /minio_data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
@@ -57,7 +70,7 @@ services:
       ETCD_ENDPOINTS: etcd:2379
       MINIO_ADDRESS: minio:9000
     volumes:
-      - llmware-milvus:/var/lib/milvus
+      - llmware-milvus:/var/lib/milvus:Z
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
       interval: 30s
@@ -71,6 +84,23 @@ services:
       - "etcd"
       - "minio"
 
+  
+  dev-neo4j:
+    container_name: devneo4j
+    hostname: neo4j
+    image: neo4j:5.15.0-community
+    ports:
+      - 7474:7474
+      - 7687:7687
+    restart: always
+
+    volumes:
+      - $HOME/neo4j/data:/data:Z
+      - $HOME/neo4j/logs:/logs:Z
+
+    environment:
+      - NEO4J_AUTH=none
+
 volumes:
     llmware-mongodb:
       driver: local
@@ -80,4 +110,5 @@ volumes:
       driver: local
     llmware-milvus:
       driver: local
+    
 
