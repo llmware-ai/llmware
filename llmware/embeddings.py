@@ -90,12 +90,23 @@ from llmware.util import Utilities
 
 
 class EmbeddingHandler:
+    """Provides an interface to all supported vector dabases, which is used by the ``Library`` class.
 
-    """ Main class abstraction to handle Embeddings - this is the primary entry point for calling methods-
-    and handles all embedding-related interactions with a library - creation, insertion/updates, queries
-    and deletion + synchronization with the text collection database for incremental updates and ability to
-    have multiple embeddings on each library. """
+    ``EmbeddingHandler`` is responsible for embedding-related interactions between a library and a vector
+    store. This includes creating, reading, updating, and deleting (CRUD) embeddings. The ``EmbeddingHandler``,
+    in addition, synchronizes the vector store with the text collection database, this includes incremental
+    updates to the embeddings. Finally, it also allows one library to have multiple embeddings.
 
+    Parameters
+    ----------
+    library : Library
+        The library with which the ``EmbeddingHandler`` interacts.
+
+    Returns
+    -------
+    embedding_handler : EmbeddingHandler
+        A new ``EmbeddingHandler`` object.
+    """
     def __init__(self, library):
 
         self.supported_embedding_dbs = LLMWareConfig().get_supported_vector_db()
@@ -220,10 +231,35 @@ class EmbeddingHandler:
 
 
 class _EmbeddingUtils:
+    """Provides functions to vector stores, such as creating names for the text collection database as well
+    as creating names for vector such, and creating a summary of an embedding process.
 
-    """ Common utilities invoked by all of the individual embedding classes to preserve consistency,
-        especially in interaction and synchronization with the underlying text collection database """
+    ``_EmbeddingUTils`` provides utilities used by all vector stores, especially in interaction and
+    synchronization with the underlying text collection database. In short, it has functions for
+    creating names, the text index, the embedding flag, the block curser, and the embedding summary.
 
+    Parameters
+    ----------
+    library_name : str, default=None
+        Name of the library.
+
+    model_name : str, default=None
+        Name of the model.
+
+    account_name : str, default=None
+        Name of the account.
+
+    db_name : str, default=None
+        Name of the vector store.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_utils : _EmbeddingUtils
+        A new ``_EmbeddingUtils`` object.
+    """
     def __init__(self, library_name=None, model_name=None, account_name=None,db_name=None,
                  embedding_dims=None):
 
@@ -343,9 +379,30 @@ class _EmbeddingUtils:
 
 
 class EmbeddingMilvus:
+    """Implements the vector database Milvius.
 
-    """ Milvus vector database object - executes all operations on Milvus """
+    ``EmbeddingMivlus`` implements the interface to the ``Milvus`` vector store. It is used by the
+    ``EmbeddingHandler``.
 
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_milvus : EmbeddingMilvus
+        A new ``EmbeddingMilvus`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.library = library
@@ -514,9 +571,30 @@ class EmbeddingMilvus:
 
 
 class EmbeddingFAISS:
+    """Implements the vector database FAISS.
 
-    """ FAISS vector file database object - executes all operations on FAISS """
+    ``EmbeddingFAISS`` implements the interface to the ``FAISS`` vector database. It is used by the
+    ``EmbeddingHandler``.
 
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_faiss : EmbeddingFAISS
+        A new ``EmbeddingFAISS`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.library = library
@@ -662,8 +740,29 @@ class EmbeddingFAISS:
         return 1
 
 class EmbeddingLanceDB:
-    """ 
-    LanceDB vector database object - executes all operations on LanceDB
+    """Implements the vector database LanceDB.
+
+    ``EmbeddingLancDB`` implements the interface to the ``LanceDB`` vector database. It is used by the
+    ``EmbeddingHandler``.
+
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_lancedb : EmbeddingLanceDB
+        A new ``EmbeddingLanceDB`` object.
     """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
             self.uri = LanceDBConfig().get_config("uri")
@@ -831,9 +930,30 @@ class EmbeddingLanceDB:
 
 
 class EmbeddingPinecone:
+    """Implements the vector database Pinecone.
 
-    """ Pinecone vector database object - executes all operations on Pinecone """
+    ``EmbeddingPinecone`` implements the interface to the ``Pinecone`` vector database. It is used by the
+    ``EmbeddingHandler``.
 
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_pinecone : EmbeddingPinecone
+        A new ``EmbeddingPinecone`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.api_key = PineconeConfig().get_config("pinecone_api_key")
@@ -975,9 +1095,30 @@ class EmbeddingPinecone:
 
 
 class EmbeddingMongoAtlas:
+    """Implements the use of MongoDB Atlas as a vector database.
 
-    """ Mongo Atlas vector database object - executes all vector db operations on Mongo Atlas """
+    ``EmbeddingMongoAtlas`` implements the interface to ``MongoDB Atlas``. It is used by the
+    ``EmbeddingHandler``.
 
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_mongoatlas : EmbeddingMongoAtlas
+        A new ``EmbeddingMongoAtlas`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
         
         # Use a specified Mongo Atlas connection string if supplied.
@@ -1205,9 +1346,30 @@ class EmbeddingMongoAtlas:
 
 
 class EmbeddingRedis:
+    """Implements the use of Redis as a vector database.
 
-    """ Redis vector database object - executes all operations on Redis endpoint """
+    ``EmbeddingRedis`` implements the interface to ``Redis``. It is used by the
+    ``EmbeddingHandler``.
 
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_redis : EmbeddingRedis
+        A new ``EmbeddingRedis`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.library = library
@@ -1400,9 +1562,30 @@ class EmbeddingRedis:
 
 
 class EmbeddingQdrant:
+    """Implements the Qdrant vector database.
 
-    """ Qdrant vector database object - executes all operations on Qdrant endpoint """
+    ``EmbeddingQdrant`` implements the interface to ``Qdrant``. It is used by the
+    ``EmbeddingHandler``.
 
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_qdrant : EmbeddingQdrant
+        A new ``EmbeddingQdrant`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.library = library
@@ -1559,9 +1742,30 @@ class EmbeddingQdrant:
 
 
 class EmbeddingPGVector:
+    """Implements the interface to the PGVector vector database.
 
-    """ PGVector (Postgres) vector database object - executes all operations associated with PGVector endpoint """
+    ``EmbeddingPGVector`` implements the interface to ``PGVector``. It is used by the
+    ``EmbeddingHandler``.
 
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_pgvector : EmbeddingPGVector
+        A new ``EmbeddingPGVector`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None, full_schema=False):
 
         self.library = library
@@ -1872,7 +2076,30 @@ class EmbeddingPGVector:
 
 
 class EmbeddingNeo4j:
+    """Implements the interface to Neo4j as a vector database.
 
+    ``EmbeddingNeo4j`` implements the interface to ``Neo4j``. It is used by the
+    ``EmbeddingHandler``.
+
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_Neo4j : EmbeddingNeo4j
+        A new ``EmbeddingNeo4j`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         # look up model card
@@ -2078,7 +2305,30 @@ class EmbeddingNeo4j:
 
 
 class EmbeddingChromaDB:
+    """Implements the interface to the ChromaDB vector database.
 
+    ``EmbeddingChromaDB`` implements the interface to ``ChromaDB``. It is used by the
+    ``EmbeddingHandler``.
+
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_chromadb : EmbeddingChromaDB
+        A new ``EmbeddingPGVector`` object.
+    """
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
         #
         # General llmware set up code

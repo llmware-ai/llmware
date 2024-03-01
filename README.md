@@ -3,10 +3,15 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
 [![discord](https://img.shields.io/badge/Chat%20on-Discord-blue?logo=discord&logoColor=white)](https://discord.gg/MhZn5Nc39h)   
 
-`llmware` is a unified framework for developing LLM-based application patterns including Retrieval Augmented Generation (RAG).  This project provides an integrated set of tools that anyone can use - from a beginner to the most sophisticated AI developer - to rapidly build industrial-grade, knowledge-based enterprise LLM applications with specific focus on making it easy to integrate open source small specialized models and connecting enterprise knowledge safely and securely. 
+`llmware` is a unified framework for developing LLM-based application patterns including Retrieval Augmented Generation (RAG).  
+
+This project provides an integrated set of tools that anyone can use - from a beginner to the most sophisticated AI developer - to rapidly build industrial-grade, knowledge-based enterprise LLM applications. 
+
+Our specific focus is on making it easy to integrate open source small specialized models and connecting enterprise knowledge safely and securely. 
 
 [Join us on Discord](https://discord.gg/MhZn5Nc39h)   |  [Watch Youtube Tutorials](https://www.youtube.com/@llmware)  | [Explore our Model Families on Huggingface](https://www.huggingface.co/llmware)   
 
+New to RAG?  [Check out the Fast Start video series](https://www.youtube.com/playlist?list=PL1-dn33KwsmD7SB9iSO6vx4ZLRAWea1DB)  
 
 🔥🔥🔥 [**Multi-Model Agents with SLIM Models**](examples/SLIM-Agents/) - [**Intro-Video**](https://www.youtube.com/watch?v=cQfdaTcmBpY) 🔥🔥🔥   
 Can't wait?  Get SLIMs right away:  
@@ -700,17 +705,21 @@ Interested in contributing to llmware? Information on ways to participate can be
 
 Questions and discussions are welcome in our [github discussions](https://github.com/llmware-ai/llmware/discussions).  
 
-## 📣  Release notes and Change Log
+## 📣  Release notes and Change Log  
 
-**Friday, February 16 - v0.2.3 WIP Update**  
+**Wednesday, Februray 28 - v0.2.4 Update**
+- Major upgrade of GGUF Generative Model class - support for Stable-LM-3B, CUDA build options, and better control over sampling strategies.
+- Note: new GGUF llama.cpp built libs packaged with build starting in v0.2.4.  
+- Improved GPU support for HF Embedding Models.   
+  
+**Friday, February 16 - v0.2.3 Update**  
 - Added 10+ embedding models to ModelCatalog - nomic, jina, bge, gte, ember and uae-large.   
 - Updated OpenAI support >=1.0 and new text-3 embedding models.    
 - SLIM model keys and output_values now accessible in ModelCatalog.  
 - Updating encodings to 'utf-8-sig' to better handle txt/csv files with bom.  
 
 **Reported notable issues on priority resolution path**  
-- stablelm-based models using gguf  
-- older linux versions with GLIBC < 2.34  
+- older linux versions with GLIBC < 2.34  (especially Ubuntu20)  
 - 3.12 python support - waiting on one last dependency (coming soon)
   
 **Supported Operating Systems**: MacOS (Metal and x86), Linux (x86 and aarch64), Windows  

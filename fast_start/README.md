@@ -14,30 +14,33 @@ Platforms:
 - Mac M1, Mac x86, Windows, Linux (Ubuntu 22 preferred)  
 - RAM: 16 GB minimum 
 - Python 3.9, 3.10, 3.11 (note: not supported on 3.12 yet)
-- Use llmware >= 0.2.0 version
-
+- Use llmware >= 0.2.0 version  
+- Latest version of llmware is 0.2.4 (as of end of February 2024)
+  
 There are 6 examples, designed to be used step-by-step, but each is self-contained, 
 so you can feel free to jump into any of the examples, in any order, that you prefer.  
 
-Each example has been designed to be "copy-paste" and RUN with lots of helpful comments and explanations embedded in the code samples.
+Each example has been designed to be "copy-paste" and RUN with lots of helpful comments and explanations embedded in the code samples.  
+
+Please check out our [Fast Start Youtube tutorials](https://www.youtube.com/playlist?list=PL1-dn33KwsmD7SB9iSO6vx4ZLRAWea1DB) that walk through each example below.  
 
 Examples:
 
 **Section I - Learning the Main Components**
-1.  **Library** - parse, text chunk, and index to convert a "pile of files" into an AI-ready knowledge-base.  
-
-2.  **Embeddings** - apply an embedding model to the Library, store vectors, and start enabling natural language queries.  
-
-3.  **Prompts** & **Model Catalog** - start running inferences and building prompts.
+1.  **Library** - parse, text chunk, and index to convert a "pile of files" into an AI-ready knowledge-base.  [Video](https://youtu.be/2xDefZ4oBOM?si=8vRCvqj0-HG3zc4c)  
+  
+2.  **Embeddings** - apply an embedding model to the Library, store vectors, and start enabling natural language queries.  [Video](https://youtu.be/xQEk6ohvfV0?si=B3X25ZsAZfW4AR_3)
+   
+3.  **Prompts** & **Model Catalog** - start running inferences and building prompts.  [Video](https://youtu.be/swiu4oBVfbA?si=0IVmLhiiYS3-pMIg)
 
 **Section II - Connecting Knowledge with Prompts - 3 scenarios**  
 
-4.  **RAG with Text Query** - start integrating documents into prompts.  
-
-5.  **RAG with Semantic Query** - use natural language queries on documents and integrate with prompts.
- 
-6.  **RAG with more complex retrieval** - start integrating more complex retrieval patterns.
-
+4.  **RAG with Text Query** - start integrating documents into prompts.  [Video](https://youtu.be/6oALi67HP7U?si=pAbvio4ULXTIXKdL)
+  
+5.  **RAG with Semantic Query** - use natural language queries on documents and integrate with prompts.  [Video](https://youtu.be/XT4kIXA9H3Q?si=EBCAxVXBt5vgYY8s)
+    
+6.  **RAG with more complex retrieval** - start integrating more complex retrieval patterns.  [Video](https://youtu.be/G1Q6Ar8THbo?si=vIVAv35uXAcnaUJy)  
+   
 After completing these 6 examples, you should have a good foundation and set of recipes to start 
 exploring the other 50+ examples in the /examples folder, and build more sophisticated 
 LLM-based applications.

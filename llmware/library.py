@@ -37,11 +37,28 @@ from llmware.exceptions import LibraryNotFoundException, SetUpLLMWareWorkspaceEx
 
 
 class Library:
+    """Implements the interface to manage a collection of texts and images as a ``Library``.
 
-    """ Library is the main class abstraction for organizing a collection of unstructured information, and is the
-        primary interface into the Parser and Embedding classes.  Libraries are passed to Query objects, and
-        can be passed in whole, or as part of a query, to a Prompt object. """
+    ``Library`` is responsible for managing a collection of unstructured inofrmation, i.e. a library is a
+    collection of texts and images.
 
+    Returns
+    -------
+    library : Library
+        A new ``Library`` object.
+
+    Examples
+    ----------
+    >>> import os
+    >>> import llmware.library
+    >>> import llmware.setup
+    >>> sample_files_path = llmware.setup.Setup().load_sample_files(over_write=True)
+    >>> agreements_path = os.path.join(sample_files_path, 'Agreements')
+    >>> library = llmare.library.Library().create_new_library('my-new-library')
+    >>> library.add_files(agreements_path)
+    >>> library_card = library.get_library_card()
+    >>> library_card['documents']
+    """
     def __init__(self):
 
         # default settings for basic parameters
@@ -744,12 +761,30 @@ class Library:
 
 
 class LibraryCatalog:
+    """Implements the management of tracking details for libraries via the library card, which is stored
+    in the `library` table of the text collection database. It is used by the ``Library`` class.
 
-    """ LibraryCatalog is a supporting class for Library that handles the creation, deletion, updating and
-    general administration of tracking details of specific Libraries through 'Library Card' entries in the
-    'library' table of the text collection database.  In most cases, LibraryCatalog does not need to be directly
-     invoked, and can be accessed through the methods of Library. """
+    ``LibraryCatalog`` is responsible for managing tracking details. This includes creating,
+    reading, updating, and deleting library cards. The library card is stored in the table library
+    of the chosen text collection database. In most cases, ``LibraryCatalog`` does not need to be directly
+    invoked, instead it is used indirectly through the methods of ``Library``.
 
+    Parameters
+    ----------
+    library : Library, default=None
+        The library with which the ``LibraryCatalog`` interacts.
+
+    library_path : str or pathlib.Path object, default=None
+        The path to the llmware directory. If set, then the default from ``LLMWareconfig`` is used.
+
+    account_name : str, default='llmware'
+        Name of the account.
+
+    Returns
+    -------
+    library_catalog : LibraryCatalog
+        A new ``LibraryCatalog`` object.
+    """
     def __init__(self, library=None, library_path=None, account_name="llmware"):
 
         self.library = library

@@ -3067,7 +3067,9 @@ class CloudBucketManager:
         try:
             s3 = boto3.client('s3', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
 
-            bucket = s3.Bucket(user_bucket_name)
+            bucket = boto3.resource('s3', aws_access_key_id=aws_access_key,
+                                    aws_secret_access_key=aws_secret_key).Bucket(user_bucket_name)
+
             files = bucket.objects.all()
 
             for file in files:
