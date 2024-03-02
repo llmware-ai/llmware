@@ -4,7 +4,7 @@
 """ (A) Python Dependencies - 
 
     As a first step, you should pip install dependencies not included in the llmware package:
-        -- pip3 install qdrant
+        -- pip3 install qdrant-client
     
     (B) Installing Qdrant - 
         -- Docker - https://qdrant.tech/documentation/guides/installation/
