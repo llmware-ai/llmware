@@ -795,9 +795,15 @@ class CorpTokenizer:
         self.one_letter_removal = one_letter_removal
 
     def tokenize(self, text):
+        
+        # strip the whitespace from the beginning and end of the text so we can tokenize the data
+        text = text.strip()
+        # start with basic whitespace tokenizing, 
+        #is there a reason the text is being split on one space only?   
+        #text2 = text.split(" ")
+        # this line will split on whitespace regardless of tab or multispaces between words
+        text2 = text.split()
 
-        # start with basic whitespace tokenizing
-        text2 = text.split(" ")
 
         if self.remove_punctuation:
             text2 = Utilities().clean_list(text2)

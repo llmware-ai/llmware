@@ -1,33 +1,48 @@
 {
+
   "name": "LLMWARE Dev",
-  //"build": { "dockerfile": "../Dockerfile" },
-  "image": "provocoai/llmware:dev-01", // 
-  "RemoteUser": "${localEnv:USER}",
 
+  // This is the image to use if doing development on only the llmware code base
+  //"image": "provocoai/llmware:dev-01", /
+  // using the dockerComposeFile option allows us to setup 
+  // the full env around the llm code base include milvus and mongodb.
+  "dockerComposeFile": "docker-compose.yaml",
 
+  "service": "llmware", // we define the container to connect too
+
+  // update based on individual perference and mount point defined below
+  "workspaceFolder": "/llmware", 
+
+  //  "remoteUser": "llmware", //used with docker instead of podman
+  //  "containerUser": "llmware", // used with docker instead of podman
+
+  // when we close the devcontainer env make sure we clean up after ourselfs
+  "shutdownAction": "stopCompose",
+
+  // needed for podman to keep the id's the same
   "runArgs": [
-     "--name",
-     "${localWorkspaceFolderBasename}", // Container name
-     "-it",
-     "-l",
-     "com.docker.compose.project=devcontainers" // Container group name
+        "--userns=keep-id"
   ],
-	// you can setup your local directory in the devcontainer here.   The mount line is an example and mounts your home directory into the /code directory  
+
+  // Define the mountpoints into the llmware container.  
+  // I use $HOMEDIR/code/provoco as my default codebase and
+  // then set the target to /code so I have access to all my code in /code 
   "mounts" : [
-    //"source=${localEnv:HOME},target=/code,type=bind,consistency=cached"
+    "source=${localEnv:HOME}/code/provoco,target=/code,Z,type=bind,consistency=cached"
+//    "source=${localENV:HOME}/.vscode-server,target=/root/.vscode-server,Z,type=bind,consistency=cached"
   ],
+
+  // setup the github cli feature so we can commit within the UI
   "features": {
-   "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
-      "dockerDashComposeVersion": "v2"
-    },
-   "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
+
   "customizations": {
     "vscode": {
       "extensions": [
         "esbenp.prettier-vscode", // prettify the code extension
 	"ms-python.python", //python code extensions
-	"ms-python.vscode-pylance" / vscode python extension
+	"ms-python.vscode-pylance" // vscode python extension
       ]
     }
   }

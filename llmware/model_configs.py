@@ -229,13 +229,21 @@ global_model_repo_catalog_list = [
     {"model_name": "gpt-3.5-turbo-instruct", "display_name": "GPT-3.5-Instruct", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 4000},
 
-    # new gpt-4 models announced in November 2023
+    # gpt-4 model announced in November 2023
     {"model_name": "gpt-4-1106-preview", "display_name": "GPT-4-Turbo-1106", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 128000},
 
+    # gpt-3.5 model announced in November 2023
     {"model_name": "gpt-3.5-turbo-1106", "display_name": "GPT-3.5-Turbo-1106", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 16385},
-    # end - gpt-4 model update
+
+    # gpt-4 model announced in January 2024
+    {"model_name": "gpt-4-0125-preview", "display_name": "GPT-4-Turbo-0125", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
+  
+    # gpt-3.5 model announced in January 2024
+    {"model_name": "gpt-3.5-turbo-0125", "display_name": "GPT-3.5-Turbo-0125", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 16385},
 
     # generative AIB models - aib-read-gpt - "main model"
     {"model_name": "aib-read-gpt", "display_name": "AIB-READ-GPT", "model_family": "AIBReadGPTModel",
@@ -837,6 +845,16 @@ global_model_repo_catalog_list = [
      "function_call": False,
      "fc_output_values": [],
      "primary_keys": ["sql"], "function": ["sql"]},
+
+  {"model_name": "bling-stablelm-3b-tool", "display_name": "llmware/bling-stablelm-3b-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+  "temperature": 0.3, "trailing_space": "",
+  "gguf_file": "bling-stablelm.gguf",
+  "gguf_repo": "llmware/bling-stablelm-3b-gguf",
+  "snapshot": True,
+  "link": "https://huggingface.co/llmware/bling-stablelm-3b-gguf",
+  "custom_model_files": ["bling-stablelm.gguf"], "custom_model_repo": "llmware/bling-stablelm-3b-gguf"},
 
 ]
 

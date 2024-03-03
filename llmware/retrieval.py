@@ -96,7 +96,7 @@ class Query:
     """
     def __init__(self, library, embedding_model=None, tokenizer=None, vector_db_api_key=None,
                  query_id=None, from_hf=False, from_sentence_transformer=False,embedding_model_name=None,
-                 save_history=True, query_mode=None, vector_db=None):
+                 save_history=True, query_mode=None, vector_db=None, model_api_key=None):
 
         # load user profile & instantiate core library assets linked to profile
 
@@ -128,6 +128,7 @@ class Query:
         self.embedding_model = None
         self.embedding_db = None
         self.embeddings = None
+        self.model_api_key = model_api_key
 
         if self.library:
             self.embeddings = EmbeddingHandler(self.library)
@@ -260,7 +261,8 @@ class Query:
 
             else:
                 if ModelCatalog().lookup_model_card(self.embedding_model_name):
-                    self.embedding_model = ModelCatalog().load_model(selected_model=self.embedding_model_name)
+                    self.embedding_model = ModelCatalog().load_model(selected_model=self.embedding_model_name,
+                                                                     api_key=self.model_api_key)
                 else:
                     logging.info("update: Query - selected embedding model could not be found- %s ",
                                     self.embedding_model_name)
@@ -1429,6 +1431,9 @@ class Query:
         for x in range(0, len(core_text)):
             match = 0
             for key_term in query_tokens:
+                if len(key_term) == 0:
+                    continue
+                
                 if key_term.startswith('"'):
                     key_term = key_term[1:-1]
 

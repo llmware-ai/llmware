@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+
 """The llmware package provides tools to build large language model (LLM) applications, this includes
 a custom set of LLMs that are small and open source.
 
@@ -20,6 +21,6 @@ the vector databases.
 """
 
 
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 __author__ = 'llmware'
 __license__ = 'Apache 2.0 License'
