@@ -86,13 +86,22 @@ class Query:
     >>> len(results)
     3
     >>> results[0].keys()
-    dict_keys(['query', '_id', 'text', 'doc_ID', 'block_ID', 'page_num', 'content_type', 'author_or_speaker', 'special_field1', 'file_source', 'added_to_collection', 'table', 'coords_x', 'coords_y', 'coords_cx', 'coords_cy', 'external_files', 'score', 'similarity', 'distance', 'matches', 'account_name', 'library_name'])
+    dict_keys(['query', '_id', 'text', 'doc_ID', 'block_ID', 'page_num', 'content_type',
+               'author_or_speaker', 'special_field1', 'file_source', 'added_to_collection',
+               'table', 'coords_x', 'coords_y', 'coords_cx', 'coords_cy', 'external_files',
+               'score', 'similarity', 'distance', 'matches', 'account_name', 'library_name'])
     >>> results[0]['query']
     'the capital of austria is'
     >>> results[0]['text']
-    'Austria is a parliamentary representative democracy with a popularly elected president as head of state and a chancellor as head of government and chief executive. Major cities include Vienna , Graz , Linz , Salzburg , and Innsbruck . Austria has the 17th highest nominal GDP per capita with high standards of living; it was ranked 25th in the world for its Human Development Index in 2021. '
+    'Austria is a parliamentary representative democracy with a popularly elected president as head of '
+    'state and a chancellor as head of government and chief executive. Major cities include Vienna , Graz, '
+    'Linz , Salzburg , and Innsbruck . Austria has the 17th highest nominal GDP per capita with high '
+    'standards of living; it was ranked 25th in the world for its Human Development Index in 2021. '
     >>> results[2]['text']
-    "Austrian Parliament Building Vienna The Parliament of Austria is located in Vienna , the country's capital and most populous city. Austria became a federal , representative democratic republic through the Federal Constitutional Law of 1920. The political system of the Second Republic with its nine federal states is based on the constitution of 1920, amended in 1929, which was re-enacted on 1 May 1945. [108] "
+    "Austrian Parliament Building Vienna The Parliament of Austria is located in Vienna , the country's capital "
+    "and most populous city. Austria became a federal , representative democratic republic through the "
+    "Federal Constitutional Law of 1920. The political system of the Second Republic with its nine federal "
+    "states is based on the constitution of 1920, amended in 1929, which was re-enacted on 1 May 1945. [108] "
     """
     def __init__(self, library, embedding_model=None, tokenizer=None, vector_db_api_key=None,
                  query_id=None, from_hf=False, from_sentence_transformer=False,embedding_model_name=None,
