@@ -3,9 +3,13 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
 [![discord](https://img.shields.io/badge/Chat%20on-Discord-blue?logo=discord&logoColor=white)](https://discord.gg/MhZn5Nc39h)   
 
-`llmware` is a unified framework for developing LLM-based application patterns including Retrieval Augmented Generation (RAG).  
+🧰🛠️🔩**The Ultimate Toolkit for Building LLM Apps**
 
-This project provides an integrated set of tools that anyone can use - from a beginner to the most sophisticated AI developer - to rapidly build industrial-grade, knowledge-based enterprise LLM applications. 
+From quickly building POCs to scalable LLM Apps for the enterprise, LLMWare is packed with all the tools you need. 
+
+`llmware` is an integrated framework with over 50+ models in Hugging Face for quickly developing LLM-based application including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.  
+
+This project provides a comprehensive set of tools that anyone can use - from a beginner to the most sophisticated AI developer - to rapidly build industrial-grade, knowledge-based enterprise LLM applications. 
 
 Our specific focus is on making it easy to integrate open source small specialized models and connecting enterprise knowledge safely and securely. 
 
