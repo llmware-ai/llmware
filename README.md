@@ -7,7 +7,7 @@
 
 From quickly building POCs to scalable LLM Apps for the enterprise, LLMWare is packed with all the tools you need. 
 
-`llmware` is an integrated framework with over 50+ models in Hugging Face for quickly developing LLM-based application including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.  
+`llmware` is an integrated framework with over 50+ models in Hugging Face for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.  
 
 This project provides a comprehensive set of tools that anyone can use - from a beginner to the most sophisticated AI developer - to rapidly build industrial-grade, knowledge-based enterprise LLM applications. 
 
