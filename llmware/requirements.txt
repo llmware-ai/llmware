@@ -1,5 +1,5 @@
 ai21==1.0.3
-anthropic==0.3.11
+anthropic>=0.18.1  
 beautifulsoup4==4.11.1
 boto3==1.24.53
 cohere==4.1.3
