@@ -191,9 +191,29 @@ global_model_repo_catalog_list = [
     # generative-api models
     {"model_name": 'claude-v1', "display_name": "Anthropic Claude-v1", "model_family": "ClaudeModel",
      "model_category": "generative-api", "model_location": "api",  "context_window": 8000},
-    {"model_name": 'claude-instant-v1', "display_name": "Anthropic Claude-Instant-v1", "model_family": "ClaudeModel",
+    {"model_name": 'claude-instant-v1', "display_name": "claude-instant-1.2", "model_family": "ClaudeModel",
      "model_category": "generative-api","model_location": "api", "context_window": 8000},
-    {"model_name": 'command-medium-nightly', "display_name": "Cohere Command Medium", "model_family": "CohereGenModel",
+
+    # new Anthropic v3 models
+
+    # please note: we have kept Claude-3 window in model_configs at 8192 - but actual model window is 200K
+    #  if you pass a single passage of up to 200K, the model should work OK
+    # --the shorter context window of 8192 will be applied as default in Prompt when batching up evidence chunks
+    # --this can be configured and over-ridden if you prefer to use the full 200K window
+
+    {"model_name": 'claude-3-opus-20240229', "display_name": "Anthropic-Claude-3-Opus", "model_family": "ClaudeModel",
+   "model_category": "generative-api", "model_location": "api", "context_window": 8192},
+
+    {"model_name": 'claude-3-sonnet-20240229', "display_name": "Anthropic-Claude-3-Sonnet", "model_family": "ClaudeModel",
+   "model_category": "generative-api", "model_location": "api", "context_window": 8192},
+
+    {"model_name": 'claude-2.1', "display_name": "Anthropic Claude-2.1", "model_family": "ClaudeModel",
+    "model_category": "generative-api", "model_location": "api", "context_window": 8192},
+
+    {"model_name": 'claude-2.0', "display_name": "Anthropic Claude-Claude2-.0",
+    "model_family": "ClaudeModel", "model_category": "generative-api", "model_location": "api", "context_window": 8192},
+
+   {"model_name": 'command-medium-nightly', "display_name": "Cohere Command Medium", "model_family": "CohereGenModel",
      "model_category": "generative-api","model_location": "api", "context_window": 2048},
     {"model_name": 'command-xlarge-nightly', "display_name": "Cohere Command XLarge", "model_family": "CohereGenModel",
      "model_category": "generative-api","model_location": "api", "context_window": 2048},
