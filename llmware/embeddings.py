@@ -20,7 +20,6 @@ _EmbeddingUtils class, which provides a set of of funtions used by all vector da
 
 
 import os
-import faiss
 import logging
 import numpy as np
 import re
@@ -29,6 +28,11 @@ import uuid
 
 from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection
 from pymongo import MongoClient
+
+try:
+    import faiss
+except ImportError:
+    pass
 
 # note: update- adding psycopg and postgres to core llmware package in version 0.2.0
 try:
@@ -636,9 +640,20 @@ class EmbeddingFAISS:
 
         if not self.index:
             if os.path.exists(self.embedding_file_path):
-                self.index = faiss.read_index(self.embedding_file_path)
-            else: 
-                self.index = faiss.IndexFlatL2(self.embedding_dims)
+
+                #   shifted faiss to optional dependency
+                #   note: there may be an edge case where this faiss command would fail even with
+                #   library installed, but we throw dependency not installed error as most likely cause
+
+                try:
+                    self.index = faiss.read_index(self.embedding_file_path)
+                except:
+                    raise DependencyNotInstalledException("faiss-cpu")
+            else:
+                try:
+                    self.index = faiss.IndexFlatL2(self.embedding_dims)
+                except:
+                    raise DependencyNotInstalledException("faiss-cpu")
 
         # get cursor for text collection with blocks requiring embedding
         all_blocks_cursor, num_of_blocks = self.utils.get_blocks_cursor(doc_ids=doc_ids)
