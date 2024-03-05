@@ -2370,18 +2370,36 @@ class ClaudeModel:
         time_start = time.time()
 
         try:
-            response = client.completions.create(prompt=prompt_enriched,
-                                                stop_sequences=[anthropic.HUMAN_PROMPT],
-                                                max_tokens_to_sample=self.target_requested_output_tokens,
-                                                model=self.model_name,
-                                                stream=False,
-                                                temperature=self.temperature)
 
-            #text_out = list(response)[-1].completion
-            text_out = response.completion
+            # new Claude 3 models use the 'messages' API
+            # please check that you have pip installed the latest anthropic python sdk
 
-            input_count = client.count_tokens(prompt_enriched)
-            output_count = client.count_tokens(text_out)
+            if self.model_name in ["claude-3-opus-20240229", "claude-3-sonnet-20240229"]:
+
+                # use messages API
+                message = client.messages.create(model=self.model_name, max_tokens=self.target_requested_output_tokens,
+                                                 messages=[{"role": "user", "content": prompt_enriched}] )
+
+                text_out = message.content[0].text
+                input_count = message.usage.input_tokens
+                output_count = message.usage.output_tokens
+
+            else:
+
+                # use completion api for 'original' Claude models
+
+                response = client.completions.create(prompt=prompt_enriched,
+                                                    stop_sequences=[anthropic.HUMAN_PROMPT],
+                                                    max_tokens_to_sample=self.target_requested_output_tokens,
+                                                    model=self.model_name,
+                                                    stream=False,
+                                                    temperature=self.temperature)
+
+                #text_out = list(response)[-1].completion
+                text_out = response.completion
+
+                input_count = client.count_tokens(prompt_enriched)
+                output_count = client.count_tokens(text_out)
 
             usage = {"input": input_count, "output": output_count, "total": input_count + output_count,
                      "metric": "tokens", "processing_time": time.time() - time_start}
