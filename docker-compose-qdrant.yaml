@@ -1,0 +1,42 @@
+services:
+  mongodb:
+    container_name: mongodb
+    image: mongo:5.0.10
+    restart: always
+    # To secure MongoDB, uncomment and set the following values
+    # environment:
+    #   - MONGO_INITDB_DATABASE=admin
+    #   - MONGO_INITDB_ROOT_USERNAME=admin
+    #   - MONGO_INITDB_ROOT_PASSWORD=changeme
+    volumes:
+      - llmware-mongodb:/data/db
+    ports:
+      - '27017:27017'
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: always
+    container_name: qdrant
+    ports:
+      - 6333:6333
+      - 6334:6334
+    expose:
+      - 6333
+      - 6334
+      - 6335
+    configs:
+      - source: qdrant_config
+        target: /qdrant/config/production.yaml
+    volumes:
+      - qdrant_data:/qdrant_data
+
+volumes:
+  llmware-mongodb:
+    driver: local
+  qdrant_data:
+    driver: local
+
+configs:
+  qdrant_config:
+    content: |
+      log_level: INFO
