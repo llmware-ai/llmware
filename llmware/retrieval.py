@@ -33,10 +33,76 @@ from llmware.exceptions import LibraryObjectNotFoundException,UnsupportedEmbeddi
 
 
 class Query:
+    """Implements the query capabilities against a ``library``.
 
-    """ Query is the main class for executing queries against an indexed library, whether semantic, text, custom,
-     or hybrid. A query object requires a library object as input, which will be the source of the query/retrieval. """
+    Query is responsible for executing queries against an indexed library. The library can be semantic, text, custom,
+    or hybrid. A query object requires a library object as input, which will be the source of the query.
 
+    Parameters
+    ----------
+    library : object
+        A ``library`` object.
+
+    embedding_model : object, default=None
+        An ``embedding_model`` object.
+
+    tokenizer : object, default=None
+
+    vector_db_api_key : str, default=None
+        The API key for the vector store.
+
+    query_id : int, default=None
+        The identifier for a query. This is used when a query state has to be loaded.
+
+    from_hf : bool, default=False
+        Sets whether the embedding model should be loaded from hugging face.
+
+    from_sentence_transformer: bool, default=False
+        Sets whether the embedding model should be loaded from ``LLMWareSemanticModel``.
+
+    embedding_model_name : str, default=None
+        The name of the embedding model. This has to be set if ``from_sentence_transformer=True``.
+
+    save_history : bool, default=True
+        Sets whether the history of queries should be saved.
+
+    query_mode : str, default=None
+        Sets the query mode that should be used. It has to be either 'text', 'semantic', or 'hybrid'.
+
+    vector_db : str, default=None
+        The name of the vector store to be queried against. If it is not set, then this is determined by the
+        given ``embedding_model``.
+
+
+    Examples
+    ----------
+    >>> from llmware.library import Library
+    >>> from llmware.retrieval import Query
+    >>> library = Library().create_new_library('lib_semantic_query')
+    >>> library.add_website(url='https://en.wikipedia.org/wiki/Austria', get_links=False)
+    >>> library.install_new_embedding(embedding_model_name="industry-bert-sec", vector_db="milvus", batch_size=500)
+    >>> query = Query(library=library)
+    >>> results = query.semantic_query(query='the capital of austria is', result_count=3)
+    >>> len(results)
+    3
+    >>> results[0].keys()
+    dict_keys(['query', '_id', 'text', 'doc_ID', 'block_ID', 'page_num', 'content_type',
+               'author_or_speaker', 'special_field1', 'file_source', 'added_to_collection',
+               'table', 'coords_x', 'coords_y', 'coords_cx', 'coords_cy', 'external_files',
+               'score', 'similarity', 'distance', 'matches', 'account_name', 'library_name'])
+    >>> results[0]['query']
+    'the capital of austria is'
+    >>> results[0]['text']
+    'Austria is a parliamentary representative democracy with a popularly elected president as head of '
+    'state and a chancellor as head of government and chief executive. Major cities include Vienna , Graz, '
+    'Linz , Salzburg , and Innsbruck . Austria has the 17th highest nominal GDP per capita with high '
+    'standards of living; it was ranked 25th in the world for its Human Development Index in 2021. '
+    >>> results[2]['text']
+    "Austrian Parliament Building Vienna The Parliament of Austria is located in Vienna , the country's capital "
+    "and most populous city. Austria became a federal , representative democratic republic through the "
+    "Federal Constitutional Law of 1920. The political system of the Second Republic with its nine federal "
+    "states is based on the constitution of 1920, amended in 1929, which was re-enacted on 1 May 1945. [108] "
+    """
     def __init__(self, library, embedding_model=None, tokenizer=None, vector_db_api_key=None,
                  query_id=None, from_hf=False, from_sentence_transformer=False,embedding_model_name=None,
                  save_history=True, query_mode=None, vector_db=None, model_api_key=None):
