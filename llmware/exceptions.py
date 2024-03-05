@@ -92,8 +92,7 @@ class PromptNotInCatalogException(LLMWareException):
 class DependencyNotInstalledException(LLMWareException):
 
     def __init__(self, required_library_dependency):
-        message = f"'{required_library_dependency}' needs to be installed to use this function.  Please refer to the " \
-                  f"documentation with any questions. "
+        message = f"'{required_library_dependency}' needs to be installed to use this function."
         super().__init__(message)
 
 
