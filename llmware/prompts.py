@@ -42,10 +42,72 @@ from llmware.configs import LLMWareConfig
 
 
 class Prompt:
+    """Implements the actions of the prompt process, which includes the actions pre-processing, execution,
+    post-processing, and managing the state of related inferences.
 
-    """ Prompt is the main class for pre-processing, executing, and post-processing of inferences and for
-    managing end-to-end state of a series of related inferences. """
+    ``Prompt`` is responsible for pre-processing, executing, and post-processing of inferences and for
+    managing end-to-end state of a series of related inferences.
 
+    Parameters
+    ----------
+    llm_name : str, default=None
+        The name of the llm to be used.
+
+    tokenizer : object, default=None
+        The tokenzier to use. The default is to use the tokenizer specified by the ``Utilities`` class.
+
+    model_card : dict, default=None
+        A dictionary describing the model to be used. If the dictionary contains the key ``model_name``,
+        then this model will be used instead of the one set by ``llm_name``. In other words, ``model_card``
+        overrides ``llm_name``.
+
+    library : object, default=None
+        A ``Library`` object.
+
+    account_name : str, default="llmware"
+        The name of the account to be used. This is one of the states a the prompt.
+
+    prompt_id : int, default=None
+        The ID of the prompt. If a prompt ID is given, then the state of this prompt is loaded. Otherwise, a
+        new prompt ID is generated. This is part of the state of a prompt.
+
+    save_state : bool, default=True
+        Actually, this is a dead variable and should be removed in a future release.
+
+    llm_api_key : str, default=None
+        The API key that is used to load the large language model.
+
+    llm_model : str, default=None
+        The name of the model to load.
+
+    from_hf : bool, default=False
+        Indicates whether the model should be loaded from hugging face.
+
+    prompt_catalog : object, default=None
+        An object of type ``PromptCatalog``.
+
+    temperature : float, default=0.5
+        Sets the temperature of the large language model.
+
+    prompt_wrapper : str, default="human_bot"
+        Sets the prompt wrapper. Possible values are "alpaca", "human_bot", "chatgpt", "<INST>", "open_chat",
+        "hf_chat", and "chat_ml".
+
+    instruction_following : bool, default=False
+        Sets whether the large language model should follow instructions. Note that this has an effect
+        if and only if the model specified has a version that is trained to follow instructions.
+
+    Examples
+    ----------
+    >>> import os
+    >>> from llmware.prompts import Prompt
+    >>> openai_api_key = os.environ.get("OPENAI_API_KEY", "")
+    >>> prompter = Prompt(llm_name='gpt-4', llm_api_key=openai_api_key)
+    >>> prompt = 'How old is my brother?'
+    >>> context = 'My brother is 20 years old and my sister is 1.5 times older'
+    >>> response = prompter.prompt_main(prompt=prompt, context=context)
+    >>> response['llm_response']
+    """
     def __init__(self, llm_name=None, tokenizer=None, model_card=None, library=None, account_name="llmware",
                  prompt_id=None, save_state=True, llm_api_key=None, llm_model=None, from_hf=False,
                  prompt_catalog=None, temperature=0.5, prompt_wrapper="human_bot", instruction_following=False):
