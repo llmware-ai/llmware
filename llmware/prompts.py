@@ -1292,11 +1292,46 @@ class Prompt:
 
 
 class Sources:
+    """Implements a source, which is for example a document that is appended to a prompt. It is used
+    by the ``Prompt`` class.
 
-    """ Sources class can accept any Python iterable consisting of dictionary entries.
-        --each dictionary entry must support minimally the keys in self.source_input_keys
-        --By default, this is a minimum of 3 keys - "text", "file_source", "page_num"  """
+    ``Sources`` is responsible for adding a source (sometines also called a knowledge source) to a prompt.
+    It accepts a Python iterable consisting of dictionary entries, where the dictionary has to have
+    the keys "text", "file_source", "page_num".
 
+    Parameters
+    ----------
+    prompt : object
+        An object of type ``Prompt``.
+
+    Examples
+    ----------
+    >>> import os
+    >>> from llmware.setup import Setup
+    >>> from llmware.library import Library
+    >>> from llmware.prompts import Prompt
+    >>> library = Library().create_new_library('prompt_with_sources')
+    >>> sample_files_path = Setup().load_sample_files(over_write=False)
+    >>> parsing_output = library.add_files(os.path.join(sample_files_path, "Agreements"))
+    >>> prompt = Prompt().load_model('llmware/bling-1b-0.1')
+    >>> prompt.add_source_document(os.path.join(sample_files_path, "Agreements"), 'Apollo EXECUTIVE EMPLOYMENT AGREEMENT.pdf')
+    >>> result = prompt.prompt_with_source(prompt='What is the base salery amount?', prompt_name='default_with_context')
+    >>> type(result)
+    <class 'list'>
+    >>> len(result)
+    1
+    >>> type(result[0])
+    <class 'dict'>
+    >>> result[0].keys()
+    dict_keys(['llm_response', 'prompt', 'evidence', 'instruction', 'model', 'usage',
+               'time_stamp', 'calling_app_ID', 'rating', 'account_name', 'prompt_id',
+               'batch_id', 'evidence_metadata', 'biblio', 'event_type', 'human_feedback',
+               'human_assessed_accuracy'])
+    >>> result[0]['biblio']
+    {'Apollo EXECUTIVE EMPLOYMENT AGREEMENT.pdf': ['1']}
+    >>> result[0]['llm_response']
+    ' $1,000,000.00'
+    """
     def __init__(self, prompt):
 
         self.prompt= prompt
