@@ -1281,6 +1281,62 @@ class Query:
             doc_fn_out.append(file.split(os.sep)[-1])
         return doc_fn_out
 
+    def aggregate_text(self, qr_list):
+
+        """ Utility method that take a list of query result dictionaries as input (with all of the associated metadata
+        attributes) and repackages into two useful outputs:
+
+            -- text_agg, which is the aggregated text across all of the query results in a single unbroken string, and
+            -- meta_agg, which is a list of dictionaries with all of the 'start/stop' information in the text
+                string, which can be used to map back a snippet of text back to its original block entry in the DB.
+        """
+
+        text_agg = ""
+        meta_agg = []
+
+        for i, entry in enumerate(qr_list):
+            t = entry["text"]
+            meta = {"start_char": len(text_agg), "stop_char": len(text_agg) + len(t), "block_id": entry["block_ID"],
+                    "doc_ID": entry["doc_ID"], "page_num": entry["page_num"]}
+            meta_agg.append(meta)
+            text_agg += t
+
+        return text_agg, meta_agg
+
+    def document_lookup(self, doc_id="", file_source=""):
+
+        """ Takes as an input either a doc_id or file_source (e.g., filename) that is in a Library, and
+        returns all of the non-image text and table blocks in the document. """
+
+        if doc_id:
+            kv_dict = {"doc_ID": doc_id}
+        elif file_source:
+            kv_dict = {"file_source": file_source}
+        else:
+            raise RuntimeError("Query document_lookup method requires as input either a document ID or "
+                               "the name of a file already parsed in the library ")
+
+        output = CollectionRetrieval(self.library_name, account_name=self.account_name).filter_by_key_dict(kv_dict)
+
+        if len(output) == 0:
+            logging.warning(f"update: Query - document_lookup  - nothing found - {doc_id} - {file_source}")
+            result = []
+
+            return result
+
+        output_final = []
+
+        # exclude images to avoid potential duplicate text
+        for entries in output:
+            if entries["content_type"] != "image":
+                entries.update({"matches": []})
+                entries.update({"page_num": entries["master_index"]})
+                output_final.append(entries)
+
+        output_final = sorted(output_final, key=lambda x:x["block_ID"], reverse=False)
+
+        return output_final
+
     def block_lookup(self, block_id, doc_id):
 
         """ Look up by a specific pair of doc_id and block_id in a library. """
