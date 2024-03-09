@@ -33,76 +33,10 @@ from llmware.exceptions import LibraryObjectNotFoundException,UnsupportedEmbeddi
 
 
 class Query:
-    """Implements the query capabilities against a ``library``.
 
-    Query is responsible for executing queries against an indexed library. The library can be semantic, text, custom,
-    or hybrid. A query object requires a library object as input, which will be the source of the query.
+    """ Query is the main class for executing queries against an indexed library, whether semantic, text, custom,
+     or hybrid. A query object requires a library object as input, which will be the source of the query/retrieval. """
 
-    Parameters
-    ----------
-    library : object
-        A ``library`` object.
-
-    embedding_model : object, default=None
-        An ``embedding_model`` object.
-
-    tokenizer : object, default=None
-
-    vector_db_api_key : str, default=None
-        The API key for the vector store.
-
-    query_id : int, default=None
-        The identifier for a query. This is used when a query state has to be loaded.
-
-    from_hf : bool, default=False
-        Sets whether the embedding model should be loaded from hugging face.
-
-    from_sentence_transformer: bool, default=False
-        Sets whether the embedding model should be loaded from ``LLMWareSemanticModel``.
-
-    embedding_model_name : str, default=None
-        The name of the embedding model. This has to be set if ``from_sentence_transformer=True``.
-
-    save_history : bool, default=True
-        Sets whether the history of queries should be saved.
-
-    query_mode : str, default=None
-        Sets the query mode that should be used. It has to be either 'text', 'semantic', or 'hybrid'.
-
-    vector_db : str, default=None
-        The name of the vector store to be queried against. If it is not set, then this is determined by the
-        given ``embedding_model``.
-
-
-    Examples
-    ----------
-    >>> from llmware.library import Library
-    >>> from llmware.retrieval import Query
-    >>> library = Library().create_new_library('lib_semantic_query')
-    >>> library.add_website(url='https://en.wikipedia.org/wiki/Austria', get_links=False)
-    >>> library.install_new_embedding(embedding_model_name="industry-bert-sec", vector_db="milvus", batch_size=500)
-    >>> query = Query(library=library)
-    >>> results = query.semantic_query(query='the capital of austria is', result_count=3)
-    >>> len(results)
-    3
-    >>> results[0].keys()
-    dict_keys(['query', '_id', 'text', 'doc_ID', 'block_ID', 'page_num', 'content_type',
-               'author_or_speaker', 'special_field1', 'file_source', 'added_to_collection',
-               'table', 'coords_x', 'coords_y', 'coords_cx', 'coords_cy', 'external_files',
-               'score', 'similarity', 'distance', 'matches', 'account_name', 'library_name'])
-    >>> results[0]['query']
-    'the capital of austria is'
-    >>> results[0]['text']
-    'Austria is a parliamentary representative democracy with a popularly elected president as head of '
-    'state and a chancellor as head of government and chief executive. Major cities include Vienna , Graz, '
-    'Linz , Salzburg , and Innsbruck . Austria has the 17th highest nominal GDP per capita with high '
-    'standards of living; it was ranked 25th in the world for its Human Development Index in 2021. '
-    >>> results[2]['text']
-    "Austrian Parliament Building Vienna The Parliament of Austria is located in Vienna , the country's capital "
-    "and most populous city. Austria became a federal , representative democratic republic through the "
-    "Federal Constitutional Law of 1920. The political system of the Second Republic with its nine federal "
-    "states is based on the constitution of 1920, amended in 1929, which was re-enacted on 1 May 1945. [108] "
-    """
     def __init__(self, library, embedding_model=None, tokenizer=None, vector_db_api_key=None,
                  query_id=None, from_hf=False, from_sentence_transformer=False,embedding_model_name=None,
                  save_history=True, query_mode=None, vector_db=None, model_api_key=None):
@@ -1281,6 +1215,62 @@ class Query:
             doc_fn_out.append(file.split(os.sep)[-1])
         return doc_fn_out
 
+    def aggregate_text(self, qr_list):
+
+        """ Utility method that take a list of query result dictionaries as input (with all of the associated metadata
+        attributes) and repackages into two useful outputs:
+
+            -- text_agg, which is the aggregated text across all of the query results in a single unbroken string, and
+            -- meta_agg, which is a list of dictionaries with all of the 'start/stop' information in the text
+                string, which can be used to map back a snippet of text back to its original block entry in the DB.
+        """
+
+        text_agg = ""
+        meta_agg = []
+
+        for i, entry in enumerate(qr_list):
+            t = entry["text"]
+            meta = {"start_char": len(text_agg), "stop_char": len(text_agg) + len(t), "block_id": entry["block_ID"],
+                    "doc_ID": entry["doc_ID"], "page_num": entry["page_num"]}
+            meta_agg.append(meta)
+            text_agg += t
+
+        return text_agg, meta_agg
+
+    def document_lookup(self, doc_id="", file_source=""):
+
+        """ Takes as an input either a doc_id or file_source (e.g., filename) that is in a Library, and
+        returns all of the non-image text and table blocks in the document. """
+
+        if doc_id:
+            kv_dict = {"doc_ID": doc_id}
+        elif file_source:
+            kv_dict = {"file_source": file_source}
+        else:
+            raise RuntimeError("Query document_lookup method requires as input either a document ID or "
+                               "the name of a file already parsed in the library ")
+
+        output = CollectionRetrieval(self.library_name, account_name=self.account_name).filter_by_key_dict(kv_dict)
+
+        if len(output) == 0:
+            logging.warning(f"update: Query - document_lookup  - nothing found - {doc_id} - {file_source}")
+            result = []
+
+            return result
+
+        output_final = []
+
+        # exclude images to avoid potential duplicate text
+        for entries in output:
+            if entries["content_type"] != "image":
+                entries.update({"matches": []})
+                entries.update({"page_num": entries["master_index"]})
+                output_final.append(entries)
+
+        output_final = sorted(output_final, key=lambda x:x["block_ID"], reverse=False)
+
+        return output_final
+
     def block_lookup(self, block_id, doc_id):
 
         """ Look up by a specific pair of doc_id and block_id in a library. """
@@ -1440,9 +1430,6 @@ class Query:
         for x in range(0, len(core_text)):
             match = 0
             for key_term in query_tokens:
-                if len(key_term) == 0:
-                    continue
-                
                 if key_term.startswith('"'):
                     key_term = key_term[1:-1]
 
