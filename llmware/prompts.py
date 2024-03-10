@@ -1628,10 +1628,61 @@ class Sources:
 
 
 class QualityCheck:
+    """Implements the validation between the output of the LLM and the context used to generate the response,
+    which is used by the ``Prompt`` class.
 
-    """ QualityCheck is the main class for comparisons and validations between the llm_response output and the
-    input source context information provided to generate the response. """
+    ``QualityCheck`` allows for the comparison of LLM generated responses with the context that was used to
+    create the response. Concretely, it is quality verifying mechanism used by the ``Prompt`` class.
+    One use case is to verify that reported numbers in the response appear in the context.
 
+    Parameters
+    ----------
+    prompt : object, default=None
+        An object of type ``Prompt``.
+
+    Examples
+    ----------
+    >>> import os
+    >>> from llmware.setup import Setup
+    >>> from llmware.library import Library
+    >>> from llmware.prompts import Prompt
+    >>> library = Library().create_new_library('prompt_with_sources')
+    >>> sample_files_path = Setup().load_sample_files(over_write=False)
+    >>> parsing_output = library.add_files(os.path.join(sample_files_path, "Agreements"))
+    >>> prompt = Prompt().load_model('llmware/bling-1b-0.1')
+    >>> prompt.add_source_document(os.path.join(sample_files_path, "Agreements"), 'Apollo EXECUTIVE EMPLOYMENT AGREEMENT.pdf')
+    >>> result = prompt.prompt_with_source(prompt='What is the base salery amount?', prompt_name='default_with_context')
+    >>> result[0]['llm_response']
+    ' $1,000,000.00'
+    >>> ev_numbers = prompter.evidence_check_numbers(result)
+    >>> ev_numbers[0].keys()
+    dict_keys(['llm_response', 'prompt', 'evidence', 'instruction', 'model',
+               'usage', 'time_stamp', 'calling_app_ID', 'rating', 'account_name',
+               'prompt_id', 'batch_id', 'evidence_metadata', 'biblio', 'event_type',
+               'human_feedback', 'human_assessed_accuracy',
+               'fact_check'])
+    >>> ev_numbers[0]['fact_check']
+    [{'fact': 'detail.', 'status': 'Not Confirmed', 'text': '', 'page_num': '', 'source': ''}]
+    >>> ev_sources = prompter.evidence_check_sources(result)
+    >>> ev_sources[0].keys()
+    dict_keys(['llm_response', 'prompt', 'evidence', 'instruction', 'model',
+               'usage', 'time_stamp', 'calling_app_ID', 'rating', 'account_name',
+               'prompt_id', 'batch_id', 'evidence_metadata', 'biblio', 'event_type',
+               'human_feedback', 'human_assessed_accuracy',
+               'fact_check', 'source_review'])
+    >>> ev_sources[0]['source_review']
+    []
+    >>> ev_stats = prompter.evidence_comparison_stats(result)
+    >>> ev_stats[0].keys()
+    dict_keys(['llm_response', 'prompt', 'evidence', 'instruction', 'model',
+               'usage', 'time_stamp', 'calling_app_ID', 'rating', 'account_name',
+               'prompt_id', 'batch_id', 'evidence_metadata', 'biblio', 'event_type',
+               'human_feedback', 'human_assessed_accuracy', 'fact_check', 'source_review', 'comparison_stats'])
+    >>> ev_stats[0]['comparison_stats']
+    {'percent_display': '0.0%', 'confirmed_words': [],
+     'unconfirmed_words': ['1000000.00'], 'verified_token_match_ratio': 0.0,
+     'key_point_list': [{'key_point': ' $1,000,000.00', 'entry': 0, 'verified_match': 0.0}]}
+    """
     def __init__(self, prompt=None):
 
         self.llm_response = None
