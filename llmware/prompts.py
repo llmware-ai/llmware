@@ -2276,10 +2276,38 @@ class QualityCheck:
 
 
 class HumanInTheLoop:
+    """Implements the human reviewing features, which are used by the ``Prompt`` class.
 
-    """HumanInTheLoop class provides a set of basic utilities to extract prompt history state for
-    secondary level review, including corrections and user ratings."""
+    ``HumanInTheLoop`` provides utilities to extract prompt history states for secondary level review.
+    Currently, this includes sending an interaction to a human for review, modifying the response of
+    the model, and adding user ratings to an interaction.
 
+    Parameters
+    ----------
+    prompt : object
+        An object of type ``Prompt``.
+
+    prompt_id_list : list, default=None
+        A list of prompt ids.
+
+    Examples
+    ----------
+    >>> import os
+    >>> from llmware.setup import Setup
+    >>> from llmware.library import Library
+    >>> from llmware.prompts import Prompt, HumanInTheLoop
+    >>> library = Library().create_new_library('prompt_with_sources')
+    >>> sample_files_path = Setup().load_sample_files(over_write=False)
+    >>> parsing_output = library.add_files(os.path.join(sample_files_path, "Agreements"))
+    >>> prompt = Prompt().load_model('llmware/bling-1b-0.1')
+    >>> prompt.add_source_document(os.path.join(sample_files_path, "Agreements"), 'Apollo EXECUTIVE EMPLOYMENT AGREEMENT.pdf')
+    >>> result = prompt.prompt_with_source(prompt='What is the base salery amount?', prompt_name='default_with_context')
+    >>> csv_metadata = HumanInTheLoop(prompt).export_current_interaction_to_csv()
+    >>> csv_metadata
+    {'report_name': 'interaction_report_Sun Mar 10 17:16:01 2024.csv',
+     'report_fp': '/home/user/llmware_data/prompt_history/interaction_report_Sun Mar 10 17:16:01 2024.csv',
+     'results': 1}
+    """
     def __init__(self, prompt, prompt_id_list=None):
 
         self.prompt= prompt
