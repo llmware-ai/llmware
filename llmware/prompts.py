@@ -42,10 +42,72 @@ from llmware.configs import LLMWareConfig
 
 
 class Prompt:
+    """Implements the actions of the prompt process, which includes the actions pre-processing, execution,
+    post-processing, and managing the state of related inferences.
 
-    """ Prompt is the main class for pre-processing, executing, and post-processing of inferences and for
-    managing end-to-end state of a series of related inferences. """
+    ``Prompt`` is responsible for pre-processing, executing, and post-processing of inferences and for
+    managing end-to-end state of a series of related inferences.
 
+    Parameters
+    ----------
+    llm_name : str, default=None
+        The name of the llm to be used.
+
+    tokenizer : object, default=None
+        The tokenzier to use. The default is to use the tokenizer specified by the ``Utilities`` class.
+
+    model_card : dict, default=None
+        A dictionary describing the model to be used. If the dictionary contains the key ``model_name``,
+        then this model will be used instead of the one set by ``llm_name``. In other words, ``model_card``
+        overrides ``llm_name``.
+
+    library : object, default=None
+        A ``Library`` object.
+
+    account_name : str, default="llmware"
+        The name of the account to be used. This is one of the states a the prompt.
+
+    prompt_id : int, default=None
+        The ID of the prompt. If a prompt ID is given, then the state of this prompt is loaded. Otherwise, a
+        new prompt ID is generated. This is part of the state of a prompt.
+
+    save_state : bool, default=True
+        Actually, this is a dead variable and should be removed in a future release.
+
+    llm_api_key : str, default=None
+        The API key that is used to load the large language model.
+
+    llm_model : str, default=None
+        The name of the model to load.
+
+    from_hf : bool, default=False
+        Indicates whether the model should be loaded from hugging face.
+
+    prompt_catalog : object, default=None
+        An object of type ``PromptCatalog``.
+
+    temperature : float, default=0.5
+        Sets the temperature of the large language model.
+
+    prompt_wrapper : str, default="human_bot"
+        Sets the prompt wrapper. Possible values are "alpaca", "human_bot", "chatgpt", "<INST>", "open_chat",
+        "hf_chat", and "chat_ml".
+
+    instruction_following : bool, default=False
+        Sets whether the large language model should follow instructions. Note that this has an effect
+        if and only if the model specified has a version that is trained to follow instructions.
+
+    Examples
+    ----------
+    >>> import os
+    >>> from llmware.prompts import Prompt
+    >>> openai_api_key = os.environ.get("OPENAI_API_KEY", "")
+    >>> prompter = Prompt(llm_name='gpt-4', llm_api_key=openai_api_key)
+    >>> prompt = 'How old is my brother?'
+    >>> context = 'My brother is 20 years old and my sister is 1.5 times older'
+    >>> response = prompter.prompt_main(prompt=prompt, context=context)
+    >>> response['llm_response']
+    """
     def __init__(self, llm_name=None, tokenizer=None, model_card=None, library=None, account_name="llmware",
                  prompt_id=None, save_state=True, llm_api_key=None, llm_model=None, from_hf=False,
                  prompt_catalog=None, temperature=0.5, prompt_wrapper="human_bot", instruction_following=False):
@@ -1230,11 +1292,46 @@ class Prompt:
 
 
 class Sources:
+    """Implements a source, which is for example a document that is appended to a prompt. It is used
+    by the ``Prompt`` class.
 
-    """ Sources class can accept any Python iterable consisting of dictionary entries.
-        --each dictionary entry must support minimally the keys in self.source_input_keys
-        --By default, this is a minimum of 3 keys - "text", "file_source", "page_num"  """
+    ``Sources`` is responsible for adding a source (sometines also called a knowledge source) to a prompt.
+    It accepts a Python iterable consisting of dictionary entries, where the dictionary has to have
+    the keys "text", "file_source", "page_num".
 
+    Parameters
+    ----------
+    prompt : object
+        An object of type ``Prompt``.
+
+    Examples
+    ----------
+    >>> import os
+    >>> from llmware.setup import Setup
+    >>> from llmware.library import Library
+    >>> from llmware.prompts import Prompt
+    >>> library = Library().create_new_library('prompt_with_sources')
+    >>> sample_files_path = Setup().load_sample_files(over_write=False)
+    >>> parsing_output = library.add_files(os.path.join(sample_files_path, "Agreements"))
+    >>> prompt = Prompt().load_model('llmware/bling-1b-0.1')
+    >>> prompt.add_source_document(os.path.join(sample_files_path, "Agreements"), 'Apollo EXECUTIVE EMPLOYMENT AGREEMENT.pdf')
+    >>> result = prompt.prompt_with_source(prompt='What is the base salery amount?', prompt_name='default_with_context')
+    >>> type(result)
+    <class 'list'>
+    >>> len(result)
+    1
+    >>> type(result[0])
+    <class 'dict'>
+    >>> result[0].keys()
+    dict_keys(['llm_response', 'prompt', 'evidence', 'instruction', 'model', 'usage',
+               'time_stamp', 'calling_app_ID', 'rating', 'account_name', 'prompt_id',
+               'batch_id', 'evidence_metadata', 'biblio', 'event_type', 'human_feedback',
+               'human_assessed_accuracy'])
+    >>> result[0]['biblio']
+    {'Apollo EXECUTIVE EMPLOYMENT AGREEMENT.pdf': ['1']}
+    >>> result[0]['llm_response']
+    ' $1,000,000.00'
+    """
     def __init__(self, prompt):
 
         self.prompt= prompt
@@ -1531,10 +1628,61 @@ class Sources:
 
 
 class QualityCheck:
+    """Implements the validation between the output of the LLM and the context used to generate the response,
+    which is used by the ``Prompt`` class.
 
-    """ QualityCheck is the main class for comparisons and validations between the llm_response output and the
-    input source context information provided to generate the response. """
+    ``QualityCheck`` allows for the comparison of LLM generated responses with the context that was used to
+    create the response. Concretely, it is quality verifying mechanism used by the ``Prompt`` class.
+    One use case is to verify that reported numbers in the response appear in the context.
 
+    Parameters
+    ----------
+    prompt : object, default=None
+        An object of type ``Prompt``.
+
+    Examples
+    ----------
+    >>> import os
+    >>> from llmware.setup import Setup
+    >>> from llmware.library import Library
+    >>> from llmware.prompts import Prompt
+    >>> library = Library().create_new_library('prompt_with_sources')
+    >>> sample_files_path = Setup().load_sample_files(over_write=False)
+    >>> parsing_output = library.add_files(os.path.join(sample_files_path, "Agreements"))
+    >>> prompt = Prompt().load_model('llmware/bling-1b-0.1')
+    >>> prompt.add_source_document(os.path.join(sample_files_path, "Agreements"), 'Apollo EXECUTIVE EMPLOYMENT AGREEMENT.pdf')
+    >>> result = prompt.prompt_with_source(prompt='What is the base salery amount?', prompt_name='default_with_context')
+    >>> result[0]['llm_response']
+    ' $1,000,000.00'
+    >>> ev_numbers = prompter.evidence_check_numbers(result)
+    >>> ev_numbers[0].keys()
+    dict_keys(['llm_response', 'prompt', 'evidence', 'instruction', 'model',
+               'usage', 'time_stamp', 'calling_app_ID', 'rating', 'account_name',
+               'prompt_id', 'batch_id', 'evidence_metadata', 'biblio', 'event_type',
+               'human_feedback', 'human_assessed_accuracy',
+               'fact_check'])
+    >>> ev_numbers[0]['fact_check']
+    [{'fact': 'detail.', 'status': 'Not Confirmed', 'text': '', 'page_num': '', 'source': ''}]
+    >>> ev_sources = prompter.evidence_check_sources(result)
+    >>> ev_sources[0].keys()
+    dict_keys(['llm_response', 'prompt', 'evidence', 'instruction', 'model',
+               'usage', 'time_stamp', 'calling_app_ID', 'rating', 'account_name',
+               'prompt_id', 'batch_id', 'evidence_metadata', 'biblio', 'event_type',
+               'human_feedback', 'human_assessed_accuracy',
+               'fact_check', 'source_review'])
+    >>> ev_sources[0]['source_review']
+    []
+    >>> ev_stats = prompter.evidence_comparison_stats(result)
+    >>> ev_stats[0].keys()
+    dict_keys(['llm_response', 'prompt', 'evidence', 'instruction', 'model',
+               'usage', 'time_stamp', 'calling_app_ID', 'rating', 'account_name',
+               'prompt_id', 'batch_id', 'evidence_metadata', 'biblio', 'event_type',
+               'human_feedback', 'human_assessed_accuracy', 'fact_check', 'source_review', 'comparison_stats'])
+    >>> ev_stats[0]['comparison_stats']
+    {'percent_display': '0.0%', 'confirmed_words': [],
+     'unconfirmed_words': ['1000000.00'], 'verified_token_match_ratio': 0.0,
+     'key_point_list': [{'key_point': ' $1,000,000.00', 'entry': 0, 'verified_match': 0.0}]}
+    """
     def __init__(self, prompt=None):
 
         self.llm_response = None
@@ -2128,10 +2276,38 @@ class QualityCheck:
 
 
 class HumanInTheLoop:
+    """Implements the human reviewing features, which are used by the ``Prompt`` class.
 
-    """HumanInTheLoop class provides a set of basic utilities to extract prompt history state for
-    secondary level review, including corrections and user ratings."""
+    ``HumanInTheLoop`` provides utilities to extract prompt history states for secondary level review.
+    Currently, this includes sending an interaction to a human for review, modifying the response of
+    the model, and adding user ratings to an interaction.
 
+    Parameters
+    ----------
+    prompt : object
+        An object of type ``Prompt``.
+
+    prompt_id_list : list, default=None
+        A list of prompt ids.
+
+    Examples
+    ----------
+    >>> import os
+    >>> from llmware.setup import Setup
+    >>> from llmware.library import Library
+    >>> from llmware.prompts import Prompt, HumanInTheLoop
+    >>> library = Library().create_new_library('prompt_with_sources')
+    >>> sample_files_path = Setup().load_sample_files(over_write=False)
+    >>> parsing_output = library.add_files(os.path.join(sample_files_path, "Agreements"))
+    >>> prompt = Prompt().load_model('llmware/bling-1b-0.1')
+    >>> prompt.add_source_document(os.path.join(sample_files_path, "Agreements"), 'Apollo EXECUTIVE EMPLOYMENT AGREEMENT.pdf')
+    >>> result = prompt.prompt_with_source(prompt='What is the base salery amount?', prompt_name='default_with_context')
+    >>> csv_metadata = HumanInTheLoop(prompt).export_current_interaction_to_csv()
+    >>> csv_metadata
+    {'report_name': 'interaction_report_Sun Mar 10 17:16:01 2024.csv',
+     'report_fp': '/home/user/llmware_data/prompt_history/interaction_report_Sun Mar 10 17:16:01 2024.csv',
+     'results': 1}
+    """
     def __init__(self, prompt, prompt_id_list=None):
 
         self.prompt= prompt
