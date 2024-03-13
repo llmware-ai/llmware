@@ -15,7 +15,7 @@
 
 The common abstraction for all supported vector databases is the EmbeddingHandler class, which supports
 creating a new embedding, as well as searching and deleting the vector index. The module also implements the
-_EmbeddingUtils class, which provides a set of of funtions used by all vector database classes.
+_EmbeddingUtils class, which provides a set of functions used by all vector database classes.
 """
 
 
@@ -279,17 +279,17 @@ class _EmbeddingUtils:
 
         """ Creates concatenated safe name for collection """
 
-        converted_library_name = re.sub("[-@_.\/ ]", "", self.library_name).lower()
+        converted_library_name = re.sub(r"[-@_.\/ ]", "", self.library_name).lower()
         if len(converted_library_name) > 18:
             converted_library_name = converted_library_name[0:18]
 
-        converted_model_name = re.sub("[-@_.\/ ]", "", self.model_name).lower()
+        converted_model_name = re.sub(r"[-@_.\/ ]", "", self.model_name).lower()
         if len(converted_model_name) > 18:
             # chops off the start of the model name if longer than 18 chars
             starter = len(converted_model_name) - 18
             converted_model_name = converted_model_name[starter:]
 
-        converted_account_name = re.sub("[-@_.\/ ]", "", self.account_name).lower()
+        converted_account_name = re.sub(r"[-@_.\/ ]", "", self.account_name).lower()
         if len(converted_model_name) > 7:
             converted_account_name = converted_account_name[0:7]
 
@@ -303,7 +303,7 @@ class _EmbeddingUtils:
         """ Creates db_specific key """
 
         # will leave "-" and "_" in file path, but remove "@" and " "
-        model_safe_path = re.sub("[@ ]", "", self.model_name).lower()
+        model_safe_path = re.sub(r"[@ ]", "", self.model_name).lower()
         self.collection_key = f"embedding_{self.db_name}_" + model_safe_path
 
         return self.collection_key
@@ -630,7 +630,7 @@ class EmbeddingFAISS:
         self.collection_key = self.utils.create_db_specific_key()
 
         # will leave "-" and "_" in file path, but remove "@" and " "
-        model_safe_path = re.sub("[@\/. ]", "", self.model_name).lower()
+        model_safe_path = re.sub(r"[@\/. ]", "", self.model_name).lower()
         self.embedding_file_path = os.path.join(self.library.embedding_path, model_safe_path, "embedding_file_faiss")
         # self.collection_key = "embedding_faiss_" + model_safe_path
 
