@@ -847,7 +847,8 @@ class GGUFConfigs:
 
                   # note this will be used on Windows and Linux, but not Mac
                   "n_gpu_layers": 50,
-
+                  "cuda_driver_min_level": 12.1,
+                  "cuda_platforms": ["linux", "win32"],
                   "backend_initialized": False,
 
                   "max_output_tokens": 256,
