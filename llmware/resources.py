@@ -969,7 +969,7 @@ class PGRetrieval:
             exact_match = True
 
         # remove punctuation and split into tokens by whitespace
-        q_clean = re.sub("[^\w\s]", "", query)
+        q_clean = re.sub(r"[^\w\s]", "", query)
         q_toks = q_clean.split(" ")
 
         q_string = ""
@@ -1983,7 +1983,7 @@ class SQLiteRetrieval:
             exact_match = True
 
         # remove punctuation and split into tokens by whitespace
-        q_clean = re.sub("[^\w\s]", "", query)
+        q_clean = re.sub(r"[^\w\s]", "", query)
         q_toks = q_clean.split(" ")
 
         q_string = ""
@@ -3778,7 +3778,7 @@ class QueryState:
 
             text = ""
             if "text" in results:
-                text = re.sub("[,\"]"," ", results["text"])
+                text = re.sub(r"[,\"]"," ", results["text"])
 
             new_row = [query, file_source, doc_id, block_id, page_num, text]
 
