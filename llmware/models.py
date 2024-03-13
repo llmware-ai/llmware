@@ -39,13 +39,6 @@ import math
 
 import torch.utils.checkpoint
 
-#   start - imports for ctransformers
-from functools import partial
-import platform
-from ctypes import CDLL, c_bool, c_int, c_float, c_char_p, c_void_p, POINTER, Structure
-from pathlib import Path
-#   end - imports for ctransformers
-
 # new imports
 from collections import deque
 
@@ -54,7 +47,7 @@ from llmware.util import Utilities
 from llmware.configs import LLMWareConfig
 from llmware.resources import CloudBucketManager
 from llmware.exceptions import (ModelNotFoundException, DependencyNotInstalledException, ModuleNotFoundException,
-                                ModelCardNotRegisteredException)
+                                ModelCardNotRegisteredException, GGUFLibNotLoadedException)
 
 from llmware.model_configs import (global_model_repo_catalog_list, global_model_finetuning_prompt_wrappers_lookup,
                                    global_default_prompt_catalog)
@@ -4126,7 +4119,12 @@ class HFGenerativeModel:
 
             # sample
             probs = nn.functional.softmax(next_token_scores, dim=-1)
-            next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
+
+            # **** EXPERIMENT - turn off sampling if temperature is zero *****
+            if self.temperature == 0:
+                next_tokens = torch.argmax(probs)
+            else:
+                next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
 
             # finished sentences should have their next token be a padding token
             if eos_token_id is not None:
@@ -4644,14 +4642,54 @@ class GGUFGenerativeModel:
         self.model_params = None
         self.context_params = None
 
-        #   if (a) CUDA available and (b) use_gpu_if_available set to True (default)
-        #   note: this parameter is used currently on Linux and Windows
-        self.use_gpu = torch.cuda.is_available() and use_gpu_if_available
+        #   use_gpu set to TRUE only if:
+        #   (1) cuda_platform (e.g., linux or win32), e.g., not set on Mac OS
+        #   (2) use_gpu set to True in GGUFConfigs
+        #   (3) use_gpu_if_available flag set to True (by default)
+        #   (4) cuda found via:  torch.cuda.is_available() -> note: torch not used in GGUF processing, but is used
+        #       here as a safety check to confirm that CUDA is found and linked correctly to Python - over time,
+        #       we may identify a better way to make this check outside of Torch
+
+        self.use_gpu = (GGUFConfigs().get_config("use_gpu")
+                        and sys.platform.lower() in GGUFConfigs().get_config("cuda_platforms")
+                        and torch.cuda.is_available()
+                        and use_gpu_if_available)
 
         if self.use_gpu:
-            GGUFConfigs().set_config("use_gpu", True)
-        else:
-            GGUFConfigs().set_config("use_gpu", False)
+
+            #   need to check that the CUDA driver version is supported
+
+            cuda_version = torch.version.cuda
+            if not cuda_version:
+                self.use_gpu = False
+
+                logging.warning(f"warning: no CUDA detected - will load model on CPU.\n"
+                                f"-- potential causes:  (1) CUDA drivers not correctly installed, (2) CUDA_PATH not set, "
+                                f"or (3) Pytorch not compiled with CUDA - other causes possible, but these are the most common."
+                                f"-- note:  Pytorch is not used to run the model, but is used as a safety check to test "
+                                f"if Python is recognizing the CUDA driver."
+                                f"-- checks:  run `nvcc --version` and `nvidia-smi` to get CUDA local information.")
+
+            else:
+
+                # confirm that CUDA driver version is greater than current min (e.g., 12.1)
+
+                try:
+                    cuda_version_value = float(cuda_version)
+                except:
+                    cuda_version_value = 99
+
+                cuda_min_required = GGUFConfigs().get_config("cuda_driver_min_level")
+                if cuda_version_value < cuda_min_required:
+
+                    self.use_gpu = False
+                    logging.warning(f"warning: CUDA detected, but drivers are at level: {cuda_version} and use of GGUF"
+                                    f"model requires at least CUDA drivers at {cuda_min_required}.  Shifting to CPU mode. "
+                                    f"To use CUDA, either upgrade NVIDIA CUDA drivers, or use a custom gguf lib built "
+                                    f"to earlier driver version.")
+                else:
+                    # leaving as print for now to maximize clarity, will shift to logging warning/info over time
+                    print(f"update: confirmed CUDA drivers recognized- will load model on CUDA - {cuda_version}")
 
         # set default minimum
         self.n_batch = 2048
@@ -4747,6 +4785,9 @@ class GGUFGenerativeModel:
         custom_path = GGUFConfigs().get_config("custom_lib_path")
         cdll_args = dict()
 
+        # add option to fall_back if CUDA driver can not be loaded correctly to CPU driver for that OS
+        fall_back_option = ""
+
         if custom_path:
 
             if os.path.exists(custom_path):
@@ -4769,6 +4810,10 @@ class GGUFGenerativeModel:
 
                 if self.use_gpu:
                     _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_cuda")))
+
+                    # new - will try to use x86 as fallback
+                    fall_back_option = os.path.join(_base_path, GGUFConfigs().get_config("linux_x86"))
+
                 else:
                     _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_x86")))
 
@@ -4785,6 +4830,10 @@ class GGUFGenerativeModel:
 
                 if self.use_gpu:
                     _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("windows_cuda")))
+
+                    # new - will try to use x86 as fallback
+                    fall_back_option = os.path.join(_base_path, GGUFConfigs().get_config("windows"))
+
                 else:
                     _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("windows")))
 
@@ -4813,13 +4862,35 @@ class GGUFGenerativeModel:
         # Try to load the shared library, handling potential errors
         for _lib_path in _lib_paths:
 
+            if not os.path.exists(_lib_path):
+                if fall_back_option:
+                    _lib_path = fall_back_option
+
             if os.path.exists(_lib_path):
 
                 try:
                     return ctypes.CDLL(str(_lib_path), **cdll_args)
 
                 except Exception as e:
-                    raise ModuleNotFoundException(f"llama_cpp_backend at {_lib_path} - {e}")
+
+                    # NEW INSERT - if fail, and CUDA selected, then try to fall back to matching CPU version
+                    if fall_back_option:
+                        try:
+
+                            logging.warning("update: Not successful loading CUDA lib, so reverting to CPU driver.")
+
+                            return ctypes.CDLL(str(fall_back_option), **cdll_args)
+                        except:
+
+                            # if fall-back fails
+                            raise GGUFLibNotLoadedException("llama_cpp_backend",
+                                                            sys.platform.lower(),
+                                                            self.use_gpu,
+                                                            _lib_path,
+                                                            custom_path)
+                    else:
+                        raise GGUFLibNotLoadedException("llama_cpp_backend",sys.platform.lower(),
+                                                        self.use_gpu, _lib_path, custom_path)
 
         # if not loaded
         raise ModuleNotFoundException("llama_cpp_backend")

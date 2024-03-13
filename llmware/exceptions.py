@@ -197,3 +197,49 @@ class ModelCardNotRegisteredException(LLMWareException):
         message = (f"'{config_key}' is missing key attributes and fails validation to be registered as a model.")
         super().__init__(message)
 
+
+class GGUFLibNotLoadedException(LLMWareException):
+
+    """ Exception raised when GGUF Lib back-end can not be loaded successfully.   Exception tries to be
+    more helpful in sharing suggestions for potential causes and remedies. """
+
+    def __init__(self, module_name, os_platform, use_gpu, _lib_path, custom_path):
+
+        # over time, may add more details by os_platform
+
+        if custom_path:
+
+            message = (f"GGUF lib from custom path - '{_lib_path}' could not be successfully loaded.  Please "
+                       f"check that the lib is a llama_cpp back-end binary.  Assuming that it is a valid build,"
+                       f"then the most likely cause of the error is that the back-end binary was compiled "
+                       f"with instructions not compatible with the current system.")
+
+        else:
+
+            if not use_gpu:
+
+                message = (f"GGUF lib '{module_name}' could not be successfully loaded from shared library.  This is "
+                           f"most likely because the prepackaged binary does not match your OS configuration.   "
+                           f"LLMWare ships with 6 pre-built GGUF back-ends for Mac (Metal, x86), Windows (x86, CUDA), and "
+                           f"Linux (x86, CUDA).  These binaries depend upon low-level instruction capabilities provided"
+                           f"by the processor and OS, and for Windows and Linux assume that AVX and AVX2 will be "
+                           f"enabled.  Useful debugging tips:\n--Ensure llmware 0.2.4+ installed, and if cloned from "
+                           f"repository that all of the libs were fully updated"
+                           f"\n--Linux - Ubuntu 20+ and GLIBC 2.31+ (will likely not run if GLIBC < 2.31); "
+                           f"\n--Check CPU capabilities using `py-cpuinfo' library, which will generate a nice "
+                           f"dictionary view of supported OS capabilities.\n"
+                           f"--Raise an Issue on llmware github and please share the py-cpuinfo report for your system.")
+            else:
+
+                message = (f"GGUF lib '{module_name}' for CUDA could not be loaded successfully, and an attempt to "
+                           f"fall-back to the CPU based library also failed.   To debug the CUDA availability, "
+                           f"check the following:\n--`nvcc --version` to get the CUDA Driver version on your system."
+                           f"\n--Win CUDA and Linux CUDA builds today require at least CUDA >= 12.1.\n"
+                           f"--Pytorch is used to identify CUDA information - please check with the commands - "
+                           f"`torch.cuda.is_available()` and `torch.version.cuda` that Pytorch is finding the "
+                           f"right driver on your system.\n--Raise on Issue on llwmare github and share relevant "
+                           f"system details on OS and CUDA drivers installed.")
+
+        super().__init__(message)
+
+
