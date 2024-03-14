@@ -391,7 +391,10 @@ class LLMfx:
 
         return output_list
 
-    def load_tool(self, tool_type):
+    def load_tool(self, tool_type,
+                  # new options added
+                   use_gpu=True, sample=True, get_logits=False,
+                   max_output=100, temperature=-99):
 
         """ Loads a single tool """
 
@@ -402,7 +405,9 @@ class LLMfx:
             self.write_to_journal(journal_update)
 
             setattr(self, tool_type + "_model",
-                    ModelCatalog().load_model(self._default_tool_map[tool_type],api_key=self.api_key))
+                    ModelCatalog().load_model(self._default_tool_map[tool_type],api_key=self.api_key,
+                                              sample=sample,use_gpu=use_gpu,get_logits=get_logits,max_output=max_output,
+                                              temperature=temperature))
 
             model = getattr(self, tool_type + "_model")
 

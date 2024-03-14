@@ -231,7 +231,10 @@ class Prompt:
             os.mkdir(self.prompt_path)
             os.chmod(self.prompt_path, 0o777)
 
-    def load_model(self, gen_model,api_key=None, from_hf=False, trust_remote_code=False):
+    def load_model(self, gen_model,api_key=None, from_hf=False, trust_remote_code=False,
+                   # new options added
+                   use_gpu=True, sample=True, get_logits=False,
+                   max_output=100, temperature=-99):
 
         """Load model into prompt object by selecting model name """
 
@@ -239,7 +242,9 @@ class Prompt:
             self.llm_model_api_key = api_key
 
         if not from_hf:
-            self.llm_model = self.model_catalog.load_model(gen_model, api_key=self.llm_model_api_key)
+            self.llm_model = self.model_catalog.load_model(gen_model, api_key=self.llm_model_api_key,
+                                                           use_gpu=use_gpu, sample=sample, get_logits=get_logits,
+                                                           max_output=max_output, temperature=temperature)
         else:
             try:
                 # will wrap in Exception if import fails and move to model catalog class
