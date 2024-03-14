@@ -711,7 +711,7 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
-**Thursday, March 14 - v0.2.5 Update - WIP**
+**Thursday, March 14 - v0.2.5 Update - WIP**  
 -Improved support for GGUF on CUDA (Windows and Linux), with new prebuilt binaries and exception handling.  
 -Enhanced model configuration options (sampling, temperature, top logit capture).  
 -Added full back-level support for Ubuntu 20+ with parsers and GGUF engine.  
