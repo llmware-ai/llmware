@@ -12,7 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
-"""The util module implements general helper functions with the Utilties class, and more specialized
+
+"""The util module implements general helper functions with the Utilities class, and more specialized
  other classes.
 
 Among the more specializes other classes is whole word tokenizer with CorpTokenizer, and statistical
@@ -35,7 +36,6 @@ from zipfile import ZipFile, ZIP_DEFLATED
 import numpy as np
 import re
 from tokenizers import Tokenizer
-from word2number import w2n
 from datetime import datetime
 import time
 from ctypes import *
@@ -43,9 +43,20 @@ import logging
 import requests
 import uuid
 
+try:
+    from word2number import w2n
+except ImportError:
+    pass
 
-from wikipediaapi import Wikipedia, ExtractFormat
-import yfinance
+try:
+    from wikipediaapi import Wikipedia, ExtractFormat
+except ImportError:
+    pass
+
+try:
+    import yfinance
+except ImportError:
+    pass
 
 from llmware.resources import CollectionRetrieval, PromptState, CloudBucketManager
 from llmware.configs import LLMWareConfig

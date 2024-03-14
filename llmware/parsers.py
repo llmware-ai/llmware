@@ -25,13 +25,25 @@ import os
 from zipfile import ZipFile, ZIP_DEFLATED
 import shutil
 import requests
-from bs4 import BeautifulSoup
 from urllib.request import urlopen, Request
 
-import pytesseract
-from pytesseract.pytesseract import TesseractNotFoundError
-from pdf2image import convert_from_path
-from pdf2image.exceptions import PDFInfoNotInstalledError
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    pass
+
+try:
+    import pytesseract
+    from pytesseract.pytesseract import TesseractNotFoundError
+except ImportError:
+    pass
+
+try:
+    from pdf2image import convert_from_path
+    from pdf2image.exceptions import PDFInfoNotInstalledError
+except ImportError:
+    pass
+
 import logging
 import random
 from ctypes import *

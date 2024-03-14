@@ -102,8 +102,43 @@ class llama_model_params(ctypes.Structure):
         ("use_mlock", ctypes.c_bool),
     ]
 
+
+ggml_abort_callback = ctypes.CFUNCTYPE(ctypes.c_bool, ctypes.c_void_p)
+
+
 class llama_context_params(ctypes.Structure):
 
+    # update to new llama_context_params as of March 10, 2024
+
+    _fields_ = [
+        ("seed", ctypes.c_uint32),
+        ("n_ctx", ctypes.c_uint32),
+        ("n_batch", ctypes.c_uint32),
+        ("n_parallel", ctypes.c_uint32),
+        ("n_threads", ctypes.c_uint32),
+        ("n_threads_batch", ctypes.c_uint32),
+        ("rope_scaling_type", ctypes.c_int),
+        ("pooling_type", ctypes.c_int),
+        ("rope_freq_base", ctypes.c_float),
+        ("rope_freq_scale", ctypes.c_float),
+        ("yarn_ext_factor", ctypes.c_float),
+        ("yarn_attn_factor", ctypes.c_float),
+        ("yarn_beta_fast", ctypes.c_float),
+        ("yarn_beta_slow", ctypes.c_float),
+        ("yarn_orig_ctx", ctypes.c_uint32),
+        ("defrag_thold", ctypes.c_float),
+        ("cb_eval", ggml_backend_sched_eval_callback),
+        ("cb_eval_user_data", ctypes.c_void_p),
+        ("type_k", ctypes.c_int),
+        ("type_v", ctypes.c_int),
+        ("logits_all", ctypes.c_bool),
+        ("embeddings", ctypes.c_bool),
+        ("offload_kqv", ctypes.c_bool),
+        ("abort_callback", ggml_abort_callback),
+        ("abort_callback_data", ctypes.c_void_p),
+    ]
+
+    """
     _fields_ = [
         ("seed", ctypes.c_uint32),
         ("n_ctx", ctypes.c_uint32),
@@ -128,7 +163,7 @@ class llama_context_params(ctypes.Structure):
         ("offload_kqv", ctypes.c_bool),
         ("do_pooling", ctypes.c_bool),
     ]
-
+"""
 
 class llama_model_quantize_params(ctypes.Structure):
 
@@ -812,7 +847,8 @@ class GGUFConfigs:
 
                   # note this will be used on Windows and Linux, but not Mac
                   "n_gpu_layers": 50,
-
+                  "cuda_driver_min_level": 12.1,
+                  "cuda_platforms": ["linux", "win32"],
                   "backend_initialized": False,
 
                   "max_output_tokens": 256,

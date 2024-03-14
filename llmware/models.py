@@ -39,13 +39,6 @@ import math
 
 import torch.utils.checkpoint
 
-#   start - imports for ctransformers
-from functools import partial
-import platform
-from ctypes import CDLL, c_bool, c_int, c_float, c_char_p, c_void_p, POINTER, Structure
-from pathlib import Path
-#   end - imports for ctransformers
-
 # new imports
 from collections import deque
 
@@ -54,13 +47,16 @@ from llmware.util import Utilities
 from llmware.configs import LLMWareConfig
 from llmware.resources import CloudBucketManager
 from llmware.exceptions import (ModelNotFoundException, DependencyNotInstalledException, ModuleNotFoundException,
-                                ModelCardNotRegisteredException)
+                                ModelCardNotRegisteredException, GGUFLibNotLoadedException)
 
 from llmware.model_configs import (global_model_repo_catalog_list, global_model_finetuning_prompt_wrappers_lookup,
                                    global_default_prompt_catalog)
 
 from llmware.gguf_configs import *
 from llmware.gguf_configs import _LlamaModel, _LlamaContext, _LlamaBatch, _LlamaTokenDataArray
+
+import transformers
+transformers.logging.set_verbosity_error()
 
 
 class _ModelRegistry:
@@ -250,6 +246,15 @@ class ModelCatalog:
 
         self.account_name = None
         self.library_name= None
+
+        # attributes that are used when a model is selected through .load_model method
+        self.loaded_model_name = None
+        self.loaded_model_class = None
+        self.temperature = 0.3
+        self.use_gpu = True
+        self.sample = True
+        self.max_output = 100
+        self.get_logits = False
 
     def pull_latest_manifest(self):
         """ Not implemented currently """
@@ -615,31 +620,24 @@ class ModelCatalog:
             # HF models
             if model_class == "HFGenerativeModel":
                 my_model = HFGenerativeModel(model_name=model_name,api_key=api_key, trust_remote_code=True,
-                                             model_card=model_card)
-
-                # set specific parameters associated with custom models
-
-                if "instruction_following" in model_card:
-                    my_model.instruction_following = model_card["instruction_following"]
-                else:
-                    my_model.instruction_following = False
-
-                if "prompt_wrapper" in model_card:
-                    my_model.prompt_wrapper = model_card["prompt_wrapper"]
-                else:
-                    my_model.prompt_wrapper = "human_bot"
-
-                if "temperature" in model_card:
-                    my_model.temperature = model_card["temperature"]
-                else:
-                    my_model.temperature = 0.3
-                
-                if "trailing_space" in model_card:
-                    my_model.trailing_space = model_card["trailing_space"]
+                                             model_card=model_card,
+                                             # new options added
+                                             use_gpu_if_available=self.use_gpu,
+                                             get_logits=self.get_logits,
+                                             temperature=self.temperature,
+                                             max_output=self.max_output,
+                                             sample=self.sample)
 
             if model_class == "GGUFGenerativeModel":
 
-                my_model = GGUFGenerativeModel(model_name=model_name, api_key=api_key, model_card=model_card)
+                my_model = GGUFGenerativeModel(model_name=model_name, api_key=api_key, model_card=model_card,
+                                               # new configuration options
+                                               use_gpu_if_available=True,
+                                               get_logits=self.get_logits,
+                                               temperature=self.temperature,
+                                               max_output=self.max_output,
+                                               sample=self.sample
+                                                )
 
             if model_class == "HFEmbeddingModel": my_model = HFEmbeddingModel(model_name=model_name,
                                                                               api_key=api_key,
@@ -649,9 +647,21 @@ class ModelCatalog:
 
         return my_model
 
-    def load_model (self, selected_model, api_key=None):
+    def load_model (self, selected_model, api_key=None, use_gpu=True, sample=True,get_logits=False,
+                    max_output=100, temperature=-99):
 
         """ Main method for loading and fully instantiating a model based solely on the model's name """
+
+        # apply optional attributes - will be available to the loaded model
+        self.use_gpu=use_gpu
+        self.sample=sample
+        self.max_output=max_output
+        self.get_logits=get_logits
+
+        # note: temperature set by default at -99, which is a dummy value that is over-ridden by the temperature
+        # in the model card.   This temperature will only be used if explicitly set by the user at value != -99
+
+        self.temperature=temperature
 
         # completes all preparatory steps, and returns 'ready-for-inference' model
 
@@ -965,7 +975,10 @@ class ModelCatalog:
 
         return test_set
 
-    def tool_test_run(self, model_name, api_key=None, verbose=False):
+    def tool_test_run(self, model_name, api_key=None, verbose=False,
+                      # add more optional configurations to flow thru to the model inference
+                      use_gpu=True, sample=True, get_logits=True,
+                      max_output=100, temperature=-99):
 
         """ Loads a tool, if required, and executes a series of test runs.
         Note: only available for 'tool' implementation models. """
@@ -977,7 +990,9 @@ class ModelCatalog:
 
         if "snapshot" in model_card:
 
-            model = self.load_model(model_name, api_key=api_key)
+            model = self.load_model(model_name, api_key=api_key, use_gpu=use_gpu, sample=sample,
+                                    get_logits=get_logits,max_output=max_output, temperature=temperature)
+
             test_set = self.get_test_script(model_name)
 
             if test_set:
@@ -3743,18 +3758,23 @@ class HFGenerativeModel:
 
     def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None, model_card=None,
                  prompt_wrapper=None, instruction_following=False, context_window=2048,
-                 use_gpu_if_available=True, trust_remote_code=False):
+                 use_gpu_if_available=True, trust_remote_code=False, sample=True,max_output=100, temperature=0.3,
+                 get_logits=False):
 
-        # pull in expected hf input
+        #   pull in expected hf input
         self.model_name = model_name
         self.hf_tokenizer_name = model_name
         self.model = model
         self.tokenizer = tokenizer
 
-        # *** NEW INSERT - Function Calls ***
+        #   new parameters
+        self.sample=sample
+        self.max_output=max_output
+        self.get_logits=get_logits
+
+        # Function Call parameters
         self.model_card = model_card
         self.logits_record = []
-        self.get_logits = False
         self.output_tokens = []
         self.top_logit_count = 10
         self.primary_keys = None
@@ -3771,10 +3791,6 @@ class HFGenerativeModel:
 
             if "function_call" in model_card:
                 self.fc_supported = model_card["function_call"]
-
-        # note - these two parameters will control how prompts are handled - model-specific
-        self.prompt_wrapper = prompt_wrapper
-        self.instruction_following = instruction_following
 
         # instantiate if model_name passed without actual model and tokenizer
         if model_name and not model and not tokenizer:
@@ -3818,7 +3834,29 @@ class HFGenerativeModel:
             self.prompt_wrapper = "human_bot"
             self.instruction_following = False
 
+        # set specific parameters associated with custom models
+        # note - these two parameters will control how prompts are handled - model-specific
+        self.prompt_wrapper = prompt_wrapper
+        self.instruction_following = instruction_following
+
+        if "instruction_following" in model_card:
+            self.instruction_following = model_card["instruction_following"]
+        else:
+            self.instruction_following = False
+
+        if "prompt_wrapper" in model_card:
+            self.prompt_wrapper = model_card["prompt_wrapper"]
+        else:
+            self.prompt_wrapper = "human_bot"
+
+        #   sets trailing space default when constructing the prompt
+        #   in most cases, this is * no trailing space * but for some models, a trailing space or "\n" improves
+        #   performance
+
         self.trailing_space = ""
+
+        if "trailing_space" in model_card:
+            self.trailing_space = model_card["trailing_space"]
 
         self.model_type = None
         self.config = None
@@ -3880,9 +3918,19 @@ class HFGenerativeModel:
 
         self.error_message = "\nUnable to identify and load HuggingFace model."
 
-        # inference settings
-        self.temperature = 0.5
-        self.target_requested_output_tokens = 100
+        # temperature settings
+
+        # if temperature set at time of loading the model, then use that setting
+        if temperature != -99:
+            self.temperature = temperature
+        elif "temperature" in model_card:
+            # if not set, then pull the default temperature from the model card
+            self.temperature = model_card["temperature"]
+        else:
+            # if no guidance from model loading or model card, then set at default of 0.3
+            self.temperature = 0.3
+
+        self.target_requested_output_tokens = self.max_output
         self.add_prompt_engineering = False
         self.add_context = ""
 
@@ -4119,14 +4167,35 @@ class HFGenerativeModel:
             # shape of next_token_logits = torch.Size([1, 32000])
             # print("next token logits shape - ", next_token_logits.shape)
 
-            if self.temperature:
+            if self.temperature and self.sample:
                 next_token_scores = next_token_logits / self.temperature
             else:
                 next_token_scores = next_token_logits
 
-            # sample
+            # get token from logits
             probs = nn.functional.softmax(next_token_scores, dim=-1)
-            next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
+
+            if not self.sample:
+                # will pull the 'top logit' only
+                next_tokens = torch.argmax(probs).unsqueeze(0)
+            else:
+                # will apply probabilistic sampling
+                next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
+
+            # new - option to capture logits and output tokens for analysis
+            if self.get_logits:
+                self.register_top_logits(next_token_logits)
+
+                # capture the output tokens
+                if self.use_gpu:
+                    next_tokens_np = np.array(next_tokens.to('cpu'))
+                else:
+
+                    # print("next tokens: ", next_tokens)
+
+                    next_tokens_np = np.array(next_tokens)
+
+                self.output_tokens.append(next_tokens_np[0])
 
             # finished sentences should have their next token be a padding token
             if eos_token_id is not None:
@@ -4211,6 +4280,10 @@ class HFGenerativeModel:
                  "processing_time": time.time() - time_start}
 
         output_response = {"llm_response": output_str, "usage": usage}
+
+        if self.get_logits:
+            output_response.update({"logits": self.logits_record})
+            output_response.update({"output_tokens": self.output_tokens})
 
         return output_response
 
@@ -4397,14 +4470,22 @@ class HFGenerativeModel:
             # option to capture logits for analysis
             # if self.get_logits: self.register_top_logits(next_token_logits)
 
-            if self.temperature:
+            if self.temperature and self.sample:
                 next_token_scores = next_token_logits / self.temperature
             else:
                 next_token_scores = next_token_logits
 
-            # sample
+            # get token from logits
             probs = nn.functional.softmax(next_token_scores, dim=-1)
-            next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
+
+            if not self.sample:
+                # will pull the 'top logit' only
+                next_tokens = torch.argmax(probs).unsqueeze(0)
+            else:
+                # will apply probabilistic sampling
+                next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
+
+            # print("next tokens (fc): ", next_tokens)
 
             # option to capture logits and output tokens for analysis
             if self.get_logits:
@@ -4549,20 +4630,31 @@ class GGUFGenerativeModel:
     #   to "bring their own" pre-built llama_cpp libs in conjunction with llmware
 
     def __init__(self, model_name=None, model_card=None, api_key=None, prompt_wrapper=None, instruction_following=False,
-                 context_window=2048, use_gpu_if_available=True, get_logits=True):
+                 context_window=2048, use_gpu_if_available=True, get_logits=False,
+                 sample=True,max_output=100, temperature=0.3):
 
         #   set verbose level in environ level - will be picked up by callback in llama_cpp
         os.environ["llama_cpp_verbose"] = GGUFConfigs().get_config("llama_cpp_verbose")
 
-        #   key configs
-        self.temperature = GGUFConfigs().get_config("temperature_default")
-        self.n_seq_max = GGUFConfigs().get_config("max_output_tokens")
+        #   adding new parameters - use_sampling, temperature, max_output
+        self.use_sampling=sample
+        self.get_logits=get_logits
+        self.logits_record = []
+        self.output_tokens = []
+        self.top_logit_count = 10
 
+        # TODO:  max_output by GGUFConfigs defaults
+        self.max_output=max_output
+
+        #   key configs
+        self.n_seq_max = GGUFConfigs().get_config("max_output_tokens")
         self.target_requested_output_tokens = self.n_seq_max
 
+        # TODO: cleanup repetitive output size attributes
         self.max_total_len = 2048
         self.max_input_len = int(0.5 * context_window)
         self.llm_max_output_len = int(0.5 * context_window)
+        self.max_output_len = self.n_seq_max
 
         self.model_name = model_name
         self.prompt_wrapper = prompt_wrapper
@@ -4578,13 +4670,6 @@ class GGUFGenerativeModel:
 
         self.gguf_file = None
         self.gguf_repo = None
-
-        self.logits_record = []
-        self.output_tokens = []
-        self.top_logit_count = 10
-        self.get_logits = get_logits
-        self.max_output_len = self.n_seq_max
-
         self.primary_keys = None
         self.function = None
         self.hf_tokenizer_name = None
@@ -4615,11 +4700,6 @@ class GGUFGenerativeModel:
             if "context_window" in model_card:
                 self.max_total_len = model_card["context_window"]
 
-            if "temperature" in model_card:
-                self.temperature = model_card["temperature"]
-            else:
-                self.temperature = 0.3
-
             if "prompt_wrapper" in model_card:
                 self.prompt_wrapper = model_card["prompt_wrapper"]
             else:
@@ -4634,6 +4714,18 @@ class GGUFGenerativeModel:
             if "instruction_following" in model_card:
                 self.instruction_following = model_card["instruction_following"]
 
+        #   temperature configuration
+
+        # if temperature set at time of loading the model, then use that setting
+        if temperature != -99:
+            self.temperature = temperature
+        elif "temperature" in model_card:
+            # if not set, then pull the default temperature from the model card
+            self.temperature = model_card["temperature"]
+        else:
+            # if no guidance from model loading or model card, then set at GGUFConfigs default
+            self.temperature = GGUFConfigs().get_config("temperature_default")
+
         #   gguf specific attributes
 
         self._lib = None
@@ -4644,14 +4736,54 @@ class GGUFGenerativeModel:
         self.model_params = None
         self.context_params = None
 
-        #   if (a) CUDA available and (b) use_gpu_if_available set to True (default)
-        #   note: this parameter is used currently on Linux and Windows
-        self.use_gpu = torch.cuda.is_available() and use_gpu_if_available
+        #   use_gpu set to TRUE only if:
+        #   (1) cuda_platform (e.g., linux or win32), e.g., not set on Mac OS
+        #   (2) use_gpu set to True in GGUFConfigs
+        #   (3) use_gpu_if_available flag set to True (by default)
+        #   (4) cuda found via:  torch.cuda.is_available() -> note: torch not used in GGUF processing, but is used
+        #       here as a safety check to confirm that CUDA is found and linked correctly to Python - over time,
+        #       we may identify a better way to make this check outside of Torch
+
+        self.use_gpu = (GGUFConfigs().get_config("use_gpu")
+                        and sys.platform.lower() in GGUFConfigs().get_config("cuda_platforms")
+                        and torch.cuda.is_available()
+                        and use_gpu_if_available)
 
         if self.use_gpu:
-            GGUFConfigs().set_config("use_gpu", True)
-        else:
-            GGUFConfigs().set_config("use_gpu", False)
+
+            #   need to check that the CUDA driver version is supported
+
+            cuda_version = torch.version.cuda
+            if not cuda_version:
+                self.use_gpu = False
+
+                logging.warning(f"warning: no CUDA detected - will load model on CPU.\n"
+                                f"-- potential causes:  (1) CUDA drivers not correctly installed, (2) CUDA_PATH not set, "
+                                f"or (3) Pytorch not compiled with CUDA - other causes possible, but these are the most common."
+                                f"-- note:  Pytorch is not used to run the model, but is used as a safety check to test "
+                                f"if Python is recognizing the CUDA driver."
+                                f"-- checks:  run `nvcc --version` and `nvidia-smi` to get CUDA local information.")
+
+            else:
+
+                # confirm that CUDA driver version is greater than current min (e.g., 12.1)
+
+                try:
+                    cuda_version_value = float(cuda_version)
+                except:
+                    cuda_version_value = 99
+
+                cuda_min_required = GGUFConfigs().get_config("cuda_driver_min_level")
+                if cuda_version_value < cuda_min_required:
+
+                    self.use_gpu = False
+                    logging.warning(f"warning: CUDA detected, but drivers are at level: {cuda_version} and use of GGUF"
+                                    f"model requires at least CUDA drivers at {cuda_min_required}.  Shifting to CPU mode. "
+                                    f"To use CUDA, either upgrade NVIDIA CUDA drivers, or use a custom gguf lib built "
+                                    f"to earlier driver version.")
+                else:
+                    # leaving as print for now to maximize clarity, will shift to logging warning/info over time
+                    print(f"update: confirmed CUDA drivers recognized- will load model on CUDA - {cuda_version}")
 
         # set default minimum
         self.n_batch = 2048
@@ -4747,6 +4879,9 @@ class GGUFGenerativeModel:
         custom_path = GGUFConfigs().get_config("custom_lib_path")
         cdll_args = dict()
 
+        # add option to fall_back if CUDA driver can not be loaded correctly to CPU driver for that OS
+        fall_back_option = ""
+
         if custom_path:
 
             if os.path.exists(custom_path):
@@ -4769,6 +4904,10 @@ class GGUFGenerativeModel:
 
                 if self.use_gpu:
                     _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_cuda")))
+
+                    # new - will try to use x86 as fallback
+                    fall_back_option = os.path.join(_base_path, GGUFConfigs().get_config("linux_x86"))
+
                 else:
                     _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_x86")))
 
@@ -4785,6 +4924,10 @@ class GGUFGenerativeModel:
 
                 if self.use_gpu:
                     _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("windows_cuda")))
+
+                    # new - will try to use x86 as fallback
+                    fall_back_option = os.path.join(_base_path, GGUFConfigs().get_config("windows"))
+
                 else:
                     _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("windows")))
 
@@ -4813,13 +4956,35 @@ class GGUFGenerativeModel:
         # Try to load the shared library, handling potential errors
         for _lib_path in _lib_paths:
 
+            if not os.path.exists(_lib_path):
+                if fall_back_option:
+                    _lib_path = fall_back_option
+
             if os.path.exists(_lib_path):
 
                 try:
                     return ctypes.CDLL(str(_lib_path), **cdll_args)
 
                 except Exception as e:
-                    raise ModuleNotFoundException(f"llama_cpp_backend at {_lib_path} - {e}")
+
+                    # NEW INSERT - if fail, and CUDA selected, then try to fall back to matching CPU version
+                    if fall_back_option:
+                        try:
+
+                            logging.warning("update: Not successful loading CUDA lib, so reverting to CPU driver.")
+
+                            return ctypes.CDLL(str(fall_back_option), **cdll_args)
+                        except:
+
+                            # if fall-back fails
+                            raise GGUFLibNotLoadedException("llama_cpp_backend",
+                                                            sys.platform.lower(),
+                                                            self.use_gpu,
+                                                            _lib_path,
+                                                            custom_path)
+                    else:
+                        raise GGUFLibNotLoadedException("llama_cpp_backend",sys.platform.lower(),
+                                                        self.use_gpu, _lib_path, custom_path)
 
         # if not loaded
         raise ModuleNotFoundException("llama_cpp_backend")
@@ -4918,7 +5083,7 @@ class GGUFGenerativeModel:
         if reset:
             self.reset()
 
-        sample_idx = self.n_tokens + len(tokens) - 1
+        sample_idx = self.n_tokens + len(tokens) -1
         tokens = list(tokens)
 
         tokens_created = 0
@@ -4950,6 +5115,7 @@ class GGUFGenerativeModel:
 
                 self.scores[n_past + offset: n_past + n_tokens, :].reshape(-1)[:] = self._lib.llama_get_logits(self._ctx.ctx)[
                                                                                     offset * cols: rows * cols]
+
                 self.n_tokens += n_tokens
 
             while sample_idx < self.n_tokens:
@@ -4958,6 +5124,9 @@ class GGUFGenerativeModel:
 
                 self.prev = list(self.eval_tokens)
                 token = self.sample(logits_array=logits)
+
+                # print("token: ", token)
+
                 self.accept(id=id,apply_grammar=None)
 
                 tokens_created += 1
@@ -5070,7 +5239,7 @@ class GGUFGenerativeModel:
             #TODO - need to check/confirm this
             id = token_data_array.candidates_data["id"][0][0]
 
-        elif self.temperature == 0:
+        elif self.temperature == 0 or not self.use_sampling:
             assert self._ctx.ctx is not None
 
             id = self._lib.llama_sample_token_greedy(self._ctx.ctx, ctypes.byref(token_data_array.candidates), )
@@ -5139,6 +5308,7 @@ class GGUFGenerativeModel:
 
         """ Gets the top logits and keeps a running log for output analysis. """
 
+        #TODO:  there is issue with first logit computation - not corresponding to first token
         logit_pointer = self._lib.llama_get_logits(self._ctx.ctx)
 
         logit_size = self.n_vocab()
@@ -5319,13 +5489,13 @@ class GGUFGenerativeModel:
             self.add_prompt_engineering = add_prompt_engineering
 
         #   update default handling for no add_prompt_engineering
-        """
+
         if not self.add_prompt_engineering:
             if self.add_context:
                 self.add_prompt_engineering = "default_with_context"
             else:
                 self.add_prompt_engineering = "default_no_context"
-        """
+
         #   end - update
 
         #   show warning if function calling model
