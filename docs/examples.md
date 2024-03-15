@@ -10,7 +10,7 @@ We introduce ``llmware`` through self-contained examples.
 
 # Your first library and query
 
-{: .note}
+{: .note }
 > The code here is a modified version from [example-1-create_first_library.py](https://github.com/llmware-ai/llmware/blob/main/fast_start/example-1-create_first_library.py).
 > The adjustments are made to ease understand for this post.
 
