@@ -1,0 +1,53 @@
+# Site settings
+# These are used to personalize your new site. If you look in the HTML files,
+# you will see them accessed via {{ site.title }}, {{ site.github_repo }}, and so on.
+# You can create any custom variable you would like, and they will be accessible
+# in the templates via {{ site.myvariable }}.
+title: llmware
+description: llmware is an enterprise-grade LLM-based development framework, including tools and fine-tuned models.
+theme: just-the-docs
+url: https://llmware-ai.github.io/llmware/
+baseurl: "" # the subpath of your site
+favicon_ico: "/assets/images/favicon.ico"
+
+# Enable or disable heading anchors
+heading_anchors: true
+
+# Aux links for the upper right navigation
+aux_links:
+  llmware repository: https://github.com/llmware-ai/llmware
+
+lsi: false
+safe: true
+highlighter: rouge
+
+gist:
+  noscript: false
+kramdown:
+  math_engine: mathjax
+  syntax_highlighter: rouge
+
+
+callouts_level: quiet # or loud
+callouts:
+  highlight:
+    color: yellow
+  important:
+    title: Important
+    color: blue
+  new:
+    title: New
+    color: green
+  note:
+    title: Note
+    color: purple
+  warning:
+    title: Warning
+    color: red
+
+
+plugins:
+  - jekyll-default-layout
+  - jekyll-seo-tag
+  - jekyll-github-metadata
+  - jekyll-include-cache
