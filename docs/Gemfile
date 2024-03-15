@@ -1,0 +1,22 @@
+source 'https://rubygems.org'
+
+
+#
+# Gems that are locked to a version.
+#
+gem "jekyll", "~> 4.3.2" # installed by `gem jekyll`
+gem "just-the-docs", "0.7.0" # pinned to the current release
+
+
+#
+# Gems that are only loaded if they are configured correctly.
+#
+gem 'jekyll-default-layout'
+gem 'jekyll-github-metadata'
+
+
+#
+# Gems that loaded irrespective of site configuration.
+#
+gem 'jekyll-seo-tag', group: :jekyll_plugins
+gem 'jekyll-include-cache', group: :jekyll_plugins

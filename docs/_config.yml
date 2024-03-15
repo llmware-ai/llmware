@@ -1,0 +1,35 @@
+# Site settings
+# These are used to personalize your new site. If you look in the HTML files,
+# you will see them accessed via {{ site.title }}, {{ site.github_repo }}, and so on.
+# You can create any custom variable you would like, and they will be accessible
+# in the templates via {{ site.myvariable }}.
+title: fasttrees
+description: A fast-and-frugal-tree classifier based on Python's scikit learn
+theme: just-the-docs
+url: https://fasttrees.github.io/fasttrees/
+baseurl: "" # the subpath of your site
+favicon_ico: "/assets/images/favicon.ico"
+
+# Enable or disable heading anchors
+heading_anchors: true
+
+# Aux links for the upper right navigation
+aux_links:
+  fasttrees Repository: https://github.com/fasttrees/fasttrees
+
+lsi: false
+safe: true
+highlighter: rouge
+
+gist:
+  noscript: false
+kramdown:
+  math_engine: mathjax
+  syntax_highlighter: rouge
+
+
+plugins:
+  - jekyll-default-layout
+  - jekyll-seo-tag
+  - jekyll-github-metadata
+  - jekyll-include-cache
