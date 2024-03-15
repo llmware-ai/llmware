@@ -234,7 +234,7 @@ class Prompt:
     def load_model(self, gen_model,api_key=None, from_hf=False, trust_remote_code=False,
                    # new options added
                    use_gpu=True, sample=True, get_logits=False,
-                   max_output=100, temperature=-99):
+                   max_output=200, temperature=-99):
 
         """Load model into prompt object by selecting model name """
 
@@ -275,6 +275,7 @@ class Prompt:
 
         self.llm_name = gen_model
         self.context_window_size = self.llm_model.max_input_len
+        self.llm_max_output_len = max_output
 
         return self
 
