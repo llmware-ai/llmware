@@ -8,7 +8,7 @@ permalink: /examples
 We introduce ``llmware`` through self-contained examples.
 
 
-# Create your first library 
+# Your first library and query
 The code we use here is taken from our [example-1-create_first_library.py](https://github.com/llmware-ai/llmware/blob/main/fast_start/example-1-create_first_library.py), on some places, however, slightly modified.
 {: .note}
 
@@ -19,43 +19,81 @@ We will also download the samples files we provide, which can be used for any ex
 might want to do.
 
 
+Before we get started, we can influence the configuration of ``llmware``.
+For example, we can decide on which **text collection** data base to use, and on the logging level.
+By default, ``llmware`` uses MongoDB as the text collection data base and has a ``debug_mode`` level
+of ``0``.
+This means that by default, ``llmware`` will show the status manager and print errors.
+The status manager is useful for large parsing jobs.
+In this ``library`` introduction, we will change the text collection data base as well as the ``debug_mode``.
+As the text collection data base, we will choose ``sqlite``.
+And we will change the ``debug_mode`` to ``2``, which will show the file name that is being parsed, i.e. a file-by-file progress.
+``python
+from llmware.configs import LLMWareConfig
+
+LLMWareConfig().set_active_db("sqlite")
+LLMWareConfig().set_config("debug_mode", 2)
+``
 
 
+We start by downloading the sample files we need.
+``llmware`` provides a set of sample files which we use throught our examples.
+The following code snippet downloades these sample files, and in doing so creates the directoires
+*Agreements*, *Invoices*, *UN-Resolutions-500*, *SmallLibrary*, *FinDocs*, and *AgreementsLarge*.
+If you want to get the newest version of the sample files, you can set ``over_write=True``.
+However, we encourage you to try it out with your own files once you are confortable enough with ``llmware``.
 ```python
 from llmware.setup import Setup
 
 sample_files_path = Setup().load_sample_files(over_write=False)
 ```
+``sample_files_path`` is the path where the files are stores.
+Assume that your use name is ``foo``, then on Linux the path would be ``'/home/foo/llmware_data/sample_files'.``
 
+
+
+Now that we have data, we can start to create our library.
 In ``llmware``, a **library** is a collection of unstructured data.
 Currently, ``llmware`` supports *text* and *images*.
+The following code creates an empty ``library`` with the name ``my_llmware_library``.
 ```python
 from llmware.library import Library
 
 library = Library().create_new_library('my_llmware_library')
 ```
 
-``add_files`` supports pdf, pptx, docx, xlsx, csv, md, txt, json, wav, and zip, jpg, and png.
+Now that we have created a ``library``, we are ready to *add files* to it.
+Currently, the ``add_files`` method supports pdf, pptx, docx, xlsx, csv, md, txt, json, wav, and zip, jpg, and png.
+The method will automtically choose the correct parser, based on the file extension.
 ```python
-library.add_files(ingestion_folder_path)
+library.add_files('/home/foo/llmware_data/sample_files/Agreements')
 ```
 
-
+A ``library`` keeps inventory of its' inventory, similar to a good librarian.
+We do this with a *library card*.
+At the moment of this writting, a library card has the keys _id, library_name, embedding, knowledge_graph, unique_doc_id, documents, blocks, images, pages, tables, and account_name.
 ```python
 updated_library_card = library.get_library_card()
 doc_count = updated_library_card["documents"]
 block_count = updated_library_card["blocks"]
+library_card.keys()
 ```
 
+You can also get where the library is stored via the ``library_main_path`` attribute.
+Again, assuming your user name is *foo* and you are on a Linux system, then the ``library_path`` is ``'/home/foo/llmware_data/accounts/llmware/my_lib'``.
 ```python
-library_path = library.library_main_path
+library.library_main_path
 ```
 
 
+Finally, we are ready to execute a query against our library.
+Remember that the text is indexed automatically when we add it to the library.
 The result of a ``Query`` is a list of dictionaries, where one dictionary is one result.
 A result dictionary has a wide range of useful keys.
 A few important keys in the dictionary are *text*, *file_source*, *page_num*, *doc_ID*, *block_ID*, and
 *matches*.
+In the following, we query the library for the base salary, return the first ten results, and
+iterate over the results.
 ```python
 query_results = Query(library).text_query('base salary', result_count=10)
 
