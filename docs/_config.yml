@@ -3,10 +3,10 @@
 # you will see them accessed via {{ site.title }}, {{ site.github_repo }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: fasttrees
-description: A fast-and-frugal-tree classifier based on Python's scikit learn
+title: llmware
+description: llmware is an enterprise-grade LLM-based development framework, including tools and fine-tuned models.
 theme: just-the-docs
-url: https://fasttrees.github.io/fasttrees/
+url: https://llmware-ai.github.io/llmware/
 baseurl: "" # the subpath of your site
 favicon_ico: "/assets/images/favicon.ico"
 
@@ -15,7 +15,7 @@ heading_anchors: true
 
 # Aux links for the upper right navigation
 aux_links:
-  fasttrees Repository: https://github.com/fasttrees/fasttrees
+  fasttrees Repository: https://github.com/llmware-ai/llmware
 
 lsi: false
 safe: true
