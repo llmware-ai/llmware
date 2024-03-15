@@ -22,6 +22,7 @@ might want to do.
 
 
 **Configuring llmware**
+
 Before we get started, we can influence the configuration of ``llmware``.
 For example, we can decide on which **text collection** data base to use, and on the logging level.
 By default, ``llmware`` uses MongoDB as the text collection data base and has a ``debug_mode`` level
@@ -39,12 +40,13 @@ LLMWareConfig().set_config("debug_mode", 2)
 ```
 
 **Downloading sample files**
+
 We start by downloading the sample files we need.
-``llmware`` provides a set of sample files which we use throught our examples.
-The following code snippet downloades these sample files, and in doing so creates the directoires
+``llmware`` provides a set of sample files which we use throughout our examples.
+The following code snippet downloads these sample files, and in doing so creates the directories
 *Agreements*, *Invoices*, *UN-Resolutions-500*, *SmallLibrary*, *FinDocs*, and *AgreementsLarge*.
 If you want to get the newest version of the sample files, you can set ``over_write=True``.
-However, we encourage you to try it out with your own files once you are confortable enough with ``llmware``.
+However, we encourage you to try it out with your own files once you are comfortable enough with ``llmware``.
 ```python
 from llmware.setup import Setup
 
@@ -55,6 +57,7 @@ Assume that your use name is ``foo``, then on Linux the path would be ``'/home/f
 
 
 **Creating a library**
+
 Now that we have data, we can start to create our library.
 In ``llmware``, a **library** is a collection of unstructured data.
 Currently, ``llmware`` supports *text* and *images*.
@@ -66,17 +69,19 @@ library = Library().create_new_library('my_llmware_library')
 ```
 
 **Adding files to a library**
+
 Now that we have created a ``library``, we are ready to *add files* to it.
 Currently, the ``add_files`` method supports pdf, pptx, docx, xlsx, csv, md, txt, json, wav, and zip, jpg, and png.
-The method will automtically choose the correct parser, based on the file extension.
+The method will automatically choose the correct parser, based on the file extension.
 ```python
 library.add_files('/home/foo/llmware_data/sample_files/Agreements')
 ```
 
 **The library card**
-A ``library`` keeps inventory of its' inventory, similar to a good librarian.
+
+A ``library`` keeps inventory of its files, similar to a good librarian.
 We do this with a *library card*.
-At the moment of this writting, a library card has the keys _id, library_name, embedding, knowledge_graph, unique_doc_id, documents, blocks, images, pages, tables, and account_name.
+At the moment of this writing, a library card has the keys _id, library_name, embedding, knowledge_graph, unique_doc_id, documents, blocks, images, pages, tables, and account_name.
 ```python
 updated_library_card = library.get_library_card()
 doc_count = updated_library_card["documents"]
@@ -91,6 +96,7 @@ library.library_main_path
 ```
 
 **Querying a library**
+
 Finally, we are ready to execute a query against our library.
 Remember that the text is indexed automatically when we add it to the library.
 The result of a ``Query`` is a list of dictionaries, where one dictionary is one result.
