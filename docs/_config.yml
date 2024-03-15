@@ -28,6 +28,24 @@ kramdown:
   syntax_highlighter: rouge
 
 
+callouts_level: quiet # or loud
+callouts:
+  highlight:
+    color: yellow
+  important:
+    title: Important
+    color: blue
+  new:
+    title: New
+    color: green
+  note:
+    title: Note
+    color: purple
+  warning:
+    title: Warning
+    color: red
+
+
 plugins:
   - jekyll-default-layout
   - jekyll-seo-tag
