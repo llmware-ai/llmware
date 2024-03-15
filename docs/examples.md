@@ -1,7 +1,7 @@
 ---
 layout: default
 title: "Introduction by Examples"
-nav_order: 1
+nav_order: 2
 permalink: /examples
 ---
 # Introduction by Examples
