@@ -28,12 +28,12 @@ The status manager is useful for large parsing jobs.
 In this ``library`` introduction, we will change the text collection data base as well as the ``debug_mode``.
 As the text collection data base, we will choose ``sqlite``.
 And we will change the ``debug_mode`` to ``2``, which will show the file name that is being parsed, i.e. a file-by-file progress.
-``python
+```python
 from llmware.configs import LLMWareConfig
 
 LLMWareConfig().set_active_db("sqlite")
 LLMWareConfig().set_config("debug_mode", 2)
-``
+```
 
 
 We start by downloading the sample files we need.
