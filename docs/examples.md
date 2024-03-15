@@ -9,8 +9,8 @@ We introduce ``llmware`` through self-contained examples.
 
 
 # Create your first library 
-{: .note}
 The code we use here is taken from our [example-1-create_first_library.py](https://github.com/llmware-ai/llmware/blob/main/fast_start/example-1-create_first_library.py), on some places, however, slightly modified.
+{: .note}
 
 In this introduction, we will walk through the steps of creating a **library**.
 To create a ``library`` in ``llmware`` we have to instantiate a ``library`` object and call
