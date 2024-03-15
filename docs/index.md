@@ -5,7 +5,7 @@ nav_order: 1
 description: llmware is an integrated framework with over 50+ models in Hugging Face for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
 permalink: /
 ---
-# Welcome to fasttrees
+# Welcome to llmware
 
 `llmware` is an integrated framework with over 50+ models in Hugging Face for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
 {: .fs-6 .fw-300 }
