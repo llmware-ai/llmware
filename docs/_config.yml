@@ -15,7 +15,7 @@ heading_anchors: true
 
 # Aux links for the upper right navigation
 aux_links:
-  fasttrees Repository: https://github.com/llmware-ai/llmware
+  llmware repository: https://github.com/llmware-ai/llmware
 
 lsi: false
 safe: true
