@@ -42,7 +42,7 @@ ModelCatalog().tool_test_run("slim-sentiment-tool")
 
 # About the project
 
-`llmware` is &copy; 2019-{{ "now" | date: "%Y" }} [AI Bloks](https://www.aibloks.com/home).
+`llmware` is &copy; 2023-{{ "now" | date: "%Y" }} [AI Bloks](https://www.aibloks.com/home).
 
 ## License
 
