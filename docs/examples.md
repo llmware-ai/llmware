@@ -102,13 +102,13 @@ iterate over the results.
 ```python
 query_results = Query(library).text_query('base salary', result_count=10)
 
-for i, result in enumerate(query_results):
-    text = result["text"]
-    file_source = result["file_source"]
-    page_number = result["page_num"]
-    doc_id = result["doc_ID"]
-    block_id = result["block_ID"]
-    matches = result["matches"]
+for query_result in query_results:
+    text = query_result["text"]
+    file_source = query_result["file_source"]
+    page_number = query_result["page_num"]
+    doc_id = query_result["doc_ID"]
+    block_id = query_result["block_ID"]
+    matches = query_result["matches"]
 ```
 
 You can take a look at all the keys that are returned by calling ``keys()``.
