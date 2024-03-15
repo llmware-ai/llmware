@@ -36,7 +36,6 @@ from llmware.models import ModelCatalog
 # get all SLIM models, delivered as small, fast quantized tools
 ModelCatalog().get_llm_toolkit()
 
-
 # see the model in action with test script included
 ModelCatalog().tool_test_run("slim-sentiment-tool") 
 ```
