@@ -1025,7 +1025,7 @@ class ModelCatalog:
                             text = "Evidence: " + text + "\nConclusion: " + entries["conclusion"]
 
                         # note: testing with temp & max_output
-                        response = model.function_call(text, get_logits=True, temperature=0.3, max_output=100)
+                        response = model.function_call(text)
 
                         # if verbose:
                         print(f"\nupdate: context - test - {i} - {text}")
@@ -1053,11 +1053,6 @@ class ModelCatalog:
                                 choices = choices[0]
 
                             print("update: choices - ", choices)
-
-                        """ 
-                        for keys, values in logit_analysis.items():
-                            print("update: logit analysis - ", keys, values)
-                        """
 
         return 0
 
@@ -1264,40 +1259,131 @@ class ModelCatalog:
 
         return output_keys
 
-    def remediate_function_call_string(self, output_str):
+    def remediate_function_call_string(self,input_string, dedupe_values=True):
 
-        """ Attempts to remediate a function call llm response string in most common exception case in
-        which the model output cut off before completing and closing out the dictionary properly. """
+        """ This method attempts to remediate a function call output string that can not be automatically
+        converted into a programmatic object.  The method supports both DICT and LIST outputs.   It is designed
+        to address the most common source of automatic failing, which is a premature termination at the end of the
+        string, usually due to a max_len cap, e.g., {'key': ['value1', value2', ..., 'val """
 
-        #   by default, returns the string and response_type = "string"
-        response_type = "string"
-        output = output_str
+        starter = 3
+        keys = []
+        values = []
 
-        #   attempt to remediate
-        clean_stop_str = output_str
+        #   if very short output, then can not remediate - assume that a bigger problem happened with the inference
+        if len(input_string) < starter:
+            print("update: llm response very short - could not remediate and convert to dict or list")
+            return "string", input_string
 
-        # attempt to 'close' the value list if too long
-        if output_str.endswith('"') or output_str.endswith(','):
-            clean_stop_str = output_str
+        start = -1
+        list_start = -1
+
+        #   will scan the start of the string for either a dictionary start '{' or list start '['
+        #   if neither found, will return the original string
+
+        for x in range(0, starter):
+
+            if input_string[x] == "{":
+                # found dict starter
+                start = x
+
+            if input_string[x] == "[":
+                # found list starter
+                list_start = x
+
+        if start < 0 and list_start < 0:
+            print("update: remediation not successful - could not find a start marker for dictionary or list")
+            return "string", input_string
+
+        #  based on the start marker, determine the target output type
+        if start < 0 and list_start >= 0:
+            # try to build the string as a list output
+            list_type = True
+            key_or_value = "value"
+            response_type = "list"
         else:
-            for x in range(len(output_str)-1,-1,-1):
-                if output_str[x] in ['"',"'",","]:
-                    clean_stop_str = output_str[0:x+1]
-                    break
-
-        triage_terminus = "]}"
-        output_str_triage = clean_stop_str + triage_terminus
-
-        try:
-            output = ast.literal_eval(output_str_triage)
+            # try to build the string as a dictionary output
+            list_type = False
+            key_or_value = "key"
             response_type = "dict"
-        except:
-            logging.warning("update: first remediation attempt did not fix dictionary - %s", output_str_triage)
 
-        # end - remediation attempt
+        string_on = False
+        key_tmp = ""
+        counter = 0
+        output_dict = {}
+        output_list = []
+        current_key = ""
 
-        return response_type, output
+        for y in range(start + 1, len(input_string)):
 
+            #   note: ASCII ORD conversion - 58 - ':' | 91 - '[' | 93 - ']' | 44 - ','
+
+            if string_on and ord(input_string[counter]) not in [34, 39]:
+                if ord(input_string[counter]) not in [91, 93, 58, 44]:
+                    if ord(input_string[counter]) == 32 and not key_tmp.strip():
+                        pass
+                    else:
+                        key_tmp += input_string[counter]
+
+                # edge case where there is quote around outer bracket
+                if ord(input_string[counter]) == 91 and string_on:
+                    string_on = False
+                    key_tmp = ""
+
+            # string markers of ' and "
+            if ord(input_string[counter]) in [34, 39]:
+
+                if not string_on:
+                    string_on = True
+                    key_tmp = ""
+                else:
+                    # end of string token
+                    string_on = False
+
+                    if len(key_tmp) > 0:
+
+                        if not list_type:
+                            if key_or_value == "key":
+                                keys.append(key_tmp)
+                                current_key = key_tmp
+                                output_dict.update({current_key: []})
+                            else:
+                                values.append(key_tmp)
+                                output_dict[current_key].append(key_tmp)
+                            key_tmp = ""
+                        else:
+                            output_list.append(key_tmp)
+                            values.append(key_tmp)
+                            key_tmp = ""
+
+            if ord(input_string[counter]) == 58:
+
+                if len(input_string) > counter + 5:
+                    for z in range(1, 5):
+                        if ord(input_string[counter + z]) == 91:
+                            key_or_value = "value"
+                            counter += z - 1
+                            break
+
+            if ord(input_string[counter]) == 93:
+                key_or_value = "key"
+
+            counter += 1
+            if counter >= len(input_string):
+                break
+
+        if not list_type:
+            # remediation successful in converting to dict output
+            if dedupe_values:
+                for keys, values in output_dict.items():
+                    output_dict[keys] = list(set(values))
+
+            return response_type, output_dict
+        else:
+            # remediation successful in converting to list output
+            if dedupe_values:
+                output_list = list(set(output_list))
+            return response_type, output_list
 
 class PromptCatalog:
     """ PromptCatalog manages prompt styles and prompt wrappers. """
@@ -2075,7 +2161,7 @@ class OpenAIGenModel:
 
     """ OpenAIGenModel class implements the OpenAI API for its generative decoder models. """
 
-    def __init__(self, model_name=None, api_key=None, context_window=4000):
+    def __init__(self, model_name=None, api_key=None, context_window=4000, max_output=100,temperature=0.7):
 
         self.api_key = api_key
         self.model_name = model_name
@@ -2090,8 +2176,8 @@ class OpenAIGenModel:
         self.llm_max_output_len = int(context_window * 0.5)
 
         # inference settings
-        self.temperature = 0.7
-        self.target_requested_output_tokens = 100
+        self.temperature = temperature
+        self.target_requested_output_tokens = max_output
         self.add_prompt_engineering = False
         self.add_context = ""
 
@@ -2268,7 +2354,7 @@ class ClaudeModel:
 
     """ ClaudeModel class implements the Anthropic Claude API for calling Anthropic models. """
 
-    def __init__(self, model_name=None, api_key=None, context_window=8000):
+    def __init__(self, model_name=None, api_key=None, context_window=8000, max_output=100, temperature=0.7):
 
         self.api_key = api_key
         self.model_name = model_name
@@ -2283,8 +2369,8 @@ class ClaudeModel:
         self.llm_max_output_len = int(context_window * 0.5)
 
         # inference settings
-        self.temperature = 0.7
-        self.target_requested_output_tokens = 100
+        self.temperature = temperature
+        self.target_requested_output_tokens = max_output
         self.add_prompt_engineering = False
         self.add_context = ""
 
@@ -2440,7 +2526,7 @@ class GoogleGenModel:
     """ GoogleGenModel class implements the Google Vertex API for Google's generative models.
     Note: to use GoogleModels does require a separate import of Google SDKs - vertexai and google.cloud.platform """
 
-    def __init__(self, model_name=None, api_key=None, context_window=8192):
+    def __init__(self, model_name=None, api_key=None, context_window=8192, max_output=100, temperature=0.7):
 
         self.api_key = api_key
         self.model_name = model_name
@@ -2457,8 +2543,8 @@ class GoogleGenModel:
         self.llm_max_output_len = 1024
 
         # inference settings
-        self.temperature = 0.7
-        self.target_requested_output_tokens = 100
+        self.temperature = temperature
+        self.target_requested_output_tokens = max_output
         self.add_prompt_engineering = False
         self.add_context = ""
 
@@ -2610,7 +2696,7 @@ class JurassicModel:
 
     """ JurassicModel class implements the AI21 Jurassic API. """
 
-    def __init__(self, model_name=None, api_key=None, context_window=2048):
+    def __init__(self, model_name=None, api_key=None, context_window=2048, max_output=100,temperature=0.7):
 
         self.api_key = api_key
         self.model_name = model_name
@@ -2626,8 +2712,8 @@ class JurassicModel:
         self.llm_max_output_len = int(context_window * 0.5)
 
         # inference settings
-        self.temperature = 0.7
-        self.target_requested_output_tokens = 100
+        self.temperature = temperature
+        self.target_requested_output_tokens = max_output
         self.add_prompt_engineering = False
         self.add_context = ""
 
@@ -2767,7 +2853,7 @@ class CohereGenModel:
 
     """ CohereGenModel class implements the API for Cohere's generative models. """
 
-    def __init__(self, model_name=None, api_key=None, context_window=2048):
+    def __init__(self, model_name=None, api_key=None, context_window=2048, max_output=100,temperature=0.7):
 
         self.api_key = api_key
         self.model_name = model_name
@@ -2784,8 +2870,8 @@ class CohereGenModel:
         self.llm_max_output_len = int(context_window * 0.5)
 
         # inference settings
-        self.temperature = 0.7
-        self.target_requested_output_tokens = 100
+        self.temperature = temperature
+        self.target_requested_output_tokens = max_output
         self.add_prompt_engineering = False
         self.add_context = ""
 
@@ -3769,8 +3855,8 @@ class HFGenerativeModel:
 
         #   new parameters
         self.sample=sample
-        self.max_output=max_output
         self.get_logits=get_logits
+        self.auto_remediate_function_call_output = True
 
         # Function Call parameters
         self.model_card = model_card
@@ -3860,9 +3946,16 @@ class HFGenerativeModel:
 
         self.model_type = None
         self.config = None
+
+        # parameters on context len + output generation
         self.max_total_len = context_window
         self.max_input_len = int(0.5 * context_window)
         self.llm_max_output_len = int(0.5 * context_window)
+
+        # key output parameters
+        self.max_output=max_output
+        self.target_requested_output_tokens = self.max_output
+
         self.model_architecture = None
         self.separator = "\n"
 
@@ -3930,7 +4023,6 @@ class HFGenerativeModel:
             # if no guidance from model loading or model card, then set at default of 0.3
             self.temperature = 0.3
 
-        self.target_requested_output_tokens = self.max_output
         self.add_prompt_engineering = False
         self.add_context = ""
 
@@ -4017,7 +4109,6 @@ class HFGenerativeModel:
                                                                      instruction=None)
 
         return prompt_engineered
-
 
     @torch.no_grad()
     def inference(self, prompt, add_context=None, add_prompt_engineering=None, api_key=None,
@@ -4230,7 +4321,7 @@ class HFGenerativeModel:
                     this_peer_finished = True
 
             # stop if we exceed the maximum length
-            if new_tokens_generated > self.target_requested_output_tokens:
+            if new_tokens_generated >= self.target_requested_output_tokens:
                 this_peer_finished = True
 
             if this_peer_finished:
@@ -4485,8 +4576,6 @@ class HFGenerativeModel:
                 # will apply probabilistic sampling
                 next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
 
-            # print("next tokens (fc): ", next_tokens)
-
             # option to capture logits and output tokens for analysis
             if self.get_logits:
                 self.register_top_logits(next_token_logits)
@@ -4533,7 +4622,7 @@ class HFGenerativeModel:
                     this_peer_finished = True
 
             # stop if we exceed the maximum length
-            if new_tokens_generated > self.target_requested_output_tokens:
+            if new_tokens_generated >= self.target_requested_output_tokens:
                 this_peer_finished = True
 
             if this_peer_finished:
@@ -4583,27 +4672,42 @@ class HFGenerativeModel:
                  "processing_time": time.time() - time_start}
 
         try:
-            output_dict = ast.literal_eval(output_str)
-            usage.update({"type": "dict"})
-            convert_to_dict = True
+            output_value = ast.literal_eval(output_str)
+
+            output_type = "dict"
+
+            # allow for multiple valid object types - will expand over time
+            if isinstance(output_value,dict): output_type = "dict"
+            if isinstance(output_value,list): output_type = "list"
+
+            usage.update({"type": output_type})
 
         except:
-            logging.warning("warning: automatic function call conversion to "
-                            "python dictionary failed - %s", output_str)
-            output_dict = output_str
-            usage.update({"type": "string"})
-            convert_to_dict = False
+            # could not convert automatically to python object
+            output_type = "string"
+            usage.update({"type": output_type})
+            output_value = output_str
 
-        # quick remediation attempt - usually source of error is cut-off at end
-        if not convert_to_dict:
+            # INSERT NEW HERE
 
-            output_type, output_rem = ModelCatalog().remediate_function_call_string(output_str)
+            if self.auto_remediate_function_call_output:
 
-            if output_type == "dict":
-                usage.update({"type": "dict"})
-                output_dict.update({"llm_response": output_rem})
+                # attempt to remediate
+                output_type, output_rem = ModelCatalog().remediate_function_call_string(output_str)
 
-        output_response = {"llm_response": output_dict, "usage": usage}
+                usage.update({"type": output_type, "remediation": True})
+                output_value = output_rem
+
+            if output_type == "string":
+                logging.warning("update: automatic conversion of function call output failed, and attempt to "
+                                "remediate was not successful - %s ", output_str)
+            else:
+                logging.info("update: function call output could not be automatically converted, but remediation "
+                                "was successful to type - %s ", output_type)
+
+        # INSERT ENDS HERE
+
+        output_response = {"llm_response": output_value, "usage": usage}
 
         if get_logits:
             output_response.update({"logits": self.logits_record})
@@ -4642,12 +4746,31 @@ class GGUFGenerativeModel:
         self.logits_record = []
         self.output_tokens = []
         self.top_logit_count = 10
+        self.auto_remediate_function_call_output = True
 
         # TODO:  max_output by GGUFConfigs defaults
+
+        #   default safety check in GGUF Configs that can be adjusted
+        gguf_configs_max = GGUFConfigs().get_config("max_output_tokens")
+
+        if max_output > gguf_configs_max:
+            # truncate max output to GGUFConfigs max
+            logging.warning(f"update: requested output len - {max_output} > {gguf_configs_max}, which is the "
+                            f"current GGUF default max.\n--Truncating to {gguf_configs_max} output tokens.\n--Note: "
+                            f"to change GGUF default max to new integer amount, say 500:\n "
+                            f"  GGUFConfigs().set_config(\"max_output_tokens\", 500)"
+                            )
+
+            max_output = gguf_configs_max
+
         self.max_output=max_output
 
         #   key configs
-        self.n_seq_max = GGUFConfigs().get_config("max_output_tokens")
+        # self.n_seq_max = GGUFConfigs().get_config("max_output_tokens")
+        #   *** NEW - KEY CHANGE ***
+        self.n_seq_max = max_output
+        #   *** end key change ***
+
         self.target_requested_output_tokens = self.n_seq_max
 
         # TODO: cleanup repetitive output size attributes
@@ -5032,7 +5155,7 @@ class GGUFGenerativeModel:
             completion_tokens.append(token)
 
             #   stop at max output len
-            if len(completion_tokens) > self.max_output_len:
+            if len(completion_tokens) >= self.max_output_len:
                 text = self.detokenize(completion_tokens)
                 break
 
@@ -5597,33 +5720,35 @@ class GGUFGenerativeModel:
         output_str = output_response["llm_response"]
 
         try:
-            """
-            if output_str.startswith('"'):
-                output_str = output_str[1:]
-            if output_str.endswith('"'):
-                output_str = output_str[:-1]
-            """
-
             output_dict = ast.literal_eval(output_str)
-            output_response["usage"].update({"type": "dict"})
-            convert_to_dict = True
+
+            output_type = "dict"
+            if isinstance(output_dict,dict): output_type = "dict"
+            if isinstance(output_dict,list): output_type = "list"
+
+            output_response["usage"].update({"type": output_type})
             output_response.update({"llm_response": output_dict})
 
         except:
-            logging.warning("warning: automatic conversion of function call output to "
-                            "python dictionary failed -%s.", output_str)
-            output_dict = output_str
-            output_response["usage"].update({"type": "string"})
-            convert_to_dict = False
 
-        # quick remediation attempt - usually source of error is cut-off at end
-        if not convert_to_dict:
+            output_type = "string"
+            output_response["usage"].update({"type": output_type})
 
-            output_type, output_rem = ModelCatalog().remediate_function_call_string(output_str)
+            if self.auto_remediate_function_call_output:
 
-            if output_type == "dict":
-                output_response["usage"].update({"type": "dict"})
-                output_response["llm_response"].update({"llm_response": output_rem})
+                # attempt to automatically remediate
+                output_type, output_rem = ModelCatalog().remediate_function_call_string(output_str)
+
+                if output_type != "string":
+                    output_response["usage"].update({"type": output_type, "remediation":True})
+                    output_response.update({"llm_response": output_rem})
+
+            if output_type == "string":
+                logging.warning("update: automatic conversion of function call output failed, and attempt to "
+                                "remediate was not successful - %s ", output_str)
+            else:
+                logging.info("update: function call output could not be automatically converted, but remediation "
+                                "was successful to type - %s ", output_type)
 
         return output_response
 
