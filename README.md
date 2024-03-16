@@ -4,7 +4,7 @@
 [![discord](https://img.shields.io/badge/Chat%20on-Discord-blue?logo=discord&logoColor=white)](https://discord.gg/MhZn5Nc39h)   
 [![Documentation](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml/badge.svg)](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml)
 
-🧰🛠️🔩**The Ultimate Toolkit for Building LLM Apps**
+🧰🛠️🔩##The Ultimate Toolkit for Building LLM Apps##
 
 From quickly building POCs to scalable LLM Apps for the enterprise, LLMWare is packed with all the tools you need. 
 
