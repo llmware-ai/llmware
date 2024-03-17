@@ -25,7 +25,7 @@ pip install llmware
 
 # When to use llmware 
 
-llmware and it's models focus on making it easy to integrate open source small specialized models and connecting enterprise knowledge safely and securely.
+``llmware`` focuses on making it easy to integrate open source small specialized models and connecting enterprise knowledge safely and securely.
 
 
 # Usage
@@ -42,7 +42,7 @@ ModelCatalog().tool_test_run("slim-sentiment-tool")
 
 # About the project
 
-`llmware` is &copy; 2023-{{ "now" | date: "%Y" }} [AI Bloks](https://www.aibloks.com/home).
+`llmware` is &copy; 2023-{{ "now" | date: "%Y" }} by [AI Bloks](https://www.aibloks.com/home).
 
 ## License
 
