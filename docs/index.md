@@ -14,6 +14,31 @@ permalink: /
 [View llmware on GitHub](https://github.com/llmware-ai/llmware/tree/main){: .btn .fs-5 .mb-4 .mb-md-0 }
 [Open an Issue on GitHub](https://github.com/llmware-ai/llmware/issues){: .btn .fs-5 .mb-4 .mb-md-0 }
 
+---
+<ul class="list-style-none">
+    <li class="d-inline-block mr-1">
+        <a href="https://www.aibloks.com/home">AI Bloks</a>
+    </li>
+    <li class="d-inline-block mr-1">
+        <a href="https://llmware.ai/">llmware</a>
+    </li>
+    <li class="d-inline-block mr-1">
+        <a href="https://www.youtube.com/@llmware"><i class="fa-brands fa-youtube"></i></a>
+    </li>
+    <li class="d-inline-block mr-1">
+        <a href="https://huggingface.co/llmware">HuggingFace</a>
+    </li>
+    <li class="d-inline-block mr-1">
+        <a href="https://www.linkedin.com/company/aibloks/"><i class="fa-brands fa-linkedin"></i></a>
+    </li>
+    <li class="d-inline-block mr-1">
+        <a href="https://twitter.com/AiBloks"><i class="fa-brands fa-twitter"></i></a>
+    </li>
+    <li class="d-inline-block mr-1">
+        <a href="https://www.instagram.com/aibloks/"><i class="fa-brands fa-instagram"></i></a>
+    </li>
+</ul>
+---
 
 # Install llmware 
 
