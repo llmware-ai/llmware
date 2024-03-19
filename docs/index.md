@@ -5,7 +5,12 @@ nav_order: 1
 description: llmware is an integrated framework with over 50+ models in Hugging Face for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
 permalink: /
 ---
-# Welcome to llmware
+# Welcome to
+<ul class="list-style-none">
+    <li class="d-inline-block mr-1">
+        <a href="https://llmware.ai/"><span><img src="assets/images/llmware_logo_color_cropped.png" alt="llmware"/></span></a>
+    </li>
+</ul>
 
 `llmware` is an integrated framework with over 50+ models in Hugging Face for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
 {: .fs-6 .fw-300 }
@@ -17,25 +22,22 @@ permalink: /
 ---
 <ul class="list-style-none">
     <li class="d-inline-block mr-1">
-        <a href="https://www.aibloks.com/home">AI Bloks</a>
+        <a href="https://discord.gg/MhZn5Nc39h"><span><i class="fa-brands fa-discord"></i></span></a>
     </li>
     <li class="d-inline-block mr-1">
-        <a href="https://llmware.ai/">llmware</a>
+        <a href="https://www.youtube.com/@llmware"><span><i class="fa-brands fa-youtube"></i></span></a>
     </li>
     <li class="d-inline-block mr-1">
-        <a href="https://www.youtube.com/@llmware"><i class="fa-brands fa-youtube"></i></a>
+        <a href="https://huggingface.co/llmware"><span><i class="fa-solid fa-face-smiling-hands"></i></span></a>
     </li>
     <li class="d-inline-block mr-1">
-        <a href="https://huggingface.co/llmware">HuggingFace</a>
+        <a href="https://www.linkedin.com/company/aibloks/"><span><i class="fa-brands fa-linkedin"></i></span></a>
     </li>
     <li class="d-inline-block mr-1">
-        <a href="https://www.linkedin.com/company/aibloks/"><i class="fa-brands fa-linkedin"></i></a>
+        <a href="https://twitter.com/AiBloks"><span><i class="fa-brands fa-square-x-twitter"></i></span></a>
     </li>
     <li class="d-inline-block mr-1">
-        <a href="https://twitter.com/AiBloks"><i class="fa-brands fa-twitter"></i></a>
-    </li>
-    <li class="d-inline-block mr-1">
-        <a href="https://www.instagram.com/aibloks/"><i class="fa-brands fa-instagram"></i></a>
+        <a href="https://www.instagram.com/aibloks/"><span><i class="fa-brands fa-instagram"></i></span></a>
     </li>
 </ul>
 ---
