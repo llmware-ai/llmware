@@ -8,5 +8,10 @@ __pycache__/
 llmware.egg-info/
 venv/
 
+# Jekyll
+docs/_site/
+docs/Gemfile.lock
+
+
 # Mac
 .DS_Store/
