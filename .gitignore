@@ -10,7 +10,6 @@ venv/
 
 # Jekyll
 docs/_site/
-docs/Gemfile.lock
 
 
 # Mac
