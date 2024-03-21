@@ -8,11 +8,11 @@ name: Documentation
 
 on:
   push:
-    branches: ["master"]
+    branches: ["main"]
     paths: ["docs/**"] # only changes in the docs directory triger the workflow
 
   pull_request:
-    branches: ["master"]
+    branches: ["main"]
     types: ["closed"]
     paths: ["docs/**"]
 
