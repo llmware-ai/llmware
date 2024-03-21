@@ -6,15 +6,24 @@ description: llmware contributions.
 permalink: /contributing
 ---
 # Contributing to llmware
+
+{: .note}
+> The contributions to `llmware` are governed by our [Code of Conduct](https://github.com/llmware-ai/llmware/blob/main/CODE_OF_CONDUCT.md).
+
+{: .warning}
+> Have you found a security issue? Then please jump to [Security Vulnerabilities](#security-vulnerabilities).
+
 Contributions to `llmware` are welcome from everyone.
 Our goal is to make the process simple, transparent, and straightforward.
 
-As with everything in the project, the contributions to `llmware` are governed by our [Code of Conduct](https://github.com/llmware-ai/llmware/blob/main/CODE_OF_CONDUCT.md).
+On this page, we provide information for people interested in contributing to ``llmware``.
+This includes information on contribution areas and the contribution process.
+
 
 ## How can you contribute?
 
 {: .note}
->If you have never contributed before look for issues with the tag [``good first issue``](https://github.com/llmware-ai/llmware/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22).
+> If you have never contributed before look for issues with the tag [``good first issue``](https://github.com/llmware-ai/llmware/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22).
 
 The most usual ways to contribute is to add new features, fix bugs, add tests, or add documentation.
 You can visit the [issues](https://github.com/llmware-ai/llmware/issues) site of the project and search for tags such as
@@ -38,15 +47,34 @@ Here is a non exhaustive list of contributions you can make.
 
 ## Code contributions
 
+### New or Enhancement to existing Features
+You want to submit a code contribute that adds a new feature or enhances an existing one?
+Then the best way to start is by opening a discussion in our [github discussions](https://github.com/llmware-ai/llmware/discussions).
+Please do this before you work on it, so you do not put effort into it just to realise after submission that
+it will not be merged.
+
 ### Bugs
 If you encounter a bug, you can
 
 - File an issue about the bug.
-- Provide a self-contained example that reproduces the bug, which is extremely important.
+- Provide a self-contained minimal example that reproduces the bug, which is extremely important.
 - Provide possible solutions for the bug.
 - Submit a pull a request to fix the bug.
 
-### Open Issues
+We encourage you to read [How to create a Minimal, Reproducible Example](https://stackoverflow.com/help/minimal-reproducible-example) from the Stackoverflow helpcenter, and the tag description of [self-container](https://stackoverflow.com/tags/self-contained/info), also from Stackoverflow.
+
+## Documentation contributions
+There are two ways to contribute to the ``llmware`` documentation.
+The first is via docstrings in the code, and the second is what you are currently reading.
+In both areas, you can contribute in a lot of ways.
+Here is a non exhaustive list of these ways.
+
+1. Add documentation (e.g., adding a docstring to a function)
+2. Update documentation (e.g., update a docstring that is not in sync with the code)
+3. Simplify documentation (e.g., formulate a docstring more clearly)
+4. Enhance documentation (e.g., add more examples to a docstring or fix typos)
+
+## Open Issues
 If you're interested in existing issues, you can
 
 - Look for issues with the `good first issue` label as a good place to get started.
@@ -55,10 +83,7 @@ If you're interested in existing issues, you can
   - Ask questions, reproduce the issues, or provide solutions.
   - Pull a request to fix the issue.
 
-### New or Enhancement to existing Features
-If you'd like to contribute a new feature or significantly change an existing one, you can
-
-- Start a discussion with us in our [github discussions](https://github.com/llmware-ai/llmware/discussions). 
+ 
 
 # Security Vulnerabilities
 **If you believe you've found a security vulnerability, then please _do not_ submit an issue ticket or pull request or otherwise publicly disclose the issue.**
