@@ -87,7 +87,8 @@ class _ModelRegistry:
     #   list of function calling classifier tools
 
     llm_fx_tools = ["ner", "sentiment", "topics", "ratings", "emotions", "nli",
-                    "intent", "sql", "answer", "category", "tags"]
+                    "intent", "sql", "answer", "category", "tags", "summary", "xsum", "extract",
+                    "boolean", "sa-ner","tags-3b"]
 
     llm_fx_tools_map = {"ner": "slim-ner-tool",
                         "sentiment": "slim-sentiment-tool",
@@ -99,7 +100,15 @@ class _ModelRegistry:
                         "tags": "slim-tags-tool",
                         "answer": "bling-answer-tool",
                         "category": "slim-category-tool",
-                        "intent": "slim-intent-tool"}
+                        "intent": "slim-intent-tool",
+                        # new tools added
+                        "summary": "slim-summary-tool",
+                        "xsum": "slim-xsum-tool",
+                        "extract": "slim-extract-tool",
+                        "boolean": "slim-boolean-tool",
+                        "sa-ner": "slim-sa-ner-tool",
+                        "tags-3b": "slim-tags-3b-tool"
+                        }
     @classmethod
     def get_model_list(cls):
         """ List current view of registered models """
@@ -255,6 +264,7 @@ class ModelCatalog:
         self.sample = True
         self.max_output = 100
         self.get_logits = False
+        self.force_reload = False
 
     def pull_latest_manifest(self):
         """ Not implemented currently """
@@ -496,6 +506,23 @@ class ModelCatalog:
 
         model_folder_name = model_card["model_name"]
 
+        # new insert - check if custom_model_repo
+        if "custom_model_repo" in model_card:
+            if model_card["custom_model_repo"]:
+                if os.path.exists(model_card["custom_model_repo"]):
+                    if "custom_model_files" in model_card:
+                        if model_card["custom_model_files"]:
+                            if len(model_card["custom_model_files"]) > 0:
+                                if os.path.exists(os.path.join(model_card["custom_model_repo"],
+                                                               model_card["custom_model_files"][0])):
+                                    # confirmed that custom path and at least model artifact exist
+                                    print("update: returning custom model path: ", model_card["custom_model_repo"],
+                                          model_card["custom_model_files"])
+
+                                    return model_card["custom_model_repo"]
+                else:
+                    raise ModelNotFoundException(f"Custom model repo path - {model_card['custom_model_repo']}")
+
         if model_card["model_family"] == "GGUFGenerativeModel":
             model_folder_name = model_folder_name.split("/")[-1]
 
@@ -504,7 +531,7 @@ class ModelCatalog:
 
         model_location = os.path.join(LLMWareConfig.get_model_repo_path(), model_folder_name)
 
-        if os.path.exists(model_location):
+        if os.path.exists(model_location) and not self.force_reload:
             model_parts_in_folder = os.listdir(model_location)
             if len(model_parts_in_folder) > 0:
 
@@ -648,7 +675,7 @@ class ModelCatalog:
         return my_model
 
     def load_model (self, selected_model, api_key=None, use_gpu=True, sample=True,get_logits=False,
-                    max_output=100, temperature=-99):
+                    max_output=100, temperature=-99, force_reload=False):
 
         """ Main method for loading and fully instantiating a model based solely on the model's name """
 
@@ -657,6 +684,7 @@ class ModelCatalog:
         self.sample=sample
         self.max_output=max_output
         self.get_logits=get_logits
+        self.force_reload = force_reload
 
         # note: temperature set by default at -99, which is a dummy value that is over-ridden by the temperature
         # in the model card.   This temperature will only be used if explicitly set by the user at value != -99
@@ -1024,8 +1052,13 @@ class ModelCatalog:
                         if "conclusion" in entries:
                             text = "Evidence: " + text + "\nConclusion: " + entries["conclusion"]
 
-                        # note: testing with temp & max_output
-                        response = model.function_call(text)
+                        # special case for boolean (question = params)
+                        if "question" in entries:
+                            params = entries["question"] + " (explain)"
+                            response = model.function_call(text, params=[params])
+                        else:
+                            # general case - use default params and function from model card
+                            response = model.function_call(text)
 
                         # if verbose:
                         print(f"\nupdate: context - test - {i} - {text}")
@@ -1110,14 +1143,6 @@ class ModelCatalog:
 
         """ Analyzes logits from llm response """
 
-        # value zone markers
-        vz_start = []
-        vz_stop = []
-
-        if "value_zone_markers" in model_card:
-            vz_start = model_card["value_zone_markers"]["start"]
-            vz_stop = model_card["value_zone_markers"]["stop"]
-
         # marker tokens for sentiment analysis
         marker_tokens = []
         marker_token_lookup = {}
@@ -1134,6 +1159,15 @@ class ModelCatalog:
             # hf tokenizer name
             tokenizer = AutoTokenizer.from_pretrained(hf_tokenizer_name, token=api_key)
 
+            try:
+                # pull bos attributes from tokenizer
+                bos_token_id = tokenizer.bos_token_id
+                bos_str = tokenizer.bos_token
+            except:
+                # unexpected - but if fail, then take llama defaults
+                bos_token_id = 1
+                bos_str = "<s>"
+
             ryg_string = ""
 
             token_probs = []
@@ -1143,7 +1177,8 @@ class ModelCatalog:
 
             for i, toks in enumerate(response["output_tokens"]):
 
-                if toks in vz_stop:
+                # change - look directly for '[' in tokenized output
+                if "]" in tokenizer.decode(toks):
                     vz_capture_on = False
 
                 if toks in marker_tokens:
@@ -1172,7 +1207,8 @@ class ModelCatalog:
 
                     vz_choices.append(new_entry)
 
-                if toks in vz_start:
+                # change - look for "[" directly in token decoded output
+                if "[" in tokenizer.decode(toks):
                     vz_capture_on = True
 
                 if toks == 2:
@@ -1185,10 +1221,10 @@ class ModelCatalog:
                         token_probs.append(logits[i][x][1])
 
                         if logits[i][x][1] > 0.70:
-                            ryg_string += green + tokenizer.decode([1, logits[i][x][0]])
+                            ryg_string += green + tokenizer.decode([bos_token_id, logits[i][x][0]])
 
                         if 0.3 <= logits[i][x][1] <= 0.70:
-                            ryg_string += yellow + tokenizer.decode([1, logits[i][x][0]])
+                            ryg_string += yellow + tokenizer.decode([bos_token_id, logits[i][x][0]])
 
                             new_entry = {}
                             for y in range(0, 3):
@@ -1199,7 +1235,7 @@ class ModelCatalog:
                             low_confidence_choices.append(new_entry)
 
                         if logits[i][x][1] < 0.3:
-                            ryg_string += red + tokenizer.decode([1, logits[i][x][0]])
+                            ryg_string += red + tokenizer.decode([bos_token_id, logits[i][x][0]])
 
                             new_entry = {}
                             for y in range(0, 3):
@@ -1209,7 +1245,8 @@ class ModelCatalog:
 
                             low_confidence_choices.append(new_entry)
 
-            ryg_string = ryg_string.replace("<s>", "")
+            # removing hard-coded "<s>"
+            ryg_string = ryg_string.replace(bos_str, "")
 
         logit_analysis = {"ryg_string": ryg_string + color_reset, "choices": vz_choices,
                           "marker_tokens": marker_token_probs,
@@ -1272,7 +1309,7 @@ class ModelCatalog:
 
         #   if very short output, then can not remediate - assume that a bigger problem happened with the inference
         if len(input_string) < starter:
-            print("update: llm response very short - could not remediate and convert to dict or list")
+            # print("update: llm response very short - could not remediate and convert to dict or list")
             return "string", input_string
 
         start = -1
@@ -1292,7 +1329,7 @@ class ModelCatalog:
                 list_start = x
 
         if start < 0 and list_start < 0:
-            print("update: remediation not successful - could not find a start marker for dictionary or list")
+            # print("update: remediation not successful - could not find a start marker for dictionary or list")
             return "string", input_string
 
         #  based on the start marker, determine the target output type
@@ -1301,6 +1338,7 @@ class ModelCatalog:
             list_type = True
             key_or_value = "value"
             response_type = "list"
+            start = list_start-1
         else:
             # try to build the string as a dictionary output
             list_type = False
@@ -1313,6 +1351,8 @@ class ModelCatalog:
         output_dict = {}
         output_list = []
         current_key = ""
+
+        # print("***test*** - remediation - input string - ", input_string)
 
         for y in range(start + 1, len(input_string)):
 
@@ -1333,28 +1373,45 @@ class ModelCatalog:
             # string markers of ' and "
             if ord(input_string[counter]) in [34, 39]:
 
-                if not string_on:
-                    string_on = True
-                    key_tmp = ""
-                else:
-                    # end of string token
-                    string_on = False
+                # insert new check if ' followed by 's'
+                exception_skip = False
+                if len(input_string) > counter+1:
+                    if ord(input_string[counter+1]) in [115]:
+                        exception_skip = True
+                        # counter += 1
+                # end - new check
 
-                    if len(key_tmp) > 0:
+                if not exception_skip:
 
-                        if not list_type:
-                            if key_or_value == "key":
-                                keys.append(key_tmp)
-                                current_key = key_tmp
-                                output_dict.update({current_key: []})
+                    if not string_on:
+                        string_on = True
+                        key_tmp = ""
+
+                    else:
+                        # end of string token
+                        string_on = False
+
+                        if len(key_tmp) > 0:
+
+                            if not list_type:
+                                if key_or_value == "key":
+                                    keys.append(key_tmp)
+                                    current_key = key_tmp
+                                    output_dict.update({current_key: []})
+
+                                else:
+                                    values.append(key_tmp)
+                                    if current_key in output_dict:
+                                        output_dict[current_key].append(key_tmp)
+                                    else:
+                                        logging.warning("update: remediation - could not find key-value to correct - output "
+                                                        "may be missing certain content in structured output.")
+
+                                key_tmp = ""
                             else:
+                                output_list.append(key_tmp)
                                 values.append(key_tmp)
-                                output_dict[current_key].append(key_tmp)
-                            key_tmp = ""
-                        else:
-                            output_list.append(key_tmp)
-                            values.append(key_tmp)
-                            key_tmp = ""
+                                key_tmp = ""
 
             if ord(input_string[counter]) == 58:
 
@@ -1382,8 +1439,174 @@ class ModelCatalog:
         else:
             # remediation successful in converting to list output
             if dedupe_values:
-                output_list = list(set(output_list))
+                dd_output = []
+                for elements in output_list:
+                    if elements not in dd_output:
+                        dd_output.append(elements)
+
+                # not using set because it can change the order of the list from output
+                # output_list = list(set(output_list))
+
+                output_list = dd_output
+
             return response_type, output_list
+
+    def analyze_sampling(self,response):
+
+        """ Analyzes a llm response output dictionary and produces a 'sampling_stats' dictionary to provide
+        details on the effects, if any, of sampling in the output generation. """
+
+        sampling_stats = {}
+
+        if "logits" not in response or "output_tokens" not in response:
+            logging.warning("warning: function get_fx_scores requires a response dictionary with 'logits' key - "
+                            "not found in the current response provided.  Set the model parameters to 'get_logits=True'"
+                            "for function call to provide logits")
+            return sampling_stats
+
+        logits = response["logits"]
+        output_tokens = response["output_tokens"]
+
+        not_top_selected = 0
+        top_token_not_used = []
+
+        if len(output_tokens) == 0:
+            return sampling_stats
+
+        for x in range(0, len(output_tokens)):
+
+            top_selected = True
+
+            if output_tokens[x] != logits[x][0][0] and x > 0:
+                top_selected = False
+                top_token_not_used.append((x, output_tokens[x], logits[x]))
+
+            if not top_selected and x > 0:
+                not_top_selected += 1
+
+        tokens_considered = len(output_tokens) - 1
+        if tokens_considered > 0:
+            percent_top_token = (tokens_considered - not_top_selected) / tokens_considered
+        else:
+            percent_top_token = 0.0
+
+        # sampling_stats added to the output dictionary
+        sampling_stats.update({"total_output_tokens": len(output_tokens),
+                               "percent_top_token": round(percent_top_token, 3),
+                               "not_top_tokens": top_token_not_used})
+
+        return sampling_stats
+
+    def get_fx_scores(self,response, hf_tokenizer_name, top_choices=3, logit_count=1, api_key=None):
+
+        """ Provides useful metrics and scores derived from analyzing the logits and output tokens from function call
+        llm response - currently only supported for HFGenerative and GGUFGenerative models.
+
+        Inputs:
+            -- llm response dictionary, including logits and output tokens
+            -- hf_tokenizer_name for the model, which will be used to decode output tokens, logits and identify key
+                'value zone' markers for the output response, e.g., identify list boundaries '[' and ']'
+            -- top_choices - number of candidates to consider in each logit, e.g., top 3 choices considered
+            -- logit_count - number of tokens to consider in the value zone, whether the first only, or more
+            -- api_key - optional, if tokenizer in private repository requiring an api key
+
+        Output (dictionary):
+            -- for each key in the output response, there is a list of the candidate logits in the value zone associated
+                with that key - the list will be the length of the logit count requested
+            -- a sampling_stats key will also be produced that will provide summary data on the number of 'value zone'
+                tokens, the percentage taken from the top output logit candidate and a list of the 'sampled', e.g.,
+                'not top' logits taken
+        """
+
+        # output is a dict of dict
+        output = {}
+
+        if "logits" not in response or "output_tokens" not in response:
+            logging.warning("warning: function get_fx_scores requires a response dictionary with 'logits' key - "
+                            "not found in the current response provided.  Set the model parameters to 'get_logits=True'"
+                            "for function call to provide logits")
+            return output
+
+        logits = response["logits"]
+
+        keys_list = []
+        llm_response = response["llm_response"]
+
+        if isinstance(llm_response, dict):
+            for key, value in llm_response.items():
+                keys_list.append(key)
+        elif isinstance(llm_response, list):
+            keys_list.append("llm_response")
+        else:
+            keys_list.append("llm_response")
+
+        # hf tokenizer name
+        try:
+            from transformers import AutoTokenizer
+        except ImportError:
+            raise DependencyNotInstalledException("transformers")
+
+        tokenizer = AutoTokenizer.from_pretrained(hf_tokenizer_name, token=api_key)
+
+        vz_choices = []
+        vz_capture_on = False
+        key_counter = 0
+
+        min_threshold = 0.005
+        vz_logits = 0
+        vz_top_logits = 0
+        top_token_not_used = []
+
+        for i, toks in enumerate(response["output_tokens"]):
+
+            decoded = tokenizer.decode(toks)
+
+            if "]" in decoded:
+                vz_capture_on = False
+                if vz_choices:
+                    output.update({keys_list[key_counter]: vz_choices})
+                    key_counter += 1
+                    vz_choices = []
+
+            if vz_capture_on:
+
+                new_entry = {}
+                if toks == logits[i][0][0]:
+                    vz_top_logits += 1
+                else:
+                    # the output token does not correspond to the logit with the highest score, so there was a
+                    # 'sampling' effect to this generation - adding this token and corresponding logit to be saved
+                    # and provided as output in 'sampling_stats'
+                    # print("no match: ", i, tokenizer.decode(toks), tokenizer.decode(logits[i][0][0]),toks, logits[i])
+                    top_token_not_used.append((i, toks, logits[i]))
+
+                vz_logits += 1
+
+                for x in range(0, top_choices):
+
+                    if logits[i][x][1] >= min_threshold:
+                        new_entry.update({tokenizer.decode(logits[i][x][0]): round(logits[i][x][1], 3)})
+
+                if len(vz_choices) < logit_count:
+                    vz_choices.append(new_entry)
+
+            if "[" in decoded:
+                vz_capture_on = True
+                vz_choices = []
+
+        if vz_top_logits > 0:
+            top_token_in_value_zone = round(vz_logits / vz_top_logits, 2)
+        else:
+            top_token_in_value_zone = 0.0
+
+        # sampling_stats added to the output dictionary
+        output.update({"sampling_stats": {"total_vz_tokens": vz_logits,
+                                          "percent_top_token": top_token_in_value_zone,
+                                          "not_top_tokens": top_token_not_used}
+                       })
+
+        return output
+
 
 class PromptCatalog:
     """ PromptCatalog manages prompt styles and prompt wrappers. """
@@ -3895,6 +4118,7 @@ class HFGenerativeModel:
             if self.model_card:
                 if "hf_repo" in self.model_card:
                     hf_repo_name = self.model_card["hf_repo"]
+                    self.hf_tokenizer_name = hf_repo_name
 
             if api_key:
                 if torch.cuda.is_available():
@@ -4428,7 +4652,8 @@ class HFGenerativeModel:
         top_logits = []
         # by default, self.top_logit_count = 10, will get the top 10 highest values in logit output
         for x in range(0, self.top_logit_count):
-            pair = (sm_args_sorted[logit_size - x - 1], sm_sorted[logit_size - x - 1])
+            # experiment - rounding the long float number
+            pair = (sm_args_sorted[logit_size - x - 1], round(sm_sorted[logit_size - x - 1],3))
             top_logits.append(pair)
 
         self.logits_record.append(top_logits)
@@ -5337,7 +5562,8 @@ class GGUFGenerativeModel:
 
             nl_logit = logits_array[nl_token]
 
-            if self.penalty_last_n > 0:
+            # note: important to skip this if use_sampling is False
+            if self.penalty_last_n > 0 and self.use_sampling:
 
                 self._lib.llama_sample_repetition_penalties(self._ctx.ctx,
                                                             ctypes.byref(token_data_array.candidates),
@@ -5447,7 +5673,8 @@ class GGUFGenerativeModel:
         top_logits = []
 
         for x in range(0,self.top_logit_count):
-            pair = (sm_args_sorted[logit_size-x-1],sm_sorted[logit_size-x-1])
+            # experiment - try rounding the float number
+            pair = (sm_args_sorted[logit_size-x-1],round(sm_sorted[logit_size-x-1],3))
             top_logits.append(pair)
 
         self.logits_record.append(top_logits)
