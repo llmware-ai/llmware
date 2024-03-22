@@ -53,7 +53,7 @@ def sql_e2e_test_script(table_name="customers1",create_new_table=False):
 
     #   query starts here
     agent = LLMfx()
-    agent.load_tool("sql")
+    agent.load_tool("sql", sample=False, get_logits=True, temperature=0.0)
 
     #  Pass direct queries to the DB
 
