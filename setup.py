@@ -71,7 +71,7 @@ setup(
         'Werkzeug==3.0.1',
         'word2number==1.1',
         'Wikipedia-API==0.6.0',
-        'yfinance==0.2.28',
+        'yfinance>=0.2.28',
         'psycopg-binary==3.1.17',
         'psycopg==3.1.17',
         'pgvector==0.2.4',
