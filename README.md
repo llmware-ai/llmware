@@ -712,15 +712,20 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
-**Thursday, March 14 - v0.2.5 Update - WIP**  
--Improved support for GGUF on CUDA (Windows and Linux), with new prebuilt binaries and exception handling.  
--Enhanced model configuration options (sampling, temperature, top logit capture).  
--Added full back-level support for Ubuntu 20+ with parsers and GGUF engine.  
--Support for new Anthropic Claude 3 models.  
--New retrieval methods: document_lookup and aggregate_text.  
--New model:  bling-stablelm-3b-tool - fast, accurate 3b quantized question-answering model - one of our new favorites.  
+**Friday, March 22 - v0.2.6 Update - WIP**  
+- New SLIM models:  summary, extract, xsum, boolean, tags-3b, and combo sentiment-ner.  
+- New logit and sampling analytics.  
+- New SLIM examples showing how to use the new models.  
+  
+**Thursday, March 14 - v0.2.5 Update**  
+- Improved support for GGUF on CUDA (Windows and Linux), with new prebuilt binaries and exception handling.  
+- Enhanced model configuration options (sampling, temperature, top logit capture).  
+- Added full back-level support for Ubuntu 20+ with parsers and GGUF engine.  
+- Support for new Anthropic Claude 3 models.  
+- New retrieval methods: document_lookup and aggregate_text.  
+- New model:  bling-stablelm-3b-tool - fast, accurate 3b quantized question-answering model - one of our new favorites.  
 
-**Wednesday, February 28 - v0.2.4 Update**
+**Wednesday, February 28 - v0.2.4 Update**  
 - Major upgrade of GGUF Generative Model class - support for Stable-LM-3B, CUDA build options, and better control over sampling strategies.
 - Note: new GGUF llama.cpp built libs packaged with build starting in v0.2.4.  
 - Improved GPU support for HF Embedding Models.   
