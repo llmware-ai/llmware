@@ -73,4 +73,4 @@ ModelCatalog().tool_test_run("slim-sentiment-tool")
 
 ## License
 
-`llmware` is diributed by an [Apache-2.0 license](https://github.com/llmware-ai/llmware/blob/main/LICENSE).
+`llmware` is distributed by an [Apache-2.0 license](https://github.com/llmware-ai/llmware/blob/main/LICENSE).
