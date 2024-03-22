@@ -393,8 +393,8 @@ class LLMfx:
 
     def load_tool(self, tool_type,
                   # new options added
-                   use_gpu=True, sample=True, get_logits=False,
-                   max_output=100, temperature=-99):
+                   use_gpu=True, sample=False, get_logits=True,
+                   max_output=100, temperature=0.0):
 
         """ Loads a single tool """
 
@@ -442,11 +442,14 @@ class LLMfx:
             self.write_to_journal(journal_update)
 
             model = getattr(self, tool_type + "_model")
-            model.unload_model()
 
-            delattr(self, tool_type + "_model")
-            setattr(self, tool_type + "_model", None)
-            gc.collect()
+            if model:
+
+                model.unload_model()
+
+                delattr(self, tool_type + "_model")
+                setattr(self, tool_type + "_model", None)
+                gc.collect()
 
         return 0
 
@@ -512,6 +515,10 @@ class LLMfx:
                     if response["usage"]["type"] == "dict":
                         dict_output = True
                         self.report[work_iter] = self.report[work_iter] | response["llm_response"]
+
+                    elif response["usage"]["type"] == "list" and tool_type == "summary":
+                        dict_output = True
+                        self.report[work_iter] = self.report[work_iter] | {"summary": response["llm_response"]}
 
                     else:
                         logging.warning("update: could not automatically convert to dictionary - "
@@ -744,6 +751,79 @@ class LLMfx:
             params = [params]
 
         return self.exec_function_call("category", text=text, params=params)
+
+    def sa_ner(self, text=None, params=None):
+
+        """ Generates a dictionary with keys corresponding to 'sentiment' and 'named entity recognition' (NER)
+        identifiers in the next, such as people, organization, and place. """
+
+        if not params:
+            # default parameter key
+            params = ["sentiment, people, organization, place"]
+
+        if isinstance(params, str):
+            params = [params]
+
+        return self.exec_function_call("sa-ner", text=text, params=params)
+
+    def extract(self, text=None, params=None):
+
+        """ Extract receives an input of a text passage and a custom parameter key, and generates a dictionary with
+        key corresponding to the 'custom parameter' key and a list of values associated with that key, extracted from
+        the text passage. """
+
+        if not params:
+            # default parameter key
+            params = ["key points"]
+
+        if isinstance(params, str):
+            params = [params]
+
+        return self.exec_function_call("extract", text=text, params=params)
+
+    def xsum(self, text=None, params=None):
+
+        """ XSum or 'extreme summarization' receives an input text passage, and returns a dictionary with a 'xsum'
+        key and a value of a list with one string element, with the string element consisting of a short phrase,
+        title, headline that provides a concise summary of the text passage. """
+
+        if not params:
+            # default parameter key
+            params = ["xsum"]
+
+        if isinstance(params, str):
+            params = [params]
+
+        return self.exec_function_call("xsum", text=text, params=params)
+
+    def summarize(self, text=None, params=None):
+
+        """ Summarizes receives an input text passage, and optional parameters to guide the summarization, and
+        returns a list of summary points from the text. """
+
+        if not params:
+            # default parameter key
+            params = ["key points (3)"]
+
+        if isinstance(params, str):
+            params = [params]
+
+        return self.exec_function_call("summary", text=text, params=params)
+
+    def boolean(self, text=None, params=None):
+
+        """ Boolean receives an input text passage, a yes/no question as its parameter, and then returns a
+        dictionary with two keys - 'answer' and 'explain' with the 'answer' providing a yes/no classification, and the
+        explanation providing text from the passage that was used as the basis for the classification. """
+
+        if not params:
+            #TODO:  what is right way to handle - needs params
+            params = ["Is this true?"]
+
+        if isinstance(params, str):
+            params = [params]
+
+        return self.exec_function_call("boolean", text=text, params=params)
 
     def nli(self, text1, text2, params=None):
 
@@ -1194,6 +1274,7 @@ class SQLTables:
         for i, entry in enumerate(header_row):
             col_name = re.sub("[\xfe\xff]","",entry)
             try:
+                #TODO: build more robust type checking, e.g., float/decimal/currency
                 test_int = int(test_row[i])
                 type="integer"
             except:
@@ -1264,7 +1345,7 @@ class SQLTables:
             logging.info("update: table created - column names - %s ", column_names)
 
         else:
-            print("update: table exists - getting column names")
+            logging.info("update: table exists - getting column names")
             column_names = self.get_column_names(table_name)
 
         # insert records
