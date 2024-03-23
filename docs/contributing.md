@@ -85,13 +85,13 @@ If you're interested in existing issues, you can
 
  
 
-# Security Vulnerabilities
+## Security Vulnerabilities
 **If you believe you've found a security vulnerability, then please _do not_ submit an issue ticket or pull request or otherwise publicly disclose the issue.**
 Please follow the process at [Reporting a Vulnerability](https://github.com/llmware-ai/llmware/blob/main/Security.md)
 
 
 
-# GitHub workflow
+## GitHub workflow
 
 Generally, we follow the [``fork-and-pull``](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) Git workflow.
 
@@ -110,5 +110,5 @@ git fetch upstream
 git checkout upstream/main -b my-topic-branch
 ```
 
-# Do you have questions or just want to bounce around an idea?
+## Do you have questions or just want to bounce around an idea?
 Questions and discussions are welcome in our [GitHub discussions](https://github.com/llmware-ai/llmware/discussions)!
