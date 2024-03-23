@@ -48,7 +48,7 @@ Here is a non exhaustive list of contributions you can make.
 ## Code contributions
 
 ### New or Enhancement to existing Features
-You want to submit a code contribute that adds a new feature or enhances an existing one?
+You want to submit a code contribution that adds a new feature or enhances an existing one?
 Then the best way to start is by opening a discussion in our [GitHub discussions](https://github.com/llmware-ai/llmware/discussions).
 Please do this before you work on it, so you do not put effort into it just to realise after submission that
 it will not be merged.
