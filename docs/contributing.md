@@ -49,7 +49,7 @@ Here is a non exhaustive list of contributions you can make.
 
 ### New or Enhancement to existing Features
 You want to submit a code contribute that adds a new feature or enhances an existing one?
-Then the best way to start is by opening a discussion in our [github discussions](https://github.com/llmware-ai/llmware/discussions).
+Then the best way to start is by opening a discussion in our [GitHub discussions](https://github.com/llmware-ai/llmware/discussions).
 Please do this before you work on it, so you do not put effort into it just to realise after submission that
 it will not be merged.
 
@@ -78,7 +78,7 @@ Here is a non exhaustive list of these ways.
 If you're interested in existing issues, you can
 
 - Look for issues with the `good first issue` label as a good place to get started.
-- Provide answers for questions in our [github discussions](https://github.com/llmware-ai/llmware/discussions)
+- Provide answers for questions in our [GitHub discussions](https://github.com/llmware-ai/llmware/discussions)
 - Provide help for bug or enhancement issues. 
   - Ask questions, reproduce the issues, or provide solutions.
   - Pull a request to fix the issue.
@@ -111,4 +111,4 @@ git checkout upstream/main -b my-topic-branch
 ```
 
 # Do you have questions or just want to bounce around an idea?
-Questions and discussions are welcome in our [github discussions](https://github.com/llmware-ai/llmware/discussions)!
+Questions and discussions are welcome in our [GitHub discussions](https://github.com/llmware-ai/llmware/discussions)!
