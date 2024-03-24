@@ -8,5 +8,9 @@ __pycache__/
 llmware.egg-info/
 venv/
 
+# Jekyll
+docs/_site/
+
+
 # Mac
 .DS_Store/
