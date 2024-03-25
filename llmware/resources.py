@@ -302,6 +302,10 @@ class MongoWriter:
     def write_new_record(self, new_record):
         """Inserts one new record in Mongo collection"""
 
+        key_list = []
+        for keys in new_record:
+            key_list.append(keys)
+
         if "_id" in new_record:
             new_record.update({"_id": ObjectId(new_record["_id"])})
 
