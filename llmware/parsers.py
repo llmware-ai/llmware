@@ -144,10 +144,10 @@ class Parser:
         self.parser_output = []
 
         self.ACCEPTED_FILE_FORMATS = ["pptx","xlsx","docx","pdf","txt","csv","html","jsonl",
-                                      "jpg","jpeg","png","wav","zip", "md"]
+                                      "jpg","jpeg","png","wav","zip", "md", "tsv"]
         self.office_types = ["PPTX", "pptx", "XLSX", "xlsx", "DOCX", "docx"]
         self.pdf_types = ["PDF", "pdf"]
-        self.text_types = ["txt", "csv", "html", "jsonl", "md"]
+        self.text_types = ["txt", "csv", "html", "jsonl", "md", "tsv"]
         self.ocr_types = ["jpg", "jpeg", "png"]
         self.voice_types = ["wav"]
         self.zip_types = ["zip"]
@@ -293,9 +293,6 @@ class Parser:
             # We are done with this and we don't need to n times loop as before
             # we set the imput_file_names to be the reduced list to not to process dupe files
             input_file_names = duplicate_files_tmp
-
-
-
 
         for filename in input_file_names:
 
@@ -549,7 +546,7 @@ class Parser:
                                         os.path.join(self.pdf_work_folder,fn))
                             pdf_found += 1
 
-                        if ext in ["txt", "csv"]:
+                        if ext in ["txt", "csv", "tsv", "json", "jsonl", "md"]:
                             shutil.copy(os.path.join(self.zip_work_folder, "tmp" + os.sep, f),
                                         os.path.join(self.text_work_folder,fn))
                             text_found += 1
@@ -1377,9 +1374,11 @@ class Parser:
 
         return output
 
-    def parse_text(self, input_fp, write_to_db=True, save_history=True, dupe_check=False,copy_to_library=False):
+    def parse_text(self, input_fp, write_to_db=True, save_history=True, dupe_check=False,copy_to_library=False,
+                   text_chunk_size=None, key_list=None, interpret_as_table=False,delimiter=",", separator="\n",
+                   batch_size=1, encoding="utf-8-sig", errors="ignore"):
 
-        """ Main entry point to parser for .txt, .csv, .json and .md files """
+        """ Main entry point to parser for .txt, .csv, .json, .jsonl, .tsv and .md files """
 
         output = []
 
@@ -1431,16 +1430,22 @@ class Parser:
 
                 if file_type.lower() in ["txt", "md"]:
                     # will parse as text
-                    text_output = TextParser(self).text_file_handler (input_fp, file)
+                    text_output = TextParser(self,text_chunk_size=text_chunk_size).text_file_handler (input_fp, file)
                     content_type = "text"
                     file_type = "txt"
 
-                if file_type.lower() in ["csv"]:
-                    # will parse as table
-                    interpret_as_table=True
-                    text_output = TextParser(self).csv_file_handler(input_fp, file, interpret_as_table=True)
+                if file_type.lower() in ["csv", "tsv"]:
+
+                    if file_type.lower() == "tsv":
+                        delimiter= "\t"
+
+                    text_output = ( TextParser(self,text_chunk_size=text_chunk_size).
+                                   csv_file_handler(input_fp, file, interpret_as_table=interpret_as_table,
+                                                    delimiter=delimiter, batch_size=batch_size, encoding=encoding,
+                                                    errors=errors) )
+
                     content_type = "text"
-                    file_type = "csv"
+                    file_type = file_type.lower()
                     if interpret_as_table:
                         content_type = "table"
 
@@ -1448,9 +1453,10 @@ class Parser:
                     # will parse each line item as separate entry
 
                     interpret_as_table=False
-                    keys = ["text"]
+                    if not key_list:
+                        key_list = ["text"]
                     text_output = TextParser(self).jsonl_file_handler(input_fp,file,
-                                                                      key_list=keys,
+                                                                      key_list=key_list,
                                                                       interpret_as_table=interpret_as_table,
                                                                       separator="\n")
                     content_type = "text"
@@ -1599,6 +1605,9 @@ class Parser:
                          "", entries, entries, "", entries, "", "", "", "", "")
             else:
                 # could be table if csv file -> in this case, keep both text [11] and table [7]
+                if not isinstance(entries,str):
+                    entries = str(entries)
+
                 new_entry = (content_type, file_type, (page_num, 0), counter, "", "", file, entries, entries, "",
                              "", entries, entries, "", entries, "", "", "", "", "")
 
@@ -2755,12 +2764,21 @@ class Parser:
             content_type = "text"
             file_type = "txt"
 
-        if file_type.lower() in ["csv"]:
+        if file_type.lower() in ["csv", "tsv"]:
             # will parse as table
             interpret_as_table=True
-            parser_output = TextParser(self).csv_file_handler(input_fp, input_fn, interpret_as_table=True)
+
+            if file_type.lower() == "tsv":
+                separator="\t"
+            else:
+                separator=","
+
+            parser_output = TextParser(self).csv_file_handler(input_fp, input_fn, interpret_as_table=True,
+                                                              delimiter=separator)
+
             content_type = "text"
-            file_type = "csv"
+            # file_type = "csv"
+            file_type = file_type.lower()
             if interpret_as_table:
                 content_type = "table"
 
@@ -3048,7 +3066,7 @@ class Parser:
 
         return in_library
 
-    def parse_csv_config(self,fp, fn, cols=None, mapping_dict=None):
+    def parse_csv_config(self,fp, fn, cols=None, mapping_dict=None, delimiter=","):
 
         """ Designed for intake of a 'pseudo-db csv table' and will add rows to library with mapped keys.
 
@@ -3066,17 +3084,16 @@ class Parser:
         Note: this feature is currently only supported for Mongo - SQL DB support will follow.
         """
 
-        # method requires Mongo DB and a library loaded in the Parser
-        if LLMWareConfig().get_config("collection_db") != "mongo" or not self.library:
-            raise LLMWareException(message="Parsing of a configured CSV file requires (a) use of MongoDB as "
-                                           "the text collection parsing database, and (b) a library object to "
+        # method requires library loaded in the Parser
+
+        if not self.library:
+            raise LLMWareException(message="Parsing of a configured CSV file requires a library object to "
                                            "be connected to the parser state.")
 
         #   if found in mapping dict, then will over-write
         reserved_keys = ["text", "doc_ID", "block_ID"]
 
         rejected_rows = []
-        ds = []
 
         if not mapping_dict:
             raise LLMWareException(message="Parsing of a configured CSV file requires a mapping dictionary so that "
@@ -3086,19 +3103,15 @@ class Parser:
             raise LLMWareException(message="Parsing of a configured CSV file requires a defined column structure and "
                                            "a specified number of columns to ensure accurate mapping.")
 
+        # file type
+        ft = fn.split(".")[-1].lower()
+        if ft == "tsv":
+            delimiter="\t"
+
         # will iterate through csv file
         input_csv = os.path.join(fp, fn)
 
-        import csv
-        record_file = open(input_csv, "r", encoding='utf-8-sig',errors='ignore')
-        c = csv.reader(record_file, dialect='excel', doublequote=False, delimiter=',')
-        output = []
-
-        #   Should be OK to load in memory up to ~1M rows - beyond that, will need to implement iterator
-
-        for lines in c:
-            output.append(lines)
-        record_file.close()
+        output = Utilities.file_load(input_csv,delimiter=delimiter,encoding='utf-8-sig',errors='ignore')
 
         added_row_count = 0
         total_row_count = 0
@@ -3141,7 +3154,9 @@ class Parser:
                 meta = {"author": "", "modified_date": "", "created_date": "", "creator_tool": ""}
                 coords_dict = {"coords_x": 0, "coords_y": 0, "coords_cx": 0, "coords_cy": 0}
 
-                # conforming file format with full path of dialog intake path
+                # note: if using SQL-based DB, then will save the metadata as a text string
+                if LLMWareConfig().get_config("collection_db") in ["sqlite", "postgres"]:
+                    metadata = str(metadata)
 
                 new_row_entry = ("text", "custom_csv", (1, 0), total_row_count, "", "", fn,
                                  text, text, "", "", text, text, "", text, "", "", metadata, "", "")
@@ -3152,8 +3167,8 @@ class Parser:
                         self.library.doc_ID = int(doc_id)
                         added_doc_count += 1
                     except:
-                        logging.warning("update: doc_ID expected to be integer - can not apply custom doc ID -"
-                                        "will use default library document increment")
+                        logging.warning(f"update: doc_ID expected to be integer - can not apply custom doc ID "
+                                        f"- {doc_id} - will use default library document increment")
 
                 if block_id:
                     self.library.block_ID = block_id
@@ -3161,6 +3176,7 @@ class Parser:
                     self.library.block_ID += 1
 
                 #   write row to database
+
                 entry_output = self.add_create_new_record(self.library,
                                                           new_row_entry,
                                                           meta,
@@ -3181,7 +3197,140 @@ class Parser:
                                                                     added_blocks=added_row_count,
                                                                     added_images=0, added_pages=0)
 
-        output = {"rows_added": len(ds), "rejected_count": len(rejected_rows), "rejected_rows": rejected_rows}
+        output = {"rows_added": added_row_count, "rejected_count": len(rejected_rows), "rejected_rows": rejected_rows}
+
+        return output
+
+    def parse_json_config(self,fp, fn, mapping_dict=None):
+
+        """ Designed for intake of a 'pseudo-db json/jsonl table' and will add rows to library with mapped keys.
+
+        Inputs:
+            -- json folder path + json file name
+            -- cols = # of expected column entries in each row of the CSV
+            -- mapping dict = assigns llmware library key names to keys in the json
+                e.g., {"text": "output", "doc_ID": "ID", "key1": "special_field1", "key2": "special_field2", "key3":"special_field3"}
+
+        Requirements:
+            -- must have a "text" key in the mapping dictionary
+            -- optional doc_ID and block_ID - if found, will over-write the normal library indexes
+            -- all other keys will be saved as 'metadata' and added to the library block row in "special_field1"
+
+        Note: this feature is currently only supported for Mongo - SQL DB support will follow.
+        """
+
+        # method requires a library loaded in the Parser
+
+        if not self.library:
+            raise LLMWareException(message="Parsing of a configured CSV file requires a library object to "
+                                           "be connected to the parser state.")
+
+        #   if found in mapping dict, then will over-write
+        reserved_keys = ["text", "doc_ID", "block_ID"]
+
+        rejected_rows = []
+
+        if not mapping_dict:
+            raise LLMWareException(message="Parsing of a configured JSON/JSONL file requires a mapping dictionary so that "
+                                           "the table attributes can be properly mapped.")
+
+        # will iterate through json/jsonl file
+        ft = fn.split(".")[-1].lower()
+
+        if ft not in ["json", "jsonl"]:
+            raise LLMWareException(message=f"File type not recognized as JSON/JSONL - {ft}")
+
+        output = []
+
+        if ft == "json":
+            output = json.load(open(os.path.join(fp, fn), "r"))
+
+        if ft == "jsonl":
+            my_file = open(os.path.join(fp, fn), 'r', encoding='utf-8-sig',errors='ignore')
+
+            output = []
+            for i, lines in enumerate(my_file):
+                row_tmp = json.loads(lines)
+                output.append(row_tmp)
+
+            my_file.close()
+
+        added_row_count = 0
+        total_row_count = 0
+        added_doc_count = 0
+
+        for i, rows in enumerate(output):
+
+            text = ""
+            doc_id = None
+            block_id = None
+            metadata = {}
+
+            for keys, values in mapping_dict.items():
+
+                if keys == "text":
+                    if values in rows:
+                        text = rows[values]
+
+                if keys == "doc_ID":
+                    if values in rows:
+                        doc_id = rows[values]
+
+                if keys == "block_ID":
+                    if values in rows:
+                        block_id = rows[values]
+
+                if keys not in reserved_keys:
+                    metadata.update({keys:rows[values]})
+
+            if text.strip():
+
+                meta = {"author": "", "modified_date": "", "created_date": "", "creator_tool": ""}
+                coords_dict = {"coords_x": 0, "coords_y": 0, "coords_cx": 0, "coords_cy": 0}
+
+                # conforming file format with full path of dialog intake path
+                metadata = str(metadata)
+
+                new_row_entry = ("text", "custom_json", (1, 0), total_row_count, "", "", fn,
+                                 text, text, "", "", text, text, "", text, "", "", metadata, "", "")
+
+                #   set attributes custom
+                if doc_id:
+                    try:
+                        self.library.doc_ID = int(doc_id)
+                        added_doc_count += 1
+                    except:
+                        logging.warning(f"update: doc_ID expected to be integer - can not apply custom doc ID"
+                                        f"- {doc_id} - will use default library document increment")
+
+                if block_id:
+                    self.library.block_ID = block_id
+                else:
+                    self.library.block_ID += 1
+
+                #   write row to database
+
+                entry_output = self.add_create_new_record(self.library,
+                                                          new_row_entry,
+                                                          meta,
+                                                          coords_dict,
+                                                          dialog_value="false")
+                added_row_count += 1
+
+            total_row_count += 1
+
+        # update overall library counter at end of parsing
+
+        if len(output) > 0:
+
+            if added_doc_count == 0:
+                added_doc_count += 1
+
+            dummy = self.library.set_incremental_docs_blocks_images(added_docs=added_doc_count,
+                                                                    added_blocks=added_row_count,
+                                                                    added_images=0, added_pages=0)
+
+        output = {"rows_added": added_row_count, "rejected_count": len(rejected_rows), "rejected_rows": rejected_rows}
 
         return output
 
@@ -4020,16 +4169,36 @@ class TextParser:
                 self.text_chunk_size = parser.library.block_size_target_characters + 200
                 self.look_back_range = 300
 
-    def jsonl_file_handler (self, dir_fp,sample_file, key_list=None, interpret_as_table=False,
-                            separator="\n"):
+    def jsonl_file_handler (self, dir_fp,sample_file, key_list=None, interpret_as_table=False,separator="\n"):
 
-        """ Parse JSONL file. """
+        """ Parse JSON or JSONL file. """
 
         # will extract each line in jsonl as separate sample
         #   --based on key_list and interpret_as_table
 
         output = []
-        my_file = open(os.path.join(dir_fp, sample_file), 'r', encoding='utf-8-sig',errors='ignore')
+        my_file = []
+
+        ft = sample_file.split(".")[-1].lower()
+
+        if ft not in ["json", "jsonl"]:
+            logging.warning(f"update: jsonl_file_parser did not find a recognized json/jsonl file type - {sample_file}")
+            return output
+
+        if ft == "json":
+            my_file = json.load(open(os.path.join(dir_fp, sample_file), "r"))
+
+        if ft == "jsonl":
+            file = open(os.path.join(dir_fp,sample_file), 'r', encoding='utf-8-sig',errors='ignore')
+
+            output = []
+            for i, lines in enumerate(file):
+                row_tmp = json.loads(lines)
+                my_file.append(row_tmp)
+
+            file.close()
+
+        # my_file = open(os.path.join(dir_fp, sample_file), 'r', encoding='utf-8-sig',errors='ignore')
 
         if not key_list:
             # as default, if no key_list, then look for "text" attribute in jsonl by default
@@ -4037,20 +4206,21 @@ class TextParser:
 
         for i, lines in enumerate(my_file):
 
-            row_tmp = json.loads(lines)
+            row_tmp = lines
+            # row_tmp = json.loads(lines)
 
             if not interpret_as_table:
                 row_text = ""
                 for keys in key_list:
                     if keys in row_tmp:
-                        row_text += row_tmp[keys] + separator
+                        row_text += str(row_tmp[keys]) + separator
                 output.append(row_text)
 
             else:
                 row_table = []
                 for keys in key_list:
                     if keys in row_tmp:
-                        row_table.append(keys)
+                        row_table.append(str(row_tmp[keys]))
                 output.append(row_table)
 
         return output
@@ -4068,44 +4238,51 @@ class TextParser:
 
         return text_chunks
 
-    def csv_file_handler (self, dir_fp,sample_file, max_rows=100, interpret_as_table=True):
+    def csv_file_handler (self, dir_fp,sample_file, interpret_as_table=True, delimiter=",",
+                          encoding='utf-8-sig',errors='ignore', batch_size=1, separator="\t"):
 
-        """ Parse .csv file. """
+        """ Parse .csv or .tsv file - depending upon separator, e.g., ',' or '\t' """
 
-        if interpret_as_table:
+        ft = sample_file.split(".")[-1].lower()
+        if ft == "tsv":
+            delimiter = "\t"
 
-            # will split the table by rows and columns (\n for rows and ',' for cells in row)
-            t = Utilities().file_load(os.path.join(dir_fp,sample_file))
-            tables_out= []
+        # will split the table by rows and columns (\n for rows and ',' for cells in row)
+        t = Utilities.file_load(os.path.join(dir_fp,sample_file),
+                                delimiter=delimiter, encoding=encoding, errors=errors)
 
-            if len(t) < max_rows:
-                tables_out = [t]
-            else:
-                table_chunks = len(t) // max_rows
-                if max_rows > table_chunks * len(t):
-                    # there is a remainder, so create one additional partial chunk with last set of rows
-                    table_chunks += 1
-                starter = 0
-                stopper = 0
-                for x in range(0,table_chunks):
-                    starter = starter + stopper
-                    stopper = starter + min(len(t)-starter, max_rows)
-                    tables_out.append(t[starter:stopper])
+        tables_out= []
 
-            return tables_out
-
+        if len(t) < batch_size:
+            tables_out = [t]
         else:
-            # chunk and split as a big piece of text
-            raw_csv = open(os.path.join(dir_fp,sample_file), "r", encoding='utf-8-sig', errors='ignore').read()
-            # replace ',' & '\n' & '\r' with spaces
-            text_out = re.sub("[,\n\r]", " ", raw_csv)
+            table_chunks = len(t) // batch_size
 
-            # will chop up the long text into individual text chunks
-            text_chunks = TextChunker(text_chunk=text_out,
-                                      max_char_size=self.text_chunk_size,
-                                      look_back_char_range=self.look_back_range).convert_text_to_chunks()
+            if batch_size > table_chunks * len(t):
+                # there is a remainder, so create one additional partial chunk with last set of rows
+                table_chunks += 1
 
-            return text_chunks
+            starter = 0
+            increment = 0
+
+            for x in range(0,table_chunks):
+                starter = starter + increment
+                increment = min(len(t)-starter, batch_size)
+                stopper = starter + increment
+
+                if interpret_as_table:
+                    tmp= t[starter:stopper]
+                else:
+                    tmp = ""
+                    for x in range(starter, stopper):
+                        for y in range(0,len(t[x])):
+                            tmp += str(t[x][y]) + separator
+                        tmp = tmp[:-len(separator)]
+                        tmp += "\n"
+
+                tables_out.append(tmp)
+
+        return tables_out
 
 
 class WikiParser:
