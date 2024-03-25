@@ -44,10 +44,53 @@ permalink: /
 
 # Install llmware 
 
+{: .note}
+> New wheels are built generally on PyPy on a weekly basis and updated on PyPy versioning.
+> The development repo is updated and current at all times, but may have updates that are not yet in the PyPy wheel.
+> All wheels are built and tested on
+> - Mac Metal
+> - Mac x86
+> - Windows x86 (+ with CUDA)
+> - Linux x86 (+ with CUDA) - most testing on Ubuntu 22 and Ubuntu 20 - which are recommended.
+> - Linux aarch64
+
+{: .note}
+> We recommend that you use at least ``llmware >= 0.2.0``. Other than that, make sure that you have the following
+> set up.
+> - Platforms: Mac M1, Mac x86, Windows, Linux (Ubuntu 22 preferred)
+> - Hardware: 16 GB RAM minimum
+> - Python versions: 3.9, 3.10, 3.11
+
+You can install ``llmware`` via the Python Package Index (PIP), or you can manually download the ``wheel`` files from
+the [GitHub repository](https://github.com/llmware-ai/llmware/tree/main/wheel_archives).
+
+## PIP
 You can easily install `llmware` via `pip`.
 
 ```bash
 pip install llmware 
+```
+
+## Manual install of wheel files
+First, go to the [wheel\_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives) folder
+and download the *wheel* you want to install.
+For example, if you want to install ``llmware`` version ``0.2.5`` then choose ``llmware-0.2.5-py3-none-any.whl``.
+After downloading, place the ``wheel`` archive in a folder.
+Finally, navigate to that folder and and run ``pip3 install llmware-0.2.5-py3-none-any.whl``.
+On linux, a typical work flow would be the following.
+
+```bash
+cd Downloads
+
+mkdir llmware
+cd llmware
+
+wget https://github.com/\
+llmware-ai/llmware/\
+blob/432b5530cda158f57442a3fe4a9f03a20945a41c/\
+wheel_archives/llmware-0.2.5-py3-none-any.whl
+
+pip3 install llmware-0.2.5-py3-none-any.whl
 ```
 
 # When to use llmware 
