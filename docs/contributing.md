@@ -45,6 +45,29 @@ Here is a non exhaustive list of contributions you can make.
 11. Answer questions in our [Discord channel](https://discord.gg/MhZn5Nc39h), especially in the [technical support forum](https://discord.com/channels/1179245642770559067/1218498778915672194)
 12. Post projects in which you use ``llmware`` in our Discord forum [made with llmware](https://discord.com/channels/1179245642770559067/1218567269471486012), ideially with a link to a public GitHub repository
 
+We briefly describe some of the important modules of ``llmware`` next, so you can more easily navigate the code base.
+For newcomers, we embed links to our [fast start series from YouTube](https://www.youtube.com/playlist?list=PL1-dn33KwsmD7SB9iSO6vx4ZLRAWea1DB).
+
+### Core modules
+
+#### Library
+<iframe width="560" height="315" src="https://www.youtube.com/embed/2xDefZ4oBOM?si=IAHkxpQkFwnWyYTL" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+In ``llmware``, a *library* is a collection of documents.
+A library is responsible for parsing, text chunking, and indexing.
+
+#### Embeddings
+<iframe width="560" height="315" src="https://www.youtube.com/embed/xQEk6ohvfV0?si=GAPle5gVdVPkYKWv" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+In ``llmware``, an *embedding* is a vector store and an embedding model.
+An embedding is responsible for applying an embedding model to a library, storing the embeddings in a vector store, and providing access to the embeddings with natural language queries.
+
+#### Prompts
+<iframe width="560" height="315" src="https://www.youtube.com/embed/swiu4oBVfbA?si=rKbgO3USADCqICqr" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+In ``llmware``, a *prompt* is an input to model.
+
+#### Model Catalog
+In ``llmware``, a *model catalog* is a collection of models.
+
+
 ## Code contributions
 
 ### New or Enhancement to existing Features
