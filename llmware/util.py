@@ -259,9 +259,9 @@ class Utilities:
         return 0
 
     @staticmethod
-    def file_load (in_path):
-        record_file = open(in_path, encoding='ISO-8859-1')
-        c = csv.reader(record_file, dialect='excel', doublequote=False, delimiter=',')
+    def file_load (in_path, delimiter=",",encoding='ISO-8859-1',errors='ignore'):
+        record_file = open(in_path, encoding=encoding,errors=errors)
+        c = csv.reader(record_file, dialect='excel', doublequote=False, delimiter=delimiter)
         output = []
         for lines in c:
             output.append(lines)
