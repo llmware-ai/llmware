@@ -9,10 +9,12 @@ stacked together in multi-step, multi-model Agent workflows - all running on a l
 
 **New SLIMS Just released** - check out slim-extract, slim-summarize, slim-xsum, slim-sa-ner, slim-boolean and slim-tags-3b  
 
+**Check out the new examples below marked with 🆕**
+
 **Check out the Intro videos**  
 [SLIM Intro Video](https://www.youtube.com/watch?v=cQfdaTcmBpY)  
 
-There are 15 SLIM models, each delivered in two packages - a Pytorch/Huggingface FP16 model, and a  
+There are 16 SLIM models, each delivered in two packages - a Pytorch/Huggingface FP16 model, and a  
 quantized "tool" designed for fast inference on a CPU, using LLMWare's embedded GGUF inference engine.  In most cases, 
 we would recommend that you start with the "tools" version of the models.
 
@@ -29,9 +31,15 @@ We have several ready-to-run examples in this repository:
 | 5.   Two-Step NER Retrieval ([code](ner-retrieval.py))                          | Using NER to extract name, and then using as basis for retrieval.            |                                                                                                                                        | 
 | 6.   Using Sentiment Analysis ([code](sentiment-analysis.py)) | Using sentiment analysis on earnings transcripts and a 'if...then' condition |
 | 7.   Text2SQL - Intro ([code](text2sql-getting-started-1.py))                                                                             | Getting Started with SLIM-SQL-TOOL and Basic Text2SQL Inference              |                                                                                                                   |
-| 8.   Text2SQL - E2E ([code](text2sql-end-to-end-2.py))                                                                                  | End-to-End Natural Langugage Query to SQL DB Query                           |                                                                                                                     |
+| 8.   Text2SQL - E2E ([code](text2sql-end-to-end-2.py))                                                                                  | End-to-End Natural Langugage Query to SQL DB Query                           |                                                                                                                     |  
 | 9.   Text2SQL - MultiStep ([code](text2sql-multistep-example-3.py))                                                                     | Extract a customer name using NER and use in a Text2SQL query                |  
-
+| 10.  🆕 Web Services & Function Calls ([code]([web_services_slim_fx.py)) | Generate 30 key financial analysis with SLIM function calls and web services |  
+| 11.  🆕 Yes-No Questions with Explanations ([code](using_slim_boolean_model.py)) | Analyze earnings releases with SLIM Boolean |  
+| 12.  🆕 Extracting Revenue Growth ([code](using_slim_extract_model.py)) | Extract revenue growth from earnings releases with SLIM Extract |  
+| 13.  🆕 Summary as a Function Call ([code](using_slim_summary.py)) | Simple Summarization as a Function Call with List Length Parameters |  
+| 14.  🆕 Handling Not Found Extracts ([code](not_found_extract_with_lookup.py)) | Multi-step Lookup strategy and handling not-found answers | 
+| 15.  🆕 Extract + Lookup ([code](custom_extract_and_lookup.py)) | Extract Named Entity information and use for lookups with SLIM Extract |  
+| 16.  🆕 Headline/Title as XSUM Function Call ([code](using_slim_xsum.py)) | eXtreme Summarization (XSUM) with SLIM XSUM |  
 
 For information on all of the SLIM models, check out [LLMWare SLIM Model Collection](https://www.huggingface.co/llmware/).  
 
@@ -67,7 +75,7 @@ You may also want to check out these quantized 'answer' tools, which work well i
 No special setup for SLIMs is required other than to install llmware >=0.2.6, e.g., `pip3 install llmware`.  
 
 **Platforms:**   
-- Mac M1, Mac x86, Windows, Linux (Ubuntu 22 preferred)  
+- Mac M1, Mac x86, Windows, Linux (Ubuntu 22 preferred, supported on Ubuntu 20 +)  
 - RAM: 16 GB minimum 
 - Python 3.9, 3.10, 3.11 (note: not supported on 3.12 yet)
 - llmware >= 0.2.6 version
