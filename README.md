@@ -644,7 +644,12 @@ Check out:  [llmware examples](https://github.com/llmware-ai/llmware/blob/main/e
 <summary><b>Step 3 - Tutorial Videos</b> - check out our Youtube channel for high-impact 5-10 minute tutorials on the latest examples.   </summary>
 
 🎬 Check out these videos to get started quickly:  
+- [Agent-based Complex Research Analysis](https://youtu.be/y4WvwHqRR60?si=jX3KCrKcYkM95boe)  
+- [Getting Started with SLIMs (with code)](https://youtu.be/aWZFrTDmMPc?si=lmo98_quo_2Hrq0C)  
+- [Are you prompting wrong for RAG - Stochastic Sampling-Part I](https://youtu.be/7oMTGhSKuNY?si=_KSjuBnqArvWzYbx)  
+- [Are you prompting wrong for RAG - Stochastic Sampling-Part II- Code Experiments](https://youtu.be/iXp1tj-pPjM?si=3ZeMgipY0vJDHIMY)  
 - [SLIM Models Intro](https://www.youtube.com/watch?v=cQfdaTcmBpY)  
+- [Text2SQL Intro](https://youtu.be/BKZ6kO2XxNo?si=tXGt63pvrp_rOlIP)  
 - [RAG with BLING on your laptop](https://www.youtube.com/watch?v=JjgqOZ2v5oU)    
 - [DRAGON-7B-Models](https://www.youtube.com/watch?v=d_u7VaKu6Qk&t=37s)  
 - [Install and Compare Multiple Embeddings with Postgres and PGVector](https://www.youtube.com/watch?v=Bncvggy6m5Q)  
