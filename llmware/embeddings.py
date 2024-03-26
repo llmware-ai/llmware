@@ -25,6 +25,7 @@ import numpy as np
 import re
 import time
 import uuid
+import itertools
 
 from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection
 from pymongo import MongoClient
@@ -60,7 +61,7 @@ except ImportError:
 
 #   optional import of pinecone - not in project requirements
 try:
-    import pinecone
+    from pinecone import Pinecone, ServerlessSpec
 except ImportError:
     pass
 
@@ -972,7 +973,8 @@ class EmbeddingPinecone:
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.api_key = PineconeConfig().get_config("pinecone_api_key")
-        self.environment = PineconeConfig().get_config("pinecone_environment")
+        self.cloud = PineconeConfig().get_config("pinecone_cloud")
+        self.region = PineconeConfig().get_config("pinecone_region")
 
         self.library = library
         self.library_name = self.library.library_name
@@ -996,7 +998,7 @@ class EmbeddingPinecone:
 
         # initiate connection to Pinecone
         try:
-            pinecone.init(api_key=self.api_key, environment=self.environment)
+            pinecone = Pinecone(api_key=self.api_key)
         except:
             raise ImportError(
                 "Exception - could not connect to Pinecone - please check:"
@@ -1011,21 +1013,39 @@ class EmbeddingPinecone:
                                      db_name="pinecone",
                                      embedding_dims=self.embedding_dims)
 
-        self.collection_name = self.utils.create_safe_collection_name()
+        collection_name = self.utils.create_safe_collection_name()
+        self.collection_name = collection_name.replace('_', '-')
+
         self.collection_key = self.utils.create_db_specific_key()
 
         # build new name here
         # self.index_name = self.collection_name
 
-        if self.collection_name not in pinecone.list_indexes():
-            pinecone.create_index(self.collection_name, dimension=self.embedding_dims, metric="euclidean")
+        pinecone_indexes = [pincone_index['name'] for pincone_index in pinecone.list_indexes()]
+        if self.collection_name not in pinecone_indexes:
+            pinecone.create_index(
+                name=self.collection_name,
+                dimension=self.embedding_dims,
+                metric="euclidean",
+                spec=ServerlessSpec(
+                    cloud=self.cloud,
+                    region=self.region))
+
             pinecone.describe_index(self.collection_name) # Waits for index to be created
             # describe_index_stats()  # Returns: {'dimension': 8, 'index_fullness': 0.0, 'namespaces': {'': {'vector_count': 5}}}
 
         # connect to index
         self.index = pinecone.Index(self.collection_name)
 
-    def create_new_embedding(self, doc_ids = None, batch_size=500):
+    def create_new_embedding(self, doc_ids = None, batch_size=100):
+        def chunks(iterable, batch_size=100):
+            """A helper function to break an iterable into chunks of size batch_size."""
+            it = iter(iterable)
+            chunk = tuple(itertools.islice(it, batch_size))
+            while chunk:
+                yield chunk
+                chunk = tuple(itertools.islice(it, batch_size))
+
 
         all_blocks_cursor, num_of_blocks = self.utils.get_blocks_cursor(doc_ids=doc_ids)
 
@@ -1063,12 +1083,15 @@ class EmbeddingPinecone:
             
             if len(sentences) > 0:
                 # Process the batch
-                vectors = self.model.embedding(sentences).tolist()
+                vectors = self.model.embedding(sentences)
 
                 # expects records as tuples - (batch of _ids, batch of vectors, batch of dict metadata)
                 records = zip(block_ids, vectors) #, doc_ids)
                 # upsert to Pinecone
-                self.index.upsert(vectors=records)
+
+                # Upsert data with 100 vectors per upsert request
+                for records_chunk in chunks(records, batch_size=100):
+                    self.index.upsert(vectors=records_chunk)
 
                 current_index = self.utils.update_text_index(block_ids,current_index)
 
@@ -1086,7 +1109,7 @@ class EmbeddingPinecone:
 
     def search_index(self, query_embedding_vector, sample_count=10):
 
-        result = self.index.query(vector=query_embedding_vector.tolist(), top_k=sample_count,include_values=True)
+        result = self.index.query(vector=query_embedding_vector, top_k=sample_count,include_values=True)
        
         block_list = []
         for match in result["matches"]:
