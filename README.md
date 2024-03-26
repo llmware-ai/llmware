@@ -541,6 +541,8 @@ if __name__ == "__main__":
 
 ## 🔥 What's New? 🔥
 
+-**New SLIM models released** - specialized function-calling models for extract, summary, xsum, boolean, sa-ner and tags-3b.  [New Examples](examples/SLIM-Agents)  
+
 -**Multi-Model Agents with SLIM models** - multi-step Agents with SLIMs on CPU - [video](https://www.youtube.com/watch?v=cQfdaTcmBpY) - [example](examples/SLIM-Agents)  
 
 -**Fast start with no db installation** - SQLite (text collection) and FAISS (vector file database) - [example](examples/Getting_Started/configure_db.py) 
@@ -564,6 +566,7 @@ if __name__ == "__main__":
 
 ## 🔥 Top New Examples 🔥  
 
+End-to-End Scenario - [**Function Calls with SLIM Extract and Web Services for Financial Research**](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/web_services_slim_fx.py)  
 New to LLMWare - [**Fast Start tutorial series**](https://github.com/llmware-ai/llmware/tree/main/fast_start)  
 SLIM Examples -  [**SLIM Models**](examples/SLIM-Agents/)
 
@@ -591,7 +594,7 @@ Check out:  [llmware examples](https://github.com/llmware-ai/llmware/blob/main/e
 <summary><b>Step 3 - Tutorial Videos</b> - check out our Youtube channel for high-impact 5-10 minute tutorials on the latest examples.   </summary>
 
 🎬 Check out these videos to get started quickly:  
-- [SLIM Models Intro] (https://www.youtube.com/watch?v=cQfdaTcmBpY)  
+- [SLIM Models Intro](https://www.youtube.com/watch?v=cQfdaTcmBpY)  
 - [RAG with BLING on your laptop](https://www.youtube.com/watch?v=JjgqOZ2v5oU)    
 - [DRAGON-7B-Models](https://www.youtube.com/watch?v=d_u7VaKu6Qk&t=37s)  
 - [Install and Compare Multiple Embeddings with Postgres and PGVector](https://www.youtube.com/watch?v=Bncvggy6m5Q)  
@@ -712,7 +715,7 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
-**Friday, March 22 - v0.2.6 Update - WIP**  
+**Friday, March 22 - v0.2.6 Update**  
 - New SLIM models:  summary, extract, xsum, boolean, tags-3b, and combo sentiment-ner.  
 - New logit and sampling analytics.  
 - New SLIM examples showing how to use the new models.  
