@@ -33,7 +33,8 @@ os.environ['USER_MANAGED_OPENAI_API_KEY'] = ''
 
 def set_up_api_keys(
     pinecone_api_key=os.getenv('USER_MANAGED_PINECONE_API_KEY', None),
-    pinecone_environment=os.getenv('USER_MANAGED_PINECONE_ENVIRONMENT', None),
+    pinecone_cloud=os.getenv('USER_MANAGED_PINECONE_CLOUD', None),
+    pinecone_region=os.getenv('USER_MANAGED_PINECONE_REGION', None),
     openai_api_key=os.getenv('USER_MANAGED_OPENAI_API_KEY', None)):
     '''This function sets the API keys for Pinecone and OpenAI, they have to be set!
     '''
@@ -50,7 +51,8 @@ def set_up_api_keys(
 
 
     os.environ.setdefault('USER_MANAGED_PINECONE_API_KEY', pinecone_api_key)
-    os.environ.setdefault('USER_MANAGED_PINECONE_ENVIRONMENT', pinecone_environment)
+    os.environ.setdefault('USER_MANAGED_PINECONE_CLOUD', pinecone_cloud)
+    os.environ.setdefault('USER_MANAGED_PINECONE_REGION', pinecone_region)
 
     os.environ.setdefault('USER_MANAGED_OPENAI_API_KEY', openai_api_key)
     
