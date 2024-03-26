@@ -88,9 +88,10 @@ def step5_run_automated_tests():
 
     #   running automated tests - see the tools in action
 
-    tools= ["slim-sentiment-tool" , "slim-topics-tool", "slim-ner-tool", "slim-ratings-tool",
+    tools= ["slim-extract-tool", "slim-xsum-tool", "slim-summary-tool", "slim-boolean-tool", 
+            "slim-sentiment-tool" , "slim-topics-tool", "slim-ner-tool", "slim-ratings-tool",
             "slim-emotions-tool",  "slim-intent-tool", "slim-tags-tool", "slim-sql-tool",
-            "slim-category-tool", "slim-nli-tool"]
+            "slim-category-tool", "slim-nli-tool", "slim-sa-ner-tool", "slim-tags-3b-tool"]
 
     # run tests for one tool
     ModelCatalog().tool_test_run("slim-sentiment-tool")
