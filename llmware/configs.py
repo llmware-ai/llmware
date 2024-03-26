@@ -477,8 +477,11 @@ class PineconeConfig:
 
     """Configuration object for Pinecone"""
 
-    _conf = {"pincone_api_key": os.environ.get("USER_MANAGED_PINECONE_API_KEY"),
-             "pinecone_environment": os.environ.get("USER_MANAGED_PINECONE_ENVIRONMENT")}
+    _conf = {
+        "pinecone_api_key": os.environ.get("USER_MANAGED_PINECONE_API_KEY"),
+        "pinecone_cloud": os.environ.get("USER_MANAGED_PINECONE_CLOUD"),
+        "pinecone_region": os.environ.get("USER_MANAGED_PINECONE_REGION")
+    }
 
     @classmethod
     def get_config(cls, name):
