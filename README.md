@@ -440,6 +440,56 @@ LLMWareConfig().set_vector_db("postgres")
 
 <details>
 
+<summary> 🔥 <b> Agents with Function Calls and SLIM Models </b> 🔥 </summary>  
+
+```python
+
+from llmware.agents import LLMfx
+
+text = ("Tesla stock fell 8% in premarket trading after reporting fourth-quarter revenue and profit that "
+        "missed analysts’ estimates. The electric vehicle company also warned that vehicle volume growth in "
+        "2024 'may be notably lower' than last year’s growth rate. Automotive revenue, meanwhile, increased "
+        "just 1% from a year earlier, partly because the EVs were selling for less than they had in the past. "
+        "Tesla implemented steep price cuts in the second half of the year around the world. In a Wednesday "
+        "presentation, the company warned investors that it’s 'currently between two major growth waves.'")
+
+#   create an agent using LLMfx class
+agent = LLMfx()
+
+#   load text to process
+agent.load_work(text)
+
+#   load 'models' as 'tools' to be used in analysis process
+agent.load_tool("sentiment")
+agent.load_tool("extract")
+agent.load_tool("topics")
+agent.load_tool("boolean")
+
+#   run function calls using different tools
+agent.sentiment()
+agent.topics()
+agent.extract(params=["company"])
+agent.extract(params=["automotive revenue growth"])
+agent.xsum()
+agent.boolean(params=["is 2024 growth expected to be strong? (explain)"])
+
+#   at end of processing, show the report that was automatically aggregated by key
+report = agent.show_report()
+
+#   displays a summary of the activity in the process
+activity_summary = agent.activity_summary()
+
+#   list of the responses gathered
+for i, entries in enumerate(agent.response_list):
+    print("update: response analysis: ", i, entries)
+
+output = {"report": report, "activity_summary": activity_summary, "journal": agent.journal}  
+
+```
+
+</details>
+<details>
+
 <summary> 🚀 <b>Start coding - Quick Start for RAG </b> 🚀 </summary>
 
 ```python
