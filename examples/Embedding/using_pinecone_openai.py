@@ -16,6 +16,21 @@ from llmware.setup import Setup
 logging.basicConfig(level = logging.INFO)
 logger = logging.getLogger('llmware-pinecone-openai')
 
+
+'''Change the values below to your API keys, and the cloud and region you want to use. If you want to use the
+bash script, then you have to comment out the following code lines.
+
+See the Pinecone documentation for details on available cloud and region options. During testing, we used
+'aws' for cloud and 'us-west-2' for region.
+'''
+os.environ['USER_MANAGED_PINECONE_API_KEY'] = ''
+os.environ['USER_MANAGED_PINECONE_CLOUD'] = ''
+os.environ['USER_MANAGED_PINECONE_REGION'] = ''
+
+os.environ['USER_MANAGED_OPENAI_API_KEY'] = ''
+
+
+
 def set_up_api_keys(
     pinecone_api_key=os.getenv('USER_MANAGED_PINECONE_API_KEY', None),
     pinecone_environment=os.getenv('USER_MANAGED_PINECONE_ENVIRONMENT', None),
