@@ -17,7 +17,9 @@ SLIM Examples -  [**SLIM Models**](SLIM-Agents/)
 | 10.  Prompts With Sources ([code](Prompts/prompt_with_sources.py))  | Attach wide range of knowledge sources directly into Prompts.   |   
 | 11.  Fact Checking ([code](Prompts/fact_checking.py))  | Explore the full set of evidence methods in this example script that analyzes a set of contracts.   |
 | 12.  Using 7B GGUF Chat Models ([code](Models/chat_models_gguf_fast_start.py)) | Using 4 state of the art 7B chat models in minutes running locally |  
-
+| 13.  ⭐ Adjusting Sampling for Better LLM Results ([code](Models/adjusting_sampling_settings.py) / [video](https://youtu.be/iXp1tj-pPjM?si=4fauK9P49c22H82x)) | How to control and analyze stochastic sampling impact  
+| 14.  ⭐ CSV Parsing Configuration ([code](Parsing/parse_csv_custom.py)) | Different options for configuring CSV parsing |  
+| 15.  ⭐ JSON Parsing Configuration ([code](Parsing/parse_jsonl_custom.py)) | Different options for configuring JSON and JSONL parsing |  
 
 Check back from time-to-time as we are always updating these examples - especially with new use cases and contributions from the llmware Community!  
 
