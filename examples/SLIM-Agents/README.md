@@ -9,7 +9,8 @@ stacked together in multi-step, multi-model Agent workflows - all running on a l
 
 **New SLIMS Just released** - check out slim-extract, slim-summarize, slim-xsum, slim-sa-ner, slim-boolean and slim-tags-3b  
 
-**Check out the new examples below marked with 🆕**
+**Check out the new examples below marked with ⭐**  
+🔥🔥🔥 Web Services & Function Calls ([code](web_services_slim_fx.py)) 🔥🔥🔥  
 
 **Check out the Intro videos**  
 [SLIM Intro Video](https://www.youtube.com/watch?v=cQfdaTcmBpY)  
@@ -33,13 +34,13 @@ We have several ready-to-run examples in this repository:
 | 7.   Text2SQL - Intro ([code](text2sql-getting-started-1.py))                                                                             | Getting Started with SLIM-SQL-TOOL and Basic Text2SQL Inference              |                                                                                                                   |
 | 8.   Text2SQL - E2E ([code](text2sql-end-to-end-2.py))                                                                                  | End-to-End Natural Langugage Query to SQL DB Query                           |                                                                                                                     |  
 | 9.   Text2SQL - MultiStep ([code](text2sql-multistep-example-3.py))                                                                     | Extract a customer name using NER and use in a Text2SQL query                |  
-| 10.  🆕 Web Services & Function Calls ([code]([web_services_slim_fx.py)) | Generate 30 key financial analysis with SLIM function calls and web services |  
-| 11.  🆕 Yes-No Questions with Explanations ([code](using_slim_boolean_model.py)) | Analyze earnings releases with SLIM Boolean |  
-| 12.  🆕 Extracting Revenue Growth ([code](using_slim_extract_model.py)) | Extract revenue growth from earnings releases with SLIM Extract |  
-| 13.  🆕 Summary as a Function Call ([code](using_slim_summary.py)) | Simple Summarization as a Function Call with List Length Parameters |  
-| 14.  🆕 Handling Not Found Extracts ([code](not_found_extract_with_lookup.py)) | Multi-step Lookup strategy and handling not-found answers | 
-| 15.  🆕 Extract + Lookup ([code](custom_extract_and_lookup.py)) | Extract Named Entity information and use for lookups with SLIM Extract |  
-| 16.  🆕 Headline/Title as XSUM Function Call ([code](using_slim_xsum.py)) | eXtreme Summarization (XSUM) with SLIM XSUM |  
+| 10.  ⭐ Web Services & Function Calls ([code](web_services_slim_fx.py)) | Generate 30 key financial analysis with SLIM function calls and web services |  
+| 11.  ⭐ Yes-No Questions with Explanations ([code](using_slim_boolean_model.py)) | Analyze earnings releases with SLIM Boolean |  
+| 12.  ⭐ Extracting Revenue Growth ([code](using_slim_extract_model.py)) | Extract revenue growth from earnings releases with SLIM Extract |  
+| 13.  ⭐ Summary as a Function Call ([code](using_slim_summary.py)) | Simple Summarization as a Function Call with List Length Parameters |  
+| 14.  ⭐ Handling Not Found Extracts ([code](not_found_extract_with_lookup.py)) | Multi-step Lookup strategy and handling not-found answers | 
+| 15.  ⭐ Extract + Lookup ([code](custom_extract_and_lookup.py)) | Extract Named Entity information and use for lookups with SLIM Extract |  
+| 16.  ⭐ Headline/Title as XSUM Function Call ([code](using_slim_xsum.py)) | eXtreme Summarization (XSUM) with SLIM XSUM |  
 
 For information on all of the SLIM models, check out [LLMWare SLIM Model Collection](https://www.huggingface.co/llmware/).  
 
