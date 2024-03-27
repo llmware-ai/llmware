@@ -43,8 +43,11 @@ def set_up_api_keys(
     if pinecone_api_key in [None, '']:
         raise ValueError(f'You need to set the pinecone API key, got {pinecone_api_key}')
 
-    if pinecone_environment in [None, '']:
-        raise ValueError(f'You need to set the pinecone environment {pinecone_environment}')
+    if pinecone_cloud in [None, '']:
+        raise ValueError(f'You need to set the pinecone cloud, got {pinecone_environment}')
+
+    if pinecone_region in [None, '']:
+        raise ValueError(f'You need to set the pinecone cloud, got {pinecone_region}')
 
     if openai_api_key in [None, '']:
         raise ValueError(f'You need to set the OpenAI API key {openai_api_key}')
