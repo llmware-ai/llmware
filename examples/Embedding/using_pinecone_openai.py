@@ -50,7 +50,7 @@ def set_up_api_keys(
         raise ValueError(f'You need to set the pinecone cloud, got {pinecone_region}')
 
     if openai_api_key in [None, '']:
-        raise ValueError(f'You need to set the OpenAI API key {openai_api_key}')
+        raise ValueError(f'You need to set the OpenAI API key, got {openai_api_key}')
 
 
     os.environ.setdefault('USER_MANAGED_PINECONE_API_KEY', pinecone_api_key)
