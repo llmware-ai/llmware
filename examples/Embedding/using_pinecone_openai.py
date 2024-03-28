@@ -104,7 +104,7 @@ def query_library(
     semantic_query='Salary'):
     '''This function executes the semantic query ``query`` on ``library``.
 
-    If you want to query for something else, simply overwrite ``query``.
+    If you want to query for something else, simply overwrite ``semantic_query``.
     '''
     query = Query(library)
     query_results = query.semantic_query(query=semantic_query, result_count=10, results_only=True)
