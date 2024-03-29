@@ -3066,6 +3066,151 @@ class Parser:
 
         return in_library
 
+    def parse_delimiter_config(self,fp, fn, cols=None, mapping_dict=None, delimiter=","):
+
+        """ Designed for intake of a 'pseudo-db csv table' and will add rows to library with mapped keys.
+
+        special feature here is any delimiter is possible there is no restriction in lenght
+            so you could do a delimiter like ##superspecialdelimiter##
+
+        Inputs:
+            -- csv folder path + csv file name
+            -- cols = # of expected column entries in each row of the CSV
+            -- mapping dict = assigns key names to columns, starting with 0 for first column
+                e.g., {"text": 4, "doc_ID": 2, "key1": 3}
+
+        Requirements:
+            -- must have a "text" key in the mapping dictionary
+            -- optional doc_ID and block_ID - if found, will over-write the normal library indexes
+            -- all other keys will be saved as 'metadata' and added to the library block row in "special_field1"
+
+        Note: this feature is currently only supported for Mongo - SQL DB support will follow.
+        """
+
+        # method requires library loaded in the Parser
+
+        if not self.library:
+            raise LLMWareException(message="Parsing of a configured CSV file requires a library object to "
+                                           "be connected to the parser state.")
+
+        #   if found in mapping dict, then will over-write
+        reserved_keys = ["text", "doc_ID", "block_ID"]
+
+        rejected_rows = []
+
+        if not mapping_dict:
+            raise LLMWareException(message="Parsing of a configured CSV file requires a mapping dictionary so that "
+                                           "the table attributes can be properly mapped.")
+
+        if not cols:
+            raise LLMWareException(message="Parsing of a configured CSV file requires a defined column structure and "
+                                           "a specified number of columns to ensure accurate mapping.")
+
+        # file type
+        ft = fn.split(".")[-1].lower()
+        if ft == "tsv":
+            delimiter="\t"
+
+        # will iterate through csv file
+        input_file = os.path.join(fp, fn)
+
+        f = open(input_file, 'r', encoding='utf-8-sig',errors='ignore')
+        filedata = f.readlines()
+
+
+        output = []
+        for line in filedata:
+            output.append(line.split(delimiter))
+        f.close()
+        del filedata
+
+        added_row_count = 0
+        total_row_count = 0
+        added_doc_count = 0
+
+        for i, rows in enumerate(output):
+
+            text = ""
+            doc_id = None
+            block_id = None
+            metadata = {}
+
+            if len(rows) != cols:
+                bad_entry = {"index": i, "row": rows}
+                rejected_rows.append(bad_entry)
+
+            else:
+                # confirmed that row has the correct number of entries
+
+                for keys, values in mapping_dict.items():
+
+                    if keys == "text":
+                        if mapping_dict["text"] < len(rows):
+                            text = rows[mapping_dict["text"]]
+
+                    if keys == "doc_ID":
+                        if mapping_dict["doc_ID"] < len(rows):
+                            doc_id = rows[mapping_dict["doc_ID"]]
+
+                    if keys == "block_ID":
+                        if mapping_dict["block_ID"] < len(rows):
+                            block_id = rows[mapping_dict["block_ID"]]
+
+                    if keys not in reserved_keys:
+                        if values < len(rows):
+                            metadata.update({keys:rows[values]})
+
+            if text.strip():
+
+                meta = {"author": "", "modified_date": "", "created_date": "", "creator_tool": ""}
+                coords_dict = {"coords_x": 0, "coords_y": 0, "coords_cx": 0, "coords_cy": 0}
+
+                # note: if using SQL-based DB, then will save the metadata as a text string
+                if LLMWareConfig().get_config("collection_db") in ["sqlite", "postgres"]:
+                    metadata = str(metadata)
+
+                new_row_entry = ("text", "custom_csv", (1, 0), total_row_count, "", "", fn,
+                                 text, text, "", "", text, text, "", text, "", "", metadata, "", "")
+
+                #   set attributes custom
+                if doc_id:
+                    try:
+                        self.library.doc_ID = int(doc_id)
+                        added_doc_count += 1
+                    except:
+                        logging.warning(f"update: doc_ID expected to be integer - can not apply custom doc ID "
+                                        f"- {doc_id} - will use default library document increment")
+
+                if block_id:
+                    self.library.block_ID = block_id
+                else:
+                    self.library.block_ID += 1
+
+                #   write row to database
+
+                entry_output = self.add_create_new_record(self.library,
+                                                          new_row_entry,
+                                                          meta,
+                                                          coords_dict,
+                                                          dialog_value="false")
+                added_row_count += 1
+
+            total_row_count += 1
+
+        # update overall library counter at end of parsing
+
+        if len(output) > 0:
+
+            if added_doc_count == 0:
+                added_doc_count += 1
+
+            dummy = self.library.set_incremental_docs_blocks_images(added_docs=added_doc_count,
+                                                                    added_blocks=added_row_count,
+                                                                    added_images=0, added_pages=0)
+
+        output = {"rows_added": added_row_count, "rejected_count": len(rejected_rows), "rejected_rows": rejected_rows}
+
+        return output
     def parse_csv_config(self,fp, fn, cols=None, mapping_dict=None, delimiter=","):
 
         """ Designed for intake of a 'pseudo-db csv table' and will add rows to library with mapped keys.
