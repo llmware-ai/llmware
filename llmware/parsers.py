@@ -3114,11 +3114,13 @@ class Parser:
         # will iterate through csv file
         input_file = os.path.join(fp, fn)
 
+        # here we go around using csv.reader() to allow for any delimiter of any length
+        # this helps in cases where a single char delimiter might not be possible due to the content to be spit
+        # is already using any possible character
+        output = []
+
         f = open(input_file, 'r', encoding='utf-8-sig',errors='ignore')
         filedata = f.readlines()
-
-
-        output = []
         for line in filedata:
             output.append(line.split(delimiter))
         f.close()
@@ -3211,6 +3213,7 @@ class Parser:
         output = {"rows_added": added_row_count, "rejected_count": len(rejected_rows), "rejected_rows": rejected_rows}
 
         return output
+
     def parse_csv_config(self,fp, fn, cols=None, mapping_dict=None, delimiter=","):
 
         """ Designed for intake of a 'pseudo-db csv table' and will add rows to library with mapped keys.
