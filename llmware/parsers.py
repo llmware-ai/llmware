@@ -3085,6 +3085,9 @@ class Parser:
             -- all other keys will be saved as 'metadata' and added to the library block row in "special_field1"
 
         Note: this feature is currently only supported for Mongo - SQL DB support will follow.
+
+        Sample how to use:
+            parse_delimiter_config(self,fp, fn, cols=None, mapping_dict=None, delimiter="##superspacer##"):
         """
 
         # method requires library loaded in the Parser
