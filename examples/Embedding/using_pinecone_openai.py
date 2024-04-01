@@ -50,7 +50,7 @@ def set_up_api_keys(
         raise ValueError(f'You need to set the pinecone cloud, got {pinecone_region}')
 
     if openai_api_key in [None, '']:
-        raise ValueError(f'You need to set the OpenAI API key {openai_api_key}')
+        raise ValueError(f'You need to set the OpenAI API key, got {openai_api_key}')
 
 
     os.environ.setdefault('USER_MANAGED_PINECONE_API_KEY', pinecone_api_key)
@@ -104,7 +104,7 @@ def query_library(
     semantic_query='Salary'):
     '''This function executes the semantic query ``query`` on ``library``.
 
-    If you want to query for something else, simply overwrite ``query``.
+    If you want to query for something else, simply overwrite ``semantic_query``.
     '''
     query = Query(library)
     query_results = query.semantic_query(query=semantic_query, result_count=10, results_only=True)
