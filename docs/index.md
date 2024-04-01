@@ -114,6 +114,11 @@ ModelCatalog().tool_test_run("slim-sentiment-tool")
 
 `llmware` is &copy; 2023-{{ "now" | date: "%Y" }} by [AI Bloks](https://www.aibloks.com/home).
 
+## ``llmware`` and [AI Bloks](https://www.aibloks.com/home)
+``llmware`` is an open source project from [AI Bloks](https://www.aibloks.com/home).
+[AI Bloks](https://www.aibloks.com/home) is the company behind ``llmware``, which offers a Software as a Service (SaaS) Retrieval Augmented Generation (RAG) service with the same name.
+[AI Bloks](https://www.aibloks.com/home) was founded by [Namee Oberst](https://www.linkedin.com/in/nameeoberst/) and [Darren Oberst](https://www.linkedin.com/in/darren-oberst-34a4b54/) in Oktober 2022.
+
 ## License
 
 `llmware` is distributed by an [Apache-2.0 license](https://github.com/llmware-ai/llmware/blob/main/LICENSE).
