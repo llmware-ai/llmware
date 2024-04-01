@@ -119,6 +119,10 @@ Please first discuss any change you want to make publicly, for example on GitHub
 You can also write an email or start a discussion on our Discrod channel.
 Read more about becoming a contributor in the [GitHub repo](https://github.com/llmware-ai/llmware/blob/main/CONTRIBUTING.md).
 
+## Code of conduct
+We welcome everyone into the ``llmware`` community.
+[View our Code of Conduct](https://github.com/llmware-ai/llmware/blob/main/CODE_OF_CONDUCT.md) in our GitHub repository.
+
 ## ``llmware`` and [AI Bloks](https://www.aibloks.com/home)
 ``llmware`` is an open source project from [AI Bloks](https://www.aibloks.com/home).
 [AI Bloks](https://www.aibloks.com/home) is the company behind ``llmware``, which offers a Software as a Service (SaaS) Retrieval Augmented Generation (RAG) service with the same name.
