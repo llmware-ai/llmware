@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
-"""The parsers module implements all parsers, i.e. all conversions fom a modality to bloacks in a database.
+"""The parsers module implements all parsers, i.e. all conversions fom a modality to blocks in a database.
 
 The module currently implements parsers for websites, images, voices, texts, wikis, and dialogs.
 """
@@ -59,11 +59,16 @@ from llmware.exceptions import DependencyNotInstalledException, FilePathDoesNotE
 
 class Parser:
 
-    def __init__(self, library=None, account_name="llmware", parse_to_db=False, file_counter=1):
+    def __init__(self, library=None, account_name="llmware", parse_to_db=False, file_counter=1,
+                 encoding="utf-8", chunk_size=400, max_chunk_size=600, smart_chunking=2,
+                 get_images=True, get_tables=True, strip_header=False, table_grid=True,
+                 get_header_text=True, table_strategy=1, verbose_level=2, copy_files_to_library=True):
 
         """ Main class for handling parsing, e.g., conversion of documents and other unstructured files
         into indexed text collection of 'blocks' in database.   For most use cases, Parser does not need
         to be invoked directly - as Library and Prompt are more natural client interfaces. """
+
+        # as of 0.2.7, expanded configuration options offered
 
         # check for llmware path & create if not already set up
         if not os.path.exists(LLMWareConfig.get_llmware_path()):
@@ -178,6 +183,20 @@ class Parser:
                 CollectionWriter("status",
                                  account_name=self.account_name).create_table("status",
                                                                               LLMWareTableSchema.get_status_schema())
+
+        # new parameters
+        self.encoding=encoding
+        self.chunk_size = chunk_size
+        self.max_chunk_size = max_chunk_size
+        self.smart_chunking = smart_chunking
+        self.get_images = get_images
+        self.get_tables = get_tables
+        self.strip_header = strip_header
+        self.table_grid = table_grid
+        self.table_strategy= table_strategy
+        self.get_header_text = get_header_text
+        self.verbose_level = verbose_level
+        self.copy_files_to_library = copy_files_to_library
 
     def clear_state(self):
 
@@ -384,23 +403,33 @@ class Parser:
 
         if work_order["office"] > 0:
             self.parse_office(self.office_work_folder, save_history=False)
-            self.uploads(self.office_work_folder)
+
+            if self.copy_files_to_library:
+                self.uploads(self.office_work_folder)
 
         if work_order["pdf"] > 0:
             self.parse_pdf(self.pdf_work_folder, save_history=False)
-            self.uploads(self.pdf_work_folder)
+
+            if self.copy_files_to_library:
+                self.uploads(self.pdf_work_folder)
 
         if work_order["text"] > 0:
             self.parse_text(self.text_work_folder, save_history=False)
-            self.uploads(self.text_work_folder)
+
+            if self.copy_files_to_library:
+                self.uploads(self.text_work_folder)
 
         if work_order["ocr"] > 0:
             self.parse_image(self.ocr_work_folder, save_history=False)
-            self.uploads(self.ocr_work_folder)
+
+            if self.copy_files_to_library:
+                self.uploads(self.ocr_work_folder)
 
         if work_order["voice"] > 0:
             self.parse_voice(self.voice_work_folder, save_history=False)
-            self.uploads(self.voice_work_folder)
+
+            if self.copy_files_to_library:
+                self.uploads(self.voice_work_folder)
 
         # need to systematically capture list of rejected docs
 
@@ -632,9 +661,264 @@ class Parser:
 
         return output_list
 
-    def parse_pdf (self, fp, write_to_db=True, save_history=True, image_save=1):
+    def parse_pdf (self, fp, write_to_db=True, save_history=True):
 
-        """ Main PDF parser method - wraps ctypes interface to call PDF parser. """
+        """ Main PDF parser method - as of 0.2.7 - wraps ctypes interface to call PDF parser - provides
+        new ctypes entrypoint into PDF parser with expanded configuration objects, and leveraging
+        new configurations exposed in Parser construction and Library().add_files. """
+
+        output = []
+
+        write_to_filename = "pdf_parse_output_0.txt"
+
+        #   must have three conditions in place - (a) user selects, (b) ping successfully, and (c) library loaded
+        if write_to_db and self.parse_to_db and self.library:
+            write_to_db_on = 1
+            unique_doc_num = -1
+        else:
+            write_to_db_on = 0
+            unique_doc_num = int(self.file_counter)
+
+        #   warning to user that no library loaded in Parser constructor
+        if write_to_db and not self.library:
+            logging.warning("warning: Parser().parse_pdf - request to write to database but no library loaded "
+                            "in Parser constructor.   Will write parsing output to file and will place the "
+                            "file in /parser_history path.")
+
+        #   warning to user that database connection not found
+        if write_to_db and not self.parse_to_db:
+            logging.error("warning: Parser().parse_pdf - could not connect to database at %s.  Will write "
+                          "parsing output to file and will place the file in /parser_history path.",
+                          self.collection_path)
+
+        #   function declaration for .add_pdf_main_llmware
+        # char * input_account_name,
+        # char * input_library_name,
+        # char * input_fp,
+        # char * db,
+        # char * db_uri_string,
+        # char * db_name,
+        # char * db_user_name,
+        # char * db_pw,
+        # char * input_images_fp,
+        # int input_debug_mode,
+        # int input_image_save_mode,
+        # int write_to_db_on,
+        # char * write_to_filename,
+        # int user_blok_size,
+        # int unique_doc_num,
+        # int status_manager_on,
+        # int status_manager_increment,
+        # char * status_job_id
+
+        # new params
+        # int strip_header,
+        # int table_extract,
+        # int smart_chunking,
+        # int max_chunk_size,
+        # int encoding_style,
+        # int get_header_text,
+        # int table_grid
+
+        #   if any issue loading module, will be captured at .get_module_pdf_parser()
+        _mod_pdf = Utilities().get_module_pdf_parser()
+
+        # pdf_handler = _mod_pdf.add_pdf_main_customize_parallel
+        pdf_handler = _mod_pdf.add_pdf_main_llmware_config_new
+
+        pdf_handler.argtypes = (c_char_p, c_char_p, c_char_p, c_char_p, c_char_p, c_char_p, c_char_p, c_char_p,
+                                c_char_p, c_int, c_int, c_int, c_char_p, c_int,c_int,c_int,c_int,c_char_p,
+                                c_int, c_int, c_int, c_int, c_int, c_int, c_int)
+
+        pdf_handler.restypes = c_int
+
+        # prepare all of the inputs to invoke the c library
+
+        t0 = time.time()
+
+        # config options pulled from the Library object
+        account_name = create_string_buffer(self.account_name.encode('ascii', 'ignore'))
+        library_name = create_string_buffer(self.library_name.encode('ascii', 'ignore'))
+
+        # image_fp = self.library.image_path
+        image_fp = self.parser_image_folder
+
+        if not image_fp.endswith(os.sep):
+            image_fp += os.sep
+
+        image_fp_c = create_string_buffer(image_fp.encode('ascii', 'ignore'))
+
+        input_collection_db_path = LLMWareConfig().get_db_uri_string()
+
+        collection_db_path_c = create_string_buffer(input_collection_db_path.encode('ascii', 'ignore'))
+
+        #   fp = passed as parameter -> this is the input file path folder containing the .PDF docs to be parsed
+        if not fp.endswith(os.sep):
+            fp += os.sep
+
+        fp_c = create_string_buffer(fp.encode('ascii', 'ignore'))
+
+        # debug_mode global parameter
+        #   "on" = 1
+        #   "file name only" = 2
+        #   "deep debug" = 3
+        #   "off" = 0 & all other values
+
+        # pull debug mode 'verbosity' levels from LLMWareConfig
+        # debug_mode = LLMWareConfig.get_config("debug_mode")
+        debug_mode = self.verbose_level
+
+        supported_options = [0, 1, 2, 3]
+
+        if debug_mode not in supported_options:
+            debug_mode = 0
+
+        input_debug_mode = c_int(debug_mode)  # default - 0 = "off"
+
+        if self.get_images:
+            image_save = 1  # TRUE - get images
+        else:
+            image_save = 0  # FALSE - no images
+
+        input_image_save_mode = c_int(image_save)  # default - 1 = "on" | use 0 = "off" in production
+
+        write_to_db_on_c = c_int(write_to_db_on)
+        write_to_filename_c = create_string_buffer(write_to_filename.encode('ascii', 'ignore'))
+
+        # pull target block size from library parameters
+        # self.block_size_target_characters= 400
+
+        user_block_size = c_int(self.chunk_size)  # standard 400-600
+
+        # unique_doc_num -> if <0: interpret as "OFF" ... if >=0 then use and increment doc_id directly
+        # unique_doc_num = -1
+        unique_doc_num_c = c_int(unique_doc_num)
+
+        # db credentials
+        db_user_name = self.collection_db_username
+        db_user_name_c = create_string_buffer(db_user_name.encode('ascii', 'ignore'))
+
+        db_pw = self.collection_db_password
+        db_pw_c = create_string_buffer(db_pw.encode('ascii', 'ignore'))
+
+        db = LLMWareConfig.get_config("collection_db")
+
+        db = create_string_buffer(db.encode('ascii','ignore'))
+        db_name = account_name
+
+        status_manager_on = c_int(1)
+        status_manager_increment = c_int(10)
+        status_job_id = create_string_buffer("1".encode('ascii','ignore'))
+
+        # defaults to 0
+        if self.strip_header:
+            strip_header = c_int(1)
+        else:
+            strip_header = c_int(0)
+
+        if self.get_tables:
+            table_extract = c_int(1)
+        else:
+            table_extract = c_int(0)
+
+        smart_chunking = c_int(self.smart_chunking)
+
+        # by default - 1 = get header text || turn off = 0
+        if self.get_header_text:
+            get_header_text = c_int(1)
+        else:
+            get_header_text = c_int(0)
+
+        if self.table_grid:
+            table_grid = c_int(1)
+        else:
+            table_grid = c_int(0)
+
+        """
+        if self.smart_chunking:
+            smart_chunking = c_int(2)
+        else:
+            smart_chunking = c_int(0)
+        """
+
+        max_chunk_size = c_int(self.max_chunk_size)
+
+        if self.encoding == "ascii":
+            encoding_style = c_int(0)
+        elif self.encoding == "utf-8":
+            encoding_style = c_int(2)
+        elif self.encoding == "latin-1":
+            encoding_style = c_int(1)
+        else:
+            encoding_style = c_int(0)
+
+        #
+        #                   * main call to pdf library *
+        #
+
+        logging.info("update: start parsing of PDF Documents...")
+
+        #   function declaration for .add_pdf_main_llmware
+        # char * input_account_name,
+        # char * input_library_name,
+        # char * input_fp,
+        # char * db,
+        # char * db_uri_string,
+        # char * db_name,
+        # char * db_user_name,
+        # char * db_pw,
+        # char * input_images_fp,
+        # int input_debug_mode,
+        # int input_image_save_mode,
+        # int write_to_db_on,
+        # char * write_to_filename,
+        # int user_blok_size,
+        # int unique_doc_num,
+        # int status_manager_on,
+        # int status_manager_increment,
+        # char * status_job_id
+        # strip_header = c_int(0)
+        # table_extract = c_int(1)
+        # smart_chunking = c_int(1)
+        # max_chunk_size = c_int(600)
+        # encoding_style = c_int(2)
+        # get_header_text = c_int(1),
+        # table_grid = c_int(1)
+
+        pages_created = pdf_handler(account_name, library_name, fp_c, db, collection_db_path_c, db_name,
+                                    db_user_name_c, db_pw_c,
+                                    image_fp_c,
+                                    input_debug_mode, input_image_save_mode, write_to_db_on_c,
+                                    write_to_filename_c, user_block_size, unique_doc_num_c,
+                                    status_manager_on, status_manager_increment, status_job_id,
+                                    strip_header, table_extract, smart_chunking, max_chunk_size,
+                                    encoding_style, get_header_text, table_grid
+                                    )
+
+        logging.info("update:  completed parsing of pdf documents - time taken: %s ", time.time() - t0)
+
+        if write_to_db_on == 0:
+            # package up results in Parser State
+            parser_output = self.convert_parsing_txt_file_to_json(self.parser_image_folder, write_to_filename)
+            if len(parser_output) > 0:
+                last_entry = parser_output[-1]
+                last_doc_id = last_entry["doc_ID"]
+
+                self.file_counter = int(last_doc_id)
+
+                logging.info("update: adding new entries to parser output state - %s", len(parser_output))
+
+                self.parser_output += parser_output
+                output += parser_output
+
+            if save_history:
+                ParserState().save_parser_output(self.parser_job_id, parser_output)
+
+        return output
+
+    def parse_pdf_deprecated_026 (self, fp, write_to_db=True, save_history=True, image_save=1):
+
+        """ Main PDF parser method through version 0.2.6 - deprecated - wraps ctypes interface to call PDF parser. """
 
         output = []
 
@@ -2369,7 +2653,6 @@ class Parser:
 
         doc_fn_raw_list = CollectionRetrieval(self.library_name,
                                               account_name=self.account_name).get_distinct_list("file_source")
-
 
         for i, file in enumerate(doc_fn_raw_list):
             if file.split(os.sep)[-1] in file_list:
