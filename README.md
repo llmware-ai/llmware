@@ -748,7 +748,7 @@ git clone git@github.com:llmware-ai/llmware.git
 
 <details>  
     
-<summary> ✨  <b>Roadmap - Where are are going ... </b>  </summary>
+<summary> ✨  <b>Roadmap - Where are we going ... </b>  </summary>
 
 - 💡 Making it easy to deploy fine-tuned open source models to build state-of-the-art RAG workflows
 - 💡 Private cloud - keeping documents, data pipelines, data stores, and models safe and secure  
