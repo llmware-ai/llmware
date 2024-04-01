@@ -770,6 +770,12 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
+**Monday, April 1 - v0.2.7 Update - WIP**  
+- PDF Parser - multiple improvements - new libs + Python methods.  
+- Includes: UTF-8 encoding for European languages.  
+- Includes: Better text chunking controls, header text extraction and configuration options.     
+- Note:  the updates are merged in the main branch - expect pip install 0.2.7 by April 2-3.  
+  
 **Friday, March 22 - v0.2.6 Update**  
 - New SLIM models:  summary, extract, xsum, boolean, tags-3b, and combo sentiment-ner.  
 - New logit and sampling analytics.  
