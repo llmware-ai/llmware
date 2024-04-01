@@ -422,7 +422,10 @@ class Library:
         shutil.copyfile(file_path,target_path)
         return self.add_files()
 
-    def add_files (self, input_folder_path=None):
+    def add_files (self, input_folder_path=None, encoding="ascii",chunk_size=400,
+                   get_images=True,get_tables=True, smart_chunking=2, max_chunk_size=600,
+                   table_grid=True, get_header_text=True, table_strategy=1, strip_header=False,
+                   verbose_level=2, copy_files_to_library=True):
 
         """ Main method to integrate documents into a Library - pass a local filepath folder and all files will be
         routed to appropriate parser by file type extension """
@@ -433,7 +436,19 @@ class Library:
         # get overall counters at start of process
         lib_counters_before = self.get_library_card()
 
-        parsing_results = Parser(library=self).ingest(input_folder_path,dupe_check=True)
+        parsing_results = Parser(library=self,
+                                 encoding=encoding,
+                                 chunk_size=chunk_size,
+                                 max_chunk_size=max_chunk_size,
+                                 smart_chunking=smart_chunking,
+                                 get_tables=get_tables,
+                                 get_images=get_images,
+                                 get_header_text=get_header_text,
+                                 table_strategy=table_strategy,
+                                 strip_header=strip_header,
+                                 table_grid=table_grid,
+                                 verbose_level=verbose_level,
+                                 copy_files_to_library=copy_files_to_library).ingest(input_folder_path,dupe_check=True)
 
         # print("update: parsing results - ", parsing_results)
 
