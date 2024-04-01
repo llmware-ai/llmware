@@ -124,8 +124,8 @@ We welcome everyone into the ``llmware`` community.
 [View our Code of Conduct](https://github.com/llmware-ai/llmware/blob/main/CODE_OF_CONDUCT.md) in our GitHub repository.
 
 ## ``llmware`` and [AI Bloks](https://www.aibloks.com/home)
-``llmware`` is an open source project from [AI Bloks](https://www.aibloks.com/home).
-[AI Bloks](https://www.aibloks.com/home) is the company behind ``llmware``, which offers a Software as a Service (SaaS) Retrieval Augmented Generation (RAG) service with the same name.
+``llmware`` is an open source project from [AI Bloks](https://www.aibloks.com/home) - the company behind ``llmware``.
+The company offers a Software as a Service (SaaS) Retrieval Augmented Generation (RAG) service.
 [AI Bloks](https://www.aibloks.com/home) was founded by [Namee Oberst](https://www.linkedin.com/in/nameeoberst/) and [Darren Oberst](https://www.linkedin.com/in/darren-oberst-34a4b54/) in Oktober 2022.
 
 ## License
