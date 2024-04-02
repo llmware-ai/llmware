@@ -1802,6 +1802,8 @@ class SQLiteRetrieval:
 
         self.conn = _SQLiteConnect().connect(library_name)
 
+        self.conn.text_factory = lambda b: b.decode(errors='ignore')
+
         self.reserved_tables = ["status", "library", "parser_events"]
         self.text_retrieval = False
 
