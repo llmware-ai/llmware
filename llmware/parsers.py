@@ -691,6 +691,19 @@ class Parser:
                           "parsing output to file and will place the file in /parser_history path.",
                           self.collection_path)
 
+        # deprecation warning for aarch64 linux
+        system = platform.system().lower()
+        machine = os.uname().machine.lower()
+
+        if system == 'linux' and machine == 'aarch64':
+            logging.warning("Deprecation warning: deprecating support for aarch linux - "
+                            "routing parsing request to handler for <=0.2.6.  Note: some features and options "
+                            "in versions >=0.2.7 may not be available.")
+
+            return self.parse_pdf_deprecated_026(fp, write_to_db=write_to_db,save_history=save_history)
+
+        # end - deprecation routing
+
         #   function declaration for .add_pdf_main_llmware
         # char * input_account_name,
         # char * input_library_name,

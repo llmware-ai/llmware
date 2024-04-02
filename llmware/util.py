@@ -94,6 +94,15 @@ class Utilities:
         if system == 'linux' and machine not in ['aarch64', 'x86_64']:
             machine = 'x86_64'
 
+        # deprecation warning for aarch64 linux
+        if system == 'linux' and machine == 'aarch64':
+            logging.warning("Deprecation warning: as of llmware 0.2.7, we are deprecating support for aarch64 "
+                            "linux - we build, support and test on six other major platforms - Linux x86_64, "
+                            "Linux x86_64 with CUDA, Windows x86_64, Windows x86_64 with CUDA, Mac Metal, and "
+                            "Mac x86_64.  We will revisit platform support from time-to-time, due "
+                            "to availability and interest.  If you have an important need for "
+                            "support for aarch 64 linux, please raise an issue at github/llmware-ai/llmware.git")
+
         # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
         machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
 
@@ -130,6 +139,15 @@ class Utilities:
             machine = 'arm64'
         if system == 'linux' and machine not in ['aarch64', 'x86_64']:
             machine = 'x86_64'
+
+        # deprecation warning for aarch64 linux
+        if system == 'linux' and machine == 'aarch64':
+            logging.warning("Deprecation warning: as of llmware 0.2.7, we are deprecating support for aarch64 "
+                            "linux - we build, support and test on six other major platforms - Linux x86_64, "
+                            "Linux x86_64 with CUDA, Windows x86_64, Windows x86_64 with CUDA, Mac Metal, and "
+                            "Mac x86_64.  We will revisit from time-to-time, due "
+                            "to availability and interest.  If you have an important need for "
+                            "support for aarch 64 linux, please raise an issue at github/llmware-ai/llmware.git")
 
         # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
         machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
@@ -171,6 +189,15 @@ class Utilities:
             machine = 'arm64'
         if system == 'linux' and machine not in ['aarch64', 'x86_64']:
             machine = 'x86_64'
+
+        # deprecation warning for aarch64 linux
+        if system == 'linux' and machine == 'aarch64':
+            logging.warning("Deprecation warning: as of llmware 0.2.7, we are deprecating support for aarch64 "
+                            "linux - we build, support and test on six other major platforms - Linux x86_64, "
+                            "Linux x86_64 with CUDA, Windows x86_64, Windows x86_64 with CUDA, Mac Metal, and "
+                            "Mac x86_64.  We will revisit from time-to-time, due "
+                            "to availability and interest.  If you have an important need for "
+                            "support for aarch 64 linux, please raise an issue at github/llmware-ai/llmware.git")
 
         # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
         machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
