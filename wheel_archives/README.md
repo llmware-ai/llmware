@@ -19,9 +19,11 @@ All wheels are built and tested on:
 2.  Mac x86
 3.  Windows x86 (+ with CUDA)
 4.  Linux x86 (+ with CUDA) - most testing on Ubuntu 22 and Ubuntu 20 - which are recommended.
-5.  Linux aarch64
+5.  Linux aarch64* (see 0.2.7 note below) 
 
 **Release Notes**  
+
+--**0.2.7** released in the week of April 1, 2024 - significant improvements to the PDF parser with new libs on all platforms.   Important note that we are keeping linux aarch64 at 0.2.6 libs - and will be deprecating support going forward.  For Linux, we recommend Ubuntu20+ and x86_64 (with and without CUDA).  
 
 --**0.2.5** released in the week of March 12, 2024 - continued enhancements of the GGUF implementation, especially for CUDA support, and re-compiling of all binaries to support Ubuntu 20 and Ubuntu 22.  Ubuntu requirements are:  CUDA 12.1 (to use GPU), and GLIBC 2.31+.  
 
