@@ -770,11 +770,12 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
-**Monday, April 1 - v0.2.7 Update - WIP**  
+**Wednesday, April 3 - v0.2.7 Update**  
 - PDF Parser - multiple improvements - new libs + Python methods.  
 - Includes: UTF-8 encoding for European languages.  
-- Includes: Better text chunking controls, header text extraction and configuration options.     
-- Note:  the updates are merged in the main branch - expect pip install 0.2.7 by April 2-3.  
+- Includes: Better text chunking controls, header text extraction and configuration options.  
+- Please see [PDF Parsing Configs example](https://github.com/llmware-ai/llmware/tree/main/examples/Parsing/pdf_parser_new_configs.py) for more details.  
+- Note:  deprecating support for aarch64-linux (will use 0.2.6 parsers).  Full support going forward for Linux Ubuntu20+ on x86_64 + with CUDA.  
   
 **Friday, March 22 - v0.2.6 Update**  
 - New SLIM models:  summary, extract, xsum, boolean, tags-3b, and combo sentiment-ner.  
