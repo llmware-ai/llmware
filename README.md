@@ -770,6 +770,11 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
+**Tuesday, April 9 - v0.2.8 Update-WIP**  
+- Office Parser (Word Docx, Powerpoint PPTX, and Excel XLSX - multiple improvements - new libs + Python method.  
+- Includes: several fixes, improved text chunking controls, header text extraction and configuration options.  
+- Generally, new office parser options conform with the new PDF parser options.  
+
 **Wednesday, April 3 - v0.2.7 Update**  
 - PDF Parser - multiple improvements - new libs + Python methods.  
 - Includes: UTF-8 encoding for European languages.  
