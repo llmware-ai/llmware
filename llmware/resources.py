@@ -2028,7 +2028,7 @@ class SQLiteRetrieval:
         """Returns rows in which col (key) = value"""
 
         # used for getting library card
-        sql_query = f"SELECT rowid, * FROM {self.library_name} WHERE {key} = {value};"
+        sql_query = f"SELECT rowid, * FROM {self.library_name} WHERE {key} = '{value}';"
         results = self.conn.cursor().execute(sql_query)
 
         output = self.unpack(results)
