@@ -591,19 +591,21 @@ if __name__ == "__main__":
 
 ## 🔥 What's New? 🔥
 
--**New SLIM models released** - specialized function-calling models for extract, summary, xsum, boolean, sa-ner and tags-3b.  [New Examples](examples/SLIM-Agents)  
+-**Small, specialized, function-calling Extract Model** - introducing slim-extract - [video](https://youtu.be/d6HFfyDk4YE?si=VB8JTsN3X7hsB_I) and [example](examples/SLIM-Agents/using_slim_extract_model.py)  
+
+--**SLIM Boolean model - Answer Yes/No questions** - introducing slim-boolean model - [video](https://youtu.be/jZQZMMqAJXs?si=7HpkLqG39ohgNecx) and [example](examples/SLIM-Agents/using_slim_boolean_model.py)  
 
 -**Multi-Model Agents with SLIM models** - multi-step Agents with SLIMs on CPU - [video](https://www.youtube.com/watch?v=cQfdaTcmBpY) - [example](examples/SLIM-Agents)  
 
--**Fast start with no db installation** - SQLite (text collection) and FAISS (vector file database) - [example](examples/Getting_Started/configure_db.py) 
+-**OCR Embedded Document Images Example** - ([example](examples/Parsing/ocr_embedded_doc_images.py))  
+
+-**Enhanced Parser Functions for PDF, Word, Powerpoint and Excel** - new text-chunking controls and strategies, extract tables, images, header text - ([example](examples/Parsing/pdf_parser_new_configs.py))   
+
+-**Fast start with no db installation** - SQLite (text collection) and FAISS (vector file database) - [example](examples/Getting_Started/configure_db.py)  
 
 -**Postgres integration** as option for text collection with PGVector support ([example](examples/Embedding/using_pg_vector.py))  
 
 -**GGUF support** - check out examples - GGUF ([example](examples/Models/using_gguf.py)) and Videos [video](https://www.youtube.com/watch?v=ZJyQIZNJ45E)  
-
--**OpenChat API integration** - OpenChat ([example](examples/Models/using-open-chat-models.py))  
-
--**Neo4j Vector Database integration** - ([example](examples/Embedding/using_neo4j.py))  
 
 
 
@@ -770,10 +772,11 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
-**Tuesday, April 9 - v0.2.8 Update-WIP**  
+**Tuesday, April 9 - v0.2.8 Update**  
 - Office Parser (Word Docx, Powerpoint PPTX, and Excel XLSX - multiple improvements - new libs + Python method.  
 - Includes: several fixes, improved text chunking controls, header text extraction and configuration options.  
 - Generally, new office parser options conform with the new PDF parser options.  
+- Please see [Office Parsing Configs example](https://github.com/llmware-ai/llmware/tree/main/examples/Parsing/office_parser_new_configs.py)  
 
 **Wednesday, April 3 - v0.2.7 Update**  
 - PDF Parser - multiple improvements - new libs + Python methods.  
