@@ -593,7 +593,9 @@ if __name__ == "__main__":
 
 -**Small, specialized, function-calling Extract Model** - introducing slim-extract - [video](https://youtu.be/d6HFfyDk4YE?si=VB8JTsN3X7hsB_I) and [example](examples/SLIM-Agents/using_slim_extract_model.py)  
 
---**SLIM Boolean model - Answer Yes/No questions** - introducing slim-boolean model - [video](https://youtu.be/jZQZMMqAJXs?si=7HpkLqG39ohgNecx) and [example](examples/SLIM-Agents/using_slim_boolean_model.py)  
+-**LLM to Answer Yes/No questions** - introducing slim-boolean model - [video](https://youtu.be/jZQZMMqAJXs?si=7HpkLqG39ohgNecx) and [example](examples/SLIM-Agents/using_slim_boolean_model.py)  
+
+-**Natural Language Query to CSV End to End example** - using slim-sql model - [video](https://youtu.be/z48z5XOXJJg?si=V-CX1w-7KRioI4Bi) and [example](examples/SLIM-Agents/text2sql-end-to-end-2.py)  
 
 -**Multi-Model Agents with SLIM models** - multi-step Agents with SLIMs on CPU - [video](https://www.youtube.com/watch?v=cQfdaTcmBpY) - [example](examples/SLIM-Agents)  
 
