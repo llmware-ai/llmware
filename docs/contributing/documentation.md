@@ -17,9 +17,35 @@ Here is a non exhaustive list of these ways.
 3. Simplify documentation (e.g., formulate a docstring more clearly)
 4. Enhance documentation (e.g., add more examples to a docstring or fix typos)
 
-## Code
+## Docstrings
 
 ## Docs
+
+{: .note}
+> All commands are executed from the `docs` sub-directory.
+
+Contributing to this documentation is extremely important as many users will refer to it.
+
+If you plan to contribute to the docs, we recommend that you locally install `jekyll` so you can test your changes locally.
+We also recommend, that you install `jekyll` into a a ruby enviroment so it does not interfere with any other installations you might have.
+
+`rbenv` is a tool that mangages different ruby versions, similar to what `conda` does for `python`.
+Please [install rvm](https://github.com/rbenv/rbenv?tab=readme-ov-file#installation) following their instructions.
+We recommend that you install a ruby version `>=3.0`.
+After having installed an isolated ruby version, you have to install the dependencies to build the docs locally.
+The `docs` directory has a `Gemfile` which specifies the dependencies.
+You can hence simply navigate to it and use the `bundle install` command.
+
+```bash
+bundle install
+```
+
+You should now be able to build and serve the documentation locally.
+To do this, simply to the following.
+```bash
+bundle exec jekyll serve --livereload
+```
+In the browser of your choice, you can then go to `http://127.0.0.1:4000/` and you will be served the documentation, which is re-build and re-loaded after any change to the `docs`.
 
 ## Open Issues
 If you're interested in existing issues, you can
