@@ -9,7 +9,7 @@ theme: just-the-docs
 url: https://llmware-ai.github.io/llmware/
 baseurl: "" # the subpath of your site
 favicon_ico: "/assets/images/favicon.ico"
-repository: llmware-ai/llmware # for github-metadata
+repository: MacOS/llmware # for github-metadata
 
 # Enable or disable heading anchors
 heading_anchors: true
