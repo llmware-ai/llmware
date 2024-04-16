@@ -687,6 +687,12 @@ class LLMWareTableSchema:
                       "time_stamp": "text",
                       "PRIMARY KEY": "(_id)"}
 
+    _reserved_schema_names = ["block", "library", "status", "parser_record"]
+
+    _custom_schema_names = []
+
+    _custom_schema = []
+
     @classmethod
     def get_block_schema(cls):
         return cls._block
@@ -702,6 +708,28 @@ class LLMWareTableSchema:
     @classmethod
     def get_parser_table_schema(cls):
         return cls._parser_record
+
+    @classmethod
+    def register_custom_schema(cls, table_name, schema,replace=False):
+
+        if table_name not in cls._custom_schema_names:
+            cls._custom_schema_names.append(table_name)
+
+        if table_name not in cls._custom_schema:
+            cls._custom_schema.append({table_name: schema})
+        else:
+            if replace:
+                cls._custom_schema.append({table_name: schema})
+
+        return cls._custom_schema
+
+    @classmethod
+    def get_custom_tables(cls):
+        return cls._custom_schema_names
+
+    @classmethod
+    def get_custom_schema(cls):
+        return cls._custom_schema
 
 
 class Neo4jConfig:
