@@ -8,7 +8,7 @@ Wheel Archives: `llmware` pip install from pypy
 1.  Download a selected wheel, unzip, and then deploy the code directly into a project.
 2.  Place the wheel archive in a folder, and in that folder path, run:
 
-```pip3 install llmware-0.1.15-py3-none-any.whl```  
+```pip3 install llmware-0.2.8-py3-none-any.whl```  
 
 New wheels are built generally on PyPy on a weekly basis and updated on PyPy versioning.   The development repo is updated  
 and current at all times, but may have updates that are not yet in the PyPy wheel.
@@ -22,6 +22,10 @@ All wheels are built and tested on:
 5.  Linux aarch64* (see 0.2.7 note below) 
 
 **Release Notes**  
+
+--**0.2.9** released in the week of April 15, 2024 - minor continued improvements to the parsers plus roll-out of new CustomTable class for rapidly integrating structured information into LLM-based workflows and data pipelines, including converting JSON/JSONL files and CSV files into structured DB tables.  
+  
+--**0.2.8** released in the week of April 8, 2024 - significant improvements to the Office parser with new libs on all platforms.   Conforming changes with the PDF parser in terms of exposing more options for text chunking strategies, encoding, and range of capture options (e.g., tables, images, header text, etc).  Linux aarch64 libs deprecated and kept at 0.2.6 - some new features will not be available on Linux aarch64 - we recommend using Ubuntu20+ on x86_64 (with and without CUDA).  
 
 --**0.2.7** released in the week of April 1, 2024 - significant improvements to the PDF parser with new libs on all platforms.   Important note that we are keeping linux aarch64 at 0.2.6 libs - and will be deprecating support going forward.  For Linux, we recommend Ubuntu20+ and x86_64 (with and without CUDA).  
 
