@@ -17,17 +17,7 @@ databases.
 Currently, llmware supports MongoDB, Postgres, and SQLite as text index databases.
 """
 
-
 import platform
-from pymongo import MongoClient, ReturnDocument
-from bson import ObjectId
-import pymongo
-import sys
-import boto3
-from botocore import UNSIGNED
-from botocore.config import Config
-from werkzeug.utils import secure_filename
-from botocore.exceptions import ClientError
 import os
 import ast
 import json
@@ -37,15 +27,40 @@ import re
 from datetime import datetime
 import random
 import logging
-from pymongo.errors import ConnectionFailure
+import sys
 
-from llmware.configs import LLMWareConfig, PostgresConfig,  LLMWareTableSchema, SQLiteConfig, AWSS3Config
+try:
+    from pymongo import MongoClient, ReturnDocument
+    from bson import ObjectId
+    import pymongo
+    from pymongo.errors import ConnectionFailure
+except ImportError:
+    pass
 
-from llmware.exceptions import LibraryNotFoundException, UnsupportedCollectionDatabaseException, InvalidNameException
+try:
+    import boto3
+    from botocore import UNSIGNED
+    from botocore.config import Config
+    from botocore.exceptions import ClientError
+except ImportError:
+    pass
+
+from werkzeug.utils import secure_filename
+
+from llmware.configs import LLMWareConfig, PostgresConfig, LLMWareTableSchema, SQLiteConfig, AWSS3Config
+
+from llmware.exceptions import LLMWareException, UnsupportedCollectionDatabaseException, InvalidNameException
 
 # new imports
-import sqlite3
-import psycopg
+try:
+    import sqlite3
+except ImportError:
+    pass
+
+try:
+    import psycopg
+except ImportError:
+    pass
 
 
 class CollectionRetrieval:
@@ -53,26 +68,34 @@ class CollectionRetrieval:
     """CollectionRetrieval is primary class abstraction to handle all queries to underlying Text Index Database.
     All calling functions should use CollectionRetrieval, which will, in turn, route to the correct DB resource """
 
-    def __init__(self, library_name, account_name="llmware"):
+    def __init__(self, library_name, account_name="llmware",db_name=None,custom_table=False, custom_schema=False):
 
         self.library_name = library_name
         self.account_name = account_name
 
         self.supported_collection_db = LLMWareConfig().get_supported_collection_db()
-        self.active_db = LLMWareConfig().get_active_db()
+
+        #   allow direct pass of db name
+        if db_name:
+            self.active_db = db_name
+        else:
+            self.active_db = LLMWareConfig().get_active_db()
 
         self._retriever = None
 
         if self.active_db in self.supported_collection_db:
 
             if self.active_db == "mongo":
-                self._retriever = MongoRetrieval(self.library_name, account_name=account_name)
+                self._retriever = MongoRetrieval(self.library_name, account_name=account_name,
+                                                 custom_table=custom_table, custom_schema=custom_schema)
 
             if self.active_db == "postgres":
-                self._retriever = PGRetrieval(self.library_name, account_name=account_name)
+                self._retriever = PGRetrieval(self.library_name, account_name=account_name,
+                                              custom_table=custom_table, custom_schema=custom_schema)
 
             if self.active_db == "sqlite":
-                self._retriever = SQLiteRetrieval(self.library_name, account_name=account_name)
+                self._retriever = SQLiteRetrieval(self.library_name, account_name=account_name,
+                                                  custom_table=custom_table, custom_schema=custom_schema)
 
         else:
             raise UnsupportedCollectionDatabaseException(self.active_db)
@@ -151,6 +174,18 @@ class CollectionRetrieval:
         """Counts the number of blocks to be created for an embedding job"""
         return self._retriever.count_embedded_blocks(embedding_key)
 
+    def direct_custom_query(self, query_filter):
+        """Applies the custom query directly to the DB and returns the results"""
+        return self._retriever.direct_custom_query(query_filter)
+
+    def list_all_tables(self):
+        """Get list of all collections on the database"""
+        return self._retriever.list_all_tables()
+
+    def get_schema(self, table_name):
+        """Return schema for selected table"""
+        return self._retriever.get_schema(table_name)
+
 
 class CollectionWriter:
 
@@ -158,26 +193,33 @@ class CollectionWriter:
     underlying text collection index - calling functions should use CollectionWriter, which will route and manage
     the connection to the underlying DB resource"""
 
-    def __init__(self, library_name, account_name="llmware"):
+    def __init__(self, library_name, account_name="llmware", db_name=None, custom_table=False, custom_schema=None):
 
         self.library_name = library_name
         self.account_name = account_name
 
         self.supported_collection_db = LLMWareConfig().get_supported_collection_db()
-        self.active_db = LLMWareConfig().get_active_db()
+
+        if db_name:
+            self.active_db = db_name
+        else:
+            self.active_db = LLMWareConfig().get_active_db()
 
         self._writer = None
 
         if self.active_db in self.supported_collection_db:
 
             if self.active_db == "mongo":
-                self._writer = MongoWriter(self.library_name, account_name=self.account_name)
+                self._writer = MongoWriter(self.library_name, account_name=self.account_name, custom_table=custom_table,
+                                           custom_schema=custom_schema)
 
             if self.active_db == "postgres":
-                self._writer = PGWriter(self.library_name, account_name=self.account_name)
+                self._writer = PGWriter(self.library_name, account_name=self.account_name, custom_table=custom_table,
+                                        custom_schema=custom_schema)
 
             if self.active_db == "sqlite":
-                self._writer = SQLiteWriter(self.library_name, account_name=self.account_name)
+                self._writer = SQLiteWriter(self.library_name, account_name=self.account_name, custom_table=custom_table,
+                                            custom_schema=custom_schema)
 
         else:
             raise UnsupportedCollectionDatabaseException(self.active_db)
@@ -277,7 +319,7 @@ class MongoWriter:
 
     """MongoWriter is main class abstraction for writes, edits and deletes to a Mongo text index collection"""
 
-    def __init__(self, library_name, account_name="llmware"):
+    def __init__(self, library_name, account_name="llmware", custom_table=False, custom_schema=None):
 
         self.library_name = library_name
         self.account_name = account_name
@@ -285,6 +327,9 @@ class MongoWriter:
 
         # initiate connection to Mongo resource
         self.collection = _MongoConnect().connect(db_name=account_name, collection_name=library_name)
+
+        self.custom_table = custom_table
+        self.custom_schema = custom_schema
 
     def build_text_index(self):
         """Builds Mongo text search index"""
@@ -497,7 +542,7 @@ class MongoWriter:
 
     def close(self):
         """Closes MongoDB connection"""
-        self.collection.close()
+        # self.collection.close()
         return 0
 
 
@@ -505,7 +550,7 @@ class MongoRetrieval:
 
     """MongoRetrieval is primary class abstraction to handle queries to Mongo text collection"""
 
-    def __init__(self, library_name, account_name="llmware"):
+    def __init__(self, library_name, account_name="llmware", custom_table=False, custom_schema=None):
 
         self.library_name = library_name
         self.account_name = account_name
@@ -519,6 +564,10 @@ class MongoRetrieval:
 
         if library_name not in self.reserved_tables:
             self.text_retrieval = True
+
+        self.custom_table = custom_table
+        if custom_table:
+            self.text_retrieval = False
 
     def safe_name(self, input_name):
 
@@ -581,7 +630,7 @@ class MongoRetrieval:
                 logging.info("update: mongo lookup - could not find _id into ObjectID - %s", value)
                 value = value
 
-        target = list(self.collection.find({key:value}))
+        target = list(self.collection.find({key:value}, no_cursor_timeout=True))
 
         return target
 
@@ -791,13 +840,39 @@ class MongoRetrieval:
         # self.collection.close()
         return 0
 
+    def direct_custom_query(self, query_filter):
+
+        """Applies the custom query directly to the DB and returns the results"""
+
+        # will force exhausting cursor iterable into list - designed for relatively small in-memory retrievals
+        results = list(self.collection.find(query_filter, no_cursor_timeout=True))
+
+        return results
+
+    def list_all_tables(self):
+
+        """Get list of all collections on the database"""
+        # self.mongo_client = MongoDBManager().client[db_name][collection_name]
+
+        results = list(MongoDBManager().client[self.account_name].list_collection_names())
+
+        return results
+
+    def get_schema(self, table_name):
+
+        """ No schema in Mongo collections so returns empty value """
+
+        table_schema = {}
+
+        return table_schema
+
 
 class PGRetrieval:
 
     """PGRetrieval is main class to handle interactions with Postgres DB for queries and retrieval -
     Embedding connections through PGVector are handled separately through EmbeddingPGVector class"""
 
-    def __init__(self, library_name, account_name="llmware"):
+    def __init__(self, library_name, account_name="llmware", custom_table=False, custom_schema=None):
 
         self.account_name = account_name
         self.library_name = library_name
@@ -818,6 +893,13 @@ class PGRetrieval:
 
         if library_name not in self.reserved_tables:
             self.text_retrieval = True
+
+        self.custom_table=custom_table
+        if custom_table:
+            self.text_retrieval = False
+
+            if custom_schema:
+                self.schema = custom_schema
 
     def test_connection(self):
 
@@ -842,8 +924,6 @@ class PGRetrieval:
             output_name = re.sub("-","_", input_name)
         else:
             raise InvalidNameException(input_name)
-
-        # print("update: pg - safe_name - ", output_name)
 
         return output_name
 
@@ -1296,13 +1376,54 @@ class PGRetrieval:
         self.conn.close()
         return 0
 
+    def direct_custom_query(self, query_filter):
+
+        """Applies the custom query directly to the DB and returns the results"""
+        results = self.conn.cursor().execute(str(query_filter))
+        output = self.unpack(results)
+        self.conn.close()
+        return output
+
+    def list_all_tables(self):
+
+        """Get list of all tables on the database"""
+
+        sql_query = f"SELECT * FROM pg_tables;"
+
+        list_of_tables = list(self.conn.cursor().execute(sql_query))
+
+        self.conn.close()
+
+        return list_of_tables
+
+    def get_schema(self, table_name):
+
+        sql_query = (f"SELECT ordinal_position, column_name, data_type "
+                     f"FROM information_schema.columns "
+                     f"WHERE table_schema = 'public' "
+                     f"AND table_name = '{table_name}';")
+
+        # sql_query = f"SELECT * FROM pg_tables WHERE tablename = '{table_name}';"
+        table_results = list(self.conn.cursor().execute(sql_query))
+        self.conn.close()
+
+        # unpack into a dictionary from list
+        table_results_sorted = sorted(table_results, key=lambda x:x[0], reverse=False)
+        schema_dict = {}
+        for i, entry in enumerate(table_results_sorted):
+            if len(entry) >= 3 and (entry[0]==i+1):
+                if entry[1] not in schema_dict:
+                    schema_dict.update({entry[1]:entry[2]})
+
+        return schema_dict
+
 
 class PGWriter:
 
     """PGWriter is main class abstraction to handle writing, indexing, modifying and deleting records in
     Postgres tables"""
 
-    def __init__(self, library_name, account_name="llmware"):
+    def __init__(self, library_name, account_name="llmware", custom_table=False, custom_schema=None):
 
         self.library_name = library_name
         self.account_name = account_name
@@ -1329,6 +1450,13 @@ class PGWriter:
 
         if library_name not in self.reserved_tables:
             self.text_retrieval = True
+
+        self.custom_table = custom_table
+
+        if custom_table:
+            self.text_retrieval = False
+            if custom_schema:
+                self.schema = custom_schema
 
     def _add_search_column(self, search_col="ts"):
 
@@ -1371,7 +1499,7 @@ class PGWriter:
                 # print("update: pgconnect - test table - evaluates to True")
                 build_table = False
 
-        self.conn.close()
+        # self.conn.close()
 
         return build_table
 
@@ -1397,7 +1525,7 @@ class PGWriter:
 
         #   only add search index to library blocks collection using self.library_name
 
-        if table_name in ["status", "library", "parser_events"]:
+        if table_name in ["status", "library", "parser_events"] or self.custom_table:
             add_search_column = False
         else:
             add_search_column = True
@@ -1533,14 +1661,14 @@ class PGWriter:
 
         conditions_clause = ""
         for k, v in filter_dict.items():
-            conditions_clause += f"{k} = {v} AND"
+            conditions_clause += f"{k} = '{v}' AND"
 
         if conditions_clause.endswith(" AND"):
             conditions_clause = conditions_clause[:-4]
 
         if conditions_clause:
             sql_instruction = f"UPDATE {self.library_name} " \
-                              f"SET {key} = {new_value} " \
+                              f"SET {key} = '{new_value}' " \
                               f"WHERE {conditions_clause};"
 
             results = self.conn.cursor().execute(sql_instruction)
@@ -1578,8 +1706,6 @@ class PGWriter:
             self.conn.cursor().execute(sql_delete)
 
         sql_new_insert = f"INSERT INTO {self.library_name} VALUES {new_values};"
-
-        # print("sql new insert - ", sql_new_insert)
 
         self.conn.cursor().execute(sql_new_insert)
         self.conn.commit()
@@ -1795,7 +1921,7 @@ class SQLiteRetrieval:
 
     """SQLiteRetrieval is main class abstraction to handle queries and retrievals from a SQLite DB running locally"""
 
-    def __init__(self, library_name, account_name="llmware"):
+    def __init__(self, library_name, account_name="llmware", custom_table=False, custom_schema=None):
 
         self.library_name = library_name
         self.account_name = account_name
@@ -1821,6 +1947,13 @@ class SQLiteRetrieval:
 
         if library_name not in self.reserved_tables:
             self.text_retrieval = True
+
+        self.custom_table = custom_table
+        if custom_table:
+            self.text_retrieval = False
+
+            if custom_schema:
+                self.schema = custom_schema
 
     def test_connection(self):
 
@@ -2291,7 +2424,7 @@ class SQLiteRetrieval:
         if filter_dict:
 
             for key, value in filter_dict.items():
-                conditions_clause += f"{key} = {value} AND "
+                conditions_clause += f"{key} = '{value}' AND "
 
             if conditions_clause.endswith(" AND "):
                 conditions_clause = conditions_clause[:-5]
@@ -2314,12 +2447,85 @@ class SQLiteRetrieval:
         self.conn.close()
         return 0
 
+    def direct_custom_query(self, query_filter):
+        """Applies the custom query directly to the DB and returns the results"""
+        results = self.conn.cursor().execute(str(query_filter))
+        output = self.unpack(results)
+        self.conn.close()
+        return output
+
+    def list_all_tables(self):
+
+        """Get list of all tables on the database"""
+
+        sql_query = f"SELECT * FROM sqlite_master WHERE type = 'table';"
+
+        results = self.conn.cursor().execute(sql_query)
+
+        list_of_tables = list(self.conn.cursor().execute(sql_query))
+
+        self.conn.close()
+
+        return list_of_tables
+
+    def get_schema(self, table_name):
+
+        """ Lookup of table_schema for an input table_name - outputs 'create table schema string' that can
+        be used directly as context in a text2sql inference """
+
+        table_schema = ""
+        schema_dict = {}
+        primary_key = ""
+
+        sql_query = f"SELECT * FROM sqlite_master WHERE type = 'table' AND name = '{table_name}';"
+
+        table_schema_row = self.conn.cursor().execute(sql_query)
+        table_schema_row = list(table_schema_row)
+
+        if len(table_schema_row) > 0:
+
+            #   in [0][4] is the original sql command to create the table,
+            #   e.g., 'CREATE TABLE {table_name} (key1 datatype1, key2 datatype2, key3 datatype3, ...)'
+            table_schema = table_schema_row[0][4]
+
+            #   split to look only at the string portion inside ( )
+            ts_split = table_schema.split("(")[-1]
+            ts_split = ts_split.split(")")[0]
+
+            #   split by ',' to get the individual chunks with key datatype
+            ts_chunks = ts_split.split(",")
+
+            for chunk in ts_chunks:
+
+                found_primary_key = False
+
+                if chunk.strip():
+
+                    if chunk.strip().endswith("PRIMARY KEY"):
+                        found_primary_key = True
+                        chunk = chunk.strip()[:-len("PRIMARY KEY")]
+
+                    #   remove any leading/trailing spaces and split by space
+                    kv = chunk.strip().split(" ")
+
+                    #   if well formed should be only two values - excluding PRIMARY KEY !
+                    if len(kv) == 2:
+                        schema_dict.update({kv[0]:kv[1]})
+
+                    if found_primary_key:
+                        primary_key = kv[0]
+
+            if primary_key:
+                schema_dict.update({"PRIMARY KEY": primary_key})
+
+        return schema_dict
+
 
 class SQLiteWriter:
 
     """SQLiteWriter is the main class abstraction to handle writes, indexes, edits and deletes on SQLite DB"""
 
-    def __init__(self, library_name, account_name="llmware"):
+    def __init__(self, library_name, account_name="llmware", custom_table=False, custom_schema=None):
 
         self.library_name = library_name
         self.account_name = account_name
@@ -2343,6 +2549,13 @@ class SQLiteWriter:
 
         if library_name not in self.reserved_tables:
             self.text_retrieval = True
+
+        self.custom_table = custom_table
+
+        if custom_table:
+            self.text_retrieval = False
+            if custom_schema:
+                self.schema = custom_schema
 
     def build_text_index(self, index_col="text_search"):
 
@@ -2407,7 +2620,7 @@ class SQLiteWriter:
 
         """Builds SQL table"""
 
-        if table_name not in ["library", "status", "parsing_events"]:
+        if table_name not in ["library", "status", "parsing_events"] and not self.custom_table:
 
             # used for creating library text search index
             table_create = self._build_sql_virtual_table_from_schema(table_name, schema)
@@ -2532,17 +2745,18 @@ class SQLiteWriter:
 
         conditions_clause = ""
         for k, v in filter_dict.items():
-            conditions_clause += f"{k} = {v} AND"
+            conditions_clause += f"{k} = '{v}' AND"
 
         if conditions_clause.endswith(" AND"):
             conditions_clause = conditions_clause[:-4]
 
         if conditions_clause:
             sql_instruction = f"UPDATE {self.library_name} " \
-                              f"SET {key} = {new_value} " \
+                              f"SET {key} = '{new_value}' " \
                               f"WHERE {conditions_clause};"
 
             results = self.conn.cursor().execute(sql_instruction)
+            self.conn.commit()
 
         self.conn.close()
 
@@ -2935,6 +3149,832 @@ class DBCursor:
         """
 
         return output
+
+
+class CustomTable:
+
+    """ CustomTable resource that can be implemented on a LLMWare collection database using consistent set of methods
+    and utilities.   Intended for creation of supporting tables and leveraging structured and semi-structured
+    information in conjunction with LLM-based workflows and for easier integration of supporting tables in
+    larger projects. """
+
+    def __init__(self, db=None, table_name=None, schema=None, library_name=None, account_name="llmware",
+                 auto_correct_schema_errors=True,auto_correct_postpend="_d"):
+
+        if not db:
+            self.db = LLMWareConfig().get_active_db()
+        else:
+            if db in LLMWareConfig().get_supported_collection_db():
+                self.db = db
+
+        self.reserved_tables = ["status", "library", "parser_events"]
+
+        #   this list will be improved over time to include common reserved col names
+        self.reserved_col_names = ["table","text"]
+
+        if table_name not in self.reserved_tables:
+            self.table_name = table_name
+        else:
+            logging.warning(
+                f"error: proposed custom table name - {table_name} - is a reserved table name and can not be used.  "
+                f"self.table_name is being set to None, and will need to be set to a different name before using.")
+
+            self.table_name = None
+
+        self.schema = schema
+        self.library_name = library_name
+        self.account_name = account_name
+        self.db_connection = None
+
+        #   if schema column name is in reserved list, then will add the value of schema_postpend to end of string
+        self.auto_correct_schema_errors = auto_correct_schema_errors
+        self.postpend = auto_correct_postpend
+
+        #   attributes used when loading a custom csv or json/jsonl to populate a table
+        self.rows = None
+        self.col_numbers = []
+        self.col_names = []
+        self.column_map = {}
+        self.sql_create_table = None
+
+        #   check if table_name already registered in LLMWareTableSchema
+        if table_name in LLMWareTableSchema().get_custom_tables() and not self.schema:
+            self.schema = LLMWareTableSchema().get_custom_schema()[table_name]
+
+        #   check if table already created in DB, and if not, create table
+        if table_name and self.schema:
+
+            if self.db != "mongo":
+                self.build_table()
+
+        #   confirm that table name and schema are registered in LLMWareTableSchema for easy future access
+        if self.table_name and self.schema:
+            LLMWareTableSchema().register_custom_schema(self.table_name, self.schema, replace=False)
+
+    def build_table(self, table_name=None, schema=None):
+
+        """ Method to explicitly build a new table with the table_name and schema passed.  This is not needed if
+        both table_name and schema are passed in the constructor when instantiating the CustomTable. """
+
+        if table_name:
+            self.table_name = table_name
+
+        if schema:
+            self.schema = schema
+
+        completed = False
+
+        if self.table_name and self.schema:
+
+            #   runs a quick check to identify common schema errors
+            #   if auto_correct == True, then will attempt to remediate
+            confirmation = self._check_and_remediate_schema()
+
+            if confirmation:
+
+                conn = self.get_connection(table_name=self.table_name, type="write")
+                if conn.check_if_table_build_required():
+                    conn.create_table(self.table_name, self.schema)
+                conn.close()
+
+                completed = True
+
+            else:
+                logging.warning(f"warning: could not successfully remediate schema - there is an issue with the "
+                                f"current schema - please review and adjust.")
+                complete = False
+
+        else:
+            logging.warning(f"warning: could not build_table since missing either table name, schema or both - "
+                            f"table_name = {self.table_name} - schema = {self.schema}")
+            completed = False
+
+        return completed
+
+    def _check_and_remediate_schema(self, schema=None):
+
+        """ Internal method used in table build process to check that namespace of proposed schema do not conflict
+        with any reserved terms or have other potential issues.  If auto_correct_schema_errors == True, then
+        it will attempt to fix the schema and self.rows on the fly by identifying reserved keywords, and
+        adding the designated 'postpend' value to the term, e.g., "_d"
+
+        If auto_correct_schema_errors == False, and there are schema errors, then confirmation returned will be False.
+
+        """
+
+        if schema:
+            self.schema = schema
+
+        confirmation = True
+
+        updated_schema = {}
+        remediated_keys = []
+
+        for k, v in self.schema.items():
+            if k in self.reserved_col_names:
+                logging.warning(f"warning: schema column name - {k} - in reserved column names list - will need to "
+                                f"change before creating table.")
+                updated_schema.update({k+self.postpend: v})
+                remediated_keys.append(k)
+                confirmation = False
+            else:
+                updated_schema.update({k:v})
+
+        if not confirmation:
+            if self.auto_correct_schema_errors:
+
+                # remediated problematic names
+                self.schema = updated_schema
+
+                # change keys in self.rows
+                updated_rows = []
+                for x in range(0,len(self.rows)):
+                    new_row = {}
+                    for k,v in self.rows[x].items():
+                        if k in self.reserved_col_names:
+                            new_row.update({k+self.postpend: v})
+                        else:
+                            new_row.update({k:v})
+                    updated_rows.append(new_row)
+
+                self.rows = updated_rows
+                confirmation = True
+
+        return confirmation
+
+    def get_connection(self, table_name=None, type="read"):
+
+        """ Convenience method that gets a connection to the selected database with two connection types -
+        'read' and 'write'. """
+
+        if table_name:
+            self.table_name = table_name
+
+        if type == "read":
+            self.db_connection = CollectionRetrieval(self.table_name, account_name=self.account_name,
+                                                     db_name=self.db, custom_table=True, custom_schema=self.schema)
+
+        if type == "write":
+            self.db_connection = CollectionWriter(self.table_name, account_name=self.account_name,
+                                                  db_name=self.db, custom_table=True, custom_schema=self.schema)
+
+        if type not in ["read", "write"]:
+            raise LLMWareException(message=f"Exception: not recognized connection type {type}")
+
+        return self.db_connection
+
+    def close_connection(self):
+
+        """ Used by each method that opens a connection to explicitly close the connection at the end of the
+        processing. """
+
+        self.db_connection.close()
+        return True
+
+    def _get_best_guess_value_type(self, v):
+
+        """ Simple utility function to check the value of a 'test row' element and use as the basis for an automated
+        data type determination.  This can be replaced/supplemented with more sophisticated checks, or the data
+        type can be explicitly passed as a more robust alternative. """
+
+        # all data elements will be set to either: "text" | "float" | "integer"
+
+        dt = "text"
+
+        try:
+            #  if whole number, then store in DB as 'integer'
+            vt = int(v)
+            dt = "integer"
+        except:
+            try:
+                #   if element can be converted to a python 'float', then store in DB as 'float'
+                #   may evaluate if 'decimal' or 'numeric' is better default choice
+                vt = float(v)
+                dt = "float"
+            except:
+                # if can not convert to a python number, then store in DB as 'text'
+                dt = "text"
+
+        return dt
+
+    def load_json(self, fp, fn, selected_keys=None, data_type_map=None, schema=None):
+
+        """ Import JSON/JSONL file - build schema and 'rows' to be processed and loaded to DB.  Assumes that
+        JSON/JSONL file is a well-formed 'pseudo-DB' with each entry consisting of elements with the same
+        dictionary keys.
+
+        -- If an optional list of selected_keys is passed, then it will be used to filter the elements
+        found in the table, and only 'keys' in the 'selected_keys' list will be added to the schema.
+
+        --If an optional (dictionary) key_data_type_map is passed, e.g., {"account_ID": "decimal"}, then the
+         data type passed will be used in the database schema.   If no explicit data type provided, then
+         it will use 'best guess' to determine a safe type.
+
+         -- Assumes that entire file can be read in memory. This is intended for
+        small tables and rapid prototyping - and not as a general purpose DB loading utility. """
+
+        f = open(os.path.join(fp, fn), "r", encoding='utf-8-sig', errors='ignore')
+
+        if fn.endswith(".json"):
+            json_rows = json.load(f)
+
+        elif fn.endswith(".jsonl"):
+            json_rows = []
+            for entries in f:
+                row = json.loads(entries)
+                json_rows.append(row)
+        else:
+            raise LLMWareException(message=f"Exception: File Type - {fn} - not supported - please use a .json or "
+                                           f".jsonl file with this method.")
+
+        #   get to list of rows, with each comprising a dictionary of keys
+        if len(json_rows) == 0:
+            raise LLMWareException(message="Exception: length of json rows == 0 - no content found suitable "
+                                           "for DB ingestion.")
+
+        #   assume that json_rows will be a list of dictionaries as default case
+        if isinstance(json_rows, list):
+            first_row = json_rows[0]
+        else:
+            # exception case - if inserting only 'one' row into DB with a small JSON file
+            first_row = json_rows
+
+        self.rows = []
+        skipped_rows = []
+
+        if not schema:
+
+            # if no schema provided, then derive from data structure implicitly
+
+            schema = {}
+
+            for keys, values in first_row.items():
+
+                add_key = True
+                if selected_keys:
+                    if keys not in selected_keys:
+                        add_key = False
+
+                if add_key:
+
+                    dt = "text"
+                    if data_type_map:
+                        if keys in data_type_map:
+                            dt = data_type_map[keys]
+                        else:
+                            dt = self._get_best_guess_value_type(values)
+                    else:
+                        dt = self._get_best_guess_value_type(values)
+
+                    schema.update({keys:dt})
+
+        #   assigns both the updated schema and rows to the attributes of the CustomTable
+        self.schema = schema
+
+        column_size = len(self.schema.items())
+
+        # iterate thru all rows (and extract keys matching to schema from each row)
+        for x in range(0,len(json_rows)):
+
+            new_row = {}
+
+            for k, v in json_rows[x].items():
+
+                if k in self.schema:
+                    new_row.update({k:v})
+
+            if len(new_row.items()) != column_size:
+                logging.warning(f"warning: on line - {x} - extracted elements - {len(new_row.items())} - does "
+                                f"not map to the target column size - {column_size} - skipping row - {new_row}.")
+                skipped_rows.append([x, json_rows[x]])
+
+            else:
+                self.rows.append(new_row)
+
+        output = {"rows": len(self.rows), "columns": column_size, "schema": self.schema,
+                  "skipped_rows": skipped_rows}
+
+        return output
+
+    @staticmethod
+    def file_load (in_path, delimiter=",",encoding='utf-8-sig',errors='ignore'):
+
+        """ Utility function provided inline - mirrors function in Utility class - basic configurable
+        csv file loading with optional parameters to set delimiter (e.g., ',' '\t', etc.) and encoding.
+
+        Returns a python list of lists in which each element corresponds to a 'row' of the spreadsheet, and is in turn,
+        a list of each of the individual 'cells' of the csv. """
+
+        record_file = open(in_path, encoding=encoding,errors=errors)
+        c = csv.reader(record_file, dialect='excel', doublequote=False, delimiter=delimiter)
+        output = []
+        for lines in c:
+            output.append(lines)
+        record_file.close()
+
+        return output
+
+    def validate_json(self, fp, fn, key_list=None):
+
+        """ Provides an assessment and validation of a json/jsonl file and readiness for insertion into a
+        database.   Optional key_list can be passed to confirm validation of a specified (minimum) set of
+        keys present in every row of the file.
+
+        If no key_list provided, then the keys in the first row of the
+        file will be used as the basis for all future rows.
+
+        Output is a dictionary with analysis of rows, columns, keys, and any nonconforming rows.
+
+        *** This method is intended to be used prior to loading a JSON/JSONL file into a CustomTable to assess
+        readiness and any additional preparation steps. *** """
+
+        f = open(os.path.join(fp, fn), "r", encoding='utf-8-sig', errors='ignore')
+
+        if fn.endswith(".json"):
+            json_rows = json.load(f)
+
+        elif fn.endswith(".jsonl"):
+            json_rows = []
+            for entries in f:
+                row = json.loads(entries)
+                json_rows.append(row)
+        else:
+            raise LLMWareException(message=f"Exception: File Type - {fn} - not supported - please use a .json or "
+                                           f".jsonl file with this method.")
+
+        col_count_tracker = {}
+        noted_list = []
+        total_rows = len(json_rows)
+        all_keys_present_in_row = 0
+
+        if key_list:
+            keys = key_list
+        else:
+            keys= []
+
+        for x in range(0,total_rows):
+
+            # if no key_list provided, then use the first row to identify the expected keys
+            if x == 0 and not key_list:
+                for k,v in json_rows[x].items():
+                    if k not in keys:
+                        keys.append(k)
+
+            if x >= 0:
+                all_keys_found = True
+                for key in keys:
+                    if key not in json_rows[x]:
+                        noted_list.append([x,key, json_rows[x]])
+                        all_keys_found = False
+                if all_keys_found:
+                    all_keys_present_in_row += 1
+
+            row_elements = len(json_rows[x].items())
+            if row_elements in col_count_tracker:
+                col_count_tracker[row_elements] += 1
+            else:
+                col_count_tracker.update({row_elements: 1})
+
+        most_common_column = max(col_count_tracker, key=col_count_tracker.get)
+        match_percent = col_count_tracker[most_common_column] / total_rows
+
+        if len(col_count_tracker.items()) > 1:
+            logging.warning("warning: found more than one length - ", col_count_tracker)
+
+            for x in range(0,total_rows):
+                row_elements = len(json_rows[x].items())
+                if row_elements != most_common_column:
+                    noted_list.append([x,row_elements, json_rows[x]])
+
+        output = {"rows": total_rows,
+                  "columns": most_common_column,
+                  "rows_with_all_keys_present": all_keys_present_in_row,
+                  "conforming_rows_percent": match_percent,
+                  "column_analysis": col_count_tracker,
+                  "keys": keys,
+                  "nonconforming_rows": noted_list}
+
+        return output
+
+    def validate_csv(self, fp, fn, delimiter=',', encoding='utf-8-sig'):
+
+        """ Provides an assessment and validation of a csv file and readiness for insertion into a
+        database.
+
+        Output is a dictionary with analysis of rows, columns, and any nonconforming rows.
+
+        *** This method is intended to be used prior to loading a CSV file into a CustomTable to assess
+        readiness and any additional preparation steps. *** """
+
+        #   load csv
+        in_path = os.path.join(fp,fn)
+        output = self.file_load(in_path,delimiter=delimiter,encoding=encoding,errors='ignore')
+
+        col_count_tracker = {}
+        noted_list = []
+        total_rows = len(output)
+
+        for x in range(0,total_rows):
+            row_elements = len(output[x])
+            if row_elements in col_count_tracker:
+                col_count_tracker[row_elements] += 1
+            else:
+                col_count_tracker.update({row_elements: 1})
+
+        most_common_column = max(col_count_tracker, key=col_count_tracker.get)
+        match_percent = col_count_tracker[most_common_column] / total_rows
+
+        if len(col_count_tracker.items()) > 1:
+            logging.warning("warning: found more than one length - ", col_count_tracker)
+
+            for x in range(0,total_rows):
+                row_elements = len(output[x])
+                if row_elements != most_common_column:
+                    noted_list.append([x,row_elements, output[x]])
+
+        output = {"rows": total_rows,
+                  "columns": most_common_column,
+                  "conforming_rows_percent": match_percent,
+                  "column_frequency_analysis": col_count_tracker,
+                  "nonconforming_rows": noted_list}
+
+        return output
+
+    def load_csv(self, fp, fn, column_names=None, required_column_count=None, column_mapping_dict=None,
+                 data_type_map=None, header_row=True, delimiter=',', encoding='utf-8-sig'):
+
+        """ Import CSV file and extract schema and 'rows' to be loaded into DB. Assumes that CSV is a well-formed
+        'pseudo-DB' with common set of elements in each row, and a first row that can be used to derive the
+        column names.
+
+        -- if optional column_names is passed, then these names will be used instead of the first row of the
+        spreadsheet to derive names, with assumption that the column_names are in sequential order, and map 1:1 with
+        rows in the CSV.
+
+        -- if an optional column_mapping_dict is passed, then this will be used to extract the key elements from the
+        CSV rows according to the mapping, e.g.,
+
+                column_mapping_dict = {"column1": 0, "column3": 2, "column5":4}
+
+        This will extract 3 columns with the keys - "column1", "column3" and "column5" and will assign the values
+        in the 0th, 2nd, and 4th slots of each CSV row.
+
+        -- if optional header_row is True, then the first row will be interpreted as a header row.  If False,
+        then it will be interpreted as part of the dataset. """
+
+        #   load csv
+        in_path = os.path.join(fp,fn)
+        output = self.file_load(in_path,delimiter=delimiter,encoding=encoding,errors='ignore')
+
+        if (len(output) < 2 and header_row) or (len(output) < 1 and not header_row):
+            raise LLMWareException(message=f"Exception: not sufficient content found in the CSV to load "
+                                           f"into DB table - found {len(output)} rows")
+
+        schema = {}
+        column_map = {}
+        self.rows = []
+        skipped_rows = []
+
+        if column_mapping_dict:
+            column_map = column_mapping_dict
+
+        else:
+            #   get column names
+            if column_names:
+
+                # will take this and map in sequential order
+                column_map = {}
+                for i, name in enumerate(column_names):
+                    column_map.update({name:i})
+
+            else:
+                # will try to derive from the header row
+                if not header_row:
+                    raise LLMWareException(message="Exception: can not determine the column names of the "
+                                                   "spreadsheet - no 'column_names' passed, and there is no "
+                                                   "header_row to use in the csv.  To try to derive from the "
+                                                   "CSV first row, set header_row = True.")
+                else:
+
+                    hrow = output[0]
+
+                    for i, entry in enumerate(hrow):
+                        column_map.update({re.sub("[\xfe\xff]", "", entry):i})
+
+        #   review the first content row to confirm matching number of entries and test data type
+
+        column_size = len(column_map.items())
+
+        if header_row:
+            test_row = output[1]
+        else:
+            test_row = output[0]
+
+        # basic minimal check
+        if len(test_row) != column_size and not column_mapping_dict:
+            raise LLMWareException(message=f"Exception: Number of elements in first row of data - {len(test_row)} - "
+                                           f"does not match the number of column names in the column mapping - "
+                                           f"{column_size}.")
+
+        if required_column_count:
+            if len(test_row) != required_column_count:
+                raise LLMWareException(message=f"Exception: Number of elements in first row of data - {len(test_row)} - "
+                                       f"does not match the number specified in required_column_count parameter - "
+                                       f"{required_column_count}.")
+
+        column_map_inverted = {v: k for k, v in column_map.items()}
+
+        for i, entry in enumerate(test_row):
+
+            if i in column_map_inverted:
+
+                if data_type_map:
+
+                    if column_map_inverted[i] in data_type_map:
+                        dt = data_type_map[column_map_inverted[i]]
+                    elif i in data_type_map:
+                        dt = data_type_map[i]
+                    else:
+                        dt = self._get_best_guess_value_type(test_row[i])
+                else:
+                    dt = self._get_best_guess_value_type(test_row[i])
+
+                schema.update({column_map_inverted[i]:dt})
+
+        self.schema = schema
+
+        if header_row:
+            starter = 1
+        else:
+            starter = 0
+
+        # iterate thru all rows (excluding header_row, if any)
+        for x in range(starter,len(output)):
+
+            new_row = {}
+
+            if (len(output[x]) != column_size and not column_mapping_dict) or (required_column_count and
+                                                                               len(output[x] != required_column_count)):
+                logging.warning(f"warning: line - {x} - has {len(output[x])} elements, and does not match the "
+                                f"number of columns in the schema - {column_size} - or specified in "
+                                f"required_column_count - {required_column_count} -  for safety, this row is being "
+                                f"skipped.")
+                skipped_rows.append([x,output[x]])
+
+            else:
+                for i, entry in enumerate(output[x]):
+
+                    if i in column_map_inverted:
+                        new_row.update({column_map_inverted[i]: entry})
+
+                if len(new_row.items()) != column_size:
+                    logging.warning(f"warning: on line - {x} - extracted elements - {len(new_row.items())} - does "
+                                    f"not map to the target column size - {column_size} - skipping row.")
+                else:
+                    self.rows.append(new_row)
+
+        output = {"rows": len(self.rows), "columns": column_size, "schema": self.schema,
+                  "skipped_rows": []}
+
+        return output
+
+    def sql_table_create_string(self,table_name=None,schema=None):
+
+        """ Builds a 'CREATE SQL TABLE' schema string that can be used directly as context in a Text2SQL model.
+        Optional parameters to pass a table_name and schema - if none provided, then it will pull from the
+        existing CustomTable parameters.
+
+        Returns 'CREATE SQL TABLE' string as output. """
+
+        if schema:
+            self.schema= schema
+
+        if table_name:
+            self.table_name = table_name
+
+        sql_create_table = ""
+
+        if self.schema and self.table_name:
+
+            keys_list = "("
+
+            sql_create_table = f"CREATE TABLE {self.table_name} ("
+
+            for key, data_types in self.schema.items():
+
+                if key != "PRIMARY KEY":
+
+                    keys_list += key + ", "
+                    sql_create_table += key + " " + data_types + ", "
+
+            if sql_create_table.endswith(", "):
+                sql_create_table = sql_create_table[:-2]
+
+            sql_create_table += " )"
+
+            if keys_list.endswith(", "):
+                keys_list = keys_list[:-2]
+
+            keys_list += " )"
+
+        self.sql_create_table = sql_create_table
+
+        return sql_create_table
+
+    def insert_rows(self, table_name=None, rows=None, schema=None):
+
+        """ Designed for rapid prototyping - by default, intended to be called after a preliminary step of
+        'load_csv' or 'load_json' file, which will package up the schema and save the rows, e.g.,
+
+            ct = CustomTable(table_name='my_test_table', db_name='sqlite')
+            analysis = ct.validate_csv('/path/to/csv', 'file.csv')
+            ct.load_csv('/path/to/csv', 'file.csv')
+            ct.insert_rows()
+
+            If table_name and schema not previously passed/created, then these parameters should be passed in
+        calling this method.
+
+            This method will insert the rows, held/packaged in self.rows, into the table."""
+
+        if table_name:
+            self.table_name = table_name
+
+        if rows:
+            self.rows = rows
+
+        if schema:
+            self.schema = schema
+
+        rows_completed = 0
+
+        if self.build_table():
+
+            for i in range(0, len(self.rows)):
+                self.write_new_record(self.rows[i])
+                rows_completed += 1
+
+        else:
+            raise LLMWareException(message=f"Exception: unable to confirm build_table - table_name - "
+                                           f"{self.table_name} - schema - {self.schema}")
+
+        return rows_completed
+
+    def get_schema(self, table_name=None):
+
+        """ Returns the schema for the table_name provided.  If no table_name provided, then it will pull from
+        self.table_name """
+
+        if table_name:
+            self.table_name = table_name
+
+        conn = self.get_connection(type="read")
+        schema = conn.get_schema(self.table_name)
+        conn.close()
+
+        return schema
+
+    def list_all_tables(self):
+
+        """ Returns a list of all of the tables on the selected database. """
+
+        conn = self.get_connection(type="read")
+        all_tables = conn.list_all_tables()
+        conn.close()
+
+        return all_tables
+
+    def write_new_record(self, new_record, table_name=None):
+
+        """ Writes a single new record to the database in the table provided, either directly (optional), or in
+        self.table_name. """
+
+        if table_name:
+            self.table_name = table_name
+
+        conn = self.get_connection(type="write")
+        response = conn.write_new_record(new_record)
+        self.close_connection()
+
+        return response
+
+    def lookup(self, key, value, table_name=None):
+
+        """ Core lookup method takes a 'key' and 'value' as input, and performs a lookup on the target DB and table
+        and returns the corresponding full row as a python dictionary with keys corresponding to the schema. """
+
+        if table_name:
+            self.table = table_name
+
+        conn = self.get_connection(type="read")
+        response = conn.lookup(key, value)
+
+        return response
+
+    def custom_lookup(self, custom_filter):
+
+        """ Input is a custom filter which will be applied directly to the database.
+
+        For MongoDB, this should be a filter dictionary, following standard Mongo query structures.
+
+        For Postgres and SQLite, this should be a SQL string - which will be passed directly to the DB
+        without modification or safety checks. """
+
+        # pass filter/params directly to resource
+        conn = self.get_connection(type="read")
+
+        try:
+            response = conn.direct_custom_query(custom_filter)
+        except:
+            raise LLMWareException(message=f"Exception: custom_filter - {str(custom_filter)} generated an error"
+                                           f"when attempting to run on {self.db} database.")
+
+        return response
+
+    def get_all(self, table_name=None, return_cursor=False):
+
+        """ Returns all rows from the DB table as a list of python dictionaries, corresponding to the schema -
+        assumed to be able to fit in memory.   This method should not be used for extremely large tables
+        where a cursor/iterator should be used. """
+
+        if table_name:
+            self.table_name = table_name
+
+        conn = self.get_connection(type="read")
+        response_cursor = conn.get_whole_collection()
+
+        #   in most cases, it is more convenient to exhaust the cursor and pull the whole set of results into
+        #   memory.
+        #   TODO:  implement cursor option - see DBCursor class for more details.
+
+        if not return_cursor:
+            output = response_cursor.pull_all()
+        else:
+            output = response_cursor.pull_all()
+
+        conn.close()
+
+        return output
+
+    def get_distinct_list(self, key, table_name=None):
+
+        """ Returns the distinct elements for a selected key in the database table. """
+
+        if table_name:
+            self.table_name = table_name
+
+        conn = self.get_connection(type="read")
+        response = conn.get_distinct_list(key)
+        conn.close()
+
+        return response
+
+    def count_documents(self, filter_dict):
+
+        conn = self.get_connection(type="read")
+        count = conn.count_documents(filter_dict)
+        conn.close()
+
+        return count
+
+    def delete_record(self, key, value, table_name=None):
+
+        """ Deletes a selected record(s) with matching key:value in selected table. """
+
+        if table_name:
+            self.table_name = table_name
+
+        conn = self.get_connection(type="write")
+        d = conn.delete_record_by_key(key, value)
+
+        conn.close()
+
+        return 0
+
+    def update_record(self, filter_dict, key, new_value):
+
+        """ Updates a selected record(s) identified with filter_dict {any_key:any_value}, and then sets the new_value
+        of the attribute value for key in that record. """
+
+        conn = self.get_connection(type="write")
+        confirmation = conn.update_one_record(filter_dict, key, new_value)
+        conn.close()
+
+        return 0
+
+    def delete_table(self, table_name=None, confirm=False):
+
+        """ Deletes a selected table in the database - note: the optional 'confirm' parameter must be set to
+        True explicitly as a safety check. """
+
+        if table_name:
+            self.table_name = table_name
+
+        conn = self.get_connection(type="write")
+        confirmation = conn.destroy_collection(confirm_destroy=confirm)
+
+        conn.close()
+
+        return 0
 
 
 class CloudBucketManager:
