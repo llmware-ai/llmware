@@ -774,6 +774,12 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
+**Tuesday, April 16 - v0.2.9-WIP Update**  
+- New CustomTable class to rapidly create custom DB tables in conjunction with LLM-based workflows.  
+- Enhanced methods for converting CSV and JSON/JSONL files into DB tables.  
+- See new examples [Creating Custom Table example](https://github.com/llmware-ai/llmware/tree/main/examples/Structured_Tables/create_custom_table-1.py)  
+- WIP update: code is merged into the main branch, but not yet published to PyPy (expect by EOD Tuesday April 16)  
+
 **Tuesday, April 9 - v0.2.8 Update**  
 - Office Parser (Word Docx, Powerpoint PPTX, and Excel XLSX - multiple improvements - new libs + Python method.  
 - Includes: several fixes, improved text chunking controls, header text extraction and configuration options.  
