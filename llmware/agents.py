@@ -19,6 +19,7 @@ from llmware.models import ModelCatalog, _ModelRegistry
 from llmware.util import CorpTokenizer
 from llmware.configs import SQLiteConfig
 from llmware.exceptions import ModelNotFoundException
+from llmware.resources import CustomTable
 
 
 class LLMfx:
@@ -62,6 +63,7 @@ class LLMfx:
     >>> llmware_agent.answer('What is the customer\'s account number and user name?', key='customer_info')
     >>> llmware_agent.show_report()
     """
+
     def __init__(self, api_key=None, verbose=True, analyze_mode=True): 
 
         if verbose:
@@ -955,6 +957,10 @@ class LLMfx:
 
         llm_response = response["llm_response"]
 
+        #   quick clean up response to replace any potential error-generating double-quotes and replace with
+        #   correct sql syntax for single-quotes
+        llm_response = re.sub('"', "'", llm_response)
+
         self.report[work_iter].update({"sql": [llm_response]})
 
         usage = response["usage"]
@@ -994,6 +1000,57 @@ class LLMfx:
         self.response_list.append(output_response)
 
         return output_response
+
+    def query_custom_table(self, query, db=None,table=None,table_schema=None,db_name="llmware"):
+
+        """ Executes a text-to-sql query on a CustomTable database table. """
+
+        custom_table = CustomTable(db=db,table_name=table)
+
+        if not table_schema:
+            if table:
+                table_schema = custom_table.sql_table_create_string()
+
+        # step 1 - convert question into sql
+
+        if not table_schema:
+            logging.warning("update: LLMfx - query_db - could not identify table schema - can not proceed")
+            return -1
+
+        # run inference with query and table schema to get SQL query response
+        response = self.sql(query, table_schema)
+
+        # step 2 - run query
+        sql_query = response["llm_response"]
+
+        # initial journal update
+        journal_update = f"executing research call - executing query on db\n"
+        journal_update += f"\t\t\t\t -- db - {db}\n"
+        journal_update += f"\t\t\t\t -- sql_query - {sql_query}"
+        self.write_to_journal(journal_update)
+
+        db_output = custom_table.custom_lookup(response["llm_response"])
+
+        output = []
+        db_response = list(db_output)
+
+        for rows in db_response:
+            output.append(rows)
+
+        result = {"step": self.step, "tool": "sql", "db_response": output, "sql_query": response["llm_response"],
+                  "query": query,"db": db, "work_item": table_schema}
+
+        self.research_list.append(result)
+
+        # start journaling update
+        journal_update = f"executing research  - getting response - sql\n"
+        journal_update += f"\t\t\t\t -- result - {str(output)}"
+        # journal_update += f"\t\t\t\t -- output type - text"
+
+        self.write_to_journal(journal_update)
+        # end journaling
+
+        return result
 
     def query_db(self, query, table=None, table_schema=None, db=None, db_name=None):
 
