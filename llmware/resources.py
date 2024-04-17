@@ -1379,10 +1379,10 @@ class PGRetrieval:
     def direct_custom_query(self, query_filter):
 
         """Applies the custom query directly to the DB and returns the results"""
-        results = self.conn.cursor().execute(str(query_filter))
-        output = self.unpack(results)
+        results = list(self.conn.cursor().execute(str(query_filter)))
+        # output = self.unpack(results)
         self.conn.close()
-        return output
+        return results
 
     def list_all_tables(self):
 
@@ -2449,10 +2449,10 @@ class SQLiteRetrieval:
 
     def direct_custom_query(self, query_filter):
         """Applies the custom query directly to the DB and returns the results"""
-        results = self.conn.cursor().execute(str(query_filter))
-        output = self.unpack(results)
+        results = list(self.conn.cursor().execute(str(query_filter)))
+        # output = self.unpack(results)
         self.conn.close()
-        return output
+        return results
 
     def list_all_tables(self):
 
@@ -3345,6 +3345,14 @@ class CustomTable:
             #  if whole number, then store in DB as 'integer'
             vt = int(v)
             dt = "integer"
+            if self.db == "postgres":
+                # for safety, pick the largest int data type
+                dt = "bigint"
+
+            # if there is a 0 value, then use float to be safe
+            if vt == 0:
+                dt = "float"
+
         except:
             try:
                 #   if element can be converted to a python 'float', then store in DB as 'float'
@@ -3356,6 +3364,52 @@ class CustomTable:
                 dt = "text"
 
         return dt
+
+    def test_and_remediate_schema(self, samples=10, auto_remediate=True):
+
+        """ Applies a larger test of the schema against the data held in CustomTable .rows attribute - will
+        test the number of samples passed as an optional parameter.
+
+        If auto_remediate == True (default), then it will automatically update the data type used in the schema to
+        the 'safest' among the types found in the sample set. """
+
+        updated_schema = {}
+
+        for key, data_type in self.schema.items():
+
+            if len(self.rows) < samples:
+                samples = len(self.rows)
+
+            samples_dt_list = []
+
+            for x in range(0,samples):
+
+                if key not in self.rows[x]:
+                    logging.warning("warning:  CustomTable - test_and_remediate_schema - unexpected error - "
+                                    "key not found in row - ", x, key, self.rows[x])
+                else:
+                    check_value = self.rows[x][key]
+                    samples_dt_list.append(self._get_best_guess_value_type(check_value))
+
+            #   simple decision tree - will add more options over time
+            if "text" in samples_dt_list or data_type=="text":
+                dt = "text"
+            elif "float" in samples_dt_list or data_type=="float":
+                dt = "float"
+            elif "integer" in samples_dt_list or "bigint" in samples_dt_list and data_type in ["integer", "bigint"]:
+                dt = "integer"
+                if self.db == "postgres":
+                    dt = "bigint"
+            else:
+                # when in doubt, assign 'text' as safest choice
+                dt = "text"
+
+            updated_schema.update({key: dt})
+
+        if auto_remediate:
+            self.schema = updated_schema
+
+        return updated_schema
 
     def load_json(self, fp, fn, selected_keys=None, data_type_map=None, schema=None):
 
@@ -3585,7 +3639,8 @@ class CustomTable:
         match_percent = col_count_tracker[most_common_column] / total_rows
 
         if len(col_count_tracker.items()) > 1:
-            logging.warning("warning: found more than one length - ", col_count_tracker)
+            logging.warning("warning: CustomTable - validate_csv - in reviewing the rows of the CSV - "
+                            "found more than one column length - ", col_count_tracker)
 
             for x in range(0,total_rows):
                 row_elements = len(output[x])
@@ -3659,7 +3714,9 @@ class CustomTable:
                     hrow = output[0]
 
                     for i, entry in enumerate(hrow):
-                        column_map.update({re.sub("[\xfe\xff]", "", entry):i})
+                        header_entry = re.sub("[\xfe\xff]", "", entry)
+                        header_entry = re.sub(" ", "_", header_entry)
+                        column_map.update({header_entry:i})
 
         #   review the first content row to confirm matching number of entries and test data type
 
@@ -3725,6 +3782,10 @@ class CustomTable:
                 for i, entry in enumerate(output[x]):
 
                     if i in column_map_inverted:
+
+                        # handle missing or null values
+                        if not entry:
+                            entry = "0"
                         new_row.update({column_map_inverted[i]: entry})
 
                 if len(new_row.items()) != column_size:
@@ -3753,6 +3814,14 @@ class CustomTable:
             self.table_name = table_name
 
         sql_create_table = ""
+
+        if not schema:
+
+            try:
+                self.get_schema(self.table_name)
+            except:
+                raise LLMWareException(message=f"Exception: could not locate schema for selected "
+                                               f"table - {self.table_name}")
 
         if self.schema and self.table_name:
 
@@ -3810,7 +3879,18 @@ class CustomTable:
         if self.build_table():
 
             for i in range(0, len(self.rows)):
-                self.write_new_record(self.rows[i])
+
+                if i >= 100 and i % 100 == 0:
+
+                    # TODO:  more config options on display of output status and logging
+                    print(f"update: CustomTable - insert_rows - status - rows loaded - {i} - out of {len(self.rows)}")
+
+                try:
+                    self.write_new_record(self.rows[i])
+                except:
+                    logging.warning(f"warning: write transaction not successful - skipping row - "
+                                    f"{i} - {self.rows[i]}")
+
                 rows_completed += 1
 
         else:
@@ -3831,6 +3911,7 @@ class CustomTable:
         schema = conn.get_schema(self.table_name)
         conn.close()
 
+        self.schema = schema
         return schema
 
     def list_all_tables(self):
@@ -3885,8 +3966,9 @@ class CustomTable:
         try:
             response = conn.direct_custom_query(custom_filter)
         except:
-            raise LLMWareException(message=f"Exception: custom_filter - {str(custom_filter)} generated an error"
-                                           f"when attempting to run on {self.db} database.")
+            logging.warning(f"warning: query was not successful - {str(custom_filter)} - and generated an error "
+                            f"when attempting to run on table - {self.table_name} - database - {self.db}. ")
+            response = []
 
         return response
 
