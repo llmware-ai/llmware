@@ -729,8 +729,8 @@ curl -o docker-compose.yaml https://raw.githubusercontent.com/llmware-ai/llmware
 ## Meet our Models   
 
 - **SLIM model series:** small, specialized models fine-tuned for function calling and multi-step, multi-model Agent workflows.  
-- **DRAGON model series:**  Production-grade RAG-optimized 6-7B parameter models - "Delivering RAG on ..." the leading foundation base models.
-- **BLING model series:**  Small CPU-based RAG-optimized, instruct-following 1B-3B parameter models.
+- **DRAGON model series:**  Production-grade RAG-optimized 6-7B parameter models - "Delivering RAG on ..." the leading foundation base models.  
+- **BLING model series:**  Small CPU-based RAG-optimized, instruct-following 1B-3B parameter models.  
 - **Industry BERT models:**  out-of-the-box custom trained sentence transformer embedding models fine-tuned for the following industries:  Insurance, Contracts, Asset Management, SEC.  
 - **GGUF Quantization:** we provide 'gguf' and 'tool' versions of many SLIM, DRAGON and BLING models, optimized for CPU deployment.  
 
@@ -753,15 +753,15 @@ git clone git@github.com:llmware-ai/llmware.git
     
 <summary> ✨  <b>Roadmap - Where are we going ... </b>  </summary>
 
-- 💡 Making it easy to deploy fine-tuned open source models to build state-of-the-art RAG workflows
+- 💡 Making it easy to deploy fine-tuned open source models to build state-of-the-art RAG workflows  
 - 💡 Private cloud - keeping documents, data pipelines, data stores, and models safe and secure  
-- 💡 Model quantization, especially GGUF, and democratizing the game-changing use of 7B CPU-based LLMs
-- 💡 Developing small specialized RAG optimized LLMs between 1B-7B parameters
-- 💡 Industry-specific LLMs, embedding models and processes to support core knowledge-based use cases
-- 💡 Enterprise scalability - containerization, worker deployments and Kubernetes
+- 💡 Model quantization, especially GGUF, and democratizing the game-changing use of 7B CPU-based LLMs  
+- 💡 Developing small specialized RAG optimized LLMs between 1B-7B parameters  
+- 💡 Industry-specific LLMs, embedding models and processes to support core knowledge-based use cases  
+- 💡 Enterprise scalability - containerization, worker deployments and Kubernetes  
 - 💡 Integration of SQL and other scale enterprise data sources  
 - 💡 Multi-step, multi-model Agent-based workflows with small, specialized function-calling models  
-
+- 💡 New Documentation - **Coming Soon**  
 
 Like our models, we aspire for llmware to be "small, but mighty" - easy to use and get started, but packing a powerful punch!
 
