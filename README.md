@@ -775,7 +775,7 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 **Saturday, April 20 - v0.2.10-WIP Update**  
 - Updates to Agent class to support Natural Language queries of Custom Tables on Postgres [example](https://github.com/llmware-ai/llmware/tree/main/examples/Structured_Tables/agent_with_custom_tables.py)  
-- New Agent API endpoint implemented with LLMWare Inference Server and new Agent capabilities [example](https://github.com/llmware-ai/llmware/tree/examples/SLIM-Agents/agent_api_endpoint.py)  
+- New Agent API endpoint implemented with LLMWare Inference Server and new Agent capabilities [example](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/agent_api_endpoint.py)  
 - Note: changes merged into main branch in repo, but not yet posted into PyPy (expected by Monday, April 22)   
   
 **Tuesday, April 16 - v0.2.9 Update**  
