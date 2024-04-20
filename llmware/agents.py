@@ -14,6 +14,7 @@ import re
 import csv
 import os
 import sqlite3
+import json
 
 from llmware.models import ModelCatalog, _ModelRegistry
 from llmware.util import CorpTokenizer
@@ -75,8 +76,6 @@ class LLMfx:
         for tools in self._supported_tools:
             setattr(self, tools + "_model", None)
 
-        self.api_key = api_key
-
         self.work_queue = []
         self.work_iteration = 0
 
@@ -102,6 +101,26 @@ class LLMfx:
 
         self.tools_deployed = []
         self.inference_calls = 0
+
+        #   set by default to localhost, 8080 and using 'demo-test' api_key
+        self.api_endpoint = "http://127.0.0.1/8080"
+        self.api_key = api_key
+        self.api_exec = False
+
+    def register_api_endpoint(self, api_endpoint = None, api_key=None, endpoint_on=True):
+
+        self.api_endpoint = api_endpoint
+        self.api_key=api_key
+        self.api_exec = endpoint_on
+        return True
+
+    def switch_endpoint_on(self):
+        self.api_exec = True
+        return True
+
+    def switch_endpoint_off(self):
+        self.api_exec = False
+        return True
 
     def update_tool_map(self, tool_type, tool_name):
 
@@ -401,20 +420,27 @@ class LLMfx:
         """ Loads a single tool """
 
         model = None
-        if tool_type in self._supported_tools:
 
-            journal_update = f"loading tool - {tool_type}"
+        if not self.api_exec:
+
+            if tool_type in self._supported_tools:
+
+                journal_update = f"loading tool - {tool_type}"
+                self.write_to_journal(journal_update)
+
+                setattr(self, tool_type + "_model",
+                        ModelCatalog().load_model(self._default_tool_map[tool_type],api_key=self.api_key,
+                                                  sample=sample,use_gpu=use_gpu,get_logits=get_logits,max_output=max_output,
+                                                  temperature=temperature))
+
+                model = getattr(self, tool_type + "_model")
+
+                if tool_type not in self.tools_deployed:
+                    self.tools_deployed.append(tool_type)
+
+        else:
+            journal_update = f"api_exec mode = 'ON' - skipping - local loading of tool - {tool_type}"
             self.write_to_journal(journal_update)
-
-            setattr(self, tool_type + "_model",
-                    ModelCatalog().load_model(self._default_tool_map[tool_type],api_key=self.api_key,
-                                              sample=sample,use_gpu=use_gpu,get_logits=get_logits,max_output=max_output,
-                                              temperature=temperature))
-
-            model = getattr(self, tool_type + "_model")
-
-            if tool_type not in self.tools_deployed:
-                self.tools_deployed.append(tool_type)
 
         return model
 
@@ -422,14 +448,19 @@ class LLMfx:
 
         """ Loads a list of tool, typically at the start of a multi-step process. """
 
-        for tool_type in tool_list:
+        if not self.api_exec:
 
-            if tool_type in self._supported_tools:
+            for tool_type in tool_list:
 
-                model = getattr(self, tool_type + "_model")
+                if tool_type in self._supported_tools:
 
-                if not model:
-                    self.load_tool(tool_type)
+                    model = getattr(self, tool_type + "_model")
+
+                    if not model:
+                        self.load_tool(tool_type)
+        else:
+            journal_update = f"api_exec mode = 'ON' - skipping - local loading of tool list - {str(tool_list)}"
+            self.write_to_journal(journal_update)
 
         return self
 
@@ -438,20 +469,26 @@ class LLMfx:
         """ Unloads a tool, which removes it from memory - useful in long-running processes
         to be able to load and unload different tools. """
 
-        if tool_type in self._supported_tools:
+        if not self.api_exec:
 
-            journal_update = f"unloading tool - {tool_type}"
+            if tool_type in self._supported_tools:
+
+                journal_update = f"unloading tool - {tool_type}"
+                self.write_to_journal(journal_update)
+
+                model = getattr(self, tool_type + "_model")
+
+                if model:
+
+                    model.unload_model()
+
+                    delattr(self, tool_type + "_model")
+                    setattr(self, tool_type + "_model", None)
+                    gc.collect()
+
+        else:
+            journal_update = f"api_exec mode = 'ON' - skipping - local 'unload' of model- {tool_type}"
             self.write_to_journal(journal_update)
-
-            model = getattr(self, tool_type + "_model")
-
-            if model:
-
-                model.unload_model()
-
-                delattr(self, tool_type + "_model")
-                setattr(self, tool_type + "_model", None)
-                gc.collect()
 
         return 0
 
@@ -475,14 +512,6 @@ class LLMfx:
 
         if tool_type in self._supported_tools:
 
-            model = getattr(self, tool_type + "_model")
-
-            #   if model not yet loaded, then load in-line
-            if not model:
-                model = self.load_tool(tool_type)
-
-            function_call = getattr(model, "function_call")
-
             journal_update = f"executing function call - deploying - {tool_type} "
             self.write_to_journal(journal_update)
 
@@ -500,7 +529,23 @@ class LLMfx:
             if not self.analyze_mode:
                 get_logits = False
 
-            response = function_call(text, function=function, params=params, get_logits=get_logits)
+            if not self.api_exec:
+
+                model = getattr(self, tool_type + "_model")
+
+                #   if model not yet loaded, then load in-line
+                if not model:
+                    model = self.load_tool(tool_type)
+
+                function_call = getattr(model, "function_call")
+
+                response = function_call(text, function=function, params=params, get_logits=get_logits)
+
+            else:
+
+                #   send to api agent server
+                response = self.fx_over_api_endpoint(context=text,tool_type=tool_type, function=function,params=params,
+                                                     get_logits=get_logits)
 
             self.inference_calls += 1
             output_response = {}
@@ -543,9 +588,14 @@ class LLMfx:
                     # default - if not found/applied
                     confidence_score = -1
 
+                    # load the model card
+                    model_name = _ModelRegistry().get_llm_fx_mapping()[tool_type]
+                    model_card = ModelCatalog().lookup_model_card(model_name)
+                    hf_tokenizer_name = model_card["tokenizer"]
+
                     if get_logits:
-                        logit_analysis = ModelCatalog().logit_analysis(response, model.model_card,
-                                                                       model.hf_tokenizer_name,
+                        logit_analysis = ModelCatalog().logit_analysis(response, model_card,
+                                                                       hf_tokenizer_name,
                                                                        api_key=self.api_key)
 
                         confidence_score = logit_analysis["confidence_score"]
@@ -596,10 +646,6 @@ class LLMfx:
 
         else:
             raise ModelNotFoundException(tool_type)
-
-        # print("update: output_response - ", output_response)
-
-        # replacing output_response with value_output which is a dictionary "subset" of the full output response
 
         return value_output
 
@@ -854,16 +900,6 @@ class LLMfx:
 
         """ Executes an inference """
 
-        model = getattr(self, "answer" + "_model")
-
-        # insert change - load model in-line
-        #   if model not yet loaded, then load in-line
-        if not model:
-            model = self.load_tool("answer")
-        # end - insert change
-
-        inference = getattr(model, "inference")
-
         journal_update = f"executing function call - deploying - question-answer tool "
         self.write_to_journal(journal_update)
 
@@ -874,7 +910,23 @@ class LLMfx:
         text = work_dict["text"]
         work_iter = self.work_iteration
 
-        response = inference(question, add_context=text, add_prompt_engineering=True)
+        if not self.api_exec:
+
+            model = getattr(self, "answer" + "_model")
+
+            # insert change - load model in-line
+            #   if model not yet loaded, then load in-line
+            if not model:
+                model = self.load_tool("answer")
+            # end - insert change
+
+            inference = getattr(model, "inference")
+
+            response = inference(question, add_context=text, add_prompt_engineering=True)
+
+        else:
+            # route answer request over API
+            response = self.fx_over_api_endpoint(tool_type="answer", context=text, prompt=question)
 
         llm_response = re.sub("[\n\r]", "\t", response["llm_response"])
 
@@ -927,16 +979,6 @@ class LLMfx:
 
         """ Executes Text2Sql tool to convert query into SQL """
 
-        model = getattr(self, "sql" + "_model")
-
-        # insert change - load model in-line
-        #   if model not yet loaded, then load in-line
-        if not model:
-            model = self.load_tool("sql")
-        # end - insert change
-
-        inference = getattr(model, "inference")
-
         if table_schema:
             self.load_work(table_schema)
             self.top_of_work_queue()
@@ -951,7 +993,22 @@ class LLMfx:
         journal_update += f"\t\t\t\t -- table_schema - {table_schema}"
         self.write_to_journal(journal_update)
 
-        response = inference(query, add_context=table_schema, add_prompt_engineering=True)
+        if not self.api_exec:
+
+            model = getattr(self, "sql" + "_model")
+
+            # insert change - load model in-line
+            #   if model not yet loaded, then load in-line
+            if not model:
+                model = self.load_tool("sql")
+            # end - insert change
+
+            inference = getattr(model, "inference")
+
+            response = inference(query, add_context=table_schema, add_prompt_engineering=True)
+
+        else:
+            response = self.fx_over_api_endpoint(tool_type="sql", context=table_schema, prompt=query)
 
         self.inference_calls += 1
 
@@ -1171,6 +1228,53 @@ class LLMfx:
                             }
 
         return comparison_stats
+
+    def fx_over_api_endpoint(self, context="", tool_type="", model_name="", params="", prompt="",
+                             function=None, endpoint_base=None, api_key=None, get_logits=False):
+
+        #   send to api agent server
+
+        import ast
+        import requests
+
+        if endpoint_base:
+            self.api_endpoint = endpoint_base
+
+        if api_key:
+            # e.g., "demo-test"
+            self.api_key = api_key
+
+        if not params:
+            model_name = _ModelRegistry().get_llm_fx_mapping()[tool_type]
+            mc = ModelCatalog().lookup_model_card(model_name)
+            if "primary_keys" in mc:
+                params = mc["primary_keys"]
+
+        url = self.api_endpoint + "{}".format("/agent")
+        output_raw = requests.post(url, data={"model_name": model_name, "api_key": self.api_key, "tool_type": tool_type,
+                                              "function": function, "params": params, "max_output": 50,
+                                              "temperature": 0.0, "sample": False, "prompt": prompt,
+                                              "context": context, "get_logits": True})
+
+        try:
+            # output = ast.literal_eval(output_raw.text)
+            output = json.loads(output_raw.text)
+            if "logits" in output:
+                logits = ast.literal_eval(output["logits"])
+                print("logits: ", logits)
+                output["logits"] = logits
+            if "output_tokens" in output:
+                ot_int = [int(x) for x in output["output_tokens"]]
+                output["output_tokens"] = ot_int
+
+            # need to clean up logits
+        except:
+            logging.warning("warning: api inference was not successful")
+            output = {}
+
+        print(f"TEST: executed Agent call over API endpoint - {model_name} - {function} - {output}")
+
+        return output
 
 
 class SQLTables:
