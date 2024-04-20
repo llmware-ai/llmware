@@ -615,7 +615,7 @@ if __name__ == "__main__":
 **Step 1 - Install llmware** -  `pip3 install llmware `
 
 <details>
-<summary><b>Step 2- Go to Examples</b> - Get Started Fast with 50+ 'Cut-and-Paste' Recipes </summary>
+<summary><b>Step 2- Go to Examples</b> - Get Started Fast with 100+ 'Cut-and-Paste' Recipes </summary>
 
 ## 🔥 Top New Examples 🔥  
 
@@ -773,6 +773,11 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
+**Saturday, April 20 - v0.2.10-WIP Update**  
+- Updates to Agent class to support Natural Language queries of Custom Tables on Postgres [example](https://github.com/llmware-ai/llmware/tree/main/examples/Structured_Tables/agent_with_custom_tables.py)  
+- New Agent API endpoint implemented with LLMWare Inference Server and new Agent capabilities [example](https://github.com/llmware-ai/llmware/tree/examples/SLIM-Agents/agent_api_endpoint.py)  
+- Note: changes merged into main branch in repo, but not yet posted into PyPy (expected by Monday, April 22)   
+  
 **Tuesday, April 16 - v0.2.9 Update**  
 - New CustomTable class to rapidly create custom DB tables in conjunction with LLM-based workflows.  
 - Enhanced methods for converting CSV and JSON/JSONL files into DB tables.  
