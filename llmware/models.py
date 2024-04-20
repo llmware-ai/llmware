@@ -1006,7 +1006,7 @@ class ModelCatalog:
     def tool_test_run(self, model_name, api_key=None, verbose=False,
                       # add more optional configurations to flow thru to the model inference
                       use_gpu=True, sample=True, get_logits=True,
-                      max_output=100, temperature=-99):
+                      max_output=100, temperature=-99, custom_test_script=None):
 
         """ Loads a tool, if required, and executes a series of test runs.
         Note: only available for 'tool' implementation models. """
@@ -1021,7 +1021,12 @@ class ModelCatalog:
             model = self.load_model(model_name, api_key=api_key, use_gpu=use_gpu, sample=sample,
                                     get_logits=get_logits,max_output=max_output, temperature=temperature)
 
-            test_set = self.get_test_script(model_name)
+            if custom_test_script:
+                #   custom_test_script can be any json file with list of json dictionary entries with
+                #   keys corresponding to test set, e.g., "context", "query", "answer"
+                test_set = custom_test_script
+            else:
+                test_set = self.get_test_script(model_name)
 
             if test_set:
 
@@ -4149,6 +4154,10 @@ class HFGenerativeModel:
         self.prompt_wrapper = prompt_wrapper
         self.instruction_following = instruction_following
 
+        if not model_card:
+            # safety - empty iterable rather than 'None'
+            model_card = []
+
         if "instruction_following" in model_card:
             self.instruction_following = model_card["instruction_following"]
         else:
@@ -6807,12 +6816,63 @@ def prune_linear_layer(layer, index, dim= 0):
     return new_layer
 
 
+
+class ModelResources:
+
+    """ ModelResources is a global state mechanism used in conjunction with deploying the LLMWare Inference
+    Server class.   It manages the persistent loading of multiple models behind the server. """
+
+    class _ModelState:
+        models_loaded = 0
+        models_list = []
+
+    @classmethod
+    def load_model(cls, model_name, sample=False, temperature=0.0, get_logits=True, max_output=200, api_key=None,
+                   use_gpu=True):
+
+        model_card = ModelCatalog().lookup_model_card(model_name)
+
+        if model_card and model_name not in cls._ModelState.models_list:
+
+            setattr(cls._ModelState, model_name, ModelCatalog().load_model(model_name, api_key=api_key,
+                                                                           sample=sample, use_gpu=use_gpu,
+                                                                           get_logits=get_logits, max_output=max_output,
+                                                                           temperature=temperature))
+
+            cls._ModelState.models_list.append(model_name)
+            cls._ModelState.models_loaded += 1
+
+            print("update: ModelResources - ", cls._ModelState.models_loaded, cls._ModelState.models_list)
+
+    @classmethod
+    def unload_model(cls, model_name):
+        """ Not implemented currently. """
+        return 0
+
+    @classmethod
+    def check_if_model_loaded(cls, model_name):
+        if model_name in cls._ModelState.models_list:
+            return True
+        return False
+
+    @classmethod
+    def fetch_model(cls, model_name):
+        return getattr(cls._ModelState, model_name)
+
+
+
 class LLMWareInferenceServer:
 
-    """ LLMWare Inference Server class implements the server-side lightweight inference server. """
+    """ LLMWare Inference Server class implements server-side lightweight inference server with two
+    primary APIs currently supported:
+
+        1.  /  - main inference of general purpose LLM deployed on inference server at time of start.
+        2.  /agent - supports agent process over API with multiple SLIM models deployed.
+
+    """
 
     def __init__(self, model_name, model_catalog=None, hf_api_key=None, secret_api_key=None, home_path=None,
-                 port=8080):
+                 port=8080, verbose=True):
 
         self.HOME_PATH = home_path
         self.hf_api_key = hf_api_key
@@ -6826,7 +6886,11 @@ class LLMWareInferenceServer:
 
         self.model = self.model_catalog.load_model(model_name, api_key=self.hf_api_key)
 
+        self.verbose = verbose
+
     def start(self):
+
+        """ Starts the server runtime. """
 
         # if inference server started, then try to get flask dependency
         try:
@@ -6837,6 +6901,11 @@ class LLMWareInferenceServer:
 
         app = Flask(__name__, template_folder=self.HOME_PATH, static_folder=self.HOME_PATH)
         app.add_url_rule("/", methods=['GET', 'POST'], view_func=self.index_route)
+        app.add_url_rule("/agent", methods=['GET','POST'], view_func=self.agent_route)
+
+        #TODO:  WIP - explicit /load_model path not fully implemented yet
+        app.add_url_rule("/load_model", methods=['GET','POST'], view_func=self.load_model_route)
+
         app.config.update(
             TESTING=True,
             # note: this is not a real secret key - it is just random letters
@@ -6850,21 +6919,25 @@ class LLMWareInferenceServer:
         my_port = self.port
         app.run(host=my_host, port=my_port)
 
-    def llmware_inference(self, prompt, context):
+    def _llmware_inference(self, prompt, context):
+
+        """ Executes a LLM model inference from the main index route. """
 
         t1 = time.time()
 
         output = self.model.inference(prompt, add_context=context, add_prompt_engineering=True)
 
-        print("update: model inference output - ", output["llm_response"], output["usage"])
-
         t2 = time.time()
 
-        print("update: total processing time: ", t2 - t1)
+        if self.verbose:
+            print("update: model inference output - ", output["llm_response"], output["usage"])
+            print("update: total processing time: ", t2 - t1)
 
         return output
 
     def index_route(self):
+
+        """ Main index route to execute a model inference from the server. """
 
         # defaults
         api_key = ""
@@ -6879,7 +6952,8 @@ class LLMWareInferenceServer:
 
         for keys in request.form:
 
-            print("update: keys / values input received: ", keys, request.form.get(keys))
+            if self.verbose:
+                print("update: keys / values input received: ", keys, request.form.get(keys))
 
             if keys == "context":
                 context = request.form.get(keys)
@@ -6909,9 +6983,180 @@ class LLMWareInferenceServer:
 
         # start processing here
 
-        output = self.llmware_inference(question, context)
+        output = self._llmware_inference(question, context)
 
         torch.cuda.empty_cache()
 
         return jsonify(output)
+
+    def agent_route(self):
+
+        """ New InferenceServer API Route - to handle an Agent process deployed over a Remote Endpoint server. """
+
+        try:
+            from flask import Flask, request, jsonify
+        except:
+            raise DependencyNotInstalledException("flask")
+
+        context = ""
+        fx = ""
+        model = ""
+        params = []
+        get_logits = False
+        prompt = ""
+        temperature = 0.0
+        sample = False
+        api_key = ""
+        max_output = 50
+        tool_type = ""
+
+        for keys in request.form:
+
+            if self.verbose:
+                print("update: keys / values input received: ", keys, request.form.get(keys))
+
+            if keys == "context":
+                context = request.form.get(keys)
+
+            if keys == "tool_type":
+                tool_type = request.form.get(keys)
+
+            if keys == "function":
+                fx = request.form.get(keys)
+
+            if keys == "model" or keys == "model_name":
+                model = request.form.get(keys)
+
+            if keys == "params":
+                params = request.form.get(keys)
+
+            if keys == "get_logits":
+
+                get_logits = request.form.get(keys)
+
+                if get_logits in ["False", "false"]:
+                    get_logits = False
+                if get_logits in ["True", "true"]:
+                    get_logits =True
+
+            if keys == "temperature":
+                temperature = request.form.get(keys)
+
+            if keys == "sample":
+                sample = request.form.get(keys)
+
+            if keys == "question" or keys == "prompt":
+                prompt = request.form.get(keys)
+
+            if keys == "max_output_tokens" or keys == "max_output":
+                max_output_len = request.form.get(keys)
+                try:
+                    max_output = int(max_output_len)
+                except:
+                    max_output = 200
+
+            if keys == "api_key":
+                api_key = request.form.get(keys)
+
+        t1 = time.time()
+
+        if not context and not (fx or model):
+            output_str = "Got your message - No content found to process"
+            return jsonify({"message": output_str})
+
+        if api_key != self.current_api_key:
+            output_str = "Got your message - Thanks for testing - API key not confirmed!"
+            return jsonify({"message": output_str})
+
+        # start processing here
+
+        output = self._llmware_agent_function_call(context=context, tool_type=tool_type, model_name=model, function=fx,
+                                                  temperature=temperature, sample=sample,params=params,
+                                                  max_output=max_output, prompt=prompt,get_logits=get_logits)
+        torch.cuda.empty_cache()
+
+        return jsonify(output)
+
+    def _llmware_agent_function_call(self, prompt=None, context=None, tool_type=None, model_name=None,
+                                    function=None, temperature=0.0, sample=False, params=None,
+                                    max_output=50, get_logits=False):
+
+        """ Executes the function call inside the agent route. """
+
+        if tool_type:
+            model_name = _ModelRegistry().get_llm_fx_mapping()[tool_type]
+
+        temperature = float(temperature)
+        max_output = int(max_output)
+
+        if self.verbose:
+            print(f"update: llmware_agent_function_call - {model_name} - {tool_type}")
+
+        if not ModelResources().check_if_model_loaded(model_name):
+            self._load_model(model_name)
+
+        model = ModelResources().fetch_model(model_name)
+
+        if tool_type not in ["sql", "answer"]:
+            # fc = getattr(model, "function_call")
+            output = model.function_call(context,function=function,params=[params], get_logits=get_logits,
+                                         max_output=max_output, temperature=temperature)
+        else:
+            # inference = getattr(model, "inference")
+            output = model.inference(prompt,add_context=context,add_prompt_engineering="default_with_context",
+                                     get_logits=get_logits)
+
+        if self.verbose:
+            print(f"update: llmware_agent_function_call - model response: ", output)
+
+        if "logits" in output:
+            output["logits"] = str(output["logits"])
+
+        return output
+
+    def load_model_route(self):
+
+        """ Load Model route is an explicit step to load a model into the server persistent state -
+        not fully implemented yet - WIP. """
+
+        output = {}
+        model_name = ""
+        tool = ""
+
+        # if inference server started, then try to get flask dependency
+        try:
+            from flask import Flask, request, jsonify
+        except:
+            raise DependencyNotInstalledException("flask")
+
+        for keys in request.form:
+
+            if self.verbose:
+                print("update: keys / values input received ", keys, request.form.get(keys))
+
+            if keys == "model" or keys == "model_name":
+                model_name = request.form.get(keys)
+
+            if keys == "tool" or keys == "tool_type":
+                tool = request.form.get(keys)
+
+        if tool and not model_name:
+            model_name = _ModelRegistry().get_llm_fx_mapping()[tool]
+
+        if model_name:
+            self._load_model(model_name)
+            output = {"model": f"loaded-{model_name}"}
+
+        return jsonify(output)
+
+    def _load_model(self, model_name):
+
+        if not ModelResources().check_if_model_loaded(model_name):
+            ModelResources().load_model(model_name)
+        else:
+            if self.verbose:
+                print("model already loaded - ", model_name)
+
+        return True
+
 
