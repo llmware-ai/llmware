@@ -101,7 +101,7 @@ def delete_db():
 
 if __name__ == "__main__":
 
-    ModelCatalog().get_llm_toolkit()
+    ModelCatalog().get_llm_toolkit(tool_list=["sql"])
 
     #   run an end-to-end test
     sql_e2e_test_script(table_name="customer1",create_new_table=True)
