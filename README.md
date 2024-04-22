@@ -783,7 +783,7 @@ Questions and discussions are welcome in our [github discussions](https://github
 - See new examples [Creating Custom Table example](https://github.com/llmware-ai/llmware/tree/main/examples/Structured_Tables/create_custom_table-1.py)
     
 **Tuesday, April 9 - v0.2.8 Update**  
-- Office Parser (Word Docx, Powerpoint PPTX, and Excel XLSX - multiple improvements - new libs + Python method.  
+- Office Parser (Word Docx, Powerpoint PPTX, and Excel XLSX) - multiple improvements - new libs + Python method.  
 - Includes: several fixes, improved text chunking controls, header text extraction and configuration options.  
 - Generally, new office parser options conform with the new PDF parser options.  
 - Please see [Office Parsing Configs example](https://github.com/llmware-ai/llmware/tree/main/examples/Parsing/office_parser_new_configs.py)  
