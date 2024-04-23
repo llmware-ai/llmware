@@ -504,7 +504,43 @@ global_model_repo_catalog_list = [
      "link": "https://huggingface.co/llmware/bonchon",
      "custom_model_files": [], "custom_model_repo": ""},
 
-    # new slim models
+    {"model_name": "microsoft/Phi-3-mini-4k-instruct-gguf", "display_name": "phi-3-gguf", "model_family": "GGUFGenerativeModel",
+     "model_category": "generative_local", "model_location": "llmware_repo", "context_windows": 4096,
+     "instruction_following": False, "prompt_wrapper": "phi_3", "temperature": 0.3, "trailing_space": "",
+     "gguf_file": "Phi-3-mini-4k-instruct-q4.gguf",
+     "gguf_repo": "microsoft/Phi-3-mini-4k-instruct-gguf",
+     "link": "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf",
+     "custom_model_files": [], "custom_model_repo": ""},
+
+    {"model_name": "microsoft/Phi-3-mini-4k-instruct", "display_name": "phi-3",
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 4096, "instruction_following": False, "prompt_wrapper": "phi_3",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf",
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "microsoft/Phi-3-mini-4k-instruct"},
+
+    {"model_name": "microsoft/Phi-3-mini-128k-instruct", "display_name": "phi-3-128k",
+    "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+    "context_window": 4096, "instruction_following": False, "prompt_wrapper": "phi_3",
+    "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/microsoft/Phi-3-mini-128k-instruct-gguf",
+    "custom_model_files": [], "custom_model_repo": "",
+    "hf_repo": "microsoft/Phi-3-mini-128k-instruct"},
+
+    {"model_name": "Meta-Llama-3-8B-Instruct", "display_name": "llama-3-instruct",
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 8192, "instruction_following": False, "prompt_wrapper": "llama_3_chat",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/meta-llama/Meta-LLama-3-8B-instruct",
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "meta-llama/Meta-Llama-3-8B-Instruct"},
+
+    {"model_name": "Meta-Llama-3-8B", "display_name": "llama-3-base",
+     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+     "context_window": 8192, "instruction_following": False, "prompt_wrapper": "llama_3_chat",
+     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/meta-llama/Meta-LLama-3-8B",
+     "custom_model_files": [], "custom_model_repo": "",
+     "hf_repo": "meta-llama/Meta-Llama-3-8B"},
+
+ # new slim models
     {"model_name": "slim-ner-tool", "display_name": "slim-ner-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -1023,9 +1059,17 @@ global_model_finetuning_prompt_wrappers_lookup = {
 
         "chat_ml": {"system_start": "<|im_start|>system", "system_stop":"<|im_end|>\n",
                     "main_start":"<|im_start|>user", "main_stop":"<|im_end|>\n",
-                    "start_llm_response":"<|im_start|>assistant"}
-        }
+                    "start_llm_response":"<|im_start|>assistant"},
 
+        "phi_3": {"system_start": "<|system|>\n", "system_stop": "<|end|>\n",
+                  "main_start": "<|user|>\n", "main_stop": "<|end|>\n", "start_llm_response": "<|assistant|>"},
+
+        "llama_3_chat": {"system_start": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n",
+                         "system_stop": "<|eot_id|>",
+                         "main_start": "<|start_header_id|>user>|end_header_id|>\n",
+                         "main_stop": "<|eot_id|>",
+                         "start_llm_response": "<|start_header_id|>assistant<|end_header_id|>\n"}
+       }
 
 """ Global default prompt catalog consists of a set of prebuilt useful prompt instructions across a wide range
 of models.   Unlike prompt_wrappers, which tend to be an attribute of the model, the prompt catalog can be invoked

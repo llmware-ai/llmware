@@ -81,7 +81,8 @@ class _ModelRegistry:
 
     #   most fine-tuned models require a specific prompt wrapping that was used in the fine-tuning process
     #   we are treating these "prompt_wrappers" as core attributes of the model
-    prompt_wrappers = ["alpaca", "human_bot", "chatgpt", "<INST>", "open_chat", "hf_chat", "chat_ml"]
+    prompt_wrappers = ["alpaca", "human_bot", "chatgpt", "<INST>", "open_chat", "hf_chat", "chat_ml", "phi_3",
+                       "llama_3_chat"]
     registered_wrappers = global_model_finetuning_prompt_wrappers_lookup
 
     #   list of function calling classifier tools
