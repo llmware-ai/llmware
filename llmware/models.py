@@ -1613,6 +1613,88 @@ class ModelCatalog:
 
         return output
 
+    def gpu_available(self, suppress_warnings=True, driver_min_levels=None):
+
+        """ Checks if CUDA GPU drivers found on machine, and whether the drivers are at
+        the required minimum level.
+
+        -- driver_min_level is a tuple of integers consisting of the major/minor driver level, e.g., (525, 15)
+        -- if no driver_min_level is passed, then the test will be skipped and come back False by default.
+        """
+
+        major_driver = 0
+        minor_driver = 0
+
+        result = {"gpu_found": False, "drivers_current": False,
+                  "gpu_name": "", "driver": "", "multiple_gpu": False}
+
+        try:
+            from subprocess import Popen, PIPE
+            from distutils import spawn
+        except:
+            if not suppress_warnings:
+                logging.warning("update: unable to check if gpu available")
+            return result
+
+        if sys.platform.lower() == "win32":
+            nvidia_smi = spawn.find_executable('nvidia-smi')
+        elif sys.platform.lower().startswith("linux"):
+            nvidia_smi = "nvidia-smi"
+        else:
+            if not suppress_warnings:
+                logging.warning("update: only check for CUDA drivers on Windows or Linux")
+            return result
+
+        try:
+            gpu_pipe = Popen([nvidia_smi, "--query-gpu=index,driver_version,name","--format=csv,noheader,nounits"],
+                      stdout=PIPE)
+            gpu, errors = gpu_pipe.communicate()
+        except Exception as e:
+            gpu = []
+            errors = e
+
+        if gpu:
+
+            result["gpu_found"] = True
+
+            # only looking at 'first' gpu
+            results = str(gpu).split(",")
+            if len(results) > 1:
+
+                #TODO: handle multiple GPUs on device!
+                driver_index = results[0].strip().encode('utf')
+
+                driver_level = results[1].strip()
+                result["driver"] = driver_level
+
+                if len(results) > 2:
+                    result["gpu_name"] = results[2].strip()
+
+                if driver_min_levels:
+
+                    driver_split = driver_level.split(".")
+
+                    if len(driver_split) > 0:
+                        try:
+                            major_driver = int(driver_split[0].strip())
+                            if len(driver_split) > 1:
+                                minor_driver = int(driver_split[1].strip())
+                        except:
+                            pass
+
+                    if major_driver > driver_min_levels[0] or (major_driver == driver_min_levels[0]
+                                                           and minor_driver >= driver_min_levels[1]):
+                        result["drivers_current"] = True
+
+                    else:
+                        result["drivers_current"] = False
+                        logging.warning(f"update: CUDA device found - but drivers look out of date, relative to "
+                                        f"required min levels: \n"
+                                        f"--drivers found: {driver_level}\n"
+                                        f"--min required:  {driver_min_levels}\n")
+
+        return result
+
 
 class PromptCatalog:
     """ PromptCatalog manages prompt styles and prompt wrappers. """
@@ -5094,54 +5176,31 @@ class GGUFGenerativeModel:
         self.model_params = None
         self.context_params = None
 
-        #   use_gpu set to TRUE only if:
-        #   (1) cuda_platform (e.g., linux or win32), e.g., not set on Mac OS
-        #   (2) use_gpu set to True in GGUFConfigs
-        #   (3) use_gpu_if_available flag set to True (by default)
-        #   (4) cuda found via:  torch.cuda.is_available() -> note: torch not used in GGUF processing, but is used
-        #       here as a safety check to confirm that CUDA is found and linked correctly to Python - over time,
-        #       we may identify a better way to make this check outside of Torch
-
-        self.use_gpu = (GGUFConfigs().get_config("use_gpu")
-                        and sys.platform.lower() in GGUFConfigs().get_config("cuda_platforms")
-                        and torch.cuda.is_available()
-                        and use_gpu_if_available)
-
-        if self.use_gpu:
-
-            #   need to check that the CUDA driver version is supported
-
-            cuda_version = torch.version.cuda
-            if not cuda_version:
+        #   new option to 'force' use of cuda lib, and over-ride safety checks
+        if GGUFConfigs().get_config("force_gpu"):
+            self.use_gpu = True
+        else:
+            if sys.platform.lower() not in GGUFConfigs().get_config("cuda_platforms"):
                 self.use_gpu = False
-
-                logging.warning(f"warning: no CUDA detected - will load model on CPU.\n"
-                                f"-- potential causes:  (1) CUDA drivers not correctly installed, (2) CUDA_PATH not set, "
-                                f"or (3) Pytorch not compiled with CUDA - other causes possible, but these are the most common."
-                                f"-- note:  Pytorch is not used to run the model, but is used as a safety check to test "
-                                f"if Python is recognizing the CUDA driver."
-                                f"-- checks:  run `nvcc --version` and `nvidia-smi` to get CUDA local information.")
-
             else:
+                # min drivers set to the lowest level for CUDA 12.1 on Linux
+                min_drivers = [525,60]
+                if sys.platform.lower() == "win32":
+                    min_drivers = GGUFConfigs().get_config("cuda_windows_driver_min")
 
-                # confirm that CUDA driver version is greater than current min (e.g., 12.1)
+                gpu_available = ModelCatalog().gpu_available(driver_min_levels=min_drivers)
 
-                try:
-                    cuda_version_value = float(cuda_version)
-                except:
-                    cuda_version_value = 99
+                #   use_gpu set to TRUE only if:
+                #   (1) cuda_platform (e.g., linux or win32), e.g., not set on Mac OS
+                #   (2) use_gpu set to True in GGUFConfigs
+                #   (3) use_gpu_if_available flag set to True (by default)
+                #   (4) cuda found and drivers current via direct polling of nvidia-smi executable in
+                #   ModelCatalog.gpu_available method
 
-                cuda_min_required = GGUFConfigs().get_config("cuda_driver_min_level")
-                if cuda_version_value < cuda_min_required:
-
-                    self.use_gpu = False
-                    logging.warning(f"warning: CUDA detected, but drivers are at level: {cuda_version} and use of GGUF"
-                                    f"model requires at least CUDA drivers at {cuda_min_required}.  Shifting to CPU mode. "
-                                    f"To use CUDA, either upgrade NVIDIA CUDA drivers, or use a custom gguf lib built "
-                                    f"to earlier driver version.")
-                else:
-                    # leaving as print for now to maximize clarity, will shift to logging warning/info over time
-                    print(f"update: confirmed CUDA drivers recognized- will load model on CUDA - {cuda_version}")
+                self.use_gpu = (GGUFConfigs().get_config("use_gpu")
+                            and sys.platform.lower() in GGUFConfigs().get_config("cuda_platforms")
+                            and gpu_available["drivers_current"] and gpu_available["gpu_found"]
+                            and use_gpu_if_available)
 
         # set default minimum
         self.n_batch = 2048
@@ -5276,7 +5335,35 @@ class GGUFGenerativeModel:
                 if machine == 'x86_64':
                     _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("mac_x86")))
                 else:
-                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("mac_metal")))
+
+                    if GGUFConfigs().get_config("use_macos_accelerate"):
+
+                        try:
+                            import platform
+                            macos_ver = platform.mac_ver()
+                            if len(macos_ver) > 0:
+                                ver = macos_ver[0].split(".")
+
+                                v1 = int(ver[0])
+                                v2 = int(ver[1])
+
+                                if v1 < 14:
+
+                                    logging.warning(f"warning: detected older version of macos - {macos_ver} - "
+                                                    f"which may produce errors related to the Accelerate framework. "
+                                                    f"To remove this warning: (1) upgrade to Sonoma (>14.0) or \n(2) set "
+                                                    f"GGUF configs to use non Accelerate binary by default:\n"
+                                                    f"GGUFConfigs().set_config('use_macos_accelerate', False)")
+
+                        except:
+                            pass
+
+                        _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("mac_metal")))
+
+                        fall_back_option = os.path.join(_base_path, GGUFConfigs().get_config("mac_metal_no_acc"))
+
+                    else:
+                        _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("mac_metal_no_acc")))
 
             elif sys.platform == "win32":
 
