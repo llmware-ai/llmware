@@ -540,6 +540,58 @@ global_model_repo_catalog_list = [
      "custom_model_files": [], "custom_model_repo": "",
      "hf_repo": "meta-llama/Meta-Llama-3-8B"},
 
+    # new llama-3 quantized models
+    {"model_name": "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF", "display_name": "llama-3-instruct-qf-gguf",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+     "context_window": 8192, "instruction_following": False, "prompt_wrapper": "llama_3",
+     "temperature": 0.0, "sample_default": False, "trailing_space": "",
+     "gguf_file": "Meta-Llama-3-8B-Instruct.Q4_K_M.gguf",
+     "gguf_repo": "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF",
+     "link": "https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF",
+     "custom_model_files": [], "custom_model_repo": ""},
+
+    {"model_name": "QuantFactory/Meta-Llama-3-8B-GGUF", "display_name": "llama-3-base-qf-gguf",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+     "context_window": 8192, "instruction_following": False, "prompt_wrapper": "llama_3",
+     "temperature": 0.0, "sample_default": False, "trailing_space": "",
+     "gguf_file": "Meta-Llama-3-8B.Q4_K_M.gguf",
+     "gguf_repo": "QuantFactory/Meta-Llama-3-8B-GGUF",
+     "link": "https://huggingface.co/QuantFactory/Meta-Llama-3-GGUF",
+     "custom_model_files": [], "custom_model_repo": ""},
+
+ {"model_name": "bartowski/Meta-Llama-3-8B-Instruct-GGUF", "display_name": "llama-3-instruct-bartowski-gguf",
+    "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+    "context_window": 8192, "instruction_following": False, "prompt_wrapper": "llama_3",
+    "temperature": 0.0, "sample_default": False, "trailing_space": "",
+    "gguf_file": "Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
+    "gguf_repo": "bartowski/Meta-Llama-3-8B-Instruct-GGUF",
+    "link": "https://huggingface.co/bartowski/Meta-Llama-3-8B-Instruct-GGUF",
+    "custom_model_files": [], "custom_model_repo": ""},
+
+ # end - new llama-3 quantized models
+
+  # whisper-cpp models
+ {"model_name": "whisper-cpp-base-english", "display_name": "whisper-en-base",
+  "model_family": "WhisperCPPModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 2048, "instruction_following": False, "prompt_wrapper": "",
+  "temperature": 0.0, "trailing_space": "",
+  "gguf_file": "ggml-base.en.bin",
+  # "gguf_file": "ggml-tiny.en.bin",
+  "gguf_repo": "llmware/bonchon",
+  "link": "https://huggingface.co/llmware/bonchon",
+  "custom_model_files": [], "custom_model_repo": ""},
+
+ {"model_name": "whisper-cpp-tiny-diarize", "display_name": "whisper-en-tiny-diarize",
+  "model_family": "WhisperCPPModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 2048, "instruction_following": False, "prompt_wrapper": "",
+  "temperature": 0.0, "trailing_space": "",
+  "gguf_file": "ggml-small.en-tdrz.bin",
+  "gguf_repo": "llmware/bonchon",
+  "link": "https://huggingface.co/llmware/bonchon",
+  "custom_model_files": [], "custom_model_repo": ""},
+
+ # end - whisper-cpp models
+
  # new slim models
     {"model_name": "slim-ner-tool", "display_name": "slim-ner-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
