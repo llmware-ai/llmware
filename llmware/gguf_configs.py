@@ -851,15 +851,22 @@ class GGUFConfigs:
                   "cuda_platforms": ["linux", "win32"],
                   "backend_initialized": False,
 
+                  # min cuda drivers for build of cuda libs
+                  "cuda_linux_driver_min": [525, 60],
+                  "cuda_windows_driver_min": [528,33],
+
                   "max_output_tokens": 256,
                   "temperature_default": 0.3,
 
                   "llama_cpp_verbose": "OFF",
+                  "force_gpu": False,
+                  "use_macos_accelerate": True,
 
                   # prebuilt shared libraries included in llmware
                   "windows": "libllama_win.dll",
                   "windows_cuda": "libllama_win_cuda.dll",
                   "mac_metal": "libllama_mac_metal.dylib",
+                  "mac_metal_no_acc": "libllama_mac_metal_no_acc.dylib",
                   "mac_x86": "libllama_mac_x86.dylib",
                   "linux_x86": "libllama_linux_x86.so",
                   "linux_cuda": "libllama_linux_cuda.so",
