@@ -818,6 +818,37 @@ class Utilities:
 
         return text_with_numbers, nums_in_text_list, token_index_of_match_found
 
+    def convert_media_file_to_wav(self, path_to_file_to_convert, save_path=None, file_out="converted_file.wav"):
+
+        """ Utility method that converts wide range of video/audio file formats into .wav for transcription. """
+
+        # import ffmpeg -> need to import the core lib (brew install ffmpeg)
+
+        try:
+            from pydub import AudioSegment
+        except:
+            raise DependencyNotInstalledException("pydub")
+
+        # format
+        #   format = "m4a" works
+        fmt = path_to_file_to_convert.split(".")[-1]
+        if fmt not in ["mp3", "m4a", "mp4", "wma", "aac", "ogg", "flv"]:
+            logging.warning(f"warning: file format - {fmt} - is not recognized and can not be converted.")
+            return None
+
+        try:
+            given_audio = AudioSegment.from_file(path_to_file_to_convert, format=fmt, channels=2, frame_rate=16000)
+            outfile_path = os.path.join(save_path, file_out)
+            given_audio.export(outfile_path, format="wav")
+        except:
+            logging.warning(f"warning: could not successfully convert file @ {path_to_file_to_convert} to .wav - "
+                            f"one common issue is the need to install ffmpeg which is a core audio/video "
+                            f"processing library.  It can be installed with apt (linux) ; brew (mac) ; or "
+                            f"downloaded directly (windows).")
+            return None
+
+        return outfile_path
+
 
 class CorpTokenizer:
 
