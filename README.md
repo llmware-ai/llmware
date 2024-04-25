@@ -773,6 +773,11 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
+**Thursday, April 25 - v0.2.11-WIP Update**  
+- Updates to gguf libs for Phi-3 and Llama-3  (WIP)  
+- Adding Phi-3 and Llama-3 and Quantized Versions to Model Catalog  
+- Changes being merged into the main branch over next 48 hours with PyPy build targeted for the weekend  
+
 **Monday, April 22 - v0.2.10 Update**  
 - Updates to Agent class to support Natural Language queries of Custom Tables on Postgres [example](https://github.com/llmware-ai/llmware/tree/main/examples/Structured_Tables/agent_with_custom_tables.py)  
 - New Agent API endpoint implemented with LLMWare Inference Server and new Agent capabilities [example](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/agent_api_endpoint.py)  
