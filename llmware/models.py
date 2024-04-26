@@ -47,7 +47,7 @@ from llmware.util import Utilities
 from llmware.configs import LLMWareConfig
 from llmware.resources import CloudBucketManager
 from llmware.exceptions import (ModelNotFoundException, DependencyNotInstalledException, ModuleNotFoundException,
-                                ModelCardNotRegisteredException, GGUFLibNotLoadedException)
+                                ModelCardNotRegisteredException, GGUFLibNotLoadedException, LLMWareException)
 
 from llmware.model_configs import (global_model_repo_catalog_list, global_model_finetuning_prompt_wrappers_lookup,
                                    global_default_prompt_catalog)
@@ -70,7 +70,7 @@ class _ModelRegistry:
     #   pulls default model list from model_configs.py
     registered_models = global_model_repo_catalog_list
 
-    model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
+    model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel", "WhisperCPPModel",
                      "LLMWareSemanticModel", "HFEmbeddingModel", "OpenChatModel", "OllamaModel",
                      "OpenAIGenModel", "ClaudeModel", "GoogleGenModel",
                      "CohereGenModel", "JurassicModel", "AIBReadGPTModel",
@@ -240,7 +240,7 @@ class ModelCatalog:
                                 "OpenAIGenModel", "ClaudeModel", "GoogleGenModel",
                                 "CohereGenModel", "JurassicModel", "AIBReadGPTModel",
                                 "HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
-                                "OpenChatModel", "OllamaModel",
+                                "OpenChatModel", "OllamaModel","WhisperCPPModel",
 
                                 # embedding model classes
                                 "LLMWareSemanticModel",
@@ -250,7 +250,7 @@ class ModelCatalog:
 
         self.open_source_model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
                                           "LLMWareSemanticModel","HFEmbeddingModel", "OpenChatModel",
-                                          "OllamaModel"]
+                                          "OllamaModel", "WhisperCPPModel"]
 
         self.global_model_list = _ModelRegistry().get_model_list()
 
@@ -546,7 +546,7 @@ class ModelCatalog:
 
         logging.info("update: ModelCatalog - pulling model from global repo - %s ", model_folder_name)
 
-        if model_card["model_family"] != "GGUFGenerativeModel":
+        if model_card["model_family"] not in ["GGUFGenerativeModel", "WhisperCPPModel"]:
 
             CloudBucketManager().pull_single_model_from_llmware_public_repo(model_folder_name)
         else:
@@ -672,6 +672,10 @@ class ModelCatalog:
                                                                               embedding_dims=embedding_dims,
                                                                               model_card=model_card,
                                                                               trust_remote_code=True)
+
+            if model_class == "WhisperCPPModel":
+
+                my_model = WhisperCPPModel(model_name=model_name,model_card=model_card)
 
         return my_model
 
@@ -5350,7 +5354,7 @@ class GGUFGenerativeModel:
                                 if v1 < 14:
 
                                     logging.warning(f"warning: detected older version of macos - {macos_ver} - "
-                                                    f"which may produce errors related to the Accelerate framework. "
+                                                    f"which may produce errors related to the Accelerate framework.\n"
                                                     f"To remove this warning: (1) upgrade to Sonoma (>14.0) or \n(2) set "
                                                     f"GGUF configs to use non Accelerate binary by default:\n"
                                                     f"GGUFConfigs().set_config('use_macos_accelerate', False)")
@@ -6075,6 +6079,463 @@ class GGUFGenerativeModel:
                                 "was successful to type - %s ", output_type)
 
         return output_response
+
+
+class WhisperCPPModel:
+
+    """ WhisperCPPModel is an implementation of the Whisper voice transcription model running on GGML, rather
+    than Pytorch. """
+
+    def __init__(self, model_name=None, model_card=None, use_gpu_if_available=True):
+
+        #   set verbose level in environ level - will be picked up by callback in whisper_cpp
+        os.environ["whisper_cpp_verbose"] = GGUFConfigs().get_config("whisper_cpp_verbose")
+
+        self.WHISPER_SR = GGUFConfigs().get_config("whisper_sr")
+        self.strategy = GGUFConfigs().get_config("whisper_strategy")
+        self.n_threads = GGUFConfigs().get_config("whisper_threads")
+        self.language = GGUFConfigs().get_config("whisper_language")
+        self.format = GGUFConfigs().get_config("whisper_output_format")
+        self.tiny_diarize = GGUFConfigs().get_config("whisper_tiny_diarize")
+        self.beam_size = GGUFConfigs().get_config("whisper_beam_size")
+        self.greedy_best_of = GGUFConfigs().get_config("whisper_greedy_best_of")
+        self.temperature_inc = GGUFConfigs().get_config("whisper_temperature_inc")
+
+        self.remove_segment_markers = GGUFConfigs().get_config("whisper_remove_segment_markers")
+        self.model_card = model_card
+        self.model_name = model_name
+        self._lib = None
+        self.model_path = None
+        self.context = None
+        self.params = None
+        self.temperature = 0.0
+        self.duration = 0
+        self.translate = False
+
+        #   new option to 'force' use of cuda lib, and over-ride safety checks
+        if GGUFConfigs().get_config("force_gpu"):
+            self.use_gpu = True
+        else:
+            if not sys.platform.lower().startswith("linux"):
+                self.use_gpu = False
+            else:
+                # min drivers set to the lowest level for CUDA 12.1 on Linux
+                min_drivers = [525,60]
+
+                gpu_available = ModelCatalog().gpu_available(driver_min_levels=min_drivers)
+
+                #   use_gpu set to TRUE only if:
+                #   (1) cuda_platform (e.g., linux or win32), e.g., not set on Mac OS
+                #   (2) use_gpu set to True in GGUFConfigs
+                #   (3) use_gpu_if_available flag set to True (by default)
+                #   (4) cuda found and drivers current via direct polling of nvidia-smi executable in
+                #   ModelCatalog.gpu_available method
+
+                self.use_gpu = (GGUFConfigs().get_config("use_gpu")
+                            and sys.platform.lower() in GGUFConfigs().get_config("cuda_platforms")
+                            and gpu_available["drivers_current"] and gpu_available["gpu_found"]
+                            and use_gpu_if_available)
+
+    def load_model_for_inference(self, model_repo_path, model_card = None):
+
+        """ Loads and instantiates model along with other required objects. """
+
+        # load shared library
+        self._lib = self._load_shared_library()
+        self._lib = self.add_ctypes_configs()
+
+        self._lib.whisper_log_set(whisper_log_callback, ctypes.c_void_p(0))
+
+        if model_card:
+            self.model_name = model_card["model_name"].split("/")[-1]
+            self.gguf_file = model_card["gguf_file"]  # e.g., "ggml-model-q4_k_m.gguf",
+            self.gguf_repo = model_card["gguf_repo"]  # e.g., "llmware/dragon-mistral-7b-v0-gguf"
+
+        self.model_path = os.path.join(model_repo_path, self.gguf_file)
+        self.context = self._lib.whisper_init_from_file(self.model_path.encode('utf-8'))
+        self.params = self._lib.whisper_full_default_params(self.strategy)
+
+        self.params.n_threads = self.n_threads
+        self.params.print_special = True
+        self.params.print_progress = False
+
+        # set to True by default - will display in 'real-time' the transcription
+        self.params.print_realtime = GGUFConfigs().get_config("whisper_cpp_realtime_display")
+
+        self.params.print_timestamps = True
+        self.params.tdrz_enable = self.tiny_diarize
+        self.params.progress_callback = whisper_progress_callback(self.callback)
+        self.params.temperature_inc = self.temperature_inc
+        self.params.token_timestamps = True
+        self.params.greedy.best_of = self.greedy_best_of
+        self.params.beam_search.beam_size = self.beam_size
+
+        return self
+
+    def _load_shared_library(self):
+
+        """ Loads the libwhisper.cpp backend GGML engine that runs the model. """
+
+        # check first if custom_lib_path - expected to be full path to custom so/dylib file
+        custom_path = GGUFConfigs().get_config("whisper_cpp_lib_path")
+        fall_back_option = ""
+        cdll_args = dict()
+
+        if custom_path:
+
+            if os.path.exists(custom_path):
+                _lib_paths = [custom_path]
+            else:
+                raise ModuleNotFoundException("custom-whisper-cpp-lib")
+
+        else:
+
+            # general case - will look for llama.cpp dynamic library included with llmware
+
+            _base_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "whisper")
+
+            _lib_paths = []
+
+            system_platform = sys.platform.lower()
+
+            # Determine the file extension based on the platform
+            if system_platform.startswith("linux"):
+
+                if self.use_gpu:
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("whisper_linux_cuda")))
+
+                    # new - will try to use x86 as fallback
+                    fall_back_option = os.path.join(_base_path, GGUFConfigs().get_config("whisper_linux_x86"))
+
+                else:
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("whisper_linux_x86")))
+
+            elif system_platform == "darwin":
+
+                machine = os.uname().machine.lower()
+
+                if machine == 'x86_64':
+                    raise LLMWareException("ModuleNotFound Exception - detected MacOS on x86_64 (e.g., not M1/M2/M3). "
+                                           "LLMWare does not ship with a whisper_cpp module for this platform.  To use "
+                                           "WhisperCPPModel will require a custom build whisper_cpp module.  For more "
+                                           "details, please go to the llmware github site, or directly to the "
+                                           "Whisper CPP source: https://www.github.com/ggerganov/whisper.cpp.git")
+
+                    # _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("whisper_mac_x86")))
+                else:
+
+                    if GGUFConfigs().get_config("use_macos_accelerate"):
+
+                        try:
+                            import platform
+                            macos_ver = platform.mac_ver()
+                            if len(macos_ver) > 0:
+                                ver = macos_ver[0].split(".")
+
+                                v1 = int(ver[0])
+                                v2 = int(ver[1])
+
+                                if v1 < 14:
+
+                                    logging.warning(f"warning: detected older version of macos - {macos_ver} - "
+                                                    f"which may produce errors related to the Accelerate framework.\n"
+                                                    f"To remove this warning: (1) upgrade to Sonoma (>14.0) or \n(2) set "
+                                                    f"GGUF configs to use non Accelerate binary by default:\n"
+                                                    f"GGUFConfigs().set_config('use_macos_accelerate', False)")
+
+                        except:
+                            pass
+
+                        _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("whisper_mac_metal")))
+
+                        fall_back_option = os.path.join(_base_path, GGUFConfigs().get_config("whisper_mac_metal_no_acc"))
+
+                    else:
+                        _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("whisper_mac_metal_no_acc")))
+
+                    # _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("whisper_mac_metal")))
+
+            elif sys.platform == "win32":
+
+                _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("whisper_windows")))
+
+        # Add the library directory to the DLL search path on Windows (if needed)
+        # if sys.platform == "win32" and sys.version_info >= (3, 8): os.add_dll_directory(str(_base_path))
+
+        # Try to load the shared library, handling potential errors
+        for _lib_path in _lib_paths:
+
+            if not os.path.exists(_lib_path):
+                if fall_back_option:
+                    _lib_path = fall_back_option
+
+            if os.path.exists(_lib_path):
+
+                try:
+                    return ctypes.CDLL(str(_lib_path), **cdll_args)
+
+                except Exception as e:
+
+                    # NEW INSERT - if fail, and CUDA selected, then try to fall back to matching CPU version
+                    if fall_back_option:
+                        try:
+                            logging.warning("update: Not successful loading primary lib, so reverting to CPU driver.")
+
+                            return ctypes.CDLL(str(fall_back_option), **cdll_args)
+                        except:
+
+                            # if fall-back fails
+                            raise GGUFLibNotLoadedException("whisper_cpp_backend",
+                                                            sys.platform.lower(),
+                                                            self.use_gpu,
+                                                            _lib_path,
+                                                            custom_path)
+                    else:
+                        raise GGUFLibNotLoadedException("whisper_cpp_backend",sys.platform.lower(),
+                                                        self.use_gpu, _lib_path, custom_path)
+            else:
+                logging.warning(f"update: looking for WhisperCPP lib - path does not exist - {str(_lib_path)}")
+
+        # Try to load the shared library, handling potential errors
+        # *** something has gone wrong - could not find the lib files
+
+        raise FileNotFoundError(f"Exception: WhisperCPP Shared library not found at paths - {str(_lib_paths)}")
+
+    def inference(self, prompt, inference_dict=None):
+
+        """ Inference on Whisper model takes a single input 'prompt' which is a string corresponding to a
+        full file path pointing to the voice file to be transcribed, e.g.,
+
+            `/home/ubuntu/voice_samples/sample.wav
+
+        """
+
+        if inference_dict:
+            if "translate" in inference_dict:
+                self.translate=inference_dict["translate"]
+
+        #   note: inference on wav file requires librosa library
+        try:
+            import librosa
+        except:
+            raise DependencyNotInstalledException("librosa")
+
+        file = prompt
+
+        if not file.endswith(".wav"):
+
+            print("update: WhisperCPPModel - inference - input file needs to be converted to .wav - "
+                  "will try to do right now.")
+
+            new_file_path = Utilities().convert_media_file_to_wav(prompt,
+                                                                  save_path=LLMWareConfig().get_tmp_path(),
+                                                                  file_out="converted_file_tmp.wav")
+
+            if not new_file_path:
+                logging.warning("update: WhisperCPPModel - inference - conversion was not successful.  "
+                                "The most likely causes of this error - \n"
+                                "1.  File type is not supported - the following are the supported file types - "
+                                "mp3, m4a, mp4, wma, aac, ogg, flv. \n"
+                                "2.  lib ffmpeg is not installed on your system.  This is the core audio processing "
+                                "library that handles the file conversion.\n"
+                                "--to install on Mac:  brew install ffmpeg \n"
+                                "--to install on Linux: sudo apt install ffmpeg \n"
+                                "--to install on Windows: see ffmpeg.org/download.html for download/install \n")
+
+                null_output = {"llm_response": "", "segments": []}
+                return null_output
+
+            else:
+                print(f"update: WhisperCPP - inference - file conversion to .wav successful - "
+                      f"new file at tmp path - {new_file_path}")
+
+                file = new_file_path
+
+        data, sr = librosa.load(file, sr=self.WHISPER_SR)
+
+        self.duration = librosa.get_duration(y=data, sr=self.WHISPER_SR)
+
+        data.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+        self.params.language = self.language.encode('utf-8')
+        if prompt:
+            self.params.initial_prompt = prompt.encode('utf-8')
+
+        self.params.temperature = self.temperature
+
+        self.params.translate = self.translate
+
+        result = self._generate(data)
+
+        #   output format options
+
+        output = result["text"]
+
+        if self.format == "srt":
+            output = '\n'.join([f'{i + 1}\n{self._format_time(s["start"])} --> '
+                                f'{self._format_time(s["end"])}\n{s["text"]}\n'
+                                for i, s in enumerate(result["segments"])])
+
+        if self.format == "vtt":
+            output = '\n'.join([f'{i + 1}\n{self._format_time(s["start"])} --> '
+                                f'{self._format_time(s["end"])} align:middle\n{s["text"]}\n'
+                                for i, s in enumerate(result["segments"])])
+
+        usage_dict = {"duration-seconds": self.duration, "segments": len(result["segments"]),
+                      "language": self.language}
+
+        response = {"llm_response": output, "usage": usage_dict, "segments": result["segments"]}
+
+        return response
+
+    def _generate(self, data):
+
+        """ Executes lib_whisper generation on data from audio file. """
+
+        w = self._lib.whisper_full(ctypes.c_void_p(self.context),
+                                   self.params,
+                                   data.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+                                   len(data))
+
+        if w != 0:
+            raise LLMWareException(message=f"Exception: WhisperCPPModel - inference: {w}")
+
+        segments = []
+        all_text = ""
+        text_chunks = []
+        n_segments = self._lib.whisper_full_n_segments(ctypes.c_void_p(self.context))
+
+        for i in range(n_segments):
+
+            t0 = self._lib.whisper_full_get_segment_t0(ctypes.c_void_p(self.context), i)/100.0
+            t1 = self._lib.whisper_full_get_segment_t1(ctypes.c_void_p(self.context), i)/100.0
+            txt = self._lib.whisper_full_get_segment_text(ctypes.c_void_p(self.context), i).decode('utf-8-sig',
+                                                                                                   errors='ignore')
+
+            if self.tiny_diarize:
+
+                # look for [_SOLM_] token to break segment - and will keep aggregating until found
+                if "[_SOLM_]" in txt:
+                    txt += "\n\n"
+
+            if self.remove_segment_markers:
+
+                #   removes leading [_BEG_] & trailing [_TT_XYZ] special tokens
+
+                txt_split = txt.split("[_TT_")[0]
+                txt_split = txt_split.strip()
+                if txt_split.startswith("[_BEG_]"):
+                    txt_split= txt_split[len("[_BEG_]"):]
+                txt = " " + txt_split + " "
+
+            # print("segments: ", i, t0, t1, txt)
+
+            all_text += txt
+            text_chunks.append(txt)
+
+            n_tokens = self._lib.whisper_full_n_tokens(ctypes.c_void_p(self.context), i)
+            tokens = []
+
+            for j in range(n_tokens):
+                token_data = self._lib.whisper_full_get_token_data(ctypes.c_void_p(self.context), i, j)
+
+                tokens.append({
+                    "id": token_data.id,
+                    "prob": token_data.p,
+                    "logprob": token_data.plog,
+                    "pt": token_data.pt,
+                    "pt_sum": token_data.ptsum,
+                })
+
+            segments.append({
+                "start": t0,
+                "end": t1,
+                "text": txt,
+                "tokens": tokens,
+            })
+
+        result = {"text": all_text.strip(), "text_chunks": text_chunks, "segments": segments}
+
+        return result
+
+    def __dealloc__(self):
+        # free the memory
+        self._lib.whisper_free(ctypes.c_void_p(self.context))
+
+    @staticmethod
+    def _format_time(t):
+
+        """ Helper utility that formats the time. """
+
+        msec = t * 10
+        hr = msec / (1000 * 60 * 60)
+        msec = msec - hr * (1000 * 60 * 60)
+        minu = msec / (1000 * 60)
+        msec = msec - minu * (1000 * 60)
+        sec = msec / 1000
+        msec = msec - sec * 1000
+
+        return f'{int(hr):02}:{int(minu):02}:{int(sec):02}.{int(msec):03}'
+
+    def abort_call_back(self, data):
+        do_nothing = 0
+
+    def callback(self, ctx, state, i, p):
+        do_nothing = 0
+
+    def add_ctypes_configs(self):
+
+        self._lib.whisper_init_from_file.argtypes = [ctypes.c_char_p]
+        self._lib.whisper_init_from_file.restype = ctypes.c_void_p
+
+        self._lib.whisper_full_default_params.argtypes = [ctypes.c_int]
+        self._lib.whisper_full_default_params.restype = whisper_full_params
+
+        self._lib.whisper_full.argtypes = [ctypes.c_void_p, whisper_full_params, ctypes.POINTER(ctypes.c_float), ctypes.c_int]
+        self._lib.whisper_full.restype = ctypes.c_int
+
+        self._lib.whisper_full_n_segments.argtypes = [ctypes.c_void_p]
+        self._lib.whisper_full_n_segments.restype = ctypes.c_int
+
+        self._lib.whisper_full_get_segment_t0.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        self._lib.whisper_full_get_segment_t0.restype = ctypes.c_int64
+
+        self._lib.whisper_full_get_segment_t1.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        self._lib.whisper_full_get_segment_t1.restype = ctypes.c_int64
+
+        self._lib.whisper_full_get_segment_text.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        self._lib.whisper_full_get_segment_text.restype = ctypes.c_char_p
+
+        self._lib.whisper_full_n_tokens.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        self._lib.whisper_full_n_tokens.restype = ctypes.c_int
+
+        self._lib.whisper_full_get_segment_t0.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        self._lib.whisper_full_get_segment_t0.restype = ctypes.c_int64
+
+        self._lib.whisper_full_get_segment_t1.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        self._lib.whisper_full_get_segment_t1.restype = ctypes.c_int64
+
+        self._lib.whisper_full_get_token_data.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int]
+        self._lib.whisper_full_get_token_data.restype = whisper_token_data
+
+        self._lib.whisper_full_n_segments.argtypes = [ctypes.c_void_p]
+        self._lib.whisper_full_n_segments.restype = ctypes.c_int
+
+        self._lib.whisper_full_get_segment_text.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        self._lib.whisper_full_get_segment_text.restype = ctypes.c_char_p
+
+        self._lib.whisper_full_n_tokens.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        self._lib.whisper_full_n_tokens.restype = ctypes.c_int
+
+        self._lib.whisper_full_get_token_data.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int]
+        self._lib.whisper_full_get_token_data.restype = whisper_token_data
+
+        self._lib.whisper_free.argtypes = [ctypes.c_void_p]
+        self._lib.whisper_free.restype = None
+
+        self._lib.whisper_log_set.artypes = [ctypes.c_void_p, ctypes.c_void_p]
+        self._lib.whisper_log_set.restype = None
+
+        return self._lib
 
 
 class LLMWareSemanticModel:
