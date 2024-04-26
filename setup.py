@@ -76,7 +76,8 @@ setup(
         'psycopg==3.1.17',
         'pgvector==0.2.4',
         'colorama==0.4.6',
-        'einops==0.7.0'
+        'einops==0.7.0',
+        'librosa>=0.10.0'
     ],
 
     extras_require={
