@@ -773,11 +773,11 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
-**Thursday, April 25 - v0.2.11-WIP Update**  
+**Monday, April 29 - v0.2.11-WIP Update**  
 - Updates to gguf libs for Phi-3 and Llama-3  
-- Added Phi-3 and Llama-3 and Quantized Versions to Model Catalog  
+- Added Phi-3 [example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-microsoft-phi-3.py)  and Llama-3 [example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-llama-3.py) and Quantized Versions to Model Catalog  
 - Integrated WhisperCPP Model class and prebuilt shared libraries  
-- Changes being merged into the main branch with PyPy build targeted for the weekend  
+- Changes being merged into the main branch with PyPy build targeted for Monday April 29 EOD   
 
 **Monday, April 22 - v0.2.10 Update**  
 - Updates to Agent class to support Natural Language queries of Custom Tables on Postgres [example](https://github.com/llmware-ai/llmware/tree/main/examples/Structured_Tables/agent_with_custom_tables.py)  
