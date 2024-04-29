@@ -5,23 +5,25 @@ Wheel Archives: `llmware` pip install from pypy
 
 **How to use?**
 
-1.  Download a selected wheel, unzip, and then deploy the code directly into a project.
-2.  Place the wheel archive in a folder, and in that folder path, run:
+1.  Download a selected wheel, unzip, and then deploy the code directly into a project.   (Only selected wheels kept in the archive - raise an issue if there is a particular wheel you are looking for - and we can post by request.)  
+2.  Place the wheel archive in a folder, and in that folder path, run:  
 
-```pip3 install llmware-0.2.8-py3-none-any.whl```  
+```pip3 install llmware-0.2.10-py3-none-any.whl```  
 
 New wheels are built generally on PyPy on a weekly basis and updated on PyPy versioning.   The development repo is updated  
-and current at all times, but may have updates that are not yet in the PyPy wheel.
+and current at all times, but may have updates that are not yet in the PyPy wheel.  
 
-All wheels are built and tested on:
+All wheels are built and tested on:  
 
-1.  Mac Metal
-2.  Mac x86
-3.  Windows x86 (+ with CUDA)
-4.  Linux x86 (+ with CUDA) - most testing on Ubuntu 22 and Ubuntu 20 - which are recommended.
-5.  Linux aarch64* (see 0.2.7 note below) 
+1.  Mac Metal  
+2.  Windows x86 (+ with CUDA)  
+3.  Linux x86 (+ with CUDA) - most testing on Ubuntu 22 and Ubuntu 20 - which are recommended.  
+4.  Mac x86 (see 0.2.11 note below)  
+5.  Linux aarch64* (see 0.2.7 note below)  
 
 **Release Notes**  
+
+--**0.2.11** released in the week of April 29, 2024 - updated GGUF libs for Phi-3 and Llama-3 support, and added new prebuilt shared libraries to support WhisperCPP.  We are also deprecating support for Mac x86 going forward - will continue to support on most major components but not all new features going forward will be built specifically for Mac x86 (which Apple stopped shipping in 2022).  Our intent is to keep narrowing our testing matrix to provide better support on key platforms.  We have also added better safety checks for older versions of Mac OS running on M1/M2/M3 (no_acc option in GGUF and Whisper libs), as well as a custom check to find CUDA drivers on Windows (independent of Pytorch).  
 
 --**0.2.9** released in the week of April 15, 2024 - minor continued improvements to the parsers plus roll-out of new CustomTable class for rapidly integrating structured information into LLM-based workflows and data pipelines, including converting JSON/JSONL files and CSV files into structured DB tables.  
   
@@ -38,14 +40,12 @@ All wheels are built and tested on:
         -- how to check:  `nvcc --version` and `nvidia-smi` - if not found, then drivers are either not installed or not in $PATH and need to be configured 
         -- if you have older drivers (e.g., v11), then you will need to update them.  
         
-    2.  Requirement:  CUDA-enabled Pytorch  
+    2.  Requirement:  CUDA-enabled Pytorch  (pre-0.2.11)  
     
-        -- while GGUF does not use Pytorch, in llmware, we use Pytorch as a proxy to determine if Python is able to find the CUDA drivers (if anyone knows a better 
-        way, please let us know!)  
-        
-        -- how to check:  `torch.cuda.is_available()` and `torch.version.cuda`  
+        -- starting with 0.2.11, we have implemented a custom check to evaluate if CUDA is present, independent of Pytorch.  
+        -- for pre-0.2.11, we use Pytorch to check for CUDA drivers, e.g., `torch.cuda.is_available()` and `torch.version.cuda`  
 
-    3.  Installing a CUDA-enabled Pytorch - useful install script:  
+    3.  Installing a CUDA-enabled Pytorch - useful install script:  (not required post-0.2.11 for GGUF on Windows)  
     
         -- `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121`  
 
