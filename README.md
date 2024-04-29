@@ -588,25 +588,27 @@ if __name__ == "__main__":
 </details>
 
 
-## 🔥 What's New? 🔥
+## 🔥 What's New? 🔥  
+
+-**Web Services with Agent Calls for Financial Research** - end-to-end scenario - [video](https://youtu.be/l0jzsg1_Ik0?si=hmLhpT1iv_rxpkHo) and [example](examples/SLIM-Agents/web_services_slim_fx.py)  
+
+-**Voice Transcription with WhisperCPP** - fast, accurate local transcription of voice files - [example](examples/Models/using-whisper-cpp-getting-started.py)    
 
 -**Small, specialized, function-calling Extract Model** - introducing slim-extract - [video](https://youtu.be/d6HFfyDk4YE?si=VB8JTsN3X7hsB_I) and [example](examples/SLIM-Agents/using_slim_extract_model.py)  
 
 -**LLM to Answer Yes/No questions** - introducing slim-boolean model - [video](https://youtu.be/jZQZMMqAJXs?si=7HpkLqG39ohgNecx) and [example](examples/SLIM-Agents/using_slim_boolean_model.py)  
 
--**Natural Language Query to CSV End to End example** - using slim-sql model - [video](https://youtu.be/z48z5XOXJJg?si=V-CX1w-7KRioI4Bi) and [example](examples/SLIM-Agents/text2sql-end-to-end-2.py)  
+-**Natural Language Query to CSV End to End example** - using slim-sql model - [video](https://youtu.be/z48z5XOXJJg?si=V-CX1w-7KRioI4Bi) and [example](examples/SLIM-Agents/text2sql-end-to-end-2.py)  and now using Custom Tables on Postgres [example](https://github.com/llmware-ai/llmware/tree/main/examples/Structured_Tables/agent_with_custom_tables.py)  
 
 -**Multi-Model Agents with SLIM models** - multi-step Agents with SLIMs on CPU - [video](https://www.youtube.com/watch?v=cQfdaTcmBpY) - [example](examples/SLIM-Agents)  
 
--**OCR Embedded Document Images Example** - ([example](examples/Parsing/ocr_embedded_doc_images.py))  
+-**OCR Embedded Document Images Example** - systematically extract text from images embeddedd in documents ([example](examples/Parsing/ocr_embedded_doc_images.py))  
 
 -**Enhanced Parser Functions for PDF, Word, Powerpoint and Excel** - new text-chunking controls and strategies, extract tables, images, header text - ([example](examples/Parsing/pdf_parser_new_configs.py))   
 
--**Fast start with no db installation** - SQLite (text collection) and FAISS (vector file database) - [example](examples/Getting_Started/configure_db.py)  
+-**Agent Inference Server** - set up multi-model Agents over Inference Server [example](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/agent_api_endpoint.py)  
 
--**Postgres integration** as option for text collection with PGVector support ([example](examples/Embedding/using_pg_vector.py))  
-
--**GGUF support** - check out examples - GGUF ([example](examples/Models/using_gguf.py)) and Videos [video](https://www.youtube.com/watch?v=ZJyQIZNJ45E)  
+-**GGUF - Getting Started** - check out examples - GGUF ([example](examples/Models/using_gguf.py)) and Videos [video](https://www.youtube.com/watch?v=ZJyQIZNJ45E)  
 
 
 
