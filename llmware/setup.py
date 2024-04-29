@@ -11,10 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+
 """The setup module implements the init process.
 
-The module implements the Setup class, which has one static method - load_sample_files. This method
-creates the necessary directory if they do not exist and downloads the sample files from an AWS S3 instance.
+The module implements the Setup class, which has two static methods - load_sample_files and load_sample_voice_files.
+
+These methods create the necessary directory if they do not exist and downloads the sample files from an llmware-
+ maintained AWS S3 instance.
+
 """
 
 
@@ -22,18 +26,16 @@ import shutil
 import os
 from llmware.resources import CloudBucketManager
 from llmware.configs import LLMWareConfig
-from llmware.library import Library
-from llmware.retrieval import Query
 
-import subprocess
 import logging
 
 
 class Setup:
+
     """Implements the download of sample files from an AWS S3 bucket.
 
     ``Setup`` implements the download of sample files from an AWS S3 bucket. Currently, there are samples
-    from eight domains. Which are
+    from eight domains:
 
     - AgreementsLarge (~80 sample contracts)
     - Agreements (~15 sample employment agreements)
@@ -69,8 +71,7 @@ class Setup:
     @staticmethod
     def load_sample_files(over_write=False):
 
-        #   changed name from demo to 'sample_files'
-        #   simplified:  no user config - pulls into llmware_path
+        """ Downloads sample document files from non-restricted AWS S3 bucket. """
 
         if not os.path.exists(LLMWareConfig.get_llmware_path()):
             LLMWareConfig.setup_llmware_workspace()
@@ -90,6 +91,46 @@ class Setup:
         remote_zip = bucket_name + ".zip"
         local_zip = os.path.join(sample_files_path, bucket_name + ".zip")
             
+        CloudBucketManager().pull_file_from_public_s3(remote_zip, local_zip, bucket_name)
+        shutil.unpack_archive(local_zip, sample_files_path, "zip")
+        os.remove(local_zip)
+
+        return sample_files_path
+
+    @staticmethod
+    def load_voice_sample_files(over_write=False, small_only=True):
+
+        """ Downloads sample wav files from non-restricted AWS S3 bucket. """
+
+        if not os.path.exists(LLMWareConfig.get_llmware_path()):
+            LLMWareConfig.setup_llmware_workspace()
+
+        # not configurable - will pull into /sample_files under llmware_path
+        if not small_only:
+            sample_files_path = os.path.join(LLMWareConfig.get_llmware_path(), "voice_sample_files")
+        else:
+            sample_files_path = os.path.join(LLMWareConfig.get_llmware_path(), "voice_sample_files_small")
+
+        if not os.path.exists(sample_files_path):
+            os.makedirs(sample_files_path, exist_ok=True)
+        else:
+            if not over_write:
+                logging.info("update: voice_sample_files path already exists - %s ", sample_files_path)
+                return sample_files_path
+
+        # pull from sample files bucket
+        bucket_name = LLMWareConfig().get_config("llmware_sample_files_bucket")
+
+        if small_only:
+            folder_name = "voice_small"
+        else:
+            folder_name = "voice_all"
+
+        logging.info("update: downloading requested sample files from AW3 S3 bucket")
+
+        remote_zip = folder_name + ".zip"
+        local_zip = os.path.join(sample_files_path, bucket_name + ".zip")
+
         CloudBucketManager().pull_file_from_public_s3(remote_zip, local_zip, bucket_name)
         shutil.unpack_archive(local_zip, sample_files_path, "zip")
         os.remove(local_zip)
