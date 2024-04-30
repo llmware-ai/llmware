@@ -6,7 +6,7 @@ import os
 from llmware.prompts import Prompt
 from llmware.setup import Setup
 from llmware.configs import LLMWareConfig
-from llmware.util import Datasets
+from llmware.dataset_tools import Datasets
 
 
 def contract_analysis_with_fact_checking (model_name):
