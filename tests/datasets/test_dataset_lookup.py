@@ -3,10 +3,11 @@ import sys
 
 from llmware.library import Library
 from llmware.setup import Setup
-from llmware.util import Datasets
+from llmware.dataset_tools import Datasets
+from logging import Logger
 
 sys.path.append(os.path.join(os.path.dirname(__file__),".."))
-from utils import Logger
+
 
 def test_ds_lookup_by_name():
 

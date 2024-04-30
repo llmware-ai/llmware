@@ -8,11 +8,11 @@
 
 import json
 import os
-from llmware.util import Datasets
+from llmware.dataset_tools import Datasets
 from llmware.library import Library
 from llmware.retrieval import Query
-from llmware.parsers import Parser
 from llmware.setup import Setup
+from llmware.configs import LLMWareConfig
 
 
 def build_and_use_dataset(library_name):
@@ -27,7 +27,7 @@ def build_and_use_dataset(library_name):
     # Create a Datasets object from library
     datasets = Datasets(library)
 
-    # Build a basic dataset useful for industry domain adaptation for finetuning embedding models
+    # Build a basic dataset useful for industry domain adaptation for fine-tuning embedding models
     print (f"\n > Building basic text dataset...")
 
     basic_embedding_dataset = datasets.build_text_ds(min_tokens=500, max_tokens=1000)
@@ -56,11 +56,13 @@ def build_and_use_dataset(library_name):
     
     # Pass a set of query results to create a dataset from those results only
     query_results = Query(library=library).query("africa")
-    query_filtered_dataaset = datasets.build_text_ds(min_tokens=250,max_tokens=600, qr=query_results)
+    query_filtered_dataset = datasets.build_text_ds(min_tokens=250,max_tokens=600, qr=query_results)
 
     return 0
 
 
 if __name__ == "__main__":
 
-    build_and_use_dataset("test_txt_datasets")
+    LLMWareConfig().set_active_db("sqlite")
+
+    build_and_use_dataset("test_txt_datasets_0")
