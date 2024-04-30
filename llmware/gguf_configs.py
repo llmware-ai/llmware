@@ -898,7 +898,7 @@ class GGUFConfigs:
                   "whisper_language": "en",
                   "whisper_sr": 16000,
                   "whisper_strategy": 0,
-                  "whisper_threads": 10,
+                  "whisper_threads": 2,
                   "whisper_beam_size": 5,
                   "whisper_greedy_best_of": 5,
                   "whisper_temperature_inc": 0.4,
