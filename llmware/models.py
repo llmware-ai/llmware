@@ -22,31 +22,18 @@ inference server of llmware.
 
 import logging
 import json
-import numpy as np
-import os
-import re
 import requests
 import tempfile
 import ast
-from collections import OrderedDict
-from tqdm.auto import trange
 import time
-
-import torch
-from torch import Tensor, nn
-from tqdm.autonotebook import trange
-import math
-
-import torch.utils.checkpoint
-
-# new imports
 from collections import deque
 
+from torch import tensor, nn, cuda, no_grad, ones, long, LongTensor, argmax, multinomial, cat, squeeze
 
 from llmware.util import Utilities
 from llmware.configs import LLMWareConfig
 from llmware.resources import CloudBucketManager
-from llmware.exceptions import (ModelNotFoundException, DependencyNotInstalledException, ModuleNotFoundException,
+from llmware.exceptions import (DependencyNotInstalledException, ModuleNotFoundException,
                                 ModelCardNotRegisteredException, GGUFLibNotLoadedException, LLMWareException)
 
 from llmware.model_configs import (global_model_repo_catalog_list, global_model_finetuning_prompt_wrappers_lookup,
@@ -55,8 +42,8 @@ from llmware.model_configs import (global_model_repo_catalog_list, global_model_
 from llmware.gguf_configs import *
 from llmware.gguf_configs import _LlamaModel, _LlamaContext, _LlamaBatch, _LlamaTokenDataArray
 
-import transformers
-transformers.logging.set_verbosity_error()
+from transformers import logging as transformers_logging
+transformers_logging.set_verbosity_error()
 
 
 class _ModelRegistry:
@@ -1145,12 +1132,6 @@ class ModelCatalog:
             yellow = ""
             color_reset = ""
 
-        try:
-            #   tokenizer used as part of building confidence level string
-            from transformers import AutoTokenizer
-        except:
-            raise DependencyNotInstalledException("transformers")
-
         """ Analyzes logits from llm response """
 
         # marker tokens for sentiment analysis
@@ -1167,7 +1148,8 @@ class ModelCatalog:
             logits = response["logits"]
 
             # hf tokenizer name
-            tokenizer = AutoTokenizer.from_pretrained(hf_tokenizer_name, token=api_key)
+            pt_loader = PyTorchLoader(api_key=api_key, trust_remote_code=True, custom_loader=None)
+            tokenizer = pt_loader.get_tokenizer(hf_tokenizer_name)
 
             try:
                 # pull bos attributes from tokenizer
@@ -1550,13 +1532,8 @@ class ModelCatalog:
         else:
             keys_list.append("llm_response")
 
-        # hf tokenizer name
-        try:
-            from transformers import AutoTokenizer
-        except ImportError:
-            raise DependencyNotInstalledException("transformers")
-
-        tokenizer = AutoTokenizer.from_pretrained(hf_tokenizer_name, token=api_key)
+        pt_loader = PyTorchLoader(api_key=api_key, trust_remote_code=True, custom_loader=None)
+        tokenizer = pt_loader.get_tokenizer(hf_tokenizer_name)
 
         vz_choices = []
         vz_capture_on = False
@@ -1651,7 +1628,7 @@ class ModelCatalog:
 
         try:
             gpu_pipe = Popen([nvidia_smi, "--query-gpu=index,driver_version,name","--format=csv,noheader,nounits"],
-                      stdout=PIPE)
+                             stdout=PIPE)
             gpu, errors = gpu_pipe.communicate()
         except Exception as e:
             gpu = []
@@ -1701,6 +1678,7 @@ class ModelCatalog:
 
 
 class PromptCatalog:
+
     """ PromptCatalog manages prompt styles and prompt wrappers. """
 
     def __init__(self):
@@ -3643,7 +3621,7 @@ class LLMWareModel:
 
 class OpenAIEmbeddingModel:
 
-    """ OpenaIEmbeddingModel class implements the OpenAI API for embedding models. """
+    """ OpenAIEmbeddingModel class implements the OpenAI API for embedding models. """
 
     def __init__(self, model_name=None, api_key=None, embedding_dims=None, model_card=None, max_len=None):
 
@@ -4003,13 +3981,8 @@ class HFEmbeddingModel:
                 self.context_window = self.model_card["context_window"]
 
         if self.model_name and not model:
-            # pull from HF
-            try:
-                # will wrap in Exception if import fails and move to model catalog class
-                from transformers import AutoModel, AutoTokenizer
-            except ImportError:
-                raise DependencyNotInstalledException("transformers")
 
+            # pull from HF
             hf_repo_name = self.model_name
 
             if not self.model_card:
@@ -4019,27 +3992,12 @@ class HFEmbeddingModel:
                 if "hf_repo" in self.model_card:
                     hf_repo_name = self.model_card["hf_repo"]
 
-            if api_key:
-                if torch.cuda.is_available():
-                    self.model = AutoModel.from_pretrained(hf_repo_name, token=api_key,
-                                                           trust_remote_code=trust_remote_code,
-                                                           torch_dtype="auto")
-                else:
-                    self.model = AutoModel.from_pretrained(hf_repo_name, token=api_key,
-                                                           trust_remote_code=trust_remote_code)
+            pt_loader = PyTorchLoader(api_key=api_key,trust_remote_code=trust_remote_code,custom_loader=None)
 
-                self.tokenizer = AutoTokenizer.from_pretrained(hf_repo_name, token=api_key,
-                                                               trust_remote_code=trust_remote_code)
-            else:
-                if torch.cuda.is_available():
-                    self.model = AutoModel.from_pretrained(hf_repo_name, trust_remote_code=trust_remote_code,
-                                                           torch_dtype="auto")
-                else:
-                    self.model = AutoModel.from_pretrained(hf_repo_name, trust_remote_code=trust_remote_code)
+            self.model=pt_loader.get_embedding_model(hf_repo_name)
+            self.tokenizer=pt_loader.get_tokenizer(hf_repo_name)
 
-                self.tokenizer = AutoTokenizer.from_pretrained(hf_repo_name, trust_remote_code=trust_remote_code)
-
-        self.use_gpu = torch.cuda.is_available() and use_gpu_if_available
+        self.use_gpu = cuda.is_available() and use_gpu_if_available
 
         if self.model:
 
@@ -4114,7 +4072,7 @@ class HFEmbeddingModel:
         toks = self.tokenizer.encode(text_sample).ids
         return len(toks)
 
-    @torch.no_grad()
+    @no_grad()
     def embedding (self, text_sample, api_key=None):
 
         # return embeddings only
@@ -4138,7 +4096,7 @@ class HFEmbeddingModel:
         embedding = model_outputs.last_hidden_state[:,0]
 
         # normalize hf embeddings
-        embeddings_normalized = torch.nn.functional.normalize(embedding, p=2, dim=1)
+        embeddings_normalized = nn.functional.normalize(embedding, p=2, dim=1)
 
         if self.use_gpu:
             embeddings_normalized = np.array(embeddings_normalized.detach().to('cpu'))
@@ -4159,7 +4117,7 @@ class HFGenerativeModel:
 
     def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None, model_card=None,
                  prompt_wrapper=None, instruction_following=False, context_window=2048,
-                 use_gpu_if_available=True, trust_remote_code=False, sample=True,max_output=100, temperature=0.3,
+                 use_gpu_if_available=True, trust_remote_code=True, sample=True,max_output=100, temperature=0.3,
                  get_logits=False):
 
         #   pull in expected hf input
@@ -4196,12 +4154,6 @@ class HFGenerativeModel:
         # instantiate if model_name passed without actual model and tokenizer
         if model_name and not model and not tokenizer:
 
-            try:
-                # will wrap in Exception if import fails and move to model catalog class
-                from transformers import AutoModelForCausalLM, AutoTokenizer
-            except:
-                raise DependencyNotInstalledException("transformers")
-
             hf_repo_name = self.model_name
 
             if not self.model_card:
@@ -4212,24 +4164,9 @@ class HFGenerativeModel:
                     hf_repo_name = self.model_card["hf_repo"]
                     self.hf_tokenizer_name = hf_repo_name
 
-            if api_key:
-                if torch.cuda.is_available():
-                    self.model = AutoModelForCausalLM.from_pretrained(hf_repo_name, token=api_key,
-                                                                      trust_remote_code=trust_remote_code,
-                                                                      torch_dtype="auto")
-                else:
-                    self.model = AutoModelForCausalLM.from_pretrained(hf_repo_name, token=api_key,
-                                                                      trust_remote_code=trust_remote_code)
-
-                self.tokenizer = AutoTokenizer.from_pretrained(hf_repo_name, token=api_key,
-                                                               trust_remote_code=trust_remote_code)
-            else:
-                if torch.cuda.is_available():
-                    self.model = AutoModelForCausalLM.from_pretrained(hf_repo_name, trust_remote_code=trust_remote_code,
-                                                                      torch_dtype="auto")
-                else:
-                    self.model = AutoModelForCausalLM.from_pretrained(hf_repo_name, trust_remote_code=trust_remote_code)
-                self.tokenizer = AutoTokenizer.from_pretrained(hf_repo_name, trust_remote_code=trust_remote_code)
+            pt_loader = PyTorchLoader(api_key=api_key, trust_remote_code=trust_remote_code, custom_loader=None)
+            self.model = pt_loader.get_generative_model(hf_repo_name)
+            self.tokenizer = pt_loader.get_tokenizer(hf_repo_name)
 
             # set to defaults for HF models in Model Catalog
             # this can be over-ridden post initiation if needed for custom models
@@ -4284,7 +4221,7 @@ class HFGenerativeModel:
 
         #   will load model and inference onto gpu,
         #   if (a) CUDA available and (b) use_gpu_if_available set to True (default)
-        self.use_gpu = torch.cuda.is_available() and use_gpu_if_available
+        self.use_gpu = cuda.is_available() and use_gpu_if_available
 
         if self.model:
 
@@ -4430,7 +4367,7 @@ class HFGenerativeModel:
 
         return prompt_engineered
 
-    @torch.no_grad()
+    @no_grad()
     def inference(self, prompt, add_context=None, add_prompt_engineering=None, api_key=None,
                   inference_dict=None):
 
@@ -4488,7 +4425,7 @@ class HFGenerativeModel:
 
         tokenizer_output = self.tokenizer.encode(text_prompt)
         input_token_len = len(tokenizer_output)
-        input_ids = torch.tensor(tokenizer_output).unsqueeze(0)
+        input_ids = tensor(tokenizer_output).unsqueeze(0)
 
         #   explicit check and setting to facilitate debugging
         if self.use_gpu:
@@ -4499,23 +4436,11 @@ class HFGenerativeModel:
         # time start
         time_start = time.time()
 
-        #   Note: this is a simplified 'sampling' generation loop, derived from the far more
-        #   sophisticated Generation capabilities provided by the Transformers library
-        #   It is included here to enable transformers users to easily extend llmware to include
-        #   their favorite generative models in the transformers library.
-
-        #   The code below contains code copied from, derived from or inspired from the Huggingface
-        #   transformers generation code.
-        #   (https: // github.com / huggingface / transformers / src / transformers / generation)
-
-        #   Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc.team.
-        #   Copyright(c) 2018, NVIDIA CORPORATION.All rights reserved.
-        #   Licensed under the Apache License, Version 2.0(the "License"); you may not use this
-        #   file except in compliance with the License. You may obtain a copy of the License at
-        #   http: // www.apache.org / licenses / LICENSE - 2.0 Unless required by applicable law or agreed
-        #   to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
-        #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
-        #   for the specific language governing permissions and limitations under the License.
+        #   This simplified greedy sampling generation loop was derived from and inspired by ideas in the
+        #   HuggingFace transformers library generation class.
+        #   https: //github.com/huggingface/transformers/tree/main/src/transformers/generation
+        #   Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc.team, and NVIDIA Corporation.
+        #   Licensed under the Apache License, Version 2.0 (the "License")
 
         # default settings
         pad_token_id = 0
@@ -4524,16 +4449,16 @@ class HFGenerativeModel:
         eos_token_id = [self.eos_token_id]
         # eos_token_id = [0]
 
-        eos_token_id_tensor = torch.tensor(eos_token_id).to(input_ids.device)
+        eos_token_id_tensor = tensor(eos_token_id).to(input_ids.device)
 
         # keep track of which sequences are already finished
-        unfinished_sequences = torch.ones(input_ids.shape[0], dtype=torch.long, device=input_ids.device)
+        unfinished_sequences = ones(input_ids.shape[0], dtype=long, device=input_ids.device)
 
         this_peer_finished = False  # used by synced_gpus only
         # auto-regressive generation
         new_tokens_generated = 0
 
-        attn_mask = torch.ones(input_ids.shape[1]).unsqueeze(0)
+        attn_mask = ones(input_ids.shape[1]).unsqueeze(0)
 
         #   explicit check and setting to facilitate debugging, if needed
         if self.use_gpu:
@@ -4548,7 +4473,7 @@ class HFGenerativeModel:
 
         while True:
 
-            inp_one_time: torch.LongTensor = input_ids
+            inp_one_time: LongTensor = input_ids
 
             if new_tokens_generated > 0:
                 inp_one_time = input_ids[:, -1:]
@@ -4588,10 +4513,10 @@ class HFGenerativeModel:
 
             if not self.sample:
                 # will pull the 'top logit' only
-                next_tokens = torch.argmax(probs).unsqueeze(0)
+                next_tokens = argmax(probs).unsqueeze(0)
             else:
                 # will apply probabilistic sampling
-                next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
+                next_tokens = multinomial(probs, num_samples=1).squeeze(1)
 
             # new - option to capture logits and output tokens for analysis
             if self.get_logits:
@@ -4613,7 +4538,7 @@ class HFGenerativeModel:
                 next_tokens = next_tokens * unfinished_sequences + pad_token_id * (1 - unfinished_sequences)
 
             # update generated ids, model inputs, and length for next step
-            input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=-1)
+            input_ids = cat([input_ids, next_tokens[:, None]], dim=-1)
 
             #   testing output in progress starts here
             """
@@ -4628,7 +4553,7 @@ class HFGenerativeModel:
             pkv = outputs.past_key_values
 
             # update attention mask
-            attn_mask = torch.cat([attn_mask, attn_mask.new_ones((attn_mask.shape[0], 1))], dim=-1)
+            attn_mask = cat([attn_mask, attn_mask.new_ones((attn_mask.shape[0], 1))], dim=-1)
 
             # if eos_token was found in one sentence, set sentence to finished
             if eos_token_id_tensor is not None:
@@ -4733,7 +4658,7 @@ class HFGenerativeModel:
         #   will be a tensor of shape [1,vocab_size]
 
         logit_size = next_token_logit.shape[-1]
-        logit = torch.squeeze(next_token_logit)
+        logit = squeeze(next_token_logit)
 
         if self.use_gpu:
             logit_array = np.array(logit.to('cpu'))
@@ -4756,7 +4681,7 @@ class HFGenerativeModel:
 
         return top_logits
 
-    @torch.no_grad()
+    @no_grad()
     def function_call(self, context, function=None, params=None, get_logits=True,
                       temperature=-99, max_output=None):
 
@@ -4794,7 +4719,7 @@ class HFGenerativeModel:
 
         tokenizer_output = self.tokenizer.encode(prompt)
         input_token_len = len(tokenizer_output)
-        input_ids = torch.tensor(tokenizer_output).unsqueeze(0)
+        input_ids = tensor(tokenizer_output).unsqueeze(0)
 
         #   explicit check and setting to facilitate debugging
         if self.use_gpu:
@@ -4805,23 +4730,11 @@ class HFGenerativeModel:
         # time start
         time_start = time.time()
 
-        #   Note: this is a simplified 'sampling' generation loop, derived from the far more
-        #   sophisticated Generation capabilities provided by the Transformers library
-        #   It is included here to enable transformers users to easily extend llmware to include
-        #   their favorite generative models in the transformers library.
-
-        #   The code below contains code copied from, derived from or inspired from the Huggingface
-        #   transformers generation code.
-        #   (https: // github.com / huggingface / transformers / src / transformers / generation)
-
-        #   Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc.team.
-        #   Copyright(c) 2018, NVIDIA CORPORATION.All rights reserved.
-        #   Licensed under the Apache License, Version 2.0(the "License"); you may not use this
-        #   file except in compliance with the License. You may obtain a copy of the License at
-        #   http: // www.apache.org / licenses / LICENSE - 2.0 Unless required by applicable law or agreed
-        #   to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
-        #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
-        #   for the specific language governing permissions and limitations under the License.
+        #   This simplified greedy sampling generation loop was derived from and inspired by ideas in the
+        #   HuggingFace transformers library generation class.
+        #   https: //github.com/huggingface/transformers/tree/main/src/transformers/generation
+        #   Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc.team, and NVIDIA Corporation.
+        #   Licensed under the Apache License, Version 2.0 (the "License")
 
         # default settings
         pad_token_id = 0
@@ -4830,16 +4743,16 @@ class HFGenerativeModel:
         eos_token_id = [self.eos_token_id]
         # eos_token_id = [0]
 
-        eos_token_id_tensor = torch.tensor(eos_token_id).to(input_ids.device)
+        eos_token_id_tensor = tensor(eos_token_id).to(input_ids.device)
 
         # keep track of which sequences are already finished
-        unfinished_sequences = torch.ones(input_ids.shape[0], dtype=torch.long, device=input_ids.device)
+        unfinished_sequences = ones(input_ids.shape[0], dtype=long, device=input_ids.device)
 
         this_peer_finished = False  # used by synced_gpus only
         # auto-regressive generation
         new_tokens_generated = 0
 
-        attn_mask = torch.ones(input_ids.shape[1]).unsqueeze(0)
+        attn_mask = ones(input_ids.shape[1]).unsqueeze(0)
 
         #   explicit check and setting to facilitate debugging, if needed
         if self.use_gpu:
@@ -4854,7 +4767,7 @@ class HFGenerativeModel:
 
         while True:
 
-            inp_one_time: torch.LongTensor = input_ids
+            inp_one_time: LongTensor = input_ids
 
             if new_tokens_generated > 0:
                 inp_one_time = input_ids[:, -1:]
@@ -4892,10 +4805,10 @@ class HFGenerativeModel:
 
             if not self.sample:
                 # will pull the 'top logit' only
-                next_tokens = torch.argmax(probs).unsqueeze(0)
+                next_tokens = argmax(probs).unsqueeze(0)
             else:
                 # will apply probabilistic sampling
-                next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
+                next_tokens = multinomial(probs, num_samples=1).squeeze(1)
 
             # option to capture logits and output tokens for analysis
             if self.get_logits:
@@ -4914,7 +4827,7 @@ class HFGenerativeModel:
                 next_tokens = next_tokens * unfinished_sequences + pad_token_id * (1 - unfinished_sequences)
 
             # update generated ids, model inputs, and length for next step
-            input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=-1)
+            input_ids = cat([input_ids, next_tokens[:, None]], dim=-1)
 
             #   testing output in progress starts here
             """
@@ -4929,7 +4842,7 @@ class HFGenerativeModel:
             pkv = outputs.past_key_values
 
             # update attention mask
-            attn_mask = torch.cat([attn_mask, attn_mask.new_ones((attn_mask.shape[0], 1))], dim=-1)
+            attn_mask = cat([attn_mask, attn_mask.new_ones((attn_mask.shape[0], 1))], dim=-1)
 
             # if eos_token was found in one sentence, set sentence to finished
             if eos_token_id_tensor is not None:
@@ -6346,7 +6259,7 @@ class WhisperCPPModel:
                 return null_output
 
             else:
-                print(f"update: WhisperCPP - inference - file conversion to .wav successful - "
+                print(f"update: WhisperCPPModel - inference - file conversion to .wav successful - "
                       f"new file at tmp path - {new_file_path}")
 
                 file = new_file_path
@@ -6627,13 +6540,12 @@ class LLMWareSemanticModel:
 
     def load_model_for_inference(self,fp=None, model_card=None):
 
-        if fp:
-            self.model_repo_location = fp
+        """ This path has been deprecated starting with llmware 0.2.12. """
 
-        self.model = STransformer(self.model_repo_location, model_size=self.model_size,
-                                  max_seq_length=self.max_len)
+        # if fp: self.model_repo_location = fp
 
-        return self
+        raise LLMWareException(message="Exception - this load option has been deprecated.   LLMWareSemanticModels "
+                                       "should be pulled from a sentence transformer standard repository.")
 
     def embedding(self, sentence):
 
@@ -6658,712 +6570,6 @@ class LLMWareSemanticModel:
     def euclidean_distance(self,a,b):
         # aligning with FAISS - which returns square of Euclidean distance
         return np.linalg.norm(a - b) * np.linalg.norm(a-b)
-
-
-# The code that follows contains code copied from, derived from or inspired by Nils Reimers and the
-# UKP Lab Sentence Transformers Model. (https://github.com/UKPLab/sentence-transformers)
-# Copyright 2019 Nils Reimers
-# Modifications Copyright 2023 llmware
-
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-
-# http://www.apache.org/licenses/LICENSE-2.0
-
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-
-class STransformer (nn.Sequential):
-
-    """STransformer class is simplified implementation of Sentence Transformers. """
-
-    def __init__(self, model_path, max_seq_length=150, model_size="standard",
-                 torch_dtype=torch.float32):
-
-        super().__init__()
-
-        self.do_lower_case=False
-        self.max_seq_length = max_seq_length
-        self.torch_dtype = torch_dtype
-        self.device = 'cuda' if torch.cuda.is_available() else "cpu"
-
-        logging.info("update - creating Transformer - model dims - %s ", model_size)
-
-        self.word_embedding_model = Transformer(model_path, model_size=model_size)
-
-        # pooling mode = "mean" by default
-        self.pooling_model = Pooling(self.word_embedding_model.get_word_embedding_dimension())
-
-        modules=[self.word_embedding_model, self.pooling_model]
-        self.model = OrderedDict([(str(idx), module) for idx, module in enumerate(modules)])
-
-    def tokenize(self, texts):
-        return self.word_embedding_model.tokenize_wrapper(texts)
-
-    def encode(self, sentences, batch_size=32, normalize_embeddings=True):
-
-        self.eval()
-
-        output_value = "sentence_embedding"
-        convert_to_numpy = True
-        convert_to_tensor = False
-        normalize_embeddings = True
-        device = None
-
-        # output expected to be in numpy array
-
-        input_was_string = False
-        if isinstance(sentences, str) or not hasattr(sentences, '__len__'):
-            sentences = [sentences]
-            input_was_string = True
-
-        self.to(self.device)
-
-        all_embeddings = []
-        length_sorted_idx = np.argsort([-self._text_length(sen) for sen in sentences])
-        sentences_sorted = [sentences[idx] for idx in length_sorted_idx]
-
-        show_progress_bar = None
-
-        for start_index in trange(0, len(sentences), batch_size, desc="Batches", disable=not show_progress_bar):
-            sentences_batch = sentences_sorted[start_index:start_index+batch_size]
-            features = self.tokenize(sentences_batch)
-
-            for key in features:
-                if isinstance(features[key], Tensor):
-                    features[key] = features[key].to(self.device)
-
-            with torch.no_grad():
-
-                out_features = self.forward(features)
-
-                # assume sentence_embeddings only
-                embeddings = out_features[output_value]
-                embeddings = embeddings.detach()
-
-                if normalize_embeddings:
-                    embeddings = torch.nn.functional.normalize(embeddings, p=2, dim=1)
-
-                if convert_to_numpy:
-                    embeddings = embeddings.cpu()
-
-                all_embeddings.extend(embeddings)
-
-        all_embeddings = [all_embeddings[idx] for idx in np.argsort(length_sorted_idx)]
-
-        if convert_to_tensor:
-            all_embeddings = torch.stack(all_embeddings)
-
-        elif convert_to_numpy:
-            all_embeddings = np.asarray([emb.numpy() for emb in all_embeddings])
-
-        if input_was_string:
-            all_embeddings = all_embeddings[0]
-
-        return all_embeddings
-
-    def _text_length(self, text):
-
-        if isinstance(text, dict):
-            #   {key: value} case
-            return len(next(iter(text.values())))
-
-        elif not hasattr(text, '__len__'):
-            #   Object has no len() method
-            return 1
-
-        elif len(text) == 0 or isinstance(text[0], int):
-            #   Empty string or list of ints
-            return len(text)
-
-        else:
-            #   Sum of length of individual strings
-            return sum([len(t) for t in text])
-
-
-class Transformer (nn.Module):
-
-    """ Transformer is simplified implementation of wrapper utility class used to assemble Sentence Transformers. """
-
-    def __init__(self, model_path, max_seq_length=150, do_lower_case= False, model_size="standard"):
-        super().__init__()
-
-        # need to look up model config first
-        try:
-            self.config = json.load(open(os.path.join(model_path,"config.json"), "r", encoding='utf-8'))
-
-        except:
-            if model_size == "mini":
-                self.config = bert_mini_config
-            else:
-                self.config = bert_base_config
-
-        self.config_keys = ['max_seq_length', 'do_lower_case']
-
-        self.do_lower_case = do_lower_case
-        self.max_seq_length = max_seq_length
-
-        bert_config = BertConfig(config_dict=self.config)
-        # print("loading weights from path - ", model_path)
-
-        #   by default, assume BERT based model - TODO:  extend to Roberta base options
-        self.auto_model = BertModel(bert_config).load_weights_from_file(model_path)
-
-        tokenizer_file = "tokenizer.json"
-        self.tokenizer = Utilities().load_tokenizer_from_file(os.path.join(model_path, tokenizer_file))
-
-        # tokenizer is where the max_length is applied
-        self.tokenizer.enable_truncation(max_length=self.max_seq_length,strategy="longest_first")
-        self.tokenizer.enable_padding(pad_id=0)
-
-    def forward(self, features):
-
-        # note: features in forward from Transformer passed to Pooling layer for final output
-        trans_features = {'input_ids': features['input_ids'], 'attention_mask': features['attention_mask']}
-        output_states = self.auto_model(**trans_features)
-        output_tokens = output_states[0]
-        features.update({'token_embeddings': output_tokens, 'attention_mask': features['attention_mask']})
-
-        return features
-
-    def get_word_embedding_dimension(self):
-        return self.auto_model.config.hidden_size
-
-    def tokenize_wrapper(self, text, padding=True, truncation="longest_first"):
-
-        self.tokenizer.enable_truncation(max_length=self.max_seq_length, strategy=truncation)
-        if padding:
-            self.tokenizer.enable_padding(pad_id=0)
-
-        batch_input = self.tokenizer.encode_batch(text)
-
-        input_id_list = []
-        token_id_list = []
-        am_list = []
-
-        for i, encoding_obj in enumerate(batch_input):
-            input_id_list.append(encoding_obj.ids)
-            token_id_list.append(encoding_obj.type_ids)
-            am_list.append(encoding_obj.attention_mask)
-
-        inputs_agg = {"input_ids": torch.tensor(input_id_list, dtype=torch.long),
-                      "token_type_ids": torch.tensor(token_id_list, dtype=torch.long),
-                      "attention_mask": torch.tensor(am_list, dtype=torch.long)}
-
-        return inputs_agg
-
-
-class Pooling(nn.Module):
-
-    """Pooling is a component of the Sentence Transformer architecture. """
-
-    def __init__(self, word_embedding_dimension):
-
-        super(Pooling, self).__init__()
-
-        self.pooling_mode = "mean"
-        self.word_embedding_dimension = word_embedding_dimension
-        self.pooling_mode_mean_tokens = True
-
-    def forward(self, features):
-
-        token_embeddings = features['token_embeddings']
-        attention_mask = features['attention_mask']
-
-        #   Pooling strategy - "pooling_mode_mean_tokens"
-        output_vectors = []
-
-        self.pooling_mode_mean_tokens = True
-
-        input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-        sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
-
-        sum_mask = input_mask_expanded.sum(1)
-        sum_mask = torch.clamp(sum_mask, min=1e-9)
-
-        output_vectors.append(sum_embeddings / sum_mask)
-
-        output_vector = torch.cat(output_vectors, 1)
-        features.update({'sentence_embedding': output_vector})
-
-        return features
-
-
-"""PyTorch BERT model."""
-
-# The code below contains code copied from, derived from or inspired from the PyTorch BERT model.
-# (https://github.com/huggingface/transformers)
-# Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
-
-# Note: this is a very streamlined implementation of the BERT model, optimized for use in LLMWARE
-# There are many features and options that have been purposefully omitted
-# For a more robust implementation of BERT, please see the Google BERT repository, or HuggingFace
-
-# coding=utf-8
-# Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-
-bert_base_config = {
-    "_name_or_path": "bert-base-uncased",
-    "architectures": [
-        "BertModel"
-    ],
-    "attention_probs_dropout_prob": 0.1,
-    "classifier_dropout": None,
-    "gradient_checkpointing": False,
-    "hidden_act": "gelu",
-    "hidden_dropout_prob": 0.1,
-    "hidden_size": 768,
-    "initializer_range": 0.02,
-    "intermediate_size": 3072,
-    "layer_norm_eps": 1e-12,
-    "max_position_embeddings": 512,
-    "model_type": "bert",
-    "num_attention_heads": 12,
-    "num_hidden_layers": 12,
-    "pad_token_id": 0,
-    "position_embedding_type": "absolute",
-    "torch_dtype": "float32",
-    "type_vocab_size": 2,
-    "use_cache": True,
-    "vocab_size": 30522,
-    "model_size": "standard"
-}
-
-
-bert_mini_config = {
-    "_name_or_path": "nreimers/MiniLM-L6-H384-uncased",
-    "architectures": [
-        "BertModel"
-    ],
-    "attention_probs_dropout_prob": 0.1,
-    "gradient_checkpointing": False,
-    "hidden_act": "gelu",
-    "hidden_dropout_prob": 0.1,
-    "hidden_size": 384,   # vs 768
-    "initializer_range": 0.02,
-    "intermediate_size": 1536,  # vs. 3072
-    "layer_norm_eps": 1e-12,
-    "max_position_embeddings": 512,
-    "model_type": "bert",
-    "num_attention_heads": 12,
-    "num_hidden_layers": 6, # vs. 12
-    "pad_token_id": 0,
-    "position_embedding_type": "absolute",
-    "type_vocab_size": 2,
-    "use_cache": True,
-    "vocab_size": 30522,
-    "model_size": "mini"
-}
-
-
-class BertConfig:
-
-    # note: if no config passed, then defaults to standard 'bert-base-uncased' model
-    def __init__(self, config_dict=None, **kwargs):
-
-        # set default parameters -> will be over-ridden by any passed configs
-        self.vocab_size =30522,
-        self.hidden_size =768,
-        self.num_hidden_layers =12,
-        self.num_attention_heads =12,
-        self.intermediate_size =3072,
-        self.hidden_act ="gelu",
-        self.hidden_dropout_prob =0.1,
-        self.attention_probs_dropout_prob =0.1,
-        self.max_position_embeddings =512,
-        self.type_vocab_size =2,
-        self.initializer_range =0.02,
-        self.layer_norm_eps =1e-12,
-        self.pad_token_id =0,
-        self.position_embedding_type ="absolute",
-        self.use_cache =True,
-        self.classifier_dropout =None,
-        self.model_size ="standard"
-
-        for key in config_dict:
-            setattr(self, key, config_dict[key])
-
-        self.output_hidden_states = False
-        self.output_attentions = False
-        self.torch_dtype = kwargs.pop("torch_dtype", None)
-        self.pruned_heads = kwargs.pop("pruned_heads", {})
-
-        # self.tie_word_embeddings = kwargs.pop("tie_word_embeddings", True)
-
-
-class BertEmbeddings(nn.Module):
-
-    def __init__(self, config):
-        super().__init__()
-
-        self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size,
-                                            padding_idx=config.pad_token_id)
-        self.position_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size)
-        self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
-
-        self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
-
-        self.position_embedding_type = "absolute"
-
-        self.register_buffer("position_ids", torch.arange(config.max_position_embeddings).expand((1, -1)))
-        self.register_buffer(
-            "token_type_ids", torch.zeros(self.position_ids.size(), dtype=torch.long), persistent=False
-        )
-
-    def forward(self, input_ids):
-
-        past_key_values_length = 0
-
-        input_shape = input_ids.size()
-        seq_length = input_shape[1]
-
-        position_ids = self.position_ids[:, past_key_values_length : seq_length + past_key_values_length]
-
-        if hasattr(self, "token_type_ids"):
-            buffered_token_type_ids = self.token_type_ids[:, :seq_length]
-            buffered_token_type_ids_expanded = buffered_token_type_ids.expand(input_shape[0], seq_length)
-            token_type_ids = buffered_token_type_ids_expanded
-        else:
-            token_type_ids = torch.zeros(input_shape, dtype=torch.long, device=self.position_ids.device)
-
-        inputs_embeds = self.word_embeddings(input_ids)
-        token_type_embeddings = self.token_type_embeddings(token_type_ids)
-
-        embeddings = inputs_embeds + token_type_embeddings
-
-        if self.position_embedding_type == "absolute":
-            position_embeddings = self.position_embeddings(position_ids)
-            embeddings += position_embeddings
-
-        embeddings = self.LayerNorm(embeddings)
-        embeddings = self.dropout(embeddings)
-        return embeddings
-
-
-class BertSelfAttention(nn.Module):
-
-    def __init__(self, config):
-        super().__init__()
-
-        self.num_attention_heads = config.num_attention_heads
-        self.attention_head_size = int(config.hidden_size / config.num_attention_heads)
-        self.all_head_size = self.num_attention_heads * self.attention_head_size
-
-        self.query = nn.Linear(config.hidden_size, self.all_head_size)
-        self.key = nn.Linear(config.hidden_size, self.all_head_size)
-        self.value = nn.Linear(config.hidden_size, self.all_head_size)
-
-        self.dropout = nn.Dropout(config.attention_probs_dropout_prob)
-
-        self.position_embedding_type = "absolute"
-
-    def transpose_for_scores(self, x):
-        new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
-        x = x.view(new_x_shape)
-        return x.permute(0, 2, 1, 3)
-
-    def forward(self, hidden_states, attention_mask= None):
-
-        output_attentions = False
-
-        mixed_query_layer = self.query(hidden_states)
-
-        key_layer = self.transpose_for_scores(self.key(hidden_states))
-        value_layer = self.transpose_for_scores(self.value(hidden_states))
-
-        query_layer = self.transpose_for_scores(mixed_query_layer)
-
-        # Take the dot product between "query" and "key" to get the raw attention scores.
-        attention_scores = torch.matmul(query_layer, key_layer.transpose(-1, -2))
-
-        attention_scores = attention_scores / math.sqrt(self.attention_head_size)
-        if attention_mask is not None:
-            # Apply the attention mask is (precomputed for all layers in BertModel forward() function)
-            attention_scores = attention_scores + attention_mask
-
-        # Normalize the attention scores to probabilities.
-        attention_probs = nn.functional.softmax(attention_scores, dim=-1)
-
-        # This is actually dropping out entire tokens to attend to (taken from original Transformer paper)
-        attention_probs = self.dropout(attention_probs)
-
-        context_layer = torch.matmul(attention_probs, value_layer)
-
-        context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
-        new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)
-        context_layer = context_layer.view(new_context_layer_shape)
-
-        outputs = (context_layer, attention_probs) if output_attentions else (context_layer,)
-
-        return outputs
-
-
-class BertSelfOutput(nn.Module):
-
-    def __init__(self, config):
-        super().__init__()
-        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
-        self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
-
-    def forward(self, hidden_states, input_tensor):
-        hidden_states = self.dense(hidden_states)
-        hidden_states = self.dropout(hidden_states)
-        hidden_states = self.LayerNorm(hidden_states + input_tensor)
-        return hidden_states
-
-
-class BertAttention(nn.Module):
-
-    def __init__(self, config):
-        super().__init__()
-        self.self = BertSelfAttention(config)
-        self.output = BertSelfOutput(config)
-        self.pruned_heads = set()
-
-    def prune_heads(self, heads):
-
-        if len(heads) == 0:
-            return
-        heads, index = find_pruneable_heads_and_indices(
-            heads, self.self.num_attention_heads, self.self.attention_head_size, self.pruned_heads
-        )
-
-        # Prune linear layers
-        self.self.query = prune_linear_layer(self.self.query, index)
-        self.self.key = prune_linear_layer(self.self.key, index)
-        self.self.value = prune_linear_layer(self.self.value, index)
-        self.output.dense = prune_linear_layer(self.output.dense, index, dim=1)
-
-        # Update hyper params and store pruned heads
-        self.self.num_attention_heads = self.self.num_attention_heads - len(heads)
-        self.self.all_head_size = self.self.attention_head_size * self.self.num_attention_heads
-        self.pruned_heads = self.pruned_heads.union(heads)
-
-    def forward(self, hidden_states, attention_mask= None):
-
-        self_outputs = self.self(hidden_states, attention_mask)
-        attention_output = self.output(self_outputs[0], hidden_states)
-        outputs = (attention_output,) + self_outputs[1:]  # add attentions if we output them
-        return outputs
-
-
-class BertIntermediate(nn.Module):
-
-    def __init__(self, config):
-        super().__init__()
-
-        self.dense = nn.Linear(config.hidden_size, config.intermediate_size)
-        self.intermediate_act_fn = nn.functional.gelu
-
-    def forward(self, hidden_states):
-        hidden_states = self.dense(hidden_states)
-        hidden_states = self.intermediate_act_fn(hidden_states)
-        return hidden_states
-
-
-class BertOutput(nn.Module):
-
-    def __init__(self, config):
-        super().__init__()
-        self.dense = nn.Linear(config.intermediate_size, config.hidden_size)
-        self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
-
-    def forward(self, hidden_states, input_tensor):
-        hidden_states = self.dense(hidden_states)
-        hidden_states = self.dropout(hidden_states)
-        hidden_states = self.LayerNorm(hidden_states + input_tensor)
-        return hidden_states
-
-
-class BertLayer(nn.Module):
-
-    def __init__(self, config):
-        super().__init__()
-
-        self.seq_len_dim = 1
-        self.attention = BertAttention(config)
-        self.intermediate = BertIntermediate(config)
-        self.output = BertOutput(config)
-
-    def forward(self, hidden_states, attention_mask= None):
-
-        self_attention_outputs = self.attention(hidden_states, attention_mask)
-        attention_output = self_attention_outputs[0]
-        outputs = self_attention_outputs[1:]
-
-        layer_output = self.feed_forward_chunk(attention_output)
-
-        outputs = (layer_output,) + outputs
-
-        return outputs
-
-    def feed_forward_chunk(self, attention_output):
-        intermediate_output = self.intermediate(attention_output)
-        layer_output = self.output(intermediate_output, attention_output)
-        return layer_output
-
-
-class BertEncoder(nn.Module):
-
-    def __init__(self, config):
-        super().__init__()
-
-        self.config = config
-        self.layer = nn.ModuleList([BertLayer(config) for _ in range(config.num_hidden_layers)])
-
-    def forward(self, hidden_states, attention_mask= None):
-
-        for i, layer_module in enumerate(self.layer):
-            layer_outputs = layer_module(hidden_states, attention_mask)
-            hidden_states = layer_outputs[0]
-
-        return (hidden_states,)
-
-
-class BertPooler(nn.Module):
-
-    def __init__(self, config):
-        super().__init__()
-        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
-        self.activation = nn.Tanh()
-
-    def forward(self, hidden_states):
-        # We "pool" the model by simply taking the hidden state corresponding to the first token.
-        first_token_tensor = hidden_states[:, 0]
-        pooled_output = self.dense(first_token_tensor)
-        pooled_output = self.activation(pooled_output)
-        return pooled_output
-
-
-class BertModel (nn.Module):
-
-    def __init__(self, config, add_pooling_layer=True, torch_dtype=torch.float16):
-        super().__init__()
-
-        self.config = config
-        self.embeddings = BertEmbeddings(config)
-        self.encoder = BertEncoder(config)
-        self.pooler = BertPooler(config) if add_pooling_layer else None
-        self.torch_dtype = torch_dtype
-        self.dtype = torch_dtype
-
-    def load_weights_from_file(self, fp=None):
-        model_file = "pytorch_model.bin"
-        self.load_state_dict(torch.load(os.path.join(fp,model_file), map_location=torch.device('cpu')), strict=False)
-        logging.info("update: re-loaded model weights from file")
-        self.eval()
-        return self
-
-    def _prune_heads(self, heads_to_prune):
-        for layer, heads in heads_to_prune.items():
-            self.encoder.layer[layer].attention.prune_heads(heads)
-
-    def forward(self, input_ids, attention_mask= None):
-
-        token_type_ids = None
-        input_shape = input_ids.size()
-        batch_size, seq_length = input_shape
-        device = input_ids.device
-
-        if attention_mask is None:
-            attention_mask = torch.ones(((batch_size, seq_length)), device=device)
-
-        if token_type_ids is None:
-            if hasattr(self.embeddings, "token_type_ids"):
-                buffered_token_type_ids = self.embeddings.token_type_ids[:, :seq_length]
-                buffered_token_type_ids_expanded = buffered_token_type_ids.expand(batch_size, seq_length)
-                token_type_ids = buffered_token_type_ids_expanded
-            else:
-                token_type_ids = torch.zeros(input_shape, dtype=torch.long, device=device)
-
-        extended_attention_mask = self.get_extended_attention_mask(attention_mask, input_shape)
-
-        embedding_output = self.embeddings(input_ids=input_ids)
-
-        encoder_outputs = self.encoder(embedding_output, attention_mask=extended_attention_mask)
-
-        sequence_output = encoder_outputs[0]
-        pooled_output = self.pooler(sequence_output) if self.pooler is not None else None
-
-        return (sequence_output, pooled_output) + encoder_outputs[1:]
-
-    def get_extended_attention_mask(self, attention_mask, input_shape):
-
-        if attention_mask.dim() == 3:
-            extended_attention_mask = attention_mask[:, None, :, :]
-
-        elif attention_mask.dim() == 2:
-            # Provided a padding mask of dimensions [batch_size, seq_length]
-            # - if the model is an encoder, make the mask:  [batch_size, num_heads, seq_length, seq_length]
-            extended_attention_mask = attention_mask[:, None,None, :]
-
-        else:
-            raise ValueError(
-                f"Wrong shape for input_ids (shape {input_shape}) or attention_mask (shape {attention_mask.shape})"
-            )
-
-        extended_attention_mask = extended_attention_mask.to(dtype=self.dtype)  # fp16 compatibility
-        extended_attention_mask = (1.0 - extended_attention_mask) * torch.finfo(self.dtype).min
-        return extended_attention_mask
-
-
-def find_pruneable_heads_and_indices(heads, n_heads, head_size, already_pruned_heads):
-
-    mask = torch.ones(n_heads, head_size)
-    heads = set(heads) - already_pruned_heads  # Convert to set and remove already pruned heads
-    for head in heads:
-        # Compute how many pruned heads are before the head and move the index accordingly
-        head = head - sum(1 if h < head else 0 for h in already_pruned_heads)
-        mask[head] = 0
-    mask = mask.view(-1).contiguous().eq(1)
-    index: torch.LongTensor = torch.arange(len(mask))[mask].long()
-    return heads, index
-
-
-def prune_linear_layer(layer, index, dim= 0):
-
-    index = index.to(layer.weight.device)
-    W = layer.weight.index_select(dim, index).clone().detach()
-    if layer.bias is not None:
-        if dim == 1:
-            b = layer.bias.clone().detach()
-        else:
-            b = layer.bias[index].clone().detach()
-    new_size = list(layer.weight.size())
-    new_size[dim] = len(index)
-    new_layer = nn.Linear(new_size[1], new_size[0], bias=layer.bias is not None).to(layer.weight.device)
-    new_layer.weight.requires_grad = False
-    new_layer.weight.copy_(W.contiguous())
-    new_layer.weight.requires_grad = True
-    if layer.bias is not None:
-        new_layer.bias.requires_grad = False
-        new_layer.bias.copy_(b.contiguous())
-        new_layer.bias.requires_grad = True
-    return new_layer
-
 
 
 class ModelResources:
@@ -7407,7 +6613,6 @@ class ModelResources:
     @classmethod
     def fetch_model(cls, model_name):
         return getattr(cls._ModelState, model_name)
-
 
 
 class LLMWareInferenceServer:
@@ -7534,7 +6739,7 @@ class LLMWareInferenceServer:
 
         output = self._llmware_inference(question, context)
 
-        torch.cuda.empty_cache()
+        cuda.empty_cache()
 
         return jsonify(output)
 
@@ -7622,7 +6827,7 @@ class LLMWareInferenceServer:
         output = self._llmware_agent_function_call(context=context, tool_type=tool_type, model_name=model, function=fx,
                                                   temperature=temperature, sample=sample,params=params,
                                                   max_output=max_output, prompt=prompt,get_logits=get_logits)
-        torch.cuda.empty_cache()
+        cuda.empty_cache()
 
         return jsonify(output)
 
@@ -7707,5 +6912,186 @@ class LLMWareInferenceServer:
                 print("model already loaded - ", model_name)
 
         return True
+
+
+class PyTorchLoader:
+
+    """ PyTorchLoader is a wrapper class that consolidates all of the PyTorch model loading functions
+    throughout llmware - and provides the ability to create a single custom loader function to over-ride
+    the default PyTorch model loading, which relies upon HuggingFace repositories, and the formalisms
+    provided by the transformers library in terms of configs and model class code.  This also enables a single
+    point to customize the behavior of transformers configurations.   """
+
+    def __init__(self, api_key=None, trust_remote_code=True,custom_loader=None):
+
+        self.model_name = None
+        self.api_key=api_key
+        self.trust_remote_code = trust_remote_code
+        self.custom_loader = custom_loader
+
+    def get_generative_model(self, model_name, **kwargs):
+
+        """ Retrieves and instantiates a Pytorch Generative model.  Takes a model_name as input, which is
+        assumed to map to the Huggingface repository name - this name is not necessarily the same as the
+        LLMWare model card, which is used to lookup the model in model_configs -> the model_name used here
+        should be the hf_repo attribute on the model card. """
+
+        #   will return None if no model found
+        model = None
+
+        self.model_name=model_name
+
+        if self.custom_loader:
+            model = self.custom_loader.loader(self.model_name,
+                                              self.api_key,self.trust_remote_code,caller="generative_model",**kwargs)
+
+        else:
+
+            try:
+                # will wrap in Exception if import fails
+                from transformers import AutoModelForCausalLM, AutoTokenizer
+            except ImportError:
+                raise DependencyNotInstalledException("transformers")
+
+            if self.api_key:
+
+                if cuda.is_available():
+                    model = AutoModelForCausalLM.from_pretrained(model_name, token=self.api_key,
+                                                                 trust_remote_code=self.trust_remote_code,
+                                                                 torch_dtype="auto")
+                else:
+                    model = AutoModelForCausalLM.from_pretrained(model_name, token=self.api_key,
+                                                                 trust_remote_code=self.trust_remote_code)
+
+            else:
+                if cuda.is_available():
+                    model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=self.trust_remote_code,
+                                                                 torch_dtype="auto")
+                else:
+                    model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=self.trust_remote_code)
+
+        return model
+
+    def get_embedding_model(self, model_name, **kwargs):
+
+        """ Retrieves and instantiates a Pytorch Embedding model.  Takes a model_name as input, which is
+        assumed to map to the Huggingface repository name - this name is not necessarily the same as the
+        LLMWare model card, which is used to lookup the model in model_configs -> the model_name used here
+        should be the hf_repo attribute on the model card. """
+
+        model = None
+
+        self.model_name = model_name
+
+        if self.custom_loader:
+            model = self.custom_loader.loader(self.model_name, self.api_key, self.trust_remote_code, self.custom_loader,
+                                              caller="embedding_model", **kwargs)
+
+        else:
+
+            try:
+                # will wrap in Exception if import fails
+                from transformers import AutoModel
+            except ImportError:
+                raise DependencyNotInstalledException("transformers")
+
+            if self.api_key:
+
+                if cuda.is_available():
+                    model = AutoModel.from_pretrained(model_name, token=self.api_key,
+                                                      trust_remote_code=self.trust_remote_code,
+                                                      torch_dtype="auto")
+                else:
+                    model = AutoModel.from_pretrained(model_name, token=self.api_key,
+                                                      trust_remote_code=self.trust_remote_code)
+
+            else:
+                if cuda.is_available():
+                    model = AutoModel.from_pretrained(model_name, trust_remote_code=self.trust_remote_code,
+                                                      torch_dtype="auto")
+                else:
+                    model = AutoModel.from_pretrained(model_name, trust_remote_code=self.trust_remote_code)
+
+        return model
+
+    def get_tokenizer(self, model_name, **kwargs):
+
+        """ Retrieves and instantiates a tokenizer.  Takes a model_name as input, which is
+        assumed to map to the Huggingface repository name - this name is not necessarily the same as the
+        LLMWare model card, which is used to lookup the model in model_configs -> the model_name used here
+        should be the hf_repo attribute on the model card. """
+
+        tokenizer = None
+
+        self.model_name = model_name
+
+        if self.custom_loader:
+            tokenizer = self.custom_loader.loader(self.model_name, self.api_key, self.trust_remote_code,
+                                                  self.custom_loader, caller="tokenizer", **kwargs)
+        else:
+
+            try:
+                # will wrap in Exception if import fails
+                from transformers import AutoTokenizer
+            except ImportError:
+                raise DependencyNotInstalledException("transformers")
+
+            if self.api_key:
+                tokenizer = AutoTokenizer.from_pretrained(model_name, token=self.api_key,
+                                                          trust_remote_code=self.trust_remote_code)
+            else:
+                tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=self.trust_remote_code)
+
+        return tokenizer
+
+
+class CustomPTLoader:
+
+    """ CustomPTLoader is a stub class that demonstrates how to create a custom PT loader method that
+    can be passed to PyTorchLoader to over-ride the default load from a HuggingFace repository using transformers. """
+
+    def __init__(self, model_name=None, api_key=None, trust_remote_code=True,caller=None):
+
+        self.model_name = model_name
+        self.api_key= api_key
+        self.trust_remote_code = trust_remote_code
+        self.caller = caller
+
+    def loader(self, model_name,api_key=None, trust_remote_code=True, caller=None):
+
+        self.model_name = model_name
+        self.api_key= api_key
+        self.trust_remote_code=trust_remote_code
+        self.caller = caller
+
+        if self.caller == "generative_model":
+            return self.load_generative_model()
+
+        if self.caller == "embedding_model":
+            return self.load_embedding_model()
+
+        if self.caller == "tokenizer":
+            return self.load_tokenizer()
+
+    def load_generative_model(self):
+
+        """ Stub method to enable a custom loading of a generative PyTorch model. """
+
+        model=None
+        return model
+
+    def load_embedding_model(self):
+
+        """ Stub method to enable a custom loading of an embedding PyTorch model. """
+
+        model=None
+        return model
+
+    def load_tokenizer(self):
+
+        """ Stub method to enable a custom loading a tokenizer. """
+
+        tokenizer=None
+        return tokenizer
 
 

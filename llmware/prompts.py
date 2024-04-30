@@ -21,27 +21,24 @@ response against the context information. Finally, the HumanInTheLoop class prov
 which includes access to the prompt history for corrections, as well as user ratings.
 """
 
-
-# from bson import ObjectId
 import statistics
-# from collections import Counter
 import re
 import time
 import logging
 import os
-import torch
 
 from llmware.util import Utilities, CorpTokenizer, YFinance, Graph
 from llmware.resources import PromptState
-from llmware.models import ModelCatalog, PromptCatalog
+from llmware.models import ModelCatalog, PromptCatalog, PyTorchLoader
 from llmware.parsers import Parser
 from llmware.retrieval import Query
 from llmware.library import Library
-from llmware.exceptions import LibraryObjectNotFoundException, PromptNotInCatalogException, DependencyNotInstalledException
+from llmware.exceptions import LibraryObjectNotFoundException, PromptNotInCatalogException
 from llmware.configs import LLMWareConfig
 
 
 class Prompt:
+
     """Implements the actions of the prompt process, which includes the actions pre-processing, execution,
     post-processing, and managing the state of related inferences.
 
@@ -246,25 +243,10 @@ class Prompt:
                                                            use_gpu=use_gpu, sample=sample, get_logits=get_logits,
                                                            max_output=max_output, temperature=temperature)
         else:
-            try:
-                # will wrap in Exception if import fails and move to model catalog class
-                from transformers import AutoModelForCausalLM, AutoTokenizer
-            except:
-                raise DependencyNotInstalledException("transformers")
 
-            if api_key:
-                # may look to add further settings/configuration in the future for hf models, e.g., trust_remote_code
-                if torch.cuda.is_available():
-                    custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model,token=api_key, trust_remote_code=trust_remote_code,  torch_dtype="auto")
-                else:
-                    custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model,token=api_key, trust_remote_code=trust_remote_code)
-                hf_tokenizer = AutoTokenizer.from_pretrained(gen_model,token=api_key,trust_remote_code=trust_remote_code)
-            else:
-                if torch.cuda.is_available():
-                    custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model, trust_remote_code=trust_remote_code, torch_dtype="auto")
-                else:
-                    custom_hf_model = AutoModelForCausalLM.from_pretrained(gen_model, trust_remote_code=trust_remote_code)
-                hf_tokenizer = AutoTokenizer.from_pretrained(gen_model, trust_remote_code=trust_remote_code)
+            pt_loader = PyTorchLoader(api_key=api_key,trust_remote_code=trust_remote_code, custom_loader=None)
+            custom_hf_model = pt_loader.get_generative_model(gen_model)
+            hf_tokenizer = pt_loader.get_tokenizer(gen_model)
 
             #   now, we have 'imported' our own custom 'instruct' model into llmware
             self.llm_model = self.model_catalog.load_hf_generative_model(custom_hf_model, hf_tokenizer,

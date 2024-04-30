@@ -6,37 +6,6 @@ ModelCatalog and PromptCatalog classes.
 
 global_model_repo_catalog_list = [
 
-  # embedding models - direct pull from llmware repo - deprecated for HF pull
-  {"model_name": 'mini-lm-sbert-llmware', "display_name": "mini-lm-sbert-llmware", "model_family": "LLMWareSemanticModel",
-   "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 384, "context_window": 512,
-   "link": "", "custom_model_files": [], "custom_model_repo": ""},
-
-  {"model_name": 'industry-bert-insurance-llmware', "display_name": "industry-bert-insurance-llmware",
-   "model_family": "LLMWareSemanticModel",
-   "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window": 512,
-   "link": "https://huggingface.co/llmware/industry-bert-insurance-v0.1", "custom_model_files": [],
-   "custom_model_repo": "",
-   "hf_repo": "llmware/industry-bert-insurance-v0.1"},
-
-  {"model_name": 'industry-bert-contracts-llmware', "display_name": "industry-bert-contracts-llmware",
-   "model_family": "LLMWareSemanticModel",
-   "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window": 512,
-   "link": "https://huggingface.co/llmware/industry-bert-contracts-v0.1", "custom_model_files": [],
-   "custom_model_repo": "",
-   "hf_repo": "llmware/industry-bert-contracts-v0.1"},
-
-  {"model_name": 'industry-bert-asset-management-llmware', "display_name": "industry-bert-asset-management-llmware",
-   "model_family": "LLMWareSemanticModel", "model_category": "embedding", "model_location": "llmware_repo",
-   "embedding_dims": 768, "context_window": 512,
-   "link": "https://huggingface.co/llmware/industry-bert-asset-management-v0.1", "custom_model_files": [],
-   "custom_model_repo": "",
-   "hf_repo": "llmware/industry-bert-asset-management-v0.1"},
-
-  {"model_name": 'industry-bert-sec-llmware', "display_name": "industry-bert-sec-llmware", "model_family": "LLMWareSemanticModel",
-   "model_category": "embedding", "model_location": "llmware_repo", "embedding_dims": 768, "context_window": 512,
-   "link": "https://huggingface.co/llmware/industry-bert-sec-v0.1", "custom_model_files": [], "custom_model_repo": "",
-   "hf_repo": "llmware/industry-bert-sec-v0.1"},
-
     # embedding models
 
     {"model_name": "all-MiniLM-L6-v2", "display_name": "mini-lm-sbert", "model_family": "HFEmbeddingModel",
