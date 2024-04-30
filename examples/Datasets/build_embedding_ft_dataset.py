@@ -13,8 +13,9 @@
 import os
 
 from llmware.library import Library
-from llmware.util import Datasets
+from llmware.dataset_tools import Datasets
 from llmware.setup import Setup
+from llmware.configs import LLMWareConfig
 
 
 def build_embedding_finetuning_dataset(library_name):
@@ -41,6 +42,8 @@ def build_embedding_finetuning_dataset(library_name):
 
 
 if __name__ == "__main__":
+
+    LLMWareConfig().set_active_db("sqlite")
 
     my_lib_name = "financial_docs_library"
     output = build_embedding_finetuning_dataset(my_lib_name)

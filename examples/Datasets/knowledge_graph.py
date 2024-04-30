@@ -5,6 +5,7 @@ import os
 from llmware.library import Library
 from llmware.setup import Setup
 from llmware.util import Graph
+from llmware.configs import LLMWareConfig
 
 
 def build_and_use_knowledge_graph (library_name):
@@ -87,5 +88,7 @@ def build_and_use_knowledge_graph (library_name):
 
 
 if __name__ == "__main__":
+
+    LLMWareConfig().set_active_db("sqlite")
 
     build_and_use_knowledge_graph("kg_test_0")

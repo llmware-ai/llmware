@@ -4,7 +4,8 @@
 import json
 import os
 from llmware.prompts import Prompt
-from llmware.util import Datasets
+from llmware.dataset_tools import Datasets
+from llmware.configs import LLMWareConfig
 
 
 # Use prompt history to easily create model-ready fine-tuning datasets
@@ -19,12 +20,22 @@ def create_datasets_from_prompt_history(model_name):
 
     # Perform several prompts
     print (f"\n > Performing several prompts to populate the prompt state...")
-    response = prompter.prompt_main(prompt="Who was the 46th president?", context=context)
-    response = prompter.number_or_none(prompt="What year did Joe Biden start as vice president?", context=context)
-    response = prompter.summarize_with_bullets(prompt="Who is Joe Biden?", context=context)
+
+    response = prompter.prompt_main("Who was the 46th president?", context=context,
+                                    register_trx=True)
+
+    response = prompter.prompt_main(prompt="What year did Joe Biden start as vice president?", context=context,
+                                    register_trx=True)
+
+    response = prompter.prompt_main(prompt="Who is Joe Biden?", context=context, register_trx=True)
+
+    for i, entries in enumerate(prompter.interaction_history):
+        print("update: interaction prompt history created: ", i, entries)
+
+    prompter.save_state()
 
     # Create a Datasets object
-    datasets = Datasets()
+    datasets = Datasets(testing_split=0.0, validation_split=0.0)
 
     # Create dataset wrapped in "Alpaca format"
     print (f"\n > Creating a dataset from prompt history in ALPACA format...")
@@ -40,7 +51,7 @@ def create_datasets_from_prompt_history(model_name):
     sample = datasets.get_dataset_sample(datasets.current_ds_name)
     print (f"\nRandom sample from the dataset:\n{json.dumps(sample, indent=2)}")
 
-    # Create dataset wrapped in "Chat GPT format"
+    # Create dataset wrapped in "human_bot format"
     print (f"\n > Creating a dataset from prompt history in HUMAN BOT format...")
     humanbot_dataset = datasets.build_gen_ds_from_prompt_history(prompt_wrapper="human_bot")
     print (f"\nThe dataset dict:\n{json.dumps(humanbot_dataset, indent=2)}")
@@ -51,6 +62,8 @@ def create_datasets_from_prompt_history(model_name):
 
 
 if __name__ == "__main__":
+
+    LLMWareConfig().set_active_db("sqlite")
 
     model_name = "llmware/bling-1b-0.1"
 

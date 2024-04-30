@@ -6,9 +6,10 @@
 
 import json
 import os
-from llmware.util import Datasets
+from llmware.dataset_tools import Datasets
 from llmware.library import Library
 from llmware.setup import Setup
+from llmware.configs import LLMWareConfig
 
 
 def build_aws_transcribe_datasets(library_name):
@@ -38,4 +39,6 @@ def build_aws_transcribe_datasets(library_name):
 
 if __name__ == "__main__":
 
-    build_aws_transcribe_datasets("aws_transcripts_lib_0")
+    LLMWareConfig().set_active_db("sqlite")
+
+    build_aws_transcribe_datasets("aws_transcripts_lib_1")
