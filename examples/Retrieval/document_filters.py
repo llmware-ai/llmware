@@ -10,6 +10,7 @@ import os
 from llmware.library import Library
 from llmware.retrieval import Query
 from llmware.setup import Setup
+from llmware.configs import LLMWareConfig
 
 #   A very powerful form of retrieval involves document filters.  Once a 'document filter' is created, it can be
 #   applied to query further only in that document set
@@ -25,8 +26,7 @@ def create_agreements_embeddings_sample_library(library_name):
     ingestion_folder_path = os.path.join(sample_files_path, "Agreements")
     parsing_output = library.add_files(ingestion_folder_path)
 
-    #   note: if you have installed Milvus, please substitute for 'FAISS'
-    library.install_new_embedding(embedding_model_name="mini-lm-sbert", vector_db="faiss")
+    library.install_new_embedding(embedding_model_name="mini-lm-sbert", vector_db="chromadb")
 
     return library
 
@@ -58,6 +58,8 @@ def perform_retrieval_with_document_filters(library, doc_filter_text, query_text
 
 
 if __name__ == "__main__":
+
+    LLMWareConfig().set_active_db("sqlite")
 
     lib = create_agreements_embeddings_sample_library("lib_doc_filter_1")
 

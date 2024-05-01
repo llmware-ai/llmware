@@ -1,7 +1,7 @@
 
 """
-#   This example shows the general recipe for creating an embedding.  This scenario uses FAISS for local
-#   laptop deployment.
+#   This example shows the general recipe for creating an embedding.  This scenario uses ChromaDB in local
+    file mode for no-install laptop deployment.
 """
 
 
@@ -11,7 +11,7 @@ from llmware.retrieval import Query
 from llmware.setup import Setup
 
 
-def embeddings_fast_start (library_name, vector_db="faiss"):
+def embeddings_fast_start (library_name, vector_db="chromadb"):
 
     # Create and populate a library
     print (f"\nstep 1 - creating and populating library: {library_name}...")
@@ -56,8 +56,8 @@ def embeddings_fast_start (library_name, vector_db="faiss"):
 
 if __name__ == "__main__":
 
-    # set to 'faiss' by default -> switch to 'milvus' once installed and running
-    db = "faiss"
+    #   set to 'chromadb' local file storage for  no-install fast start
+    db = "chromadb"
     embeddings_fast_start("embedding_test_1", vector_db=db)
 
 
