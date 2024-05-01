@@ -27,7 +27,9 @@ import time
 import logging
 import os
 
-from llmware.util import Utilities, CorpTokenizer, YFinance, Graph
+from llmware.util import Utilities, CorpTokenizer
+from llmware.web_services import YFinance
+from llmware.graph import Graph
 from llmware.resources import PromptState
 from llmware.models import ModelCatalog, PromptCatalog, PyTorchLoader
 from llmware.parsers import Parser
