@@ -1,8 +1,8 @@
 
 """
-This 'getting started' example demonstrates how to use basic text retrieval with the Query class
+This 'getting started' example demonstrates how to use basic semantic retrieval with the Query class
       1. Create a sample library
-      2. Run a basic text query
+      2. Run a basic semantic query
       3. View the results
 """
 
@@ -10,6 +10,7 @@ import os
 from llmware.library import Library
 from llmware.retrieval import Query
 from llmware.setup import Setup
+from llmware.configs import LLMWareConfig
 
 
 def create_fin_docs_sample_library(library_name):
@@ -23,12 +24,12 @@ def create_fin_docs_sample_library(library_name):
 
     print(f"update: building embeddings - may take a few minutes the first time")
 
-    #   note: if you have installed Milvus, please substitute for 'FAISS'
+    #   note: if you have installed Milvus or another vector DB, please feel free to substitute
     #   note: if you have any memory constraints on laptop:
     #       (1) reduce embedding batch_size or ...
     #       (2) substitute "mini-lm-sbert" as embedding model
 
-    library.install_new_embedding(embedding_model_name="industry-bert-sec", vector_db="faiss",batch_size=500)
+    library.install_new_embedding(embedding_model_name="industry-bert-sec", vector_db="chromadb",batch_size=200)
 
     return library
 
@@ -74,6 +75,8 @@ def basic_semantic_retrieval_example (library):
 if __name__ == "__main__":
 
     print(f"Example - Running a Basic Semantic Query")
+
+    LLMWareConfig().set_active_db("sqlite")
 
     # step 1- will create library + embeddings with Financial Docs
     lib = create_fin_docs_sample_library("lib_semantic_query_1")
