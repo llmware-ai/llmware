@@ -9,7 +9,10 @@
     4.  Install the embeddings
     5.  Run a semantic test query
 
-    For purpose of this 'fast start', we will use a no-install option of 'faiss' and 'sqlite'
+    For purpose of this 'fast start', we will use a no-install option of 'chromadb' and 'sqlite'
+
+    Note: we have updated the no-install vector db option to 'chromadb' from 'faiss' starting in
+    llmware>=0.2.12, due to better support on Python 3.12
 
     -- This same basic recipe will work with any of the vector db and collection db by simply changing the name
 
@@ -49,7 +52,8 @@ def setup_library(library_name):
 
     print("update: Parsing and Text Indexing Files")
 
-    library.add_files(input_folder_path=os.path.join(sample_files_path, "Agreements"))
+    library.add_files(input_folder_path=os.path.join(sample_files_path, "Agreements"),
+                      chunk_size=400, max_chunk_size=600, smart_chunking=1)
 
     return library
 
@@ -114,10 +118,18 @@ if __name__ == "__main__":
 
     #   Fast Start configuration - will use no-install embedded sqlite
     #   -- if you have installed Mongo or Postgres, then change the .set_active_db accordingly
-    #   -- if you have installed any other vector db, just change the name, e.g, "milvus" or "pg_vector"
 
     LLMWareConfig().set_active_db("sqlite")
-    LLMWareConfig().set_vector_db("faiss")
+
+    #   note: as of llmware==0.2.12, we have shifted from faiss to chromadb for the Fast Start examples
+    #   --if you are using a Python version before 3.12, please feel free to substitute for "faiss"
+    #   --for versions of Python >= 3.12, for the Fast Start examples (e.g., no install required), we
+    #   recommend using chromadb or lancedb
+    #   please double-check: `pip3 install chromadb` or pull the latest llmware version to get automatically
+
+    #   -- if you have installed any other vector db, just change the name, e.g, "milvus" or "pg_vector"
+
+    LLMWareConfig().set_vector_db("chromadb")
 
     #  Step 1 - this example requires us to have a library created - two options:
 
@@ -126,7 +138,7 @@ if __name__ == "__main__":
     #  library = Library().load_library("example1_library")
 
     #  alternatively, to use this example as self-contained, then create a new library from scratch:
-    library = setup_library("example2_library")
+    library = setup_library("example2_lib")
 
     #   Step 2 - Select any embedding model in the LLMWare catalog
 
