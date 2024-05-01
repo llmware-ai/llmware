@@ -54,7 +54,6 @@ setup(
         'beautifulsoup4==4.11.1',
         'boto3==1.24.53',
         'datasets==2.15.0',
-        'faiss-cpu==1.7.4',
         'huggingface-hub==0.19.4',
         'lxml==4.9.3',
         'numpy>=1.23.2',
@@ -77,7 +76,8 @@ setup(
         'pgvector==0.2.4',
         'colorama==0.4.6',
         'einops==0.7.0',
-        'librosa>=0.10.0'
+        'librosa>=0.10.0',
+        'chromadb>=0.4.22'
     ],
 
     extras_require={
@@ -85,7 +85,6 @@ setup(
         'lancedb' :['lancedb==0.5.0'],
         'qdrant': ['qdrant-client==1.7.0'],
         'redis': ['redis==5.0.1'],
-        'neo4j': ['neo4j==5.16.0'],
-        'chromadb': ['chromadb==0.4.22']
+        'neo4j': ['neo4j==5.16.0']
     },
 )
