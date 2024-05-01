@@ -416,20 +416,20 @@ if __name__ == "__main__":
 
 from llmware.configs import LLMWareConfig
 
-#   to set the collection database - mongo, sqlite, postgres
-LLMWareConfig().set_active_db("mongo")
+#   to set the collection database - mongo, sqlite, postgres  
+LLMWareConfig().set_active_db("mongo")  
 
-#   to set the vector database (or declare when installing)
-#   --options: milvus, pg_vector (postgres), redis, qdrant, faiss, pinecone, mongo atlas
-LLMWareConfig().set_vector_db("milvus")
+#   to set the vector database (or declare when installing)  
+#   --options: milvus, pg_vector (postgres), redis, qdrant, faiss, pinecone, mongo atlas  
+LLMWareConfig().set_vector_db("milvus")  
 
-#   for fast start - no installations required
-LLMWareConfig().set_active_db("sqlite")
-LLMWareConfig().set_vector_db("faiss")
+#   for fast start - no installations required  
+LLMWareConfig().set_active_db("sqlite")  
+LLMWareConfig().set_vector_db("faiss")   # try also chromadb and lancedb  
 
-#   for single postgres deployment
-LLMWareConfig().set_active_db("postgres")
-LLMWareConfig().set_vector_db("postgres")
+#   for single postgres deployment  
+LLMWareConfig().set_active_db("postgres")  
+LLMWareConfig().set_vector_db("postgres")  
 
 #   to install mongo, milvus, postgres - see the docker-compose scripts as well as examples
 
@@ -676,12 +676,12 @@ Check out:  [llmware examples](https://github.com/llmware-ai/llmware/blob/main/e
 ## Data Store Options
 
 <details>
-<summary><b>Fast Start</b>:  use SQLite3 and FAISS out-of-the-box - no install required </summary>  
+<summary><b>Fast Start</b>:  use SQLite3 and ChromaDB (File-based) out-of-the-box - no install required </summary>  
 
 ```python
 from llmware.configs import LLMWareConfig 
 LLMWareConfig().set_active_db("sqlite")   
-LLMWareConfig().set_vector_db("faiss")
+LLMWareConfig().set_vector_db("chromadb")  
 ```
 </details>  
 
@@ -775,6 +775,12 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
+**Wednesday, May 1 - v0.2.12-WIP Update**  
+- Working on support for Python 3.12 -> will deprecate faiss and replace with 'no-install' chromadb in Fast Start examples  
+- Refactored Datasets, Graph and Web Services classes  
+- Updated Voice parsing with WhisperCPP into Library  
+- Changes merged into main branch in repo - will be released as pypi 0.2.12 version targeted by Friday, May 3 EOD  
+  
 **Monday, April 29 - v0.2.11 Update**  
 - Updates to gguf libs for Phi-3 and Llama-3  
 - Added Phi-3 [example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-microsoft-phi-3.py)  and Llama-3 [example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-llama-3.py) and Quantized Versions to Model Catalog  
