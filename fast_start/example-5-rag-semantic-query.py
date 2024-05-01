@@ -45,7 +45,8 @@ def semantic_rag (library_name, embedding_model_name, llm_model_name):
     #   this method parses all of the documents, text chunks, and captures in MongoDB
     print("update: Step 3 - Parsing and Text Indexing Files")
 
-    library.add_files(input_folder_path=contracts_path)
+    library.add_files(input_folder_path=contracts_path, chunk_size=400, max_chunk_size=600,
+                      smart_chunking=1)
 
     # Step 4 - Install the embeddings
     print("\nupdate: Step 4 - Generating Embeddings in {} db - with Model- {}".format(vector_db, embedding_model))
@@ -114,9 +115,14 @@ if __name__ == "__main__":
     #   for this example, we will use an embedding model that has been 'fine-tuned' for contracts
     embedding_model = "industry-bert-contracts"
 
-    #   note: "faiss" is being used for fast start / no set-up required - we would recommend installing
-    #   a proper vector db for greater scalability and performance
-    vector_db = "faiss"
+    #   note: as of llmware==0.2.12, we have shifted from faiss to chromadb for the Fast Start examples
+    #   --if you are using a Python version before 3.12, please feel free to substitute for "faiss"
+    #   --for versions of Python >= 3.12, for the Fast Start examples (e.g., no install required), we
+    #   recommend using chromadb or lancedb
+    #   please double-check: `pip3 install chromadb` or pull the latest llmware version to get automatically
+    #   -- if you have installed any other vector db, just change the name, e.g, "milvus" or "pg_vector"
+
+    vector_db = "chromadb"
 
     # pick any name for the library
     lib_name = "example5_library"
