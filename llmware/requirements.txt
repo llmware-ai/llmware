@@ -1,7 +1,6 @@
 beautifulsoup4==4.11.1  
 boto3==1.24.53  
-datasets==2.15.0  
-faiss-cpu==1.7.4  
+datasets==2.15.0   
 huggingface-hub==0.19.4  
 lxml==4.9.3  
 numpy>=1.23.2
@@ -25,6 +24,7 @@ pgvector==0.2.4
 colorama==0.4.6
 einops==0.7.0
 librosa>=0.10.0
+chromadb>=0.4.22  
 
 requests~=2.31.0
 tqdm~=4.66.1
