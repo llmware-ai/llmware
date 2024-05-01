@@ -2343,6 +2343,7 @@ class EmbeddingNeo4j:
 
 
 class EmbeddingChromaDB:
+
     """Implements the interface to the ChromaDB vector database.
 
     ``EmbeddingChromaDB`` implements the interface to ``ChromaDB``. It is used by the
@@ -2367,7 +2368,9 @@ class EmbeddingChromaDB:
     embedding_chromadb : EmbeddingChromaDB
         A new ``EmbeddingPGVector`` object.
     """
+
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
+
         #
         # General llmware set up code
         #
@@ -2375,7 +2378,6 @@ class EmbeddingChromaDB:
         # look up model card
         if not model and not model_name:
             raise EmbeddingModelNotFoundException("no-model-or-model-name-provided")
-
 
         self.library = library
         self.library_name = library.library_name
@@ -2388,7 +2390,6 @@ class EmbeddingChromaDB:
         if self.model:
             self.model_name = self.model.model_name
             self.embedding_dims = model.embedding_dims
-
 
         #
         # ChromaDB instantiation
@@ -2411,14 +2412,16 @@ class EmbeddingChromaDB:
                                               ssl=ChromaDBConfig.get_config('ssl'),
                                               headers=ChromaDBConfig.get_config('headers'))
 
-        collection_name = ChromaDBConfig.get_config('collection')
+        #   ChromaDB Collection maps to the LLMWare library
+        collection_name = self.library_name
+
         # If the collection already exists, it is returned.
         self._collection = self.client.create_collection(name=collection_name, get_or_create=True)
-
 
         #
         # Embedding utils
         #
+
         self.utils = _EmbeddingUtils(library_name=self.library_name,
                                      model_name=self.model_name,
                                      account_name=self.account_name,
