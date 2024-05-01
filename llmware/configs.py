@@ -777,21 +777,26 @@ class Neo4jConfig:
 
 
 class ChromaDBConfig:
+
     """Configuration object for chroma.
 
-    The default is to use chroma as an in-memory (ephemeral) store.
+    Update - v0.2.12 - default is set to use chroma as a file-based local persistent storage.
+    This is a change from the previous default which used chroma as an in-memory (ephemeral) store.
 
     Chroma can be used with or without (default) a client/server architecture. If it is used with a client/server
-    architecture, you have to set the authentication meachanism. The authentication mechanism can be either
+    architecture, you have to set the authentication mechanism. The authentication mechanism can be either
     username/password or token.
     - env variable CHROMA_HOST is None -> not client/server mode (default),
     - env variable CHROMA_HOST is set -> client/server mode
 
     If you want to use Chroma without the client/server architecture, the env variable CHROMA_HOST has to be
-    None (default). In this mode, you can choos between in-memory (also called ephemeral, non-persistent) and
+    None (default). In this mode, you can choose between in-memory (also called ephemeral, non-persistent) and
     persistent.
-    - env variable CHROMA_PERSISTENT_PATH is None -> in-memory (non-persistent),
-    - env variable CHROMA_PERSISTENT_PATH is set -> persistent storage.
+
+    Update: starting v0.2.12 - persistent path set as default to LLMWareConfigs().library_path(), which is the
+    same default path for a local sqlite.db
+    - to change to in-memory / non-persistent, set this config to None
+    -   e.g.,  ChromaDBConfig().set_config("persistent_path", None)
 
     If you want to use Chroma in client/server mode, the env variable CHROMA_HOST needs to be set. In addition,
     you have to set
@@ -803,17 +808,20 @@ class ChromaDBConfig:
     """
 
     _conf = {
-        'collection': os.environ.get('CHROMA_COLLECTION', 'llmware'),
+
+        # update - v0.2.12 -> collection on ChromaDB corresponds with the LLMWare library name
+        # 'collection': os.environ.get('CHROMA_COLLECTION', 'llmware'),
 
         #
-        # Persistent path to make chroma persistent.
+        # update - v0.2.12 -> by default, persistent path set to make chroma persistent.
         # If this is None, then an in-memory only chroma instance will be created.
         #
-        'persistent_path': os.environ.get('CHROMA_PERSISTENT_PATH', None),
+        'persistent_path': LLMWareConfig().get_library_path(),
 
         #
         # Configs below are only relevant when chromadb is run in client/server mode.
         #
+
         'host': os.environ.get('CHROMA_HOST', None),
         'port': os.environ.get('CHROMA_PORT', 8000),
         'ssl': os.environ.get('CHROMA_SSL', False),
@@ -869,9 +877,6 @@ class ChromaDBConfig:
     def get_db_pw(cls):
         return cls._conf["password"]
 
-    @classmethod
-    def get_collection_name(cls):
-        return cls._conf["collection"]
     @classmethod
     def get_auth_provider(cls):
         return cls._conf["auth_provider"]
