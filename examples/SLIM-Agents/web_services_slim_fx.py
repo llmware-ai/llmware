@@ -17,7 +17,7 @@
     """
 
 
-from llmware.util import YFinance
+from llmware.web_services import YFinance
 from llmware.models import ModelCatalog
 from llmware.parsers import WikiParser
 

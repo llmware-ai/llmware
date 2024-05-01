@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+
 """The library module implements the logic for managing unstructured information (the text).
 
 The module implements the two classes Library and LibraryCatalog. Library is responsible for organising a
@@ -26,7 +27,8 @@ import json
 import logging
 
 from llmware.configs import LLMWareConfig, LLMWareTableSchema
-from llmware.util import Utilities, Graph
+from llmware.util import Utilities
+from llmware.graph import Graph
 from llmware.parsers import Parser
 from llmware.models import ModelCatalog
 from llmware.resources import CollectionRetrieval, CollectionWriter, CloudBucketManager
