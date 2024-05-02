@@ -374,7 +374,24 @@ global_model_repo_catalog_list = [
      "custom_model_files": [], "custom_model_repo": "",
      "hf_repo": "llmware/dragon-deci-7b-v0"},
 
+   # adding bling-phi-3
+   {"model_name": "llmware/bling-phi-3", "display_name": "bling-phi-3",
+    "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+    "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+    "temperature": 0.0, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-phi-3",
+    "custom_model_files": [], "custom_model_repo": "",
+    "hf_repo": "llmware/bling-phi-3"},
+
     # gguf models
+   {"model_name": "bling-phi-3-gguf", "display_name": "llmware/bling-phi-3-gguf",
+    "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+    "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+    "temperature": 0.0, "trailing_space": "",
+    "gguf_file": "bling-phi-3.gguf",
+    "gguf_repo": "llmware/bling-phi-3-gguf",
+    "snapshot": True,
+    "link": "https://huggingface.co/llmware/bling-phi-3-gguf",
+    "custom_model_files": [], "custom_model_repo": ""},
 
     # deprecated access to dragon-mistral-7b-gguf -> replaced by dragon-mistral-answer-tool
     {"model_name": "llmware/dragon-mistral-7b-gguf", "display_name": "dragon-mistral-7b-gguf",
