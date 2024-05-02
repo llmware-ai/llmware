@@ -2280,7 +2280,7 @@ class Parser:
         return output, blocks_added, pages_added
 
     def add_create_new_record(self, library, new_entry, meta, coords_dict,dialog_value="false",
-                              write_to_db=True):
+                              write_to_db=True, custom_doc_id=None, custom_block_id=None):
 
         """ Main 'write' method of new parser text chunk for python-based parsers to write to DB. """
 
@@ -2288,11 +2288,21 @@ class Parser:
         # objective is to keep one single place where new entry gets loaded into db
         # ensure consistency of db data model
 
+        if custom_doc_id:
+            new_doc_id = custom_doc_id
+        else:
+            new_doc_id = library.doc_ID
+
+        if custom_block_id:
+            new_block_id = custom_block_id
+        else:
+            new_block_id = library.block_ID
+
         time_stamp = Utilities().get_current_time_now()
 
         new_entry = {
-            "block_ID": library.block_ID,     # note - needs caution
-            "doc_ID": library.doc_ID,       # note - needs caution
+            "block_ID": new_block_id,     # note - needs caution
+            "doc_ID": new_doc_id,       # note - needs caution
             "content_type": new_entry[0],
             "file_type": new_entry[1],
             "master_index": new_entry[2][0],
@@ -2533,7 +2543,8 @@ class Parser:
 
         return output
 
-    def parse_voice(self, input_folder, write_to_db=True, save_history=True, dupe_check=False,copy_to_library=False):
+    def parse_voice(self, input_folder, write_to_db=True, save_history=True, dupe_check=False,copy_to_library=False,
+                    chunk_by_segment=True, remove_segment_markers=True, real_time_progress=True):
 
         """ Main entry point for parsing voice wav files. """
 
@@ -2575,24 +2586,78 @@ class Parser:
 
             if go_ahead:
 
-                # increment and get new doc_id
+                #   increment and get new doc_id
                 if write_to_db_on == 1:
                     self.library.doc_ID = self.library.get_and_increment_doc_id()
 
-                vp_output = VoiceParser(self).add_voice_file(input_folder, file)
+                #   using 'print' for simplicity of user debugging - will adapt to logging mechanism over time
+                print(f"update: parse_voice file - processing - {file}")
 
-                if write_to_db_on == 1:
-                    new_output, new_blocks, new_pages = self._write_output_to_db(vp_output, file, content_type="text",
-                                                                                 file_type="voice-wav")
+                vp_output = VoiceParser(self,
+                                        chunk_size=self.chunk_size,
+                                        max_chunk_size=self.max_chunk_size,
+                                        chunk_by_segment=chunk_by_segment,
+                                        remove_segment_markers=remove_segment_markers,
+                                        real_time_progress=real_time_progress).add_voice_file(input_folder, file)
+
+                if not chunk_by_segment:
+                    text_chunks_only = []
+                    for chunks in vp_output:
+                        text_chunks_only.append(chunks["text"])
+
+                    if write_to_db_on == 1:
+                        new_output, new_blocks, new_pages = self._write_output_to_db(vp_output, file,
+                                                                                     content_type="text",
+                                                                                     file_type="voice-wav")
+                    else:
+                        new_output, new_blocks, new_pages = self._write_output_to_dict(vp_output,file,
+                                                                                       content_type="text",
+                                                                                       file_type="voice-wav")
+
+                    output += new_output
+                    docs_added += 1
+                    blocks_added += new_blocks
+                    pages_added += new_pages
+                    self.file_counter += 1
+
                 else:
-                    new_output, new_blocks, new_pages = self._write_output_to_dict(vp_output,file, content_type="text",
-                                                                                   file_type="voice-wav")
-                # return output in either case
-                output += new_output
 
-                docs_added += 1
-                blocks_added += new_blocks
-                pages_added += new_pages
+                    for i, blocks in enumerate(vp_output):
+
+                        # iterate thru each block -> add to metadata
+                        speaker_name = blocks["speaker"]
+
+                        meta = {"author": speaker_name, "modified_date": "", "created_date": "", "creator_tool": ""}
+
+                        coords_dict = {"coords_x": blocks["start_time"], "coords_y": blocks["end_time"],
+                                       "coords_cx": blocks["start_segment"], "coords_cy": blocks["end_segment"]}
+
+                        text_entry = blocks["text"]
+
+                        format_type = "voice-wav"
+
+                        new_entry = ("text", format_type, (1, 0), i, "", "", file,
+                                     "", text_entry, "", "", text_entry, text_entry, "", text_entry,
+                                     "", "", "", "", "")
+
+                        #TODO: adding dialog and diarization roles in speech parsing
+
+                        if write_to_db_on == 1:
+                            entry_output = self.add_create_new_record(self.library, new_entry, meta, coords_dict,
+                                                                      dialog_value="false")
+                            self.library.block_ID += 1
+                        else:
+                            entry_output = self.create_one_parsing_output_dict(i,new_entry,meta,coords_dict,
+                                                                               dialog_value="false")
+                            self.parser_output.append(entry_output)
+
+                        # return output in either case
+                        output.append(entry_output)
+
+                    blocks_added += len(vp_output)
+                    pages_added += 0
+                    docs_added += 1
+                    self.file_counter += 1
 
         if write_to_db_on == 1:
             dummy = self.library.set_incremental_docs_blocks_images(added_docs=docs_added, added_blocks=blocks_added,
@@ -3499,7 +3564,8 @@ class Parser:
 
         return output
 
-    def parse_one_voice(self, input_fp, input_fn, save_history=True):
+    def parse_one_voice(self, input_fp, input_fn, save_history=True,
+                        chunk_by_segment=True, remove_segment_markers=True, real_time_progress=True):
 
         """ Parse one WAV document at selected file path and file name. """
 
@@ -3517,23 +3583,53 @@ class Parser:
 
         if ext in self.voice_types:
 
-            parser_output = VoiceParser(self).add_voice_file(input_fp, input_fn)
+            parser_output = VoiceParser(self,
+                                        chunk_size=self.chunk_size,
+                                        max_chunk_size=self.max_chunk_size,
+                                        chunk_by_segment=chunk_by_segment,
+                                        remove_segment_markers=remove_segment_markers,
+                                        real_time_progress=real_time_progress).add_voice_file(input_fp, input_fn)
 
-            meta = {"author": "", "modified_date": "", "created_date": "", "creator_tool": ""}
-            coords_dict = {"coords_x": 0, "coords_y": 0, "coords_cx": 0, "coords_cy": 0}
+            if not chunk_by_segment:
+                text_chunks_only = []
+                for chunks in parser_output:
+                    text_chunks_only.append(chunks["text"])
 
-            for j, blocks in enumerate(parser_output):
+                new_output, new_blocks, new_pages = self._write_output_to_dict(text_chunks_only, input_fn,
+                                                                               content_type="text", file_type="voice-wav")
 
-                new_entry = ("text", "ocr-wav", (1, 0), counter, "", "", input_fn, "", blocks, "",
-                             "", blocks, blocks, "", blocks, "", "", "", "", "")
+                self.parser_output.append(new_output)
+                output += new_output
 
-                # creates a single 'unbound' parsing output dict -> no storage
-                parsing_output_dict = self.create_one_parsing_output_dict(counter,
-                                                                          new_entry, meta, coords_dict,
-                                                                          dialog_value="false")
+            else:
 
-                output.append(parsing_output_dict)
-                self.parser_output.append(parsing_output_dict)
+                for i, blocks in enumerate(parser_output):
+
+                    # iterate thru each block -> add to metadata
+                    speaker_name = blocks["speaker"]
+
+                    meta = {"author": speaker_name, "modified_date": "", "created_date": "", "creator_tool": ""}
+
+                    coords_dict = {"coords_x": blocks["start_time"], "coords_y": blocks["end_time"],
+                                   "coords_cx": blocks["start_segment"], "coords_cy": blocks["end_segment"]}
+
+                    text_entry = blocks["text"]
+
+                    # conforming file format with full path of dialog intake path
+
+                    format_type = "voice-wav"
+
+                    new_entry = ("text", format_type, (1, 0), i, "", "", input_fn,
+                                 "", text_entry, "", "", text_entry, text_entry, "", text_entry,
+                                 "", "", "", "", "")
+
+                    entry_output = self.create_one_parsing_output_dict(i, new_entry, meta, coords_dict,
+                                                                       dialog_value="false")
+
+                    self.parser_output.append(entry_output)
+
+                    # return value is output
+                    output.append(entry_output)
 
         if save_history:
             ParserState().save_parser_output(self.parser_job_id, self.parser_output)
@@ -4184,11 +4280,20 @@ class VoiceParser:
 
     """ VoiceParser handles wav files to convert into text blocks. """
 
-    def __init__(self, parser=None, library=None, text_chunk_size=600, look_back_range=300):
+    def __init__(self, parser=None, library=None, text_chunk_size=600, look_back_range=300,
+                 chunk_size=400, max_chunk_size=600, chunk_by_segment=True, remove_segment_markers=True,
+                 real_time_progress=True):
 
         self.parser = parser
 
-        # defaults
+        #   chunking parameters
+        self.chunk_size=chunk_size
+        self.max_chunk_size = max_chunk_size
+        self.chunk_by_segment = chunk_by_segment
+        self.remove_segment_markers = remove_segment_markers
+        self.real_time_progress = real_time_progress
+
+        # defaults - for pure 'Text Chunking' - deprecating approach, but keeping as option for now
         self.text_chunk_size = text_chunk_size
         self.look_back_range = look_back_range
 
@@ -4205,36 +4310,102 @@ class VoiceParser:
 
         from llmware.gguf_configs import GGUFConfigs
 
-        # default model -> "whisper-cpp-base-english"
+        #   default model -> "whisper-cpp-base-english"
         self.selected_speech_model_name = GGUFConfigs().get_config("whisper_default_model")
+
+        #   will update global GGUFConfigs based on real_time_progress preference
+        GGUFConfigs().set_config("whisper_cpp_realtime_display", self.real_time_progress)
 
     def voice_to_text(self,fp_input, fn, sr_input=16000):
 
-        """Voice to text parsing conversion. Requires loading of separate dependency. """
+        """Voice to text parsing conversion - looks up and calls the Model and gets inference response. """
 
         from llmware.models import ModelCatalog
 
         self.speech_model = ModelCatalog().load_model(self.selected_speech_model_name)
 
-        response = self.speech_model.inference(os.path.join(fp_input,fn))
+        inference_dict = {"remove_segment_markers": self.remove_segment_markers}
 
-        transcription = response["llm_response"]
+        response = self.speech_model.inference(os.path.join(fp_input,fn),inference_dict=inference_dict)
 
-        return transcription
+        #   response dictionary has several keys - "llm_response" | "segments" | "usage"
+
+        #   still exploring the best way to release memory once processing completed
+        self.speech_model.__dealloc__()
+        del self.speech_model
+        self.speech_model = None
+
+        return response
 
     def add_voice_file(self, input_fp, fn):
 
         """ Parse voice file. """
 
+        output = []
+
         #   16000 is standard default encoding rate for .wav -> may need further test/experiment
-        text_out = self.voice_to_text(input_fp, fn, 16000)
+        response = self.voice_to_text(input_fp, fn, 16000)
 
-        # will chop up the long text into individual blocks
-        text_chunks = TextChunker(text_chunk=text_out,
-                                  max_char_size=self.text_chunk_size,
-                                  look_back_char_range=self.look_back_range).convert_text_to_chunks()
+        if not self.chunk_by_segment:
 
-        return text_chunks
+            # this is initial strategy- deprecating for chunk_by_segment
+            text_out = response["text"]
+            # will chop up the long text into individual blocks
+            text_chunks = TextChunker(text_chunk=text_out,
+                                      max_char_size=self.text_chunk_size,
+                                      look_back_char_range=self.look_back_range).convert_text_to_chunks()
+
+            for i, chunk in enumerate(text_chunks):
+
+                new_entry = {"text": chunk, "start_time": 0, "end_time": 0, "speaker": "", "index": i,
+                             "start_segment": 0, "end_segment": 0, "type": "text_only"}
+
+                output.append(new_entry)
+        else:
+            # aggregate by segment within size parameters
+            if "segments" not in response:
+                logging.warning("update: VoiceParser - no 'segments' found in response from WhisperCPP.")
+                return []
+
+            char_counter = 0
+            time_start = 0.0
+            start_segment = 0
+            t = ""
+
+            for i, segment in enumerate(response["segments"]):
+
+                current_segment_len = len(segment["text"])
+
+                if (char_counter + current_segment_len) >= self.chunk_size:
+
+                    # add to output list
+
+                    t += " " + segment["text"]
+                    new_entry = {"text": t, "start_time": time_start, "end_time": segment["end"],
+                                 "speaker": "", "index": i, "start_segment": start_segment, "end_segment": i,
+                                 "type": "segments"}
+                    output.append(new_entry)
+                    t = ""
+                    char_counter = 0
+                    time_start = segment["end"]
+                    start_segment = i+1
+                else:
+                    if len(t) > 0 and ord(t[-1]) != 32:
+                        t += " " + segment["text"]
+                    else:
+                        t += segment["text"]
+
+                    char_counter = len(t)
+
+            # pick up last block of text
+            if len(t) > 0:
+                last_segment = response["segments"][-1]
+                new_entry = {"text": t, "start_time": time_start, "end_time": last_segment["end"],
+                             "speaker": "", "index": len(response["segments"]), "start_segment": start_segment,
+                             "end_segment": len(response["segments"]), "type": "segments"}
+                output.append(new_entry)
+
+        return output
 
 
 class TextParser:

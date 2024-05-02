@@ -6227,6 +6227,9 @@ class WhisperCPPModel:
             if "translate" in inference_dict:
                 self.translate=inference_dict["translate"]
 
+            if "remove_segment_markers" in inference_dict:
+                self.remove_segment_markers = inference_dict["remove_segment_markers"]
+
         #   note: inference on wav file requires librosa library
         try:
             import librosa
@@ -6373,6 +6376,10 @@ class WhisperCPPModel:
     def __dealloc__(self):
         # free the memory
         self._lib.whisper_free(ctypes.c_void_p(self.context))
+
+    def unload_model(self):
+
+        self._lib = None
 
     @staticmethod
     def _format_time(t):
