@@ -433,6 +433,7 @@ class WebSiteParser:
 
             # main check for text
             if elements.get_text():
+
                 get_text = 1
 
                 if elements.attrs == {}:
@@ -440,8 +441,13 @@ class WebSiteParser:
 
                 if "type" in elements.attrs:
                     # skip css and javascript
-                    if elements.attrs["type"] == "text/css" or elements.attrs["type"] == "text/javascript":
+                    if elements.attrs["type"] == "text/css" or elements.attrs["type"] == "text/javascript" \
+                            or elements.attrs["type"] == "application/ld+json":
                         get_text = -1
+
+                #   wip - generally associated with javascript inline script
+                if "charset" in elements.attrs:
+                    get_text = -1
 
                 if get_text == 1:
 
