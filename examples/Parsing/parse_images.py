@@ -9,6 +9,7 @@ import os
 from llmware.library import Library, LibraryCatalog
 from llmware.parsers import Parser, ImageParser
 from llmware.setup import Setup
+from llmware.configs import LLMWareConfig
 
 
 # Demonstrate adding files to a library, which implicitly parses them and creates blocks
@@ -43,7 +44,9 @@ def parsing_image_sources_into_library(library_name):
 
 if __name__ == "__main__":
 
-    lib_name = "my_image_library_0"
+    LLMWareConfig().set_active_db("sqlite")
+
+    lib_name = "my_image_library_23"
 
     x = parsing_image_sources_into_library(lib_name)
 

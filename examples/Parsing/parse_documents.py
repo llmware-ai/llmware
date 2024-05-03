@@ -8,6 +8,7 @@
 import os
 from llmware.library import Library
 from llmware.setup import Setup
+from llmware.configs import LLMWareConfig
 
 
 def parsing_documents_into_library(library_name, sample_folder):
@@ -64,6 +65,8 @@ if __name__ == "__main__":
     # this is a list of document folders that will be pulled down by calling Setup()
     sample_folders = ["Agreements", "Invoices", "UN-Resolutions-500", "SmallLibrary", "FinDocs", "AgreementsLarge"]
 
-    library_name = "parsing_test_lib_5"
+    LLMWareConfig().set_active_db("sqlite")
+
+    library_name = "parsing_test_lib"
     selected_folder = sample_folders[0]
     output = parsing_documents_into_library(library_name, selected_folder)
