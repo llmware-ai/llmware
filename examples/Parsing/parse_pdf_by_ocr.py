@@ -1,6 +1,6 @@
 
 """ This example demonstrates how to parse PDF documents consisting of scanned pages using OCR
-      1. Note: uses pdf2image library - requires separate install locally of lib tesseract
+      1. Note: uses pdf2image library - requires separate install locally of lib tesseract and poppler
       2. This is a useful fall-back for scanned documents, if not possible to parse digitally
 """
 

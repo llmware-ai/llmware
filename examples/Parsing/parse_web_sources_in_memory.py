@@ -14,7 +14,7 @@ def parsing_web_sources_in_memory():
     print(f"\nExample - Parsing Web Sources")
 
     # parse website directly
-    website = "https://politico.com"
+    website = "https://www.cnbc.com"
     print(f"\n > Parsing {website}")
     website_parsed_output = Parser().parse_website(website, write_to_db=False, save_history=False, get_links=False)
     block_text = website_parsed_output[0]["text"]
