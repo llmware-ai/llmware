@@ -136,3 +136,37 @@ class Setup:
         os.remove(local_zip)
 
         return sample_files_path
+
+    @staticmethod
+    def load_selected_sample_files(sample_folder="microsoft_ir", over_write=False):
+
+        """ Downloads sample wav files from non-restricted AWS S3 bucket. """
+
+        if not os.path.exists(LLMWareConfig.get_llmware_path()):
+            LLMWareConfig.setup_llmware_workspace()
+
+        # not configurable - will pull into /sample_files under llmware_path
+        sample_files_path = os.path.join(LLMWareConfig.get_llmware_path(), sample_folder)
+
+        if not os.path.exists(sample_files_path):
+            os.makedirs(sample_files_path, exist_ok=True)
+        else:
+            if not over_write:
+                logging.info("update: sample_files selected path already exists - %s ", sample_files_path)
+                return sample_files_path
+
+        # pull from sample files bucket
+        bucket_name = LLMWareConfig().get_config("llmware_sample_files_bucket")
+
+        folder_name = sample_folder
+
+        logging.info("update: downloading requested sample files from AW3 S3 bucket")
+
+        remote_zip = folder_name + ".zip"
+        local_zip = os.path.join(sample_files_path, bucket_name + ".zip")
+
+        CloudBucketManager().pull_file_from_public_s3(remote_zip, local_zip, bucket_name)
+        shutil.unpack_archive(local_zip, sample_files_path, "zip")
+        os.remove(local_zip)
+
+        return sample_files_path
