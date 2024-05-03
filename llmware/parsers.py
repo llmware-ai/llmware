@@ -566,27 +566,27 @@ class Parser:
 
                     if success_code == 1:
 
-                        if ext in ["pptx", "docx", "xlsx"]:
+                        if ext in self.office_types:
                             shutil.copy(os.path.join(self.zip_work_folder,"tmp" + os.sep,f),
                                         os.path.join(self.office_work_folder,fn))
                             office_found += 1
 
-                        if ext in ["pdf"]:
+                        if ext in self.pdf_types:
                             shutil.copy(os.path.join(self.zip_work_folder, "tmp" + os.sep, f),
                                         os.path.join(self.pdf_work_folder,fn))
                             pdf_found += 1
 
-                        if ext in ["txt", "csv", "tsv", "json", "jsonl", "md"]:
+                        if ext in self.text_types:
                             shutil.copy(os.path.join(self.zip_work_folder, "tmp" + os.sep, f),
                                         os.path.join(self.text_work_folder,fn))
                             text_found += 1
 
-                        if ext in ["png", "jpg", "jpeg"]:
+                        if ext in self.ocr_types:
                             shutil.copy(os.path.join(self.zip_work_folder,"tmp" + os.sep,f),
                                         os.path.join(self.ocr_work_folder,fn))
                             ocr_found += 1
 
-                        if ext in ["wav"]:
+                        if ext in self.voice_types:
                             shutil.copy(os.path.join(self.zip_work_folder,"tmp" + os.sep,f),
                                         os.path.join(self.voice_work_folder, fn))
                             voice_found += 1
@@ -2606,11 +2606,11 @@ class Parser:
                         text_chunks_only.append(chunks["text"])
 
                     if write_to_db_on == 1:
-                        new_output, new_blocks, new_pages = self._write_output_to_db(vp_output, file,
+                        new_output, new_blocks, new_pages = self._write_output_to_db(text_chunks_only, file,
                                                                                      content_type="text",
                                                                                      file_type="voice-wav")
                     else:
-                        new_output, new_blocks, new_pages = self._write_output_to_dict(vp_output,file,
+                        new_output, new_blocks, new_pages = self._write_output_to_dict(text_chunks_only, file,
                                                                                        content_type="text",
                                                                                        file_type="voice-wav")
 
@@ -3055,6 +3055,7 @@ class Parser:
 
         for i, file in enumerate(doc_fn_raw_list):
             if file.split(os.sep)[-1] in file_list:
+                # excludes zip files that have been unzipped into core files in the parsing proces
                 found_list.append(file.split(os.sep)[-1])
             # if found_list is equal length of file_list we don't need to look any further
             if len(found_list) == len(file_list):
@@ -3062,7 +3063,15 @@ class Parser:
 
         not_found_list = list(set(file_list) - set(found_list))
 
-        return found_list, not_found_list
+        #   will strip any .zip files from rejected list, since the individual files are dynamically extracted
+        #   and parsed, and if there is an error opening the zip it is raised as an exception
+
+        ex_zip_nf_list = []
+        for f in not_found_list:
+            if not f.endswith(".zip"):
+                ex_zip_nf_list.append(f)
+
+        return found_list, ex_zip_nf_list
 
     def input_ingestion_comparison_from_parser_state (self, file_list):
 
