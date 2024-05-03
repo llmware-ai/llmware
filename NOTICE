@@ -1,79 +1,397 @@
 
-Copyright 2023, llmware 
+Copyright 2023 and 2024 by llmware
 
-This software contains links to the llmware public model repository.  Models in this repository are licensed under the Apache License 2.0. (https://www.apache.org/licenses/LICENSE-2.0)
+NOTICE - Overview
 
-This software contains code copied from, derived from or inspired by Nils Reimers and the UKP Labe Sentence Transformers Model. (https://github.com/UKPLab/sentence-transformers)
-Copyright 2019 Nils Reimers
+LLMWare Models.  This software contains links to the LLMWare public model repository currently hosted on Huggingface (www.huggingface.co/llmware).  LLMWare models in this repository are generally licensed under a separate Apache License 2.0 license, e.g., https://www.apache.org/licenses/LICENSE-2.0.  Where there are any exceptions to Apache 2.0, it is noted on the Model Card, e.g., Llama 2 Community License or CC-BY-SA-4.0, and is following licensing conditions of the underlying base models.   All of the LLMWare models that are listed in the ModelCatalog in this repository are permissively licensed and may be used for commercial purposes in conjunction with llmware, subject to the license terms found with the model cards.
 
-This software contains code copied from, derived from or inspired from the PyTorch BERT model.  (https://github.com/huggingface/transformers)
-Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
-Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+3rd Party Models.  The llmware software package also provides the ability to use other 3rd party models in conjunction with the llmware software.  Use of any third party models is subject to the licensing terms of those models.
 
-This software contains code copied from, derived from or inspired from the Huggingface transformers generation code. (https://github.com/huggingface/transformers/src/transformers/generation)
-Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
-Copyright (c) 2018, NVIDIA CORPORATION. All rights reserved.
+Sample Testing Files.  This software includes sample files that are made available for testing, including documents and audio files.   These files have either been derived from open public domain sources, or produced as original materials by the llmware team to be used as test samples and  examples.  These files are made available solely for purposes of testing and illustrating the use of key llmware functions, and should not be used, distributed or published in any other manner.   The audio files, in particular, may be subject to copyright protections that preclude any other form of publishing beyond limited 'fair use' as testing files.
+
+Compiled Enabling Components.  This software consists primarily of Python source code, but also includes back-end enabling components consisting of prebuilt compiled C/C++ shared libraries and supporting 3rd party dependencies:
+
+    * libpdf_llmware - this is a PDF parser written in C developed and copyrighted separately by llmware, which implements the ISO-32000 specification.  The compiled parser is provided as a shared library as part of the llmware software package, under an Apache 2.0 license, but the source code has not been provided in the llmware project currently.  The interfaces to the shared library are in the Python source code in the Parser module, which enable the user to access, configure and control the behavior of the PDF parser as part of building applications and other solutions with llmware.
+    
+    * liboffice_llmware - this is an Office XML parser written in C developed and copyrighted by llmware, which implements the ISO-29500 Office Open XML specification for documents that conform with Word, Powerpoint and Excel formats.   The compiled parser is provided as a shared library as part of the llmware software package, under an Apache 2.0 license, but the source code has not been provided in the llmware project currently.  The interfaces to the shared library are in the Python source code in the Parser module, which enable the user to access, configure and control the behavior of the Office parser as part of building applications and other solutions with llmware.
+    
+    * libgraph_llmware - this module provides a set of NLP-based utility functions, written in C developed and copyrighted by llmware, and exposed in the Python code in the graph module.   The compiled code is provided as a shared library as part of the llmware software package, under an Apache 2.0 license, but the source code has not been released in the llmware project currently.
+    
+    * llama.cpp / GGUF - this a prebuilt shared library implementation of Llama.CPP and associated GGML middleware components, licensed under a MIT license with the source code and all other information in the repository:  www.github.com/ggerganov/llama.cpp.git.  The llmware implementation generally follows the core Python interface for Llama.CPP as provided in the repository:  www.github.com/abetlen/llama-cpp-python.git, although there will be differences from time-to-time, and llmware may have additional features not found in other Python interfaces and vice versa.   The llmware shared library implementation is regularly updated and re-compiled, and tested for integration into llmware, but may depart from the current source code of llama.cpp.
+    
+    * whisper.cpp / GGML - this is a prebuilt shared library implementation of Whisper.CPP and associated GGML middleware components, licensed under a MIT license with the source code and all other information in the repository:  www.github.com/ggerganov/whisper.cpp.git.   The llmware Python interface for Whisper.CPP was developed originally, but took inspiration from www.github.com/carloscdias/whisper-cpp-python.git, which is provided under a MIT license.  The llmware shared library implementation is regularly updated and recompiled, and tested for integration into llmware, but may depart from the current source code of whisper.cpp.
+
+    Why shared libraries rather than source code?  The objective of including these prebuilt shared libraries in this project is to enable a complete LLM-based pipeline development framework that works "out of the box" on multiple platforms, and also enables a developer to rapidly and intuitively scale to large, complex solutions.   We view these shared libraries as enabling components with the core of the llmware project consisting of the higher-level classes and functions exposed in the Python source code.  In the future, we may revisit the decision to publish the source code for the llmware parsers (e.g., libpdf_llmware, liboffice_llmware, libgraph_llmware), and/or provide under a separate project repository focused on lower-level components and in C/C++.   Generally, these parsers are complex, standalone, low-level code that implements the arcane rules of various ISO standards, and for the foreseeable future, we do not have the bandwidth to manage a full open source documentation, testing, and lifecycle around that source code base - without it overwhelming the main objective of llmware.
+
+Vector Databases.  This software provides integration to a wide variety of vector database resources, using the open source Python drivers and associated SDKs provided by the vector database vendor with the licensing details outlined below.  Users need to install any vector databases separately and independently, subject to the licensing terms from those vendors.  llmware does not provide any licenses to vector databases, and llmware does not require the use of a vector database for a wide range of use cases.  In several Fast Start examples, we demonstrate how to use "no-install" vector databases, such as FAISS (MIT license), ChromaDB (Apache 2.0 license - www.github.com/chroma-core/chroma.git) and LanceDB (Apache 2.0 license - www.github.com/lancedb/lancedb.git), but no license is provided to those separate resources.
+
+General Purpose Databases.  This software provides integration to three core database resources - Postgres, MongoDB and SQLite.  llmware connects to these resources using open source Python and C drivers.  Users need to install these databases separately and indendently, subject to the licensing terms from those vendors.  llmware does not provide any licenses to databases, and llmware does not require the use of a database for a wide range of use cases.
+
+Huggingface Integration.  This software provides features and functions that enable access to models, tokenizers and datasets hosted in Huggingface repositories and accessible via the Huggingface transformers, tokenizers, datasets and huggingface-hub libraries.  In providing interfaces to these resources, llmware uses transformers, in particular, which is provided by Huggingface under an Apache 2.0 license (see www.github.com/huggingface/transformers.git).  In addition, related to these interfaces, llmware provides code that was influenced, derived, and in a few limited cases, copied, from transformers source code to faciliate the integration.   Some of this transformers code, especially the underlying model class code, is subject to additional copyright notices from HuggingFace, Google AI, EleutherAI, NVIDIA and potentially others for specific models.  For use of any individual third party model, accessed through a Huggingface repository, we recommend reviewing the individual model card to confirm the licensing terms and other associated copyrights.
 
 =================================================================================================
 
-Open-Source dependencies for the llmware package:
+Open Source Dependencies and Optional Components
 
+Please note that the list below includes 'first-level' dependencies but does not include potential 'second-level' dependencies included within the components outlined below.
+
+3rd Party Open Source libraries, drivers and tools in Python (pip install) and C/C++ dependencies used in conjunction for the llmware software package:
+   
 3-clause BSD License (https://opensource.org/license/bsd-3-clause/)
-   * Software: libzip (https://libzip.org/)
-   * Software: lxml (https://github.com/lxml/lxml)
-   * Software: numpy (https://github.com/numpy/numpy)
-   * Software: torch (https://github.com/pytorch/pytorch)
-   * Software: Werkzeug (https://github.com/pallets/werkzeug/)
+   * Software: libzip (https://libzip.org/)  [C library]
+   * Software: lxml (https://github.com/lxml/lxml) [Python pip install]
+   * Software: numpy (https://github.com/numpy/numpy) [Python pip install]
+   * Software: torch (https://github.com/pytorch/pytorch) [Python pip install]
+   * Software: Werkzeug (https://github.com/pallets/werkzeug/) [Python pip install]
+   * Software: colorama (https://github.com/tartley/colorama) [Python pip install]
 
 Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
-   * Software: boto3 (https://github.com/boto/boto3)
-   * Software: google-cloud-aiplatform (https://github.com/googleapis/python-aiplatform)
-   * Software: mongo-c-driver (https://github.com/mongodb/mongo-c-driver)
-   * Software: pymilvus (https://github.com/milvus-io/pymilvus)
-   * Software: pymongo (http://github.com/mongodb/mongo-python-driver)
-   * Software: pytesseract (https://github.com/madmaze/pytesseract)
-   * Software: tesseract (https://github.com/tesseract-ocr/tesseract)
-   * Software: tokenizers (https://github.com/huggingface/tokenizers)
-   * Software: yfinance (https://github.com/ranaroussi/yfinance)
+   * Software: boto3 (https://github.com/boto/boto3) [Python pip install]
+   * Software: mongo-c-driver (https://github.com/mongodb/mongo-c-driver) [C library]
+   * Software: pymilvus (https://github.com/milvus-io/pymilvus)  [Python pip install]
+   * Software: pymongo (http://github.com/mongodb/mongo-python-driver)  [Python pip install]
+   * Software: pytesseract (https://github.com/madmaze/pytesseract)  [Python pip install]
+   * Software: tokenizers (https://github.com/huggingface/tokenizers) [Python pip install]
+   * Software: transformers (https://github.com/huggingface/transformers) [Python pip install]
+   * Software: datasets (https://github.com/huggingface/datasets) [Python pip install]
+   * Software: huggingface-hub (https://github.com/huggingface/huggingface-hub) [Python pip install]
+   * Software: sentence-transformers (https://github.com/UKPLabs/sentence-transformers) [Python pip install]
+   * Software: yfinance (https://github.com/ranaroussi/yfinance) [Python pip install]
+   * Software: chromadb (https://github.com/chroma-core/chroma) [Python pip install]
+   * Optional: neo4j-python-driver (https://github.com/neo4j/neo4j-python-driver) [Optional / Python pip install]
+   * Optional: Tiny-Llama base model (https://github.com/jzhang38/TinyLlama) [Separate Download and install]
+   * Optional: tesseract (https://github.com/tesseract-ocr/tesseract) [Optional / not included / C library]
+   
+ICS License (https://opensource.org/license/isc-license-txt)
+   * Software: librosa - source code and license at: https://github.com/librosa/librosa [Python pip install]
+   
+Database Drivers used in llmware
+   * Mongo C driver - libmongoc / libbson - Apache 2.0 (https://www.github.com/mongodb/mongo-c-driver) [C library]
+   * PostgreSQL C driver - libpq - PostgresSQL Global Development Group (https://www.github.com/postgres/postgres/blob/master/copyright) [C library]
+   * PostgreSQL psycopg - unmodified and linked dynamically from pypi release - GNU Lesser General Public License (https://www.github.com/psyocopg/psycopg/LICENSE.txt) [Python pip install]
+   * SQLite C driver - libsqlite3 - (https://www.github.com/LuaDist/libsqlite3) [C library]
 
-GNU GENERAL PUBLIC LICENSE 3.0 (https://www.gnu.org/licenses/gpl-3.0.html#license-text)
-   * Software:  poppler (https://poppler.freedesktop.org/)
-
-Historical Permission Notice and Disclaimer (HPND) (https://spdx.org/licenses/HPND)
-   * Software: pillow (https://github.com/python-pillow/Pillow)
-
+PNG Reference Library License
+   * libpng: source code and license (https://github.com/pnggroup/libpng) [C library]
+   
 libtiff License (https://spdx.org/licenses/libtiff.html)
-   * Softward: libtiff (http://www.libtiff.org/)
+   * Software: libtiff (http://www.libtiff.org/) [C library]
 
 MIT License (https://opensource.org/license/mit/)
-   * Software: ai21 (https://pypi.org/project/ai21/) 
-   * Software: anthropic (https://github.com/anthropics/anthropic-sdk-python)
-   * Software: beautifulsoup4 (https://pypi.org/project/beautifulsoup4/)
-   * Software: cohere (https://github.com/cohere-ai/cohere-python)
-   * Software: faise-cpu (https://github.com/kyamagu/faiss-wheels)
-   * Software: openai (https://github.com/openai/openai-python)
-   * Software: pdf2image (https://github.com/Belval/pdf2image)
-   * Software: word2number (https://github.com/akshaynagpal/w2n)
-   * Software: Wikipedia-API (https://github.com/martin-majlis/Wikipedia-API)
-
-PNG Reference Library version 2 (https://spdx.org/licenses/libpng-2.0.html)
-   * Software: libpng (http://www.libpng.org/pub/png/libpng.html)
-
-zlib License (https://github.com/madler/zlib/blob/develop/LICENSE)
-   * Software: zlib (https://www.zlib.net/)
+   * Software: libxml2 (https://github/com/GNOME/libxml2) [C library]
+   * Software: llama.cpp (https://github.com/ggerganov/llama.cpp) [C/C++ library]
+   * Software: whisper.cpp (https://github.com/ggerganov/whisper.cpp) [C/C++ library]
+   * Software: beautifulsoup4 (https://pypi.org/project/beautifulsoup4/) [Python pip install]
+   * Software: openai (https://github.com/openai/openai-python) [Python pip install]
+   * Software: pdf2image (https://github.com/Belval/pdf2image)  [Python pip install]
+   * Software: word2number (https://github.com/akshaynagpal/w2n) [Python pip install]
+   * Software: Wikipedia-API (https://github.com/martin-majlis/Wikipedia-API) [Python pip install]
+   * Software: tabulate (https://github.com/astanin/python-tabulate) [Python pip install]
+   * Software: einops (https://github.com/arogozhinov/einops) [Python pip install]
+   * Software - Optional - Whisper models - openai (https://github.com/openai/whisper) [Separate download and install]
+   * Software - Optional - anthropic (https://github.com/anthropics/anthropic-sdk-python) [Python pip install]
+   * Software - Optional - faise-cpu (https://github.com/kyamagu/faiss-wheels) [Python pip install]
+   * Software - Optional - cohere (https://github.com/cohere-ai/cohere-python) [Python pip install]
    
+zlib License (https://github.com/madler/zlib/blob/develop/LICENSE)
+   * Software: zlib (https://www.zlib.net/) [C library]
+
+Databases - separate and optional components that may be used in conjunction with llmware and require user to license and install independently:
+
+   * Postgres: source code for Postgres database provided at: https://github.com/postgres.  Copyright is by PostgreSQL Global Development Group and Regents of the University of California - (https://github.com/postgres/postgres/blob/master/copyright) - with license terms outlined below in the Copyright Notices section.  [Separate download and install]
+   
+   * MongoDB: source code for Community edition provided at: https://github.com/mongodb/mongo - "MongoDB is free and the source is available" subject to the Server Side Public License (SSPL) v1 - (https://github.com/mongodb/mongo/blob/master/LICENSE-Community.txt).  [Separate download and install]
+   
+   * SQLite: source code provided at: https://github.com/sqlite/sqlite - not subject to copyright - "May you share freely, never taking more than you give."   [Separate download and install]
+
+Vector Databases - separate and optional open source components that may be used in conjunction with llmware and require user to license and install independently:
+
+   * Milvus:    Apache 2.0 license - source code and license at: https://github.com/milvus-io/milvus
+   * Qdrant:    Apache 2.0 license - source code and license at: https://github.com/qdrant/qdrant
+   * ChromaDB:  Apache 2.0 license - source code and license at: https://github.com/chroma-core/chroma
+   * PGVector:  Postgres Development Group license - source code and license at: https://github.com/pgvector/pgvector
+   * Neo4J:     GPL-3.0 license - source and license at: https://github.com/neo4j/neo4j
+   * FAISS:     MIT license - source code and license at: https://github.com/facebookresearch/faiss
+   * LanceDB:   Apache 2.0 license - source code and license at:  www.github.com/lancedb/lancedb.git
+
 =================================================================================================
 
-Citations for Open Source Software and Research used in the development of llmware:
+Required Copyright Notices Per Open Source Licenses for Components Distributed Directly with a Full Clone of the Repository - does not include components installed through a separate pip install process, or additional components used in conjunction with LLMWare, but installed independently from this repository.
 
-NumPy 
-Harris, C.R., Millman, K.J., van der Walt, S.J. et al. Array programming with NumPy. Nature 585, 357–362 (2020). 
+Name: llama.cpp
+License: MIT
 
-Tokenizers
-Moi, A., & Patry, N. (2023). HuggingFace's Tokenizers (Version 0.13.4) [Computer software]. https://github.com/huggingface/tokenizers
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-Torch 
-Paszke, A., Gross, S., Massa, F., Lerer, A., Bradbury, J., Chanan, G., Killeen, T., Lin, Z., Gimelshein, N., Antiga, L., Desmaison, A., Kopf, A., Yang, E., DeVito, Z., Raison, M., Tejani, A., Chilamkurthy, S., Steiner, B., Fang, L., Bai, J., & Chintala, S. (2019). PyTorch: An Imperative Style, High-Performance Deep Learning Library [Conference paper]. Advances in Neural Information Processing Systems 32, 8024–8035. http://papers.neurips.cc/paper/9015-pytorch-an-imperative-style-high-performance-deep-learning-library.pdf
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+Name: whisper.cpp
+License: MIT
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+Name: libxml2
+License: MIT
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+Name: mongo-c-driver (libmongoc and libbson)
+License: Apache 2.0 Copyright Notice
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+Name: libzip
+License: BSD-3-Clause
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Name: libpq
+License: GNU LESSER GENERAL PUBLIC LICENSE & Postgres License
+
+PostgreSQL License
+
+PostgreSQL is released under the PostgreSQL License, a liberal Open Source license, similar to the BSD or MIT licenses.
+
+PostgreSQL Database Management System
+(formerly known as Postgres, then as Postgres95)
+
+Portions Copyright © 1996-2024, The PostgreSQL Global Development Group
+
+Portions Copyright © 1994, The Regents of the University of California
+
+Permission to use, copy, modify, and distribute this software and its documentation for any purpose, without fee, and without a written agreement is hereby granted, provided that the above copyright notice and this paragraph and the following two paragraphs appear in all copies.
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
+
+GNU Lesser General Public License - Version 3, 29 June 2007
+
+Copyright © 2007 Free Software Foundation, Inc. <https://fsf.org/>
+
+Everyone is permitted to copy and distribute verbatim copies of this license document, but changing it is not allowed.
+
+This version of the GNU Lesser General Public License incorporates the terms and conditions of version 3 of the GNU General Public License, supplemented by the additional permissions listed below.
+
+0. Additional Definitions.
+As used herein, “this License” refers to version 3 of the GNU Lesser General Public License, and the “GNU GPL” refers to version 3 of the GNU General Public License.
+
+“The Library” refers to a covered work governed by this License, other than an Application or a Combined Work as defined below.
+
+An “Application” is any work that makes use of an interface provided by the Library, but which is not otherwise based on the Library. Defining a subclass of a class defined by the Library is deemed a mode of using an interface provided by the Library.
+
+A “Combined Work” is a work produced by combining or linking an Application with the Library. The particular version of the Library with which the Combined Work was made is also called the “Linked Version”.
+
+The “Minimal Corresponding Source” for a Combined Work means the Corresponding Source for the Combined Work, excluding any source code for portions of the Combined Work that, considered in isolation, are based on the Application, and not on the Linked Version.
+
+The “Corresponding Application Code” for a Combined Work means the object code and/or source code for the Application, including any data and utility programs needed for reproducing the Combined Work from the Application, but excluding the System Libraries of the Combined Work.
+
+1. Exception to Section 3 of the GNU GPL.
+You may convey a covered work under sections 3 and 4 of this License without being bound by section 3 of the GNU GPL.
+
+2. Conveying Modified Versions.
+If you modify a copy of the Library, and, in your modifications, a facility refers to a function or data to be supplied by an Application that uses the facility (other than as an argument passed when the facility is invoked), then you may convey a copy of the modified version:
+
+a) under this License, provided that you make a good faith effort to ensure that, in the event an Application does not supply the function or data, the facility still operates, and performs whatever part of its purpose remains meaningful, or
+b) under the GNU GPL, with none of the additional permissions of this License applicable to that copy.
+3. Object Code Incorporating Material from Library Header Files.
+The object code form of an Application may incorporate material from a header file that is part of the Library. You may convey such object code under terms of your choice, provided that, if the incorporated material is not limited to numerical parameters, data structure layouts and accessors, or small macros, inline functions and templates (ten or fewer lines in length), you do both of the following:
+
+a) Give prominent notice with each copy of the object code that the Library is used in it and that the Library and its use are covered by this License.
+b) Accompany the object code with a copy of the GNU GPL and this license document.
+4. Combined Works.
+You may convey a Combined Work under terms of your choice that, taken together, effectively do not restrict modification of the portions of the Library contained in the Combined Work and reverse engineering for debugging such modifications, if you also do each of the following:
+
+a) Give prominent notice with each copy of the Combined Work that the Library is used in it and that the Library and its use are covered by this License.
+b) Accompany the Combined Work with a copy of the GNU GPL and this license document.
+c) For a Combined Work that displays copyright notices during execution, include the copyright notice for the Library among these notices, as well as a reference directing the user to the copies of the GNU GPL and this license document.
+d) Do one of the following:
+0) Convey the Minimal Corresponding Source under the terms of this License, and the Corresponding Application Code in a form suitable for, and under terms that permit, the user to recombine or relink the Application with a modified version of the Linked Version to produce a modified Combined Work, in the manner specified by section 6 of the GNU GPL for conveying Corresponding Source.
+1) Use a suitable shared library mechanism for linking with the Library. A suitable mechanism is one that (a) uses at run time a copy of the Library already present on the user's computer system, and (b) will operate properly with a modified version of the Library that is interface-compatible with the Linked Version.
+e) Provide Installation Information, but only if you would otherwise be required to provide such information under section 6 of the GNU GPL, and only to the extent that such information is necessary to install and execute a modified version of the Combined Work produced by recombining or relinking the Application with a modified version of the Linked Version. (If you use option 4d0, the Installation Information must accompany the Minimal Corresponding Source and Corresponding Application Code. If you use option 4d1, you must provide the Installation Information in the manner specified by section 6 of the GNU GPL for conveying Corresponding Source.)
+5. Combined Libraries.
+You may place library facilities that are a work based on the Library side by side in a single library together with other library facilities that are not Applications and are not covered by this License, and convey such a combined library under terms of your choice, if you do both of the following:
+
+a) Accompany the combined library with a copy of the same work based on the Library, uncombined with any other library facilities, conveyed under the terms of this License.
+b) Give prominent notice with the combined library that part of it is a work based on the Library, and explaining where to find the accompanying uncombined form of the same work.
+6. Revised Versions of the GNU Lesser General Public License.
+The Free Software Foundation may publish revised and/or new versions of the GNU Lesser General Public License from time to time. Such new versions will be similar in spirit to the present version, but may differ in detail to address new problems or concerns.
+
+Each version is given a distinguishing version number. If the Library as you received it specifies that a certain numbered version of the GNU Lesser General Public License “or any later version” applies to it, you have the option of following the terms and conditions either of that published version or of any later version published by the Free Software Foundation. If the Library as you received it does not specify a version number of the GNU Lesser General Public License, you may choose any version of the GNU Lesser General Public License ever published by the Free Software Foundation.
+
+If the Library as you received it specifies that a proxy can decide whether future versions of the GNU Lesser General Public License shall apply, that proxy's public statement of acceptance of any version is permanent authorization for you to choose that version for the Library.
+
+
+Name: libpng
+License: PNG Reference Library Copyright Noticee and License version 2
+
+ * Copyright (c) 1995-2024 The PNG Reference Library Authors.
+ * Copyright (c) 2018-2024 Cosmin Truta.
+ * Copyright (c) 2000-2002, 2004, 2006-2018 Glenn Randers-Pehrson.
+ * Copyright (c) 1996-1997 Andreas Dilger.
+ * Copyright (c) 1995-1996 Guy Eric Schalnat, Group 42, Inc.
+
+The software is supplied "as is", without warranty of any kind,
+express or implied, including, without limitation, the warranties
+of merchantability, fitness for a particular purpose, title, and
+non-infringement.  In no event shall the Copyright owners, or
+anyone distributing the software, be liable for any damages or
+other liability, whether in contract, tort or otherwise, arising
+from, out of, or in connection with the software, or the use or
+other dealings in the software, even if advised of the possibility
+of such damage.
+
+Permission is hereby granted to use, copy, modify, and distribute
+this software, or portions hereof, for any purpose, without fee,
+subject to the following restrictions:
+
+ 1. The origin of this software must not be misrepresented; you
+    must not claim that you wrote the original software.  If you
+    use this software in a product, an acknowledgment in the product
+    documentation would be appreciated, but is not required.
+
+ 2. Altered source versions must be plainly marked as such, and must
+    not be misrepresented as being the original software.
+
+ 3. This Copyright notice may not be removed or altered from any
+    source or altered source distribution.
+    
+Name: libtiff
+License: Custom (https://github.com/libsdl-org/libtiff)
+
+Silicon Graphics has seen fit to allow us to give this work away. It is free. There is no support or guarantee of any sort as to its operations, correctness, or whatever. If you do anything useful with all or parts of it you need to honor the copyright notices. I would also be interested in knowing about it and, hopefully, be acknowledged.
+
+The legal way of saying that is:
+
+Copyright (c) 1988-1997 Sam Leffler Copyright (c) 1991-1997 Silicon Graphics, Inc.
+
+Permission to use, copy, modify, distribute, and sell this software and its documentation for any purpose is hereby granted without fee, provided that (i) the above copyright notices and this permission notice appear in all copies of the software and related documentation, and (ii) the names of Sam Leffler and Silicon Graphics may not be used in any advertising or publicity relating to the software without the specific, prior written permission of Sam Leffler and Silicon Graphics.
+
+THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+IN NO EVENT SHALL SAM LEFFLER OR SILICON GRAPHICS BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND, OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+Name: zlib
+License: Custom (https://github.com/madler/zlib?tab=License-1-ov-file)
+
+Copyright notice:
+
+ (C) 1995-2024 Jean-loup Gailly and Mark Adler
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+  Jean-loup Gailly        Mark Adler
+  jloup@gzip.org          madler@alumni.caltech.edu
+  
+  
+=================================================================================================
+
+Citations for Open Source Software, Models and Research used in the development of llmware:
+
+Transformers - https://github.com/huggingface/transformers
+
+@inproceedings{wolf-etal-2020-transformers,
+    title = "Transformers: State-of-the-Art Natural Language Processing",
+    author = "Thomas Wolf and Lysandre Debut and Victor Sanh and Julien Chaumond and Clement Delangue and Anthony Moi and Pierric Cistac and Tim Rault and Rémi Louf and Morgan Funtowicz and Joe Davison and Sam Shleifer and Patrick von Platen and Clara Ma and Yacine Jernite and Julien Plu and Canwen Xu and Teven Le Scao and Sylvain Gugger and Mariama Drame and Quentin Lhoest and Alexander M. Rush",
+    booktitle = "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing: System Demonstrations",
+    month = oct,
+    year = "2020",
+    address = "Online",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/2020.emnlp-demos.6",
+    pages = "38--45"
+}
+
+Sentence Transformers - https://github.com/UKPLab/sentence-transformers
+
+@inproceedings{reimers-2019-sentence-bert,
+    title = "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks",
+    author = "Reimers, Nils and Gurevych, Iryna",
+    booktitle = "Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing",
+    month = "11",
+    year = "2019",
+    publisher = "Association for Computational Linguistics",
+    url = "https://arxiv.org/abs/1908.10084",
+}
+
+Pytorch - https://github.com/pytorch/blob/main/CITATION.cff  (with full and updated contributor list)
+
+    title: PyTorch
+    authors:  PyTorch Team
+    url: https://pytorch.org
+    type: conference-paper
+    title: "PyTorch 2: Faster Machine Learning Through Dynamic Python Bytecode Transformation and Graph Compilation"
+    collection-title: "29th ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 2 (ASPLOS '24)"
+    collection-type: proceedings
+    month: 4
+    year: 2024
+  publisher:
+    name: ACM
+  url: "https://pytorch.org/assets/pytorch2-2.pdf"
+  
+  Paszke, A., Gross, S., Massa, F., Lerer, A., Bradbury, J., Chanan, G., Killeen, T., Lin, Z., Gimelshein, N., Antiga, L., Desmaison, A., Kopf, A., Yang, E., DeVito, Z., Raison, M., Tejani, A., Chilamkurthy, S., Steiner, B., Fang, L., Bai, J., & Chintala, S. (2019). PyTorch: An Imperative Style, High-Performance Deep Learning Library [Conference paper]. Advances in Neural Information Processing Systems 32, 8024–8035. http://papers.neurips.cc/paper/9015-pytorch-an-imperative-style-high-performance-deep-learning-library.pdf
+
+
+Whisper - OpenAI - https://github.com/openai/whisper & www.huggingface.co/openai/whisper
+
+@misc{radford2022whisper,
+  doi = {10.48550/ARXIV.2212.04356},
+  url = {https://arxiv.org/abs/2212.04356},
+  author = {Radford, Alec and Kim, Jong Wook and Xu, Tao and Brockman, Greg and McLeavey, Christine and Sutskever, Ilya},
+  title = {Robust Speech Recognition via Large-Scale Weak Supervision},
+  publisher = {arXiv},
+  year = {2022},
+  copyright = {arXiv.org perpetual, non-exclusive license}
+}
 
 BERT
 Turc, Iulia; Chang, Ming-Wei; Lee, Kenton; Toutanova, Kristina. Well-Read Students Learn Better: On the Importance of Pre-training Compact Models, arXiv preprint arXiv:1908.08962v2 (2019).
@@ -83,12 +401,35 @@ Devlin, Jacob; Chang, Ming-Wei; Lee, Kenton; Toutanova, Kristina.  BERT: Pre-tra
 GPT2
 Radford, Alec; Wu, Jeff; Child, Rewon; Luan, David; Amodei, Dario; Sutskever, Ilya.  Language Models are Unsupervised Multitask Learners. (2019)
 
-Roberta
-Yinhan Liu, Myle Ott, Naman Goyal, Jingfei Du, Mandar Joshi, Danqi Chen, Omer Levy, Mike Lewis, Luke Zettlemoyer, Veselin Stoyanov.  RoBERTa: {A} Robustly Optimized {BERT} Pretraining Approach.  CoRR, abs/1907.11692, 2019.  http://arxiv.org/abs/1907.11692.
+Tiny Llama
+@misc{zhang2024tinyllama,
+      title={TinyLlama: An Open-Source Small Language Model},
+      author={Peiyuan Zhang and Guangtao Zeng and Tianduo Wang and Wei Lu},
+      year={2024},
+      eprint={2401.02385},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+}
 
-Sentence-BERT
-Reimers, Nils and Gurevych, Iryna. Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing.  November 2019.  Association for Computational Linguistics. https://arxiv.org/abs/1908.10084.
+StableLM-3b-4e1t Model (StabilityAI)
+@misc{StableLM-3B-4E1T,
+      url={[https://huggingface.co/stabilityai/stablelm-3b-4e1t](https://huggingface.co/stabilityai/stablelm-3b-4e1t)},
+      title={StableLM 3B 4E1T},
+      author={Tow, Jonathan and Bellagente, Marco and Mahan, Dakota and Riquelme, Carlos}
+}
 
-Huggingface Transformers
-Wolf, T., Debut, L., Sanh, V., Chaumond, J., Delangue, C., Moi, A., Cistac, P., Ma, C., Jernite, Y., Plu, J., Xu, C., Le Scao, T., Gugger, S., Drame, M., Lhoest, Q., & Rush, A. M. (2020). Transformers: State-of-the-Art Natural Language Processing [Conference paper]. 38–45. https://www.aclweb.org/anthology/2020.emnlp-demos.6
+Sheared Llama
+@article{xia2023sheared, title={Sheared LLaMA: Accelerating Language Model Pre-training via Structured Pruning}, author={Xia, Mengzhou and Gao, Tianyu, and Zeng Zhiyuan, and Chen Danqi}, year={2023} }
+
+
+FAISS
+@article{douze2024faiss,
+      title={The Faiss library},
+      author={Matthijs Douze and Alexandr Guzhva and Chengqi Deng and Jeff Johnson and Gergely Szilvasy and Pierre-Emmanuel Mazaré and Maria Lomeli and Lucas Hosseini and Hervé Jégou},
+      year={2024},
+      eprint={2401.08281},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+
 
