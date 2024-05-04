@@ -230,8 +230,23 @@ class YFinance:
 
 class WebSiteParser:
 
-    """ WebSiteParser implements a website-scraping parser.   It can be accessed directly, or in many cases, will
-    be accessed through Parser or Library classes indirectly. """
+    """ WebSiteParser implements a website-scraping parser.   It can be accessed directly, or through the Parser
+    and Library classes indirectly.
+
+    Scraping web content is generally permissible in most cases, although ethical guidelines and sensible best
+    practices should be followed.  Scraped content does not grant any license to the content, and still must be
+    used in compliance with any associated copyrights.
+
+    For a good introduction to recommended web scraping practices, see
+    https://monashdatafluency.github.io/python-web-scraping/section-5-legal-and-ethical-considerations/
+
+    This website parser implementation is designed to quickly extract content from HTML-oriented websites, and
+    is not intended for use on large commercial websites, which tend to be primarily dynamic javascript.
+
+    If your local SSL certificate is out-of-date, you will likely receive errors - this can be updated easily
+    with a python command script, or you can select unverified_context=True to ignore
+
+    """
 
     def __init__(self, url_or_fp, link="/", save_images=True, reset_img_folder=False, local_file_path=None,
                  from_file=False, text_only=False, unverified_context=False):
@@ -246,7 +261,8 @@ class WebSiteParser:
                                            "urllib.request")
 
         #   note: for webscraping, unverified ssl are a common error
-        #   to debug, if the risk environment is relatively low, set `unverified_context` = True
+        #   to debug, if the risk environment is relatively low, set `unverified_context` = True, although
+        #   preferred method is to update the ssl certificate to remove this error
         self.unverified_context=unverified_context
 
         # by default, assume that url_or_fp is a url path
@@ -332,7 +348,8 @@ class WebSiteParser:
                                                f"WebSiteParser.\n"
                                                f"Note: it is also possible that the website does not exist, "
                                                f"or that it is restricted and rejecting your request for any "
-                                               f"number of reasons.")
+                                               f"number of reasons.  The website may have other restrictions on "
+                                               f"programmatic 'bot' access, and if so, those should be followed.")
 
         self.save_images = save_images
         self.image_counter = 0
@@ -352,6 +369,9 @@ class WebSiteParser:
     def website_main_processor(self, img_start, output_index=True):
 
         """ Main processing of HTML scraped content and converting into blocks. """
+
+        #   using 'print' in short-term for easy user debugging/visibility - will shift to logging over time
+        print(f"update: WebSite Parser - initiating parse of website: {self.url_main}")
 
         output = []
         counter = 0
@@ -386,7 +406,7 @@ class WebSiteParser:
             link_type = ""
 
             # text = ""
-
+            text_dupe_flag = False
             entry_type = "text"
 
             # if text only, then skip checks for images and links
@@ -441,12 +461,19 @@ class WebSiteParser:
 
                 if "type" in elements.attrs:
                     # skip css and javascript
-                    if elements.attrs["type"] == "text/css" or elements.attrs["type"] == "text/javascript" \
-                            or elements.attrs["type"] == "application/ld+json":
+                    if elements.attrs["type"] in ["text/css", "text/javascript", "application/ld+json",
+                                                  "application/jd+json"]:
+
                         get_text = -1
 
                 #   wip - generally associated with javascript inline script
                 if "charset" in elements.attrs:
+                    get_text = -1
+
+                if "jsname" in elements.attrs:
+                    get_text = -1
+
+                if "jscontroller" in elements.attrs:
                     get_text = -1
 
                 if get_text == 1:
@@ -457,14 +484,33 @@ class WebSiteParser:
                     # alt for consideration to clean up string
                     # s_out += string.replace('\n', ' ').replace('\r', ' ').replace('\xa0', ' ').replace('\t', ' ')
 
-                    for string in elements.stripped_strings:
-                        s_out += string + " "
+                    js_markers = ["{", "function", "(function", "if (", "window", "on", "#", "this.", ".",
+                                  "var", ";", "html", "@"]
 
-                    # print("text: s_out - ", s_out, elements.attrs)
+                    keep_adding = True
+
+                    for string in elements.stripped_strings:
+
+                        if not s_out:
+
+                            # kludge -  list of exclusions to remove the most common javascript in site
+                            for marker in js_markers:
+                                if string.startswith(marker):
+                                    keep_adding = False
+                                    break
+
+                        #   if found at start of any substring - high probability inline js -  break
+                        if string.startswith("(function") or string.startswith("window.") or string.startswith("this."):
+                            break
+
+                        if keep_adding:
+                            s_out += string + " "
+                        else:
+                            break
 
                     text += s_out
 
-                    if text:
+                    if text.strip():
                         header_entry = []
 
                         if text not in unique_text_list:
@@ -472,6 +518,9 @@ class WebSiteParser:
                             content_found += 1
                             long_running_string += text + " "
                             last_text = text
+                            text_dupe_flag = False
+                        else:
+                            text_dupe_flag = True
 
                         if "h1" in elements.name:
                             header_entry = (counter, "h1", text)
@@ -505,24 +554,29 @@ class WebSiteParser:
 
             if content_found > 0:
                 master_index = (self.url_main, self.url_link, counter)
+
+                """
                 if not text:
                     text = last_text
+                """
 
-                entry = {"content_type": entry_type,
-                         "text": text,
-                         "image": {"image_name": img_name, "image_url": img_url},
-                         "link": {"link_type": link_type, "link": link},
-                         "master_index": master_index,
-                         "last_header": last_header}
+                if text and not text_dupe_flag:
 
-                # entry = (entry_type, text, (img_name, img_url), (link_type, link), master_index, last_header)
+                    entry = {"content_type": entry_type,
+                             "text": text,
+                             "image": {"image_name": img_name, "image_url": img_url},
+                             "link": {"link_type": link_type, "link": link},
+                             "master_index": master_index,
+                             "last_header": last_header}
 
-                counter += 1
-                # save entry if image, or if (A) text > 50 and (B) not a dupe
-                if entry_type == "image" or (len(text) > 50 and text not in all_text):
-                    output.append(entry)
-                    all_text.append(text)
-                    text = ""
+                    # entry = (entry_type, text, (img_name, img_url), (link_type, link), master_index, last_header)
+
+                    counter += 1
+                    # save entry if image, or if (A) text > 50 and (B) not a dupe
+                    if entry_type == "image" or (len(text) > 50 and text not in all_text):
+                        output.append(entry)
+                        all_text.append(text)
+                        text = ""
 
         self.image_counter = img_counter
         self.internal_links = internal_links
@@ -535,6 +589,13 @@ class WebSiteParser:
 
         self.core_index = output
         self.entries = len(output)
+
+        # using 'print' to screen in short-term for user convenience - will migrate to logging over time
+        print(f"update: WebSite Parser - completed parsing: {self.url_main}")
+        print(f"update: extracted {len(self.core_index)} elements")
+
+        if self.image_counter > 0:
+            print(f"update: extracted {self.image_counter} images and saved @ path: {self.local_dir}")
 
         if not output_index:
             return len(output), img_counter
