@@ -1,17 +1,18 @@
 
-#   invoice_processing.py example illustrates the use of parsing combined with prompts_with_sources
-#   to rapidly iterate through a batch of invoices and ask a set of questions, and then save the full
-#   output to both (1) .jsonl for integration into an upstream application/database and (2) to a CSV
-#   for human review in excel.
+""" This example shows an end-to-end scenario for invoice processing that can be run locally and without a
+database.  The example shows how to combine the use of parsing combined with prompts_with_sources to rapidly
+iterate through a batch of invoices and ask a set of questions, and then save the full output to both
+(1) .jsonl for integration into an upstream application/database and (2) to a CSV for human review in excel.
 
-#   note: the sample code pulls from a public repo to load the sample invoice documents the first time -
-#   please feel free to substitute with your own invoice documents (PDF/DOCX/PPTX/XLSX/CSV/TXT) if you prefer.
+    note: the sample code pulls from a public repo to load the sample invoice documents the first time -
+    please feel free to substitute with your own invoice documents (PDF/DOCX/PPTX/XLSX/CSV/TXT) if you prefer.
 
-#   this example does not require a database or embedding
+    this example does not require a database or embedding
 
-#   this example can be run locally on a laptop by setting 'run_on_cpu=True'
-#   if 'run_on_cpu==False", then please see the example 'launch_llmware_inference_server.py'
-#   to configure and set up a 'pop-up' GPU inference server in just a few minutes
+    this example can be run locally on a laptop by setting 'run_on_cpu=True'
+    if 'run_on_cpu==False", then please see the example 'launch_llmware_inference_server.py'
+    to configure and set up a 'pop-up' GPU inference server in just a few minutes
+"""
 
 import os
 import re
@@ -41,14 +42,12 @@ def invoice_processing(run_on_cpu=True):
     if run_on_cpu:
 
         #   load local bling model that can run on cpu/laptop
-        #   alternates to try on cpu:
-        #       -- "llmware/bling-1.4b-0.1", "llmware/bling-falcon-1b-0.1",
-        #       -- "llmware/bling-sheared-llama-2.7b-0.1", "llmware/bling-sheared-llama-1.3b-0.1",
-        #       -- "llmware/bling-red-pajamas-3b-0.1", "llmware/bling-stable-lm-3b-4e1t-0.1"
 
         #   note: bling-1b-0.1 is the *fastest* & *smallest*, but will make more errors than larger BLING models
-        model_name = "llmware/bling-1b-0.1"
+        # model_name = "llmware/bling-1b-0.1"
 
+        #   try the new bling-phi-3 quantized with gguf - most accurate
+        model_name = 'bling-phi-3-gguf'
     else:
 
         #   use GPU-based inference server to process
