@@ -1,15 +1,12 @@
 
-"""This example demonstrates the various ways to retrieve data from libraries:
-      1. Basic retrieval
-      2. Retrieval with filters
-      3. Bulk retrieval
-      4. Retrieval State and Export
-"""
+"""This example demonstrates how to use a page number filter to narrow search retrievals by specific
+    documents and pages - using document_filter and page_lookup methods in the Query class. """
 
 import os
 from llmware.library import Library
 from llmware.retrieval import Query
 from llmware.setup import Setup
+from llmware.configs import LLMWareConfig
 
 
 def create_agreements_sample_library(library_name):
@@ -56,6 +53,8 @@ def page_lookup(library):
 
 if __name__ == "__main__":
 
-    lib = create_agreements_sample_library("lib_page_filter_1")
+    LLMWareConfig().set_active_db("sqlite")
+
+    lib = create_agreements_sample_library("lib_page_filter_example")
     my_results = page_lookup (lib)
 

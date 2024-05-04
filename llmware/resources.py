@@ -1235,7 +1235,23 @@ class PGRetrieval:
 
         conditions_clause = " WHERE"
         for key, value in key_dict.items():
-            conditions_clause += f" {key} = '{value}' AND "
+
+            #   handles passing a filter with 'mongo' style $in key range
+            if isinstance(value,dict):
+                if "$in" in value:
+                    value = value["$in"]
+                    print("updated value: ", value)
+                    if isinstance(value,list):
+                        v_str = "("
+                        for entry in value:
+                            v_str += str(entry) + ","
+                        if v_str.endswith(","):
+                            v_str = v_str[:-1]
+                        v_str += ")"
+                        conditions_clause += f" {key} IN {v_str} AND "
+            else:
+
+                conditions_clause += f" {key} = '{value}' AND "
 
         if conditions_clause.endswith(' AND '):
             conditions_clause = conditions_clause[:-5]
@@ -2306,13 +2322,35 @@ class SQLiteRetrieval:
 
         conditions_clause = " WHERE"
         for key, value in key_dict.items():
-            conditions_clause += f" {key} = {value} AND "
+
+            #   handles passing a filter with 'mongo' style $in key range
+            if isinstance(value,dict):
+                if "$in" in value:
+                    value = value["$in"]
+                    print("updated value: ", value)
+                    if isinstance(value,list):
+                        v_str = "("
+                        for entry in value:
+                            v_str += str(entry) + ","
+                        if v_str.endswith(","):
+                            v_str = v_str[:-1]
+                        v_str += ")"
+                        conditions_clause += f" {key} IN {v_str} AND "
+            else:
+                if isinstance(value, int):
+                    conditions_clause += f" {key} = {value} AND "
+                else:
+                    conditions_clause += f" {key} = '{value}' AND "
+
+            # conditions_clause += f" {key} = {value} AND "
 
         if conditions_clause.endswith(" AND "):
             conditions_clause = conditions_clause[:-5]
 
         if len(conditions_clause) > len(" WHERE"):
             sql_query += conditions_clause + ";"
+
+        # print("TEST: sql query - ", sql_query)
 
         results = self.conn.cursor().execute(sql_query)
 
