@@ -1,4 +1,15 @@
 
+""" This example shows an end-to-end processing of Master Services Agreements (MSAs) - including the parsing and
+text chunking of the documents with document filtering to rapidly identify the "MSA" agreements from a large
+batch of contract documents, using queries to extract source materials, using a locally-running GPU to review and
+answer the key questions, with evidence checking, and output for final human review.
+
+    The example uses a quantized 6B parameter model running on a local machine.
+
+    Note: this example tracks the example #6 in the Fast Start.
+
+"""
+
 import os
 
 from llmware.setup import Setup
@@ -14,7 +25,7 @@ def msa_processing():
     agreements_path = os.path.join(local_path, "AgreementsLarge")
 
     #   create a library with all of the Agreements (~80 contracts)
-    msa_lib = Library().create_new_library("msa_lib2")
+    msa_lib = Library().create_new_library("msa_lib503_635")
     msa_lib.add_files(agreements_path)
 
     #   find the "master service agreements" (MSA)

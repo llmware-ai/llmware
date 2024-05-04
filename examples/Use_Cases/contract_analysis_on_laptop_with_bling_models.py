@@ -1,6 +1,6 @@
 
 """This example demonstrates a basic contract analysis workflow run entirely on on a laptop
-    using a RAG-finetuned small specialized instruct BLING model
+    using a new Bling-Phi-3 RAG-finetuned small specialized instruct model.
 """
 
 import os
@@ -20,11 +20,11 @@ def contract_analysis_on_laptop (model_name):
     # query list
     query_list = {"executive employment agreement": "What are the name of the two parties?",
                   "base salary": "What is the executive's base salary?",
-                  "governing law": "What is the governing law?"}
+                  "vacation": "How many vacation days will the executive receive?"}
 
     print (f"\n > Loading model {model_name}...")
 
-    prompter = Prompt().load_model(model_name)
+    prompter = Prompt().load_model(model_name, temperature=0.0, sample=False)
 
     for i, contract in enumerate(os.listdir(contracts_path)):
 
@@ -41,7 +41,7 @@ def contract_analysis_on_laptop (model_name):
                 source = prompter.add_source_document(contracts_path, contract, query=key)
 
                 # calling the LLM with 'source' information from the contract automatically packaged into the prompt
-                responses = prompter.prompt_with_source(value, prompt_name="just_the_facts", temperature=0.3)
+                responses = prompter.prompt_with_source(value, prompt_name="default_with_context")
 
                 for r, response in enumerate(responses):
                     print(key, ":", re.sub("[\n]"," ", response["llm_response"]).strip())
@@ -60,12 +60,8 @@ def contract_analysis_on_laptop (model_name):
 
 if __name__ == "__main__":
 
-    bling_models = ["llmware/bling-1b-0.1", "llmware/bling-1.4b-0.1", "llmware/bling-falcon-1b-0.1",
-                    "llmware/bling-sheared-llama-2.7b-0.1", "llmware/bling-sheared-llama-1.3b-0.1",
-                    "llmware/bling-red-pajamas-3b-0.1", "llmware/bling-stable-lm-3b-4e1t-0.1"]
-
-    # use local cpu model
-    model = bling_models[0]
+    #   use new bling phi-3 model quantized and running on local cpu
+    model = "bling-phi-3-gguf"
 
     contract_analysis_on_laptop(model)
 
