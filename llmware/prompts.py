@@ -109,7 +109,7 @@ class Prompt:
     """
     def __init__(self, llm_name=None, tokenizer=None, model_card=None, library=None, account_name="llmware",
                  prompt_id=None, save_state=True, llm_api_key=None, llm_model=None, from_hf=False,
-                 prompt_catalog=None, temperature=0.5, prompt_wrapper="human_bot", instruction_following=False):
+                 prompt_catalog=None, temperature=0.3, prompt_wrapper="human_bot", instruction_following=False):
 
         self.account_name = account_name
         self.library = library
@@ -232,8 +232,8 @@ class Prompt:
 
     def load_model(self, gen_model,api_key=None, from_hf=False, trust_remote_code=False,
                    # new options added
-                   use_gpu=True, sample=True, get_logits=False,
-                   max_output=200, temperature=-99):
+                   use_gpu=True, sample=False, get_logits=False,
+                   max_output=200, temperature=0.0):
 
         """Load model into prompt object by selecting model name """
 
@@ -550,6 +550,13 @@ class Prompt:
 
         if not output: output = []
 
+        # START TESTING HERE
+        """
+        for i, entries in enumerate(output):
+            print("source entries: ", query, i, entries)
+        """
+        # END TESTING HERE
+
         sources = Sources(self).package_source(output, aggregate_source=True)
 
         if not sources["text_batch"]:
@@ -612,7 +619,7 @@ class Prompt:
         return source_materials_attached
 
     def prompt_with_source(self, prompt, prompt_name=None, source_id_list=None, first_source_only=True,
-                           max_output=None, temperature=None):
+                           max_output=None, temperature=None, verbose=False):
 
         """ Inference method - uses the prepared source, along with prompt/question, and calls loaded model. """
 
@@ -704,10 +711,15 @@ class Prompt:
                     response_list.append(response_dict)
 
                 # log progress of iterations at info level
-                logging.info("update: prompt_with_sources - iterating through batch - %s of total %s - %s",
+                if not verbose:
+
+                    logging.info("update: prompt_with_sources - iterating through batch - %s of total %s - %s",
                              i, len(self.source_materials), response_dict)
 
-                logging.info("update: usage stats - %s ", response_dict["usage"])
+                    logging.info("update: usage stats - %s ", response_dict["usage"])
+
+                else:
+                    print(f"update: iterating through source batches - {i} - {response_dict['llm_response']}")
 
         # register inferences in state history, linked to prompt_id
         for l, llm_inference in enumerate(response_list):
@@ -865,50 +877,61 @@ class Prompt:
         self.llm_model.add_context = context
         self.llm_model.add_prompt_engineering = prompt_name
 
-        output_dict = self.llm_model.inference(prompt, inference_dict=inference_dict)
+        # if the loaded model is function_calling, then execute a function call instead of inference
+        use_fc = False
+        if hasattr(self.llm_model, "fc_supported"):
+            use_fc = self.llm_model.fc_supported
 
-        output = output_dict["llm_response"]
+        if use_fc:
+            output_dict = self.llm_model.function_call(context, params=[prompt])
+            output = output_dict["llm_response"]
 
-        if isinstance(output,list):
-            output = output[0]
+        else:
+            output_dict = self.llm_model.inference(prompt, inference_dict=inference_dict)
 
-        # triage process - if output is ERROR code, then keep trying up to parameter- call_back_attempts
-        #   by default - will not attempt to triage, e.g., call_back_attempts = 1
-        #   --depending upon the calling function, it can decide the criticality and # of attempts
+            output = output_dict["llm_response"]
 
-        if output == "/***ERROR***/":
-            # try again
-            attempts = 1
+            if isinstance(output,list):
+                output = output[0]
 
-            while attempts < call_back_attempts:
+            # triage process - if output is ERROR code, then keep trying up to parameter- call_back_attempts
+            #   by default - will not attempt to triage, e.g., call_back_attempts = 1
+            #   --depending upon the calling function, it can decide the criticality and # of attempts
 
-                # wait 5 seconds to try back
-                time.sleep(5)
-
-                # exact same call to inference
-                output_dict = self.llm_model.inference(prompt)
-
-                output = output_dict["llm_response"]
-                # if list output, then take the string from the first output
-                if isinstance(output, list):
-                    output = output[0]
-
-                # keep trying until not ERROR message found
-                if output != "/***ERROR***/":
-                    break
-
-                attempts += 1
-
-            # if could not triage, then present "pretty" error output message
             if output == "/***ERROR***/":
-                if "error_message" in output_dict:
-                    output = output_dict["error_message"]
-                else:
-                    output = "AI Output Not Available"
+                # try again
+                attempts = 1
+
+                while attempts < call_back_attempts:
+
+                    # wait 5 seconds to try back
+                    time.sleep(5)
+
+                    # exact same call to inference
+                    output_dict = self.llm_model.inference(prompt)
+
+                    output = output_dict["llm_response"]
+                    # if list output, then take the string from the first output
+                    if isinstance(output, list):
+                        output = output[0]
+
+                    # keep trying until not ERROR message found
+                    if output != "/***ERROR***/":
+                        break
+
+                    attempts += 1
+
+                # if could not triage, then present "pretty" error output message
+                if output == "/***ERROR***/":
+                    if "error_message" in output_dict:
+                        output = output_dict["error_message"]
+                    else:
+                        output = "AI Output Not Available"
 
         # strip <s> & </s> which are used by some models as end of text marker
-        output = str(output).replace("<s>","")
-        output = str(output).replace("</s>","")
+        if not use_fc:
+            output = str(output).replace("<s>","")
+            output = str(output).replace("</s>","")
 
         # output = re.sub("<s>","", output)
         # output = re.sub("</s>","", output)
@@ -1007,8 +1030,8 @@ class Prompt:
             response += self.prompt_with_source(key_issue, prompt_name="summarize_with_bullets_w_query",
                                                 first_source_only=False)
         else:
-            placeholder_issue = "What are the main points?"
-            response += self.prompt_with_source(placeholder_issue,prompt_name="summarize_with_bullets",
+            placeholder_issue = "What is a list of the main points?"
+            response += self.prompt_with_source(placeholder_issue,prompt_name="default_with_context",
                                                 first_source_only=False)
 
         return response
@@ -1042,7 +1065,46 @@ class Prompt:
         else:
             return response
 
-    # new method - document summarization from library
+    def summarize_document_fc(self, fp, fn, topic="key points", query=None, text_only=True, max_batch_cap=15,
+                              summary_model="slim-summary-tool", real_time_update=True):
+
+        """ New document summarization method built on slim-summary-tool. """
+
+        if real_time_update:
+            print(f"update: Prompt - summarize_document_fc - document - {fn}")
+
+        # note: when loading model, context window is automatically set based on model
+        self.load_model(summary_model, temperature=0.0, sample=False)
+
+        self.llm_max_output_len = 150
+
+        if not query:
+            sources = self.add_source_document(fp, fn)
+        else:
+            sources = self.add_source_document(fp, fn, query=query)
+
+        if len(self.source_materials) > max_batch_cap:
+            self.source_materials = self.source_materials[0:max_batch_cap]
+
+        if real_time_update:
+            print("update: Prompt - summarize_document_fc - number of source batches - ", len(self.source_materials))
+
+        key_points = []
+
+        responses = self.prompt_with_source(topic, first_source_only=False, verbose=True)
+
+        for i, resp in enumerate(responses):
+
+            # print("llm response: ", i, resp)
+
+            for point in resp["llm_response"]:
+                if point not in key_points:
+                    if point.strip():
+                        if not point.strip().startswith("Not Found"):
+                            key_points.append(point)
+
+        return key_points
+
     def summarize_document_from_library(self, library, doc_id=None, filename=None, query=None,
                                         text_only=True,max_batch_cap=10):
 
