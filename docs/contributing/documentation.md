@@ -37,7 +37,7 @@ If you plan to contribute to the docs, we recommend that you locally install `je
 We also recommend, that you install `jekyll` into a a ruby enviroment so it does not interfere with any other installations you might have.
 
 `rbenv` is a tool that mangages different ruby versions, similar to what `conda` does for `python`.
-Please [install rvm](https://github.com/rbenv/rbenv?tab=readme-ov-file#installation) following their instructions.
+Please [install rbenv](https://github.com/rbenv/rbenv?tab=readme-ov-file#installation) following their instructions.
 We recommend that you install a ruby version `>=3.0`.
 After having installed an isolated ruby version, you have to install the dependencies to build the docs locally.
 The `docs` directory has a `Gemfile` which specifies the dependencies.
