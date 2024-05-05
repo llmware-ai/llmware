@@ -425,7 +425,7 @@ class Library:
         return self.add_files()
 
     def add_files (self, input_folder_path=None, encoding="utf-8",chunk_size=400,
-                   get_images=True,get_tables=True, smart_chunking=2, max_chunk_size=600,
+                   get_images=True,get_tables=True, smart_chunking=1, max_chunk_size=600,
                    table_grid=True, get_header_text=True, table_strategy=1, strip_header=False,
                    verbose_level=2, copy_files_to_library=True):
 
