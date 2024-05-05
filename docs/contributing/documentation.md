@@ -36,8 +36,9 @@ Contributing to this documentation is extremely important as many users will ref
 If you plan to contribute to the docs, we recommend that you locally install `jekyll` so you can test your changes locally.
 We also recommend, that you install `jekyll` into a a ruby enviroment so it does not interfere with any other installations you might have.
 
+We recommend that you install `rbenv` and `rvm` to manage your ruby installation.
 `rbenv` is a tool that mangages different ruby versions, similar to what `conda` does for `python`.
-Please [install rbenv](https://github.com/rbenv/rbenv?tab=readme-ov-file#installation) following their instructions.
+Please [install rbenv](https://github.com/rbenv/rbenv?tab=readme-ov-file#installation) following their instructions, and the same for [install rvm](https://github.com/rvm/rvm?tab=readme-ov-file#installing-rvm).
 We recommend that you install a ruby version `>=3.0`.
 After having installed an isolated ruby version, you have to install the dependencies to build the docs locally.
 The `docs` directory has a `Gemfile` which specifies the dependencies.
@@ -53,6 +54,7 @@ To do this, simply to the following.
 bundle exec jekyll server --livereload --verbose
 ```
 In the browser of your choice, you can then go to `http://127.0.0.1:4000/` and you will be served the documentation, which is re-build and re-loaded after any change to the `docs`.
+``jekyll`` will create a ``_site`` directory where it saves the created files, please **never commit any files from the \_site directory**!
 
 ## Open Issues
 If you're interested in existing issues, you can
