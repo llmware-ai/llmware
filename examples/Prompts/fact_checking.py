@@ -1,5 +1,5 @@
 
-""" This example demonstrates evidence and fact checking capabilities """
+""" This example demonstrates evidence and fact checking capabilities in the Prompt class. """
 
 import os
 
@@ -18,7 +18,7 @@ def contract_analysis_with_fact_checking (model_name):
 
     print (f"\n > Loading model {model_name}...")
 
-    prompter = Prompt().load_model(model_name)
+    prompter = Prompt().load_model(model_name, temperature=0.0, sample=False)
 
     research = {"topic": "base salary", "prompt": "What is the executive's base salary?"}
 
@@ -31,7 +31,7 @@ def contract_analysis_with_fact_checking (model_name):
         source = prompter.add_source_document(contracts_path, contract, query=research["topic"])
 
         # calling the LLM with 'source' information from the contract automatically packaged into the prompt
-        responses = prompter.prompt_with_source(research["prompt"], prompt_name="just_the_facts", temperature=0.3)
+        responses = prompter.prompt_with_source(research["prompt"], prompt_name="default_with_context")
         
         # run several fact checks
         ev_numbers = prompter.evidence_check_numbers(responses)
@@ -61,18 +61,18 @@ def contract_analysis_with_fact_checking (model_name):
 
 if __name__ == "__main__":
 
-    # note: stable-lm model requires "trust_remote_code=True"
-    hf_model_list = ["llmware/bling-1b-0.1", "llmware/bling-1.4b-0.1", "llmware/bling-falcon-1b-0.1",
-                     "llmware/bling-sheared-llama-2.7b-0.1", "llmware/bling-sheared-llama-1.3b-0.1",
-                     "llmware/bling-red-pajamas-3b-0.1", "llmware/bling-stable-lm-3b-4e1t-0.1"]
+    hf_model_list = ["llmware/bling-1b-0.1",
+                     "llmware/bling-1.4b-0.1",
+                     "llmware/bling-falcon-1b-0.1",
+                     "llmware/bling-sheared-llama-1.3b-0.1",
+                     "bling-phi-3-gguf"]
 
-    # to use huggingface local cpu model
     model_name = hf_model_list[0]
 
     # to use a 3rd party model, select model_name, e.g., "gpt-4"
     #   --if model requires an api_key, then it must be set as an os.environ variable
     #   --see example on 'set_model_api_keys.py'
 
-    contract_analysis_with_fact_checking(hf_model_list[0])
+    contract_analysis_with_fact_checking(model_name)
 
 
