@@ -1,5 +1,5 @@
 # llmware
-![Static Badge](https://img.shields.io/badge/python-3.9_%7C_3.10%7C_3.11%7C 3.12-blue?color=blue)
+![Static Badge](https://img.shields.io/badge/python-3.9_%7C_3.10%7C_3.11%7C_3.12-blue?color=blue)
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
 [![discord](https://img.shields.io/badge/Chat%20on-Discord-blue?logo=discord&logoColor=white)](https://discord.gg/MhZn5Nc39h)   
 
