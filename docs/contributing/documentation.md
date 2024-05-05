@@ -3,14 +3,15 @@ layout: default
 title: Documentation contributions
 parent: Contributing
 nav_order: 2
+permalink: contributing/documentation
 ---
 # Contributing documentation
 One way to contribute to ``llmware`` is by contributing documentation.
 
-There are two ways to contribute to the ``llmware`` documentation.
-The first is via docstrings in the code, and the second is what you are currently reading.
+There are **two ways** to contribute to the ``llmware`` documentation.
+The first is via **docstrings in the code**, and the second is **the docs**, which is what you are *currently reading*.
 In both areas, you can contribute in a lot of ways.
-Here is a non exhaustive list of these ways.
+Here is a non exhaustive list of these ways for the docstrings which also apply to the docs.
 
 1. Add documentation (e.g., adding a docstring to a function)
 2. Update documentation (e.g., update a docstring that is not in sync with the code)
@@ -18,6 +19,12 @@ Here is a non exhaustive list of these ways.
 4. Enhance documentation (e.g., add more examples to a docstring or fix typos)
 
 ## Docstrings
+**Docstrings** document the code within the code, which allows programmers to easily have a look while they are programming.
+For an exmaple, have a look at [this docstring](https://github.com/llmware-ai/llmware/blob/c9e12a7a150162986622738e127c37ac70f31cd6/llmware/agents.py#L27-L66) which documents the ``LLMfx`` class.
+
+We follow the docstring style of **numpy**, for which you can find an example [here](https://github.com/numpy/numpydoc/blob/main/doc/example.py) and [here](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html).
+Please be sure to follow the conventions and go over your pull request before you submit it.
+
 
 ## Docs
 
