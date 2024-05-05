@@ -61,7 +61,7 @@ from llmware.exceptions import DependencyNotInstalledException, FilePathDoesNotE
 class Parser:
 
     def __init__(self, library=None, account_name="llmware", parse_to_db=False, file_counter=1,
-                 encoding="utf-8", chunk_size=400, max_chunk_size=600, smart_chunking=2,
+                 encoding="utf-8", chunk_size=400, max_chunk_size=600, smart_chunking=1,
                  get_images=True, get_tables=True, strip_header=False, table_grid=True,
                  get_header_text=True, table_strategy=1, verbose_level=2, copy_files_to_library=True):
 
