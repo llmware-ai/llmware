@@ -12,7 +12,17 @@
        |
     </li>
     <li class="d-inline-block mr-1 hugging-face-li">
-        <a href="https://huggingface.co/llmware"><span><img src="assets/images/hf-logo.svg" alt="Hugging Face" class="hugging-face-logo"/></span></a>
+        <a href="https://huggingface.co/llmware">
+            <span>
+                {% for static_file in site.static_files %}
+                    {% if static_file.basename == "hf-logo"%}
+                        {% assign hf_logo = static_file %}
+                    {% endif %}
+                {% endfor %}
+
+                <img src="{{ site.url }}{{ hf_logo.path }}" alt="Hugging Face" class="hugging-face-logo"/>
+            </span>
+        </a>
     </li>
     <li class="d-inline-block mr-1">
         <a href="https://www.youtube.com/@llmware"><i class="fa-brands fa-youtube"></i></a>
