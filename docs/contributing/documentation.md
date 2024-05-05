@@ -50,7 +50,7 @@ bundle install
 You should now be able to build and serve the documentation locally.
 To do this, simply to the following.
 ```bash
-bundle exec jekyll serve --livereload
+bundle exec jekyll server --livereload --verbose
 ```
 In the browser of your choice, you can then go to `http://127.0.0.1:4000/` and you will be served the documentation, which is re-build and re-loaded after any change to the `docs`.
 
