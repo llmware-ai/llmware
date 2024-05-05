@@ -60,7 +60,7 @@ setup(
         'openai>=1.0.0',
         'pdf2image==1.16.0',
         'pymilvus>=2.3.0',
-        'pymongo==4.5.0',
+        'pymongo>=4.7.0',
         'pytesseract==0.3.10',
         'sentence-transformers==2.2.2',
         'tabulate==0.9.0',
