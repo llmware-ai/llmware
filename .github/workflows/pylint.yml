@@ -7,6 +7,10 @@ on:
   pull_request:
     types: ["opened"]
 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+
 jobs:
   build:
     # ubuntu-latest doesn't have all the needed Python version. Hence we need to specify Ubuntu 20.04.
