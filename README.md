@@ -3,7 +3,7 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
 [![discord](https://img.shields.io/badge/Chat%20on-Discord-blue?logo=discord&logoColor=white)](https://discord.gg/MhZn5Nc39h)   
 [![Documentation](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml/badge.svg)](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml)
-[![.github/workflows/pylint.yml](https://github.com/MacOS/llmware/actions/workflows/pylint.yml/badge.svg?branch=ci-pylint)](https://github.com/MacOS/llmware/actions/workflows/pylint.yml)
+[![.github/workflows/pylint.yml](https://github.com/llmware-ai/llmware/actions/workflows/pylint.yml/badge.svg?branch=main)](https://github.com/llmware-ai/llmware/actions/workflows/pylint.yml)
 
 ## 🧰🛠️🔩The Ultimate Toolkit for Building LLM Apps
 
