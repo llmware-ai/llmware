@@ -25,7 +25,6 @@ from llmware.exceptions import HomePathDoesNotExistException, UnsupportedEmbeddi
 
 
 class LLMWareConfig:
-
     """LLMWare global configuration object - use set/get to update """
 
     if platform.system() == "Windows":
