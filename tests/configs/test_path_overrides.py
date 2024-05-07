@@ -1,4 +1,11 @@
 
+""" Tests paths both for a standard account setup and custom account setup.
+
+    Note: by default, this test will run on MongoDB - to switch DB used - add one-line:
+
+    `LLMWareConfig().set_active_db("sqlite")
+
+"""
 
 import os
 
@@ -6,6 +13,7 @@ from llmware.configs import LLMWareConfig
 from llmware.library import Library
 from llmware.retrieval import Query
 from llmware.setup import Setup
+
 
 def test_standard_account_setup():
 
@@ -53,4 +61,4 @@ def test_setup_custom_location():
     results = Query(library).text_query("salary")
 
     assert len(results) > 0
-  
+

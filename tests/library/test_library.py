@@ -1,8 +1,17 @@
+
+""" Tests core library functions.   By default, runs on MongoDB - to change:
+
+    `LLMWareConfig().set_active_db("sqlite")
+
+"""
+
+
 import os
 import tempfile
 from llmware.configs import LLMWareConfig
 from llmware.library import Library, LibraryCatalog
 from llmware.setup import Setup
+
 
 def test_core_library_functions():
 
@@ -43,3 +52,5 @@ def test_core_library_functions():
 
     # Ensure library name does not exist
     assert library_name not in all_library_names
+
+

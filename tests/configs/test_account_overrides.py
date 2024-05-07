@@ -1,4 +1,10 @@
+""" Tests for custom account configuration over-rides to set up additional accounts, besides the default 'llmware'.
 
+    By default, the test will run on MongoDB - to change the database (including no-install) - add:
+
+    `LLMWareConfig().set_active_db("sqlite")
+
+    """
 
 import os
 
@@ -7,10 +13,11 @@ from llmware.library import Library
 from llmware.retrieval import Query
 from llmware.setup import Setup
 
+
 def test_setup_custom_account():
 
-    #   creation of custom accounts -> 'implicit' creation allowed in llmware (no permissioning checks)
-    #   assumed that upstream application will manage permissioning and account management
+    #   creation of custom accounts -> 'implicit' creation allowed in llmware (no permission checks)
+    #   assumed that upstream application will manage permission scope and account management
 
     account_name = "custom_account123"
     library_name = "custom_lib123"
@@ -31,4 +38,3 @@ def test_setup_custom_account():
     results = Query(library).text_query("salary")
     assert len(results) > 0
     
-
