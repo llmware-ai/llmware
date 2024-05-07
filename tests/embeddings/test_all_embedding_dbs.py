@@ -1,3 +1,6 @@
+
+""" Provides a set of short tests for specific vector DB. """
+
 import os
 import pytest 
 import time
@@ -12,14 +15,18 @@ from llmware.configs import LLMWareConfig
 from llmware.resources import CloudBucketManager
 from tests.embeddings.utils import qdrant_installed
 
+
 def test_unsupported_embedding_db():
+
     embedding_db = "milvusXYZ"  # Bad Embedding DB Name
     with pytest.raises(UnsupportedEmbeddingDatabaseException) as excinfo:
         embedding_handler = EmbeddingHandler(library=None)
         embedding_summary = embedding_handler.create_new_embedding(embedding_db=embedding_db, model=None)
     assert str(excinfo.value) == f"'{embedding_db}' is not a supported vector embedding database" 
 
+
 def test_milvus_embedding_and_query():
+
     sample_files_path = Setup().load_sample_files()
     library = Library().create_new_library("test_embedding_milvus")
     library.add_files(os.path.join(sample_files_path,"SmallLibrary"))
@@ -27,7 +34,9 @@ def test_milvus_embedding_and_query():
     assert len(results) > 0
     library.delete_library(confirm_delete=True)
 
+
 def test_neo4j_embedding_and_query():
+
     sample_files_path = Setup().load_sample_files()
     library = Library().create_new_library("test_embedding_neo4j")
     library.add_files(os.path.join(sample_files_path,"SmallLibrary"))
@@ -35,7 +44,9 @@ def test_neo4j_embedding_and_query():
     assert len(results) > 0
     library.delete_library(confirm_delete=True)
 
+
 def test_chromadb_embedding_and_query():
+
     sample_files_path = Setup().load_sample_files()
     library = Library().create_new_library("test_embedding_neo4j")
     library.add_files(os.path.join(sample_files_path,"SmallLibrary"))
@@ -43,7 +54,9 @@ def test_chromadb_embedding_and_query():
     assert len(results) > 0
     library.delete_library(confirm_delete=True)
 
+
 def test_faiss_embedding_and_query():
+
     sample_files_path = Setup().load_sample_files()
     library = Library().create_new_library("test_embedding_faiss")
     library.add_files(os.path.join(sample_files_path,"SmallLibrary"))
@@ -51,13 +64,16 @@ def test_faiss_embedding_and_query():
     assert len(results) > 0
     library.delete_library(confirm_delete=True)
 
+
 def test_lancedb_embedding_and_query():
+
     sample_files_path = Setup().load_sample_files()
     library = Library().create_new_library("test_embedding_lancedb")
     library.add_files(os.path.join(sample_files_path,"SmallLibrary"))
     results = generic_embedding_and_query(library, "lancedb")
     assert len(results) > 0
     library.delete_library(confirm_delete=True)
+
 
 @pytest.mark.skipif(not qdrant_installed(), reason="Qdrant client is not installed")
 def test_qdrant_embedding_and_query():
@@ -87,7 +103,9 @@ def test_qdrant_embedding_and_query():
 #     assert len(results) > 0
 #     library.delete_library(confirm_delete=True)
 
+
 def generic_embedding_and_query(library, embedding_db):
+
     # Run the embeddings (only of first 3 docs ) 
     model=ModelCatalog().load_model("mini-lm-sbert")
     embedding_handler = EmbeddingHandler(library=library)
