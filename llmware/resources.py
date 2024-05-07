@@ -45,8 +45,6 @@ try:
 except ImportError:
     pass
 
-from werkzeug.utils import secure_filename
-
 from llmware.configs import LLMWareConfig, PostgresConfig, LLMWareTableSchema, SQLiteConfig, AWSS3Config
 
 from llmware.exceptions import LLMWareException, UnsupportedCollectionDatabaseException, InvalidNameException
@@ -4248,7 +4246,15 @@ class CloudBucketManager:
             files = bucket.objects.all()
 
             for file in files:
-                f = secure_filename(file.key)
+
+                # strip os.sep from file name
+                safe_file_name = str(file.key)
+                if safe_file_name.startswith(os.sep):
+                    safe_file_name = safe_file_name[1:]
+
+                f = safe_file_name.replace(os.sep, "_")
+                f = f.replace(" ", "_")
+
                 file_type = f.split(".")[-1].lower()
                 if file_type in accepted_file_formats:
                     s3.download_file(user_bucket_name, file.key, local_download_path + f)
