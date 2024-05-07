@@ -896,3 +896,58 @@ class ChromaDBConfig:
     @classmethod
     def get_auth_token_transport_header(cls):
         return cls._conf["auth_token_transport_header"]
+
+
+class OpenAIConfig:
+
+    """Configuration object for OpenAI - primarily for configuring Azure OpenAI credentials.
+
+     Primary use is to setup an AzureOpenAI client that will be used in place of the standard
+     OpenAI client.
+
+     Within LLMWare, the OpenAI model classes will check this config before creating a new OpenAI client.
+
+     If there is a client already established in _conf["openai_client"], that client will be used in the
+     inference/embedding process.
+
+     For example:
+
+        # create your AzureOpenAI client
+
+        from openai import AzureOpenAI
+
+        client = AzureOpenAI(
+                            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+                            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+                            api_version="2024-02-01")
+
+        # add that client to the OpenAIConfig:
+
+        OpenAIConfig().set_azure_client(client)
+
+     """
+
+    _conf = {"openai_client": None,
+             "api_key": None,               # placeholder / not used currently
+             "api_version": None,           # placeholder / not used currently
+             "use_azure_endpoint": False}   # placeholder / not used currently
+
+    @classmethod
+    def get_config(cls, name):
+        if name in cls._conf:
+            return cls._conf[name]
+        raise ConfigKeyException(name)
+
+    @classmethod
+    def set_config(cls, name, value):
+        cls._conf[name] = value
+
+    @classmethod
+    def set_azure_client(cls, azure_client):
+        cls._conf["openai_client"] = azure_client
+
+    @classmethod
+    def get_azure_client(cls):
+        return cls._conf["openai_client"]
+
+

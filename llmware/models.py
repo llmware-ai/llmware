@@ -2564,6 +2564,9 @@ class OpenAIGenModel:
             if "max_tokens" in inference_dict:
                 self.target_requested_output_tokens = inference_dict["max_tokens"]
 
+            if "openai_client" in inference_dict:
+                self.openai_client = inference_dict["openai_client"]
+
         # api_key
         if api_key:
             self.api_key = api_key
@@ -2583,6 +2586,8 @@ class OpenAIGenModel:
         except ImportError:
             raise DependencyNotInstalledException("openai >= 1.0")
 
+        from llmware.configs import OpenAIConfig
+
         usage = {}
         time_start = time.time()
 
@@ -2595,7 +2600,17 @@ class OpenAIGenModel:
 
                 # updated OpenAI client to >v1.0 API - create client, and returns pydantic objects
 
-                client = OpenAI(api_key=self.api_key)
+                azure_client = OpenAIConfig().get_azure_client()
+
+                if not azure_client:
+                    client = OpenAI(api_key=self.api_key)
+
+                else:
+
+                    logging.info("update: applying custom OpenAI client from OpenAIConfig")
+
+                    client = azure_client
+
                 response = client.chat.completions.create(model=self.model_name,messages=messages,
                                                           max_tokens=self.target_requested_output_tokens)
 
@@ -2616,7 +2631,17 @@ class OpenAIGenModel:
 
                 text_prompt = prompt_final + self.separator
 
-                client = OpenAI(api_key=self.api_key)
+                azure_client = OpenAIConfig().get_azure_client()
+
+                if not azure_client:
+                    client = OpenAI(api_key=self.api_key)
+
+                else:
+
+                    logging.info("update: applying custom OpenAI client from OpenAIConfig")
+
+                    client = azure_client
+
                 response = client.completions.create(model=self.model_name, prompt=text_prompt,
                                                      temperature=self.temperature,
                                                      max_tokens=self.target_requested_output_tokens)
@@ -3697,6 +3722,8 @@ class OpenAIEmbeddingModel:
         except ImportError:
             raise DependencyNotInstalledException("openai >= 1.0")
 
+        from llmware.configs import OpenAIConfig
+
         # insert safety check here
         safe_samples = []
         safety_buffer = 200
@@ -3732,7 +3759,18 @@ class OpenAIEmbeddingModel:
         # end - safety check
 
         # update to open >v1.0 api - create client and output is pydantic objects
-        client = OpenAI(api_key=self.api_key)
+
+        azure_client = OpenAIConfig().get_azure_client()
+
+        if not azure_client:
+            client = OpenAI(api_key=self.api_key)
+
+        else:
+
+            logging.info("update: applying custom OpenAI client from OpenAIConfig")
+
+            client = azure_client
+
         response = client.embeddings.create(model=self.model_name, input=text_prompt)
 
         # logging.info("update: response: %s ", response)
