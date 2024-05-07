@@ -1,5 +1,8 @@
+
+""" Test for pulling (all) embedding models from Sentence Transformer catalog. """
+
 import os
-import pytest 
+import pytest
 import time
 
 from llmware.library import Library
