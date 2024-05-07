@@ -39,7 +39,6 @@ set of text chunks, e.g., blocks, indexed with metadata, in a database.
 
 import time
 import json
-from werkzeug.utils import secure_filename
 import os
 from zipfile import ZipFile, ZIP_DEFLATED
 import shutil
@@ -555,7 +554,7 @@ class Parser:
             if success_code == 1:
 
                 #   iterate thru all of the files found in the zip archive
-                #   apply secure_filename and prep_filename
+                #   apply secure filename and prep filename
                 #   route to the appropriate work folder, if applicable
 
                 for f in z.namelist():
@@ -2163,7 +2162,8 @@ class Parser:
 
                 ext = file.split(".")[-1]
                 if ext == "pdf":
-                    doc_fn = secure_filename(file)
+
+                    doc_fn = Utilities().secure_filename(file)
 
                     # get new doc_ID number
                     if write_to_db_on == 1:
@@ -2417,7 +2417,7 @@ class Parser:
 
         for i, topic in enumerate(topic_list):
 
-            fn = "wiki-topic-" + secure_filename(topic) + ".txt"
+            fn = "wiki-topic-" + Utilities().secure_filename(topic) + ".txt"
 
             logging.info("update: parse_wiki - %s - %s", topic, fn)
 
@@ -2961,8 +2961,8 @@ class Parser:
 
         website_name = "my_website.html"
         
-        # apply secure_filename to remove any extra "/"
-        secure_url_name = secure_filename(website.url_main.split(".")[-2])
+        # apply secure filename to remove any extra "/"
+        secure_url_name = Utilities().secure_filename(website.url_main.split(".")[-2])
 
         out_name = str(random.randint(100000, 999999)) + "_" + secure_url_name + ".html"
 
@@ -3013,7 +3013,7 @@ class Parser:
 
         # default - apply basic secure name, e.g., remove / and insert _
         if secure_name:
-            fn_out= secure_filename(fn)
+            fn_out= Utilities().secure_filename(fn)
 
         # if requested prepend or postpend
         if prepend_string:
@@ -3094,7 +3094,7 @@ class Parser:
             found_file = -1
             for j, ingested_file in enumerate(doc_fn_out):
 
-                # need to confirm 'symmetrical' transformations, e.g., secure_filename and any prepend/postpend
+                # need to confirm 'symmetrical' transformations, e.g., secure filename and any prepend/postpend
                 if input_file == ingested_file:
                     found_file = 1
                     found_list.append(input_file)
@@ -3357,7 +3357,7 @@ class Parser:
 
         if ext == "pdf":
 
-            doc_fn = secure_filename(input_fn)
+            doc_fn = Utilities().secure_filename(input_fn)
 
             output_by_page = ImageParser(self).process_pdf_by_ocr(input_fp, input_fn)
 
@@ -3403,7 +3403,7 @@ class Parser:
 
         if ext in self.ocr_types:
 
-            doc_fn = secure_filename(input_fn)
+            doc_fn = Utilities().secure_filename(input_fn)
             ocr_output = ImageParser(self).process_ocr(input_fp, input_fn)
 
             meta = {"author": "", "modified_date": "", "created_date": "", "creator_tool": ""}

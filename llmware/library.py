@@ -20,7 +20,6 @@ is passed to the Query and Prompt objects. The Library class uses the LibraryCat
 updating, and other tasks pertaining to Libraries via the Library Card.
 """
 
-from werkzeug.utils import secure_filename
 import shutil
 import os
 import json
@@ -141,7 +140,7 @@ class Library:
         self.account_name = account_name
 
         # apply safety check to library_name path
-        library_name = secure_filename(library_name)
+        library_name = Utilities().secure_filename(library_name)
 
         library_exists = self.check_if_library_exists(library_name,account_name)
 
@@ -149,6 +148,9 @@ class Library:
             # do not create
             logging.info("update: library already exists - returning library - %s - %s ", library_name, account_name)
             return self.load_library(library_name, account_name)
+
+        # assign self.library_name to the 'safe' library_name
+        self.library_name = library_name
 
         # allow 'dynamic' creation of a new account path
         account_path = os.path.join(LLMWareConfig.get_library_path(), account_name)

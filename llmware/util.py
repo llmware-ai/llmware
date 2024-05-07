@@ -833,6 +833,23 @@ class Utilities:
 
         return outfile_path
 
+    def secure_filename(self, fn):
+
+        """ New utility method to remove os.sep from proposed filenames. """
+
+        # strip os.sep from file name
+        safe_file_name = str(fn)
+        if safe_file_name.startswith(os.sep):
+            safe_file_name = safe_file_name[1:]
+
+        # removes os separator
+        secure_fn = safe_file_name.replace(os.sep, "_")
+
+        # converts spaces into underscores
+        secure_fn = secure_fn.replace(" ", "_")
+
+        return secure_fn
+
 
 class CorpTokenizer:
 

@@ -44,8 +44,10 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12"
     ],
-    keywords="ai,data,development",  # Optional 
+    keywords="ai,llm,rag,data,development",  # Optional
     packages=['llmware'],
     package_data={'llmware': ['*.c', '*.so', '*.dylib', '.dylibs/*', *glob_fix('llmware', 'lib/**/*')], 'llmware.libs': ['*']},
     python_requires=">=3.9",
@@ -67,7 +69,6 @@ setup(
         'tokenizers>=0.15.0',
         'torch>=1.13.1',
         'transformers>=4.36.0',
-        'Werkzeug==3.0.1',
         'word2number==1.1',
         'Wikipedia-API==0.6.0',
         'yfinance>=0.2.28',
