@@ -33,19 +33,19 @@ Our specific focus is on making it easy to integrate open source small specializ
 
 3.  Learn by example:  
 
-    -- [Fast Start examples](www.github.com/llmware-ai/llmware/tree/main/fast_start) - structured set of 6 examples (with no DB installations required) to learn the main concepts of RAG with LLMWare - each example has extensive comments, and a supporting video on Youtube to walk you through it.    
+    -- [Fast Start examples](https://www.github.com/llmware-ai/llmware/tree/main/fast_start) - structured set of 6 examples (with no DB installations required) to learn the main concepts of RAG with LLMWare - each example has extensive comments, and a supporting video on Youtube to walk you through it.    
 
-    -- [Getting Started examples](www.github.com/llmware-ai/llmware/tree/main/examples/Getting_Started) - heavily-annotated examples that review many getting started elements - selecting a database, loading sample files, working with libraries, and how to use the Model Catalog.  
+    -- [Getting Started examples](https://www.github.com/llmware-ai/llmware/tree/main/examples/Getting_Started) - heavily-annotated examples that review many getting started elements - selecting a database, loading sample files, working with libraries, and how to use the Model Catalog.  
 
-    -- [Use Case examples](www.github.com/llmware-ai/llmware/tree/main/examples/Use_Cases) - longer examples that integrate several components of LLMWare to provide a framework for a solution for common use case patterns.  
+    -- [Use Case examples](https://www.github.com/llmware-ai/llmware/tree/main/examples/Use_Cases) - longer examples that integrate several components of LLMWare to provide a framework for a solution for common use case patterns.  
 
-    -- Dive into specific area of interest - [Parsing](www.github.com/llmware-ai/llmware/tree/main/examples/Parsing) - [Models](www.github.com/llmware-ai/llmware/tree/main/examples/Models) - [Prompts](www.github.com/llmware-ai/llmware/tree/main/examples/Models) - [Agents](www.github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents)  - and many more ...
-
-
-4.  We provide extensive [sample files](www.github.com/llmware-ai/tree/main/examples/Getting_Started/loading_sample_files.py) integrated into the examples, so you can copy-paste-run, and quickly validate that the installation is set up correctly, and to start seeing key classes and methods in action.  We would encourage you to start with the 'out of the box' example first, and then use the example as the launching point for inserting your documents, models, queries, and workflows.  
+    -- Dive into specific area of interest - [Parsing](https://www.github.com/llmware-ai/llmware/tree/main/examples/Parsing) - [Models](https://www.github.com/llmware-ai/llmware/tree/main/examples/Models) - [Prompts](https://www.github.com/llmware-ai/llmware/tree/main/examples/Models) - [Agents](https://www.github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents)  - and many more ...
 
 
-5.  Learn by watching: check out the [LLMWare Youtube channel](www.youtube.com/@llmware).  
+4.  We provide extensive [sample files](https://www.github.com/llmware-ai/tree/main/examples/Getting_Started/loading_sample_files.py) integrated into the examples, so you can copy-paste-run, and quickly validate that the installation is set up correctly, and to start seeing key classes and methods in action.  We would encourage you to start with the 'out of the box' example first, and then use the example as the launching point for inserting your documents, models, queries, and workflows.  
+
+
+5.  Learn by watching: check out the [LLMWare Youtube channel](https://www.youtube.com/@llmware).  
 
 
 6.  Share with the community:  join us on [Discord](https://discord.gg/MhZn5Nc39h).  
@@ -55,8 +55,8 @@ Our specific focus is on making it easy to integrate open source small specializ
 [Common Setup & Configuration Items](#platform-support){: .btn .fs-5 .mb-4 .mb-md-0 }  
 [Troubleshooting](#common-troubleshooting-issues){: .btn .fs-5 .mb-4 .mb-md-0 }  
 [Architecture](architecture.md/#llmware-architecture){: .btn .fs-5 .mb-4 .mb-md-0 }  
-[View llmware on GitHub](https://github.com/llmware-ai/llmware/tree/main){: .btn .fs-5 .mb-4 .mb-md-0 }  
-[Open an Issue on GitHub](https://github.com/llmware-ai/llmware/issues){: .btn .fs-5 .mb-4 .mb-md-0 }  
+[View llmware on GitHub](https://www.github.com/llmware-ai/llmware/tree/main){: .btn .fs-5 .mb-4 .mb-md-0 }  
+[Open an Issue on GitHub](https://www.github.com/llmware-ai/llmware/issues){: .btn .fs-5 .mb-4 .mb-md-0 }  
 
 
 
@@ -68,7 +68,7 @@ ___
 - Installing llmware is easy:  `pip3 install llmware` 
 
 
-- If you prefer, we also provide a set of recent wheels in the [wheel archives](github.com/llmware-ai/llmware/tree/main/wheel_archives) in this repository, which can be downloaded individually and used as follows:  
+- If you prefer, we also provide a set of recent wheels in the [wheel archives](https://www.github.com/llmware-ai/llmware/tree/main/wheel_archives) in this repository, which can be downloaded individually and used as follows:  
 
 ```bash
 pip3 install llmware-0.2.12-py3-none-any.wheel
@@ -127,7 +127,7 @@ ___
     3.  **SQL Tables database** - for easily integrating table-based data into LLM workflows through the CustomTable class and for using in conjunction with a Text-2-SQL workflow - supported on Postgres and SQLite.  
 
 
-- **Fast Start** option:  you can start using SQLite locally without any separate installation by setting `LLMWareConfig.set_active_db("sqlite")` as shown in [configure_db_example](www.github.com/llmware-ai/llmware/blob/main/examples/Getting_Started/configure_db.py).  For vector embedding examples, you can use ChromaDB, LanceDB or FAISS - all of which provide no-install options - just start using.  
+- **Fast Start** option:  you can start using SQLite locally without any separate installation by setting `LLMWareConfig.set_active_db("sqlite")` as shown in [configure_db_example](https://www.github.com/llmware-ai/llmware/blob/main/examples/Getting_Started/configure_db.py).  For vector embedding examples, you can use ChromaDB, LanceDB or FAISS - all of which provide no-install options - just start using.  
 
 
 - **Install DB dependencies**:  we provide a number of Docker-Compose scripts which can be used, or follow install instructions provided by the database - generally easiest to install locally with Docker.  
@@ -234,7 +234,7 @@ If you have any trouble, feel free to raise an Issue and we can provide you with
 
 6.  **Model not leveraging CUDA available in environment.**  
 
-    -- **Check CUDA drivers installed correctly** - easy check of the NVIDIA CUDA drivers is to use `nvidia-smi` and `nvcc --version` from the command line.  Both commands should respond positively with details on the versions and implementations.  Any errors indicates that either the driver or CUDA toolkit are not installed or recognized.  It can be complicated at times to debug the environment, usually with some trial and error.   See extensive [Nvidia Developer documentation](docs.nvidia.com) for trouble-shooting steps, specific to your environment.  
+    -- **Check CUDA drivers installed correctly** - easy check of the NVIDIA CUDA drivers is to use `nvidia-smi` and `nvcc --version` from the command line.  Both commands should respond positively with details on the versions and implementations.  Any errors indicates that either the driver or CUDA toolkit are not installed or recognized.  It can be complicated at times to debug the environment, usually with some trial and error.   See extensive [Nvidia Developer documentation](https://docs.nvidia.com) for trouble-shooting steps, specific to your environment.  
 
     -- **Check CUDA drivers are up to date** - we build to CUDA 12.1, which translates to a minimum of 525.60 on Linux, and 528.33 on Windows.  
 
@@ -261,7 +261,7 @@ If you have any trouble, feel free to raise an Issue and we can provide you with
     -- usually the issue will be related to the retrieval step and formation of the Prompt, and as always, good pipelines and a little experimentation usually help !  
 
 
-# More information about the project - [see main repository](www.github.com/llmware-ai/llmware.git)
+# More information about the project - [see main repository](https://www.github.com/llmware-ai/llmware.git)
 
 
 # About the project
@@ -280,11 +280,11 @@ We welcome everyone into the ``llmware`` community.
 ## ``llmware`` and [AI Bloks](https://www.aibloks.com/home)
 ``llmware`` is an open source project from [AI Bloks](https://www.aibloks.com/home) - the company behind ``llmware``.
 The company offers a Software as a Service (SaaS) Retrieval Augmented Generation (RAG) service.
-[AI Bloks](https://www.aibloks.com/home) was founded by [Namee Oberst](https://www.linkedin.com/in/nameeoberst/) and [Darren Oberst](https://www.linkedin.com/in/darren-oberst-34a4b54/) in Oktober 2022.
+[AI Bloks](https://www.aibloks.com/home) was founded by [Namee Oberst](https://www.linkedin.com/in/nameeoberst/) and [Darren Oberst](https://www.linkedin.com/in/darren-oberst-34a4b54/) in October 2022.
 
 ## License
 
-`llmware` is distributed by an [Apache-2.0 license](https://github.com/llmware-ai/llmware/blob/main/LICENSE).
+`llmware` is distributed by an [Apache-2.0 license](https://www.github.com/llmware-ai/llmware/blob/main/LICENSE).
 
 ## Thank you to the contributors of ``llmware``!
 <ul class="list-style-none">
