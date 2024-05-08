@@ -12,6 +12,8 @@
     3.  Select the most relevant results by document.
     4.  Loop through all of the documents - packaging the context and asking our questions to the LLM.
 
+    NOTE: to use chromadb, you may need to install the python sdk:  pip3 install chromadb.
+
 """
 
 
@@ -22,6 +24,9 @@ from llmware.setup import Setup
 from llmware.status import Status
 from llmware.prompts import Prompt
 from llmware.configs import LLMWareConfig
+from importlib import util
+if not util.find_spec("chromadb"):
+    print("\nto run this example with chromadb, you need to install the chromadb python sdk:  pip3 install chromadb")
 
 
 def semantic_rag (library_name, embedding_model_name, llm_model_name):
@@ -119,13 +124,14 @@ if __name__ == "__main__":
     #   --if you are using a Python version before 3.12, please feel free to substitute for "faiss"
     #   --for versions of Python >= 3.12, for the Fast Start examples (e.g., no install required), we
     #   recommend using chromadb or lancedb
+
     #   please double-check: `pip3 install chromadb` or pull the latest llmware version to get automatically
     #   -- if you have installed any other vector db, just change the name, e.g, "milvus" or "pg_vector"
 
     vector_db = "chromadb"
 
     # pick any name for the library
-    lib_name = "example5_library"
+    lib_name = "example_5_library"
 
     example_models = ["llmware/bling-1b-0.1", "llmware/bling-tiny-llama-v0", "llmware/dragon-yi-6b-gguf"]
 

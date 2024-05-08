@@ -2,6 +2,9 @@
 """
 #   This example shows the general recipe for creating an embedding.  This scenario uses ChromaDB in local
     file mode for no-install laptop deployment.
+
+    NOTE: you may need to install separately:  pip3 install chromadb.
+
 """
 
 
@@ -9,6 +12,9 @@ import os
 from llmware.library import Library
 from llmware.retrieval import Query
 from llmware.setup import Setup
+from importlib import util
+if not util.find_spec("chromadb"):
+    print("\nto run this example with chromadb, you need to install the chromadb python sdk:  pip3 install chromadb")
 
 
 def embeddings_fast_start (library_name, vector_db="chromadb"):
@@ -56,7 +62,7 @@ def embeddings_fast_start (library_name, vector_db="chromadb"):
 
 if __name__ == "__main__":
 
-    #   set to 'chromadb' local file storage for  no-install fast start
+    #   set to 'chromadb' local file storage for no-install fast start
     db = "chromadb"
     embeddings_fast_start("embedding_test_1", vector_db=db)
 

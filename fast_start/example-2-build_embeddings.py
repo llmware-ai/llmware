@@ -14,6 +14,8 @@
     Note: we have updated the no-install vector db option to 'chromadb' from 'faiss' starting in
     llmware>=0.2.12, due to better support on Python 3.12
 
+    Note: you may need to install chromadb's python driver:  `pip3 install chromadb`
+
     -- This same basic recipe will work with any of the vector db and collection db by simply changing the name
 
 """
@@ -26,6 +28,10 @@ from llmware.setup import Setup
 from llmware.status import Status
 from llmware.models import ModelCatalog
 from llmware.configs import LLMWareConfig
+
+from importlib import util
+if not util.find_spec("chromadb"):
+    print("\nto run this example with chromadb, you need to install the chromadb python sdk:  pip3 install chromadb")
 
 
 def setup_library(library_name):
@@ -138,7 +144,7 @@ if __name__ == "__main__":
     #  library = Library().load_library("example1_library")
 
     #  alternatively, to use this example as self-contained, then create a new library from scratch:
-    library = setup_library("example2_lib")
+    library = setup_library("example2_library")
 
     #   Step 2 - Select any embedding model in the LLMWare catalog
 
