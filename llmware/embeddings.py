@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+
 """The embeddings module implements the supported vector databases.
 
 The common abstraction for all supported vector databases is the EmbeddingHandler class, which supports
@@ -26,9 +27,14 @@ import re
 import time
 import uuid
 import itertools
+from importlib import util
 
-from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection
 from pymongo import MongoClient
+
+try:
+    from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection
+except ImportError:
+    pass
 
 try:
     import faiss
@@ -384,6 +390,7 @@ class _EmbeddingUtils:
 
 
 class EmbeddingMilvus:
+
     """Implements the vector database Milvius.
 
     ``EmbeddingMivlus`` implements the interface to the ``Milvus`` vector store. It is used by the
@@ -408,6 +415,7 @@ class EmbeddingMilvus:
     embedding_milvus : EmbeddingMilvus
         A new ``EmbeddingMilvus`` object.
     """
+
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.library = library
@@ -416,6 +424,10 @@ class EmbeddingMilvus:
         self.milvus_alias = "default"
 
         # Connect to milvus
+        # Instantiate client.
+        if not util.find_spec("pymilvus"):
+            raise DependencyNotInstalledException("pip3 install pymilvus")
+
         connections.connect(self.milvus_alias,
                             host=MilvusConfig.get_config("host"),
                             port=MilvusConfig.get_config("port"),
@@ -2400,6 +2412,9 @@ class EmbeddingChromaDB:
         host = ChromaDBConfig.get_config('host')
 
         # Instantiate client.
+        if not util.find_spec("chromadb"):
+            raise DependencyNotInstalledException("pip3 install chromadb")
+
         if host is None and persistent_path is None:
             self.client = chromadb.EphemeralClient()
 

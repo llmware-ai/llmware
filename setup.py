@@ -58,7 +58,6 @@ setup(
         'huggingface-hub==0.19.4',
         'numpy>=1.23.2',
         'openai>=1.0.0',
-        'pymilvus>=2.3.0',
         'pymongo>=4.7.0',
         'sentence-transformers==2.2.2',
         'tabulate==0.9.0',
@@ -72,11 +71,12 @@ setup(
         'pgvector==0.2.4',
         'colorama==0.4.6',
         'einops==0.7.0',
-        'librosa>=0.10.0',
-        'chromadb>=0.4.22'
+        'librosa>=0.10.0'
     ],
 
     extras_require={
+        'milvus': ['pymilvus>=2.3.0'],
+        'chromadb': ['chromadb>=0.4.22'],
         'pinecone': ['pinecone-client==3.0.0'],
         'lancedb' :['lancedb==0.5.0'],
         'qdrant': ['qdrant-client==1.7.0'],
