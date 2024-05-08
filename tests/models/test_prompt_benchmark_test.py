@@ -1,13 +1,27 @@
 
 """This runs a benchmark test dataset against a series of prompts.  It can be used to test any model type for
-    longer running series of prompts, as well as the fact-checking capability. """
+    longer running series of prompts, as well as the fact-checking capability.
+
+    This test uses the RAG Benchmark test set, which can be pulled down from the LLMWare repository on
+    Huggingface at: www.huggingface.co/llmware/rag_instruct_benchmark_tester, or by using the
+    datasets library, which can be installed with:
+
+     `pip3 install datasets`
+ """
 
 
 import time
 import random
 
 from llmware.prompts import Prompt
-from datasets import load_dataset
+
+# The datasets package is not installed automatically by llmware
+try:
+    from datasets import load_dataset
+except ImportError:
+    raise ImportError ("This test requires the 'datasets' Python package. "
+                       "You can install it with 'pip3 install datasets'")
+
 
 
 def load_rag_benchmark_tester_dataset():

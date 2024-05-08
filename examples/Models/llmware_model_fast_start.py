@@ -5,16 +5,28 @@
     Usage: You can pass in a model name:
         python llmware_model_fast_start.py llmware/bling-1b-0.1
     If you do not specify a model you will be prompted to pick one
+
+    This example uses the RAG Benchmark test set, which can be pulled down from the LLMWare repository on
+    Huggingface at: www.huggingface.co/llmware/rag_instruct_benchmark_tester, or by using the
+     datasets library, which can be installed with:
+
+     `pip3 install datasets`
+
 """
 
 import re
 import sys
 import time
 import torch
-from datasets import load_dataset
 from huggingface_hub import hf_api, ModelFilter, ModelCard
-from tabulate import tabulate
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# The datasets package is not installed automatically by llmware
+try:
+    from datasets import load_dataset
+except ImportError:
+    raise ImportError ("This example requires the 'datasets' Python package. "
+                       "You can install it with 'pip3 install datasets'")
 
 
 # Query HuggingFace and get the llmware models.  Return the the components of a table: headers and data
@@ -38,13 +50,21 @@ def get_llmware_models():
 
 
 def print_llmware_models():
+
     table_headers, table_data = get_llmware_models()
-    print(tabulate(table_data, headers=table_headers, tablefmt="plain", numalign="right"))
+
+    print(table_headers[0], "\t\t", table_headers[1], "\t\t", table_headers[2])
+    for row in table_data:
+        print(row[0], "\t\t", row[1], "\t\t", row[2])
 
 
 def prompt_user_for_model_selection(prompt=None):
+
     table_headers, table_data = get_llmware_models()
-    print(tabulate(table_data, headers=table_headers, tablefmt="plain", numalign="right"))
+
+    print(table_headers[0], "\t\t", table_headers[1], "\t\t", table_headers[2])
+    for row in table_data:
+        print(row[0], "\t\t", row[1], "\t\t", row[2])
 
     num_models = len(table_data)
 
