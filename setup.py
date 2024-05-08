@@ -54,12 +54,10 @@ setup(
     zip_safe=True,
     install_requires=[
         'boto3==1.24.53',
-        'datasets==2.15.0',
         'huggingface-hub==0.19.4',
         'numpy>=1.23.2',
         'openai>=1.0.0',
         'pymongo>=4.7.0',
-        'tabulate==0.9.0',
         'tokenizers>=0.15.0',
         'torch>=1.13.1',
         'transformers>=4.36.0',

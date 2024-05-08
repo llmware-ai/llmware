@@ -1,10 +1,27 @@
 
-"""This example demonstrates running a 7B RAG-instruct fine-tuned DRAGON model locally on a laptop"""
+"""This example demonstrates running a 7B RAG-instruct fine-tuned DRAGON model locally on a laptop.
+
+    This example uses the RAG Benchmark test set, which can be pulled down from the LLMWare repository on
+    Huggingface at: www.huggingface.co/llmware/rag_instruct_benchmark_tester, or by using the
+     datasets library, which can be installed with:
+
+     `pip3 install datasets`
+
+"""
+
 
 import time
 from llmware.prompts import Prompt
+from llmware.exceptions import LLMWareException
+from importlib import util
+if not util.find_spec("datasets"):
+    raise LLMWareException(message="\nto run this example, you need to install HuggingFace datasets:  "
+                                    "`pip3 install datasets`")
 
-from datasets import load_dataset
+try:
+    from datasets import load_dataset
+except:
+    raise LLMWareException(message="Exception: datasets not found and required for example.")
 
 
 # Pull a 200 question RAG benchmark test dataset from llmware HuggingFace repo

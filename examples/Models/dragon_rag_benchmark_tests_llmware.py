@@ -3,15 +3,24 @@
     https://huggingface.co/collections/llmware/dragon-models-65552d7648093c3f6e35d1bf
     The model loading and interaction is handled with the llmware Prompt class which provides additional
     capabilities like evidence checking
+
+        This example uses the RAG Benchmark test set, which can be pulled down from the LLMWare repository on
+    Huggingface at: www.huggingface.co/llmware/rag_instruct_benchmark_tester, or by using the
+     datasets library, which can be installed with:
+
+     `pip3 install datasets`
+
 """
 
 import time
 from llmware.prompts import Prompt
+
 # The datasets package is not installed automatically by llmware
 try:
     from datasets import load_dataset
 except ImportError:
-    raise ImportError ("This example requires the 'datasets' Python package. You can install it with 'pip install datasets'")
+    raise ImportError ("This example requires the 'datasets' Python package. "
+                       "You can install it with 'pip3 install datasets'")
 
 
 # Pull a 200 question RAG benchmark test dataset from llmware HuggingFace repo
