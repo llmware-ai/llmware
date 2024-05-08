@@ -164,8 +164,9 @@ class YFinance:
 
         try:
             import yfinance
-        except ImportError:
-            raise LLMWareException(message="Exception: need to `pip install yfinance` library.")
+        except ImportError or ModuleNotFoundError:
+            raise LLMWareException(message="Exception: YFinance library not installed - "
+                                           "fix with `pip3 install yfinance`")
 
         if ticker:
             self.company_info = yfinance.Ticker(ticker)
@@ -255,10 +256,15 @@ class WebSiteParser:
             from bs4 import BeautifulSoup
             import requests
             from urllib.request import urlopen, Request
-        except ImportError:
-            raise LLMWareException(message="Exception: to use WebSiteParser requires three additional Python "
-                                           "dependencies via pip install:  bs4 (BeautifulSoup), requests, and "
-                                           "urllib.request")
+            import lxml
+
+        except ModuleNotFoundError or ImportError:
+            raise LLMWareException(message="Exception: to use WebSiteParser requires additional Python "
+                                           "dependencies via pip install:  "
+                                           "\n -- pip3 install beautifulsoup4 (or bs4)"
+                                           "\n -- pip3 install lxml"
+                                           "\n -- pip3 install requests"
+                                           "\n -- pip3 install urllib3")
 
         #   note: for webscraping, unverified ssl are a common error
         #   to debug, if the risk environment is relatively low, set `unverified_context` = True, although
@@ -341,7 +347,7 @@ class WebSiteParser:
             except Exception as e:
                 success_code = -1
                 raise LLMWareException(message=f"Exception: website_parser could not connect to website - "
-                                               f"caught error - {e}.  Two suggested fixes: \n"
+                                               f"caught error - {e}.  Common issues: \n"
                                                f"1.  Update your certificates in the Python path, e.g., "
                                                f"'Install Certificates.command'\n"
                                                f"2.  Set unverified_context=True in the constructor for "

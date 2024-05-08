@@ -4,6 +4,13 @@
     When parsing websites, please follow best practices, ethical guidelines and common sense - as a good example,
     see https://monashdatafluency.github.io/python-web-scraping/section-5-legal-and-ethical-considerations/
 
+    To use the WebSite Parser requires several additional python libraries to be installed:
+
+        pip3 install beautifulsoup4
+        pip3 install lxml
+        pip3 install requests
+        pip3 install urllib3
+
 """
 
 from llmware.parsers import Parser, WebSiteParser

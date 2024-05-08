@@ -14,12 +14,19 @@
     The example shows how to extract keys from one source that can then be used as a lookup in a web service to
     supplement the original source materials, and provide a secondary source, which can then also be prompted and
     used to extract, analyze and summarize key information.
+
+    NOTE: to run this example, please install yfinance library, e.g., 'pip3 install yfinance'
+
     """
 
 
 from llmware.web_services import YFinance
 from llmware.models import ModelCatalog
 from llmware.parsers import WikiParser
+
+from importlib import util
+if not util.find_spec("yfinance"):
+    print("\nto run this example, you need to install yfinance first, e.g., pip3 install yfinance")
 
 # our input - financial news article
 
