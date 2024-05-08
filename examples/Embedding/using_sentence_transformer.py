@@ -1,7 +1,11 @@
 
-"""This example shows how to use sentence transformers as a vector embedding model with llmware"""
+"""This example shows how to use sentence transformers as a vector embedding model with llmware.
 
-"""Note: this example illustrates capability from llmware==0.1.13 - please update pip install, or pull from repo"""
+To use models from the SentenceTransformer catalog, you may need to install as follows:
+
+    pip3 install sentence-transformers
+
+"""
 
 
 import os
@@ -10,7 +14,12 @@ from llmware.setup import Setup
 from llmware.library import Library
 from llmware.retrieval import Query
 from llmware.models import ModelCatalog
+from llmware.configs import LLMWareConfig
 
+from importlib import util
+if not util.find_spec("sentence_transformers"):
+    print("\nto run this example, you should install the SentenceTransformer library with:  "
+          "pip3 install sentence-transformers.")
 
 def build_lib (library_name, folder="Agreements"):
 
@@ -39,7 +48,9 @@ def build_lib (library_name, folder="Agreements"):
 
 print("update: Step 1- starting here- building library- parsing PDFs into text chunks")
 
-lib = build_lib("st_embedding_0_454")
+LLMWareConfig().set_active_db("sqlite")
+
+lib = build_lib("st_embedding_0")
 
 #   register a model from the sentence transformers library/repository
 
