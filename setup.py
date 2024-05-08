@@ -59,7 +59,6 @@ setup(
         'numpy>=1.23.2',
         'openai>=1.0.0',
         'pymongo>=4.7.0',
-        'sentence-transformers==2.2.2',
         'tabulate==0.9.0',
         'tokenizers>=0.15.0',
         'torch>=1.13.1',
