@@ -782,7 +782,14 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
-**Sunday, May 5 - v0.2.12-WIP Update**  
+**Wednesday, May 8 - v0.2.13-WIP Update**  
+- Significant cleanups in ancillary imports and dependencies to reduce install complexity - note: the updated requirements.txt and setup.py files.  
+- Defensive code to provide informative warning of any missing dependencies in specialized parts of the code, e.g., OCR, Web Parser.  
+- Updates of tests, notice and documentation.   
+- OpenAIConfigs created to support Azure OpenAI.  
+- Changes are merged in main branch with further updates coming - expect to release PyPi 0.2.13 by end of week.  
+  
+**Sunday, May 5 - v0.2.12 Update**  
 - Launched ["bling-phi-3"](https://huggingface.co/llmware/bling-phi-3) and ["bling-phi-3-gguf"](https://huggingface.co/llmware/bling-phi-3-gguf) in ModelCatalog - newest and most accurate BLING/DRAGON model  
 - New long document summarization method using slim-summary-tool [example](https://github.com/llmware-ai/llmware/tree/main/examples/Prompts/document_summarizer.py)  
 - New Office (Powerpoint, Word, Excel) sample files [example](https://github.com/llmware-ai/llmware/tree/main/examples/Parsing/parsing_microsoft_ir_docs.py)  
@@ -790,7 +797,6 @@ Questions and discussions are welcome in our [github discussions](https://github
 - Deprecated faiss and replaced with 'no-install' chromadb in Fast Start examples  
 - Refactored Datasets, Graph and Web Services classes  
 - Updated Voice parsing with WhisperCPP into Library  
-- Changes merged into main branch in repo - will be released as pypi 0.2.12 version targeted by Monday, May 6   
   
 **Monday, April 29 - v0.2.11 Update**  
 - Updates to gguf libs for Phi-3 and Llama-3  
