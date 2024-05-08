@@ -7,12 +7,14 @@
     B.  run an OCR against the images to derive the text from the image using the OCR
     C.  insert the text into the database library collection for subsequent retrieval.
 
+    Note: this example uses additional python dependencies:
+
+        -- pip3 install pytesseract
+
     Note: this example uses an OCR engine, which is outside of the core llmware package.  To install on Ubuntu:
 
         -- sudo apt install tesseract-ocr
         -- sudo apt install libtesseract-dev
-
-        -- pip3 install pytesseract   [should already be installed with llmware requirements.txt]
 
     [Other platforms:
         -- Mac: brew install tesseract
@@ -46,6 +48,11 @@ from llmware.library import Library
 from llmware.configs import LLMWareConfig
 from llmware.resources import CollectionRetrieval, CollectionWriter
 from llmware.parsers import ImageParser
+
+from importlib import util
+if not util.find_spec("pytesseract"):
+    print("\nto run this example requires additional dependencies, including pytesseract - see comments above in "
+          "this script.  to install pytesseract:  pip3 install pytesseract.")
 
 
 def ocr_images_in_library(library_name, add_new_text_block=False, chunk_size=400, min_chars=10):
