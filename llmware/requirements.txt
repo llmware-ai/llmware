@@ -11,11 +11,8 @@ pgvector==0.2.4
 colorama==0.4.6
 einops==0.7.0
 librosa>=0.10.0
-word2number==1.1
 
 tokenizers>=0.15.0
-huggingface-hub==0.19.4  
+huggingface-hub>=0.19.4  
 requests>=2.31.0
-tqdm~=4.66.1
-botocore~=1.27.96
-setuptools~=68.2.0
+
