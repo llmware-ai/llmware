@@ -783,11 +783,12 @@ Questions and discussions are welcome in our [github discussions](https://github
 ## 📣  Release notes and Change Log  
 
 **Wednesday, May 8 - v0.2.13-WIP Update**  
+- New GGUF streaming method with [basic example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/gguf_streaming.py) and [phi3 local chatbot](https://github.com/llmware-ai/llmware/tree/main/examples/UI/gguf_streaming_chatbot.py)  
 - Significant cleanups in ancillary imports and dependencies to reduce install complexity - note: the updated requirements.txt and setup.py files.  
 - Defensive code to provide informative warning of any missing dependencies in specialized parts of the code, e.g., OCR, Web Parser.  
 - Updates of tests, notice and documentation.   
 - OpenAIConfigs created to support Azure OpenAI.  
-- Changes are merged in main branch with further updates coming - expect to release PyPi 0.2.13 by end of week.  
+- Changes are merged in main branch with further updates coming - expect to release PyPi 0.2.13 by Sunday, May 12 EOD.  
   
 **Sunday, May 5 - v0.2.12 Update**  
 - Launched ["bling-phi-3"](https://huggingface.co/llmware/bling-phi-3) and ["bling-phi-3-gguf"](https://huggingface.co/llmware/bling-phi-3-gguf) in ModelCatalog - newest and most accurate BLING/DRAGON model  
