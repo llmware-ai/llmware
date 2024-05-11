@@ -554,6 +554,15 @@ global_model_repo_catalog_list = [
     "link": "https://huggingface.co/bartowski/Meta-Llama-3-8B-Instruct-GGUF",
     "custom_model_files": [], "custom_model_repo": ""},
 
+ {"model_name": "tiny-llama-chat-gguf", "display_name": "tiny-llama-chat-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 2048, "instruction_following": False, "prompt_wrapper": "hf_chat",
+  "temperature": 0.3, "sample_default": True, "trailing_space": "",
+  "gguf_file": "tiny-llama-chat.gguf",
+  "gguf_repo": "llmware/bonchon",
+  "link": "https://huggingface.co/llmware/bonchon",
+  "custom_model_files": [], "custom_model_repo": ""},
+
  # end - new llama-3 quantized models
 
   # whisper-cpp models

@@ -6031,6 +6031,117 @@ class GGUFGenerativeModel:
 
         return output_response
 
+    def stream(self, prompt, add_context=None, add_prompt_engineering=None, api_key=None, inference_dict=None,
+                  get_logits=False, disable_eos=False):
+
+        """ Main method for text streaming generation. Returns a generator function that yields one
+        token at a time for real-time streaming to console or UI. """
+
+        # first prepare the prompt
+
+        if add_context:
+            self.add_context = add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        #   update default handling for no add_prompt_engineering
+
+        if not self.add_prompt_engineering:
+            if self.add_context:
+                self.add_prompt_engineering = "default_with_context"
+            else:
+                self.add_prompt_engineering = "default_no_context"
+
+        #   end - update
+
+        #   show warning if function calling model
+        if self.fc_supported:
+            logging.warning("warning: this is a function calling model - using .inference may lead to unexpected "
+                            "results.   Recommended to use the .function_call method to ensure correct prompt "
+                            "template packaging.")
+
+        # start with clean logits_record and output_tokens for each function call
+        self.logits_record = []
+        self.output_tokens = []
+
+        if get_logits:
+            self.get_logits = get_logits
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        # prompt = prompt
+
+        if self.add_prompt_engineering:
+            prompt_enriched = self.prompt_engineer(prompt, self.add_context, inference_dict=inference_dict)
+            prompt_final = prompt_enriched
+
+            # most models perform better with no trailing space or line-break at the end of prompt
+            #   -- in most cases, the trailing space will be ""
+            #   -- yi model prefers a trailing "\n"
+            #   -- keep as parameterized option to maximize generation performance
+            #   -- can be passed either thru model_card or model config from HF
+
+            prompt = prompt_final + self.trailing_space
+
+        # output_response = self._inference(text_prompt)
+
+        #   starts _inference here
+        completion_tokens = [] if len(prompt) > 0 else [self.token_bos()]
+
+        prompt_tokens = (
+            (
+                self.tokenize(prompt.encode("utf-8"), special=True)
+                if prompt != ""
+                else [self.token_bos()]
+            )
+            if isinstance(prompt, str)
+            else prompt
+        )
+
+        # confirm that input is smaller than context_window
+        input_len = len(prompt_tokens)
+        context_window = self.n_ctx()
+
+        if input_len > context_window:
+            logging.warning("update: GGUFGenerativeModel - input is too long for model context window - truncating")
+            min_output_len = 10
+            prompt_tokens = prompt_tokens[0:context_window-min_output_len]
+            input_len = len(prompt_tokens)
+
+        text = b""
+
+        # disable_eos = True
+
+        for token in self.generate(prompt_tokens):
+
+            completion_tokens.append(token)
+
+            if not disable_eos:
+                if token == self._token_eos:
+                    break
+
+            if len(completion_tokens) > self.max_output_len:
+                break
+
+            #   stop if combined input + output at context window size
+            if (input_len + len(completion_tokens)) >= context_window:
+                break
+
+            new_token = self.detokenize([token]).decode('utf-8',errors='ignore')
+
+            yield new_token
+
+        text_str = text.decode("utf-8", errors="ignore")
+
+        return text_str
+
 
 class WhisperCPPModel:
 
