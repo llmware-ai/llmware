@@ -23,6 +23,10 @@ All wheels are built and tested on:
 
 **Release Notes**  
 
+--**0.2.13** released in the week of May 12, 2024 - clean up of dependencies in both requirements.txt and Setup (PyPi) - install of vector db python sdk (e.g., pymilvus, chromadb, etc) is now required as a separate step outside of the pip3 install llmware - attempt to keep dependency matrix as simple as possible and avoid potential dependency conflicts on install, especially for packages which in turn have a large number of dependencies.  If you run into any issues with install dependencies, please raise an issue.   
+
+--**0.2.12** released in the week of May 5, 2024 - added Python 3.12 support, and deprecated the use of faiss for v3.12+.   We have changed the "Fast Start" no-install option to use chromadb or lancedb rather than faiss.   Refactoring of code especially with Datasets, Graph and Web Services as separate modules.  
+
 --**0.2.11** released in the week of April 29, 2024 - updated GGUF libs for Phi-3 and Llama-3 support, and added new prebuilt shared libraries to support WhisperCPP.  We are also deprecating support for Mac x86 going forward - will continue to support on most major components but not all new features going forward will be built specifically for Mac x86 (which Apple stopped shipping in 2022).  Our intent is to keep narrowing our testing matrix to provide better support on key platforms.  We have also added better safety checks for older versions of Mac OS running on M1/M2/M3 (no_acc option in GGUF and Whisper libs), as well as a custom check to find CUDA drivers on Windows (independent of Pytorch).  
 
 --**0.2.9** released in the week of April 15, 2024 - minor continued improvements to the parsers plus roll-out of new CustomTable class for rapidly integrating structured information into LLM-based workflows and data pipelines, including converting JSON/JSONL files and CSV files into structured DB tables.  
