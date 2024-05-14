@@ -760,6 +760,11 @@ The llmware repo can be pulled locally to get access to all the examples, or to 
 git clone git@github.com:llmware-ai/llmware.git
 ```
 
+After cloning the repo, depending upon your IDE enviroment, you may need to take these additional steps:  
+1.  requirements.txt - inside the /llmware path - e.g., ```bash pip3 install -r llmware/requirements.txt```   (If you copy the requirements.txt file into the root of the project folder, then many IDEs will auto install the requirements and/or you can then run the canonical `pip3 install -r requirements.txt`)   
+2.  to run any of the examples, copy the example .py file into the root project path.   (We have seen several IDEs that will attempt to run interactively from the nested /example path, and then not have access to the /llmware module.  We will look into fixing this with a small automation script, but for now, the easy fix is to just copy the example you want to run into the root path).  
+3.  to use a vector db, you will need to separately install the python library for that vector db, e.g., `pip3 install pymilvus`, or `pip3 install chromadb`.   
+   
 <details>  
     
 <summary> ✨  <b>Roadmap - Where are we going ... </b>  </summary>
