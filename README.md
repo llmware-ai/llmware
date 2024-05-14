@@ -597,7 +597,9 @@ if __name__ == "__main__":
 
 -**Web Services with Agent Calls for Financial Research** - end-to-end scenario - [video](https://youtu.be/l0jzsg1_Ik0?si=hmLhpT1iv_rxpkHo) and [example](examples/Use_Cases/web_services_slim_fx.py)  
 
--**Voice Transcription with WhisperCPP** - [getting_started](examples/Models/using-whisper-cpp-getting-started.py), [using_sample_files](examples/Models/using-whisper-cpp-sample-files.py), and [analysis_use_case](examples/Use_Cases/parsing_great_speeches.py)    
+-**Voice Transcription with WhisperCPP** - [getting_started](examples/Models/using-whisper-cpp-getting-started.py), [using_sample_files](examples/Models/using-whisper-cpp-sample-files.py), and [analysis_use_case](examples/Use_Cases/parsing_great_speeches.py) with [great_speeches_video](https://youtu.be/5y0ez5ZBpPE?si=KVxsXXtX5TzvlEws)    
+
+-**Phi-3 GGUF Streaming Local Chatbot with UI** - setup your own Phi-3-gguf chatbot on your laptop in minutes - [example](examples/UI/gguf_streaming_chatbot.py)  
 
 -**Small, specialized, function-calling Extract Model** - introducing slim-extract - [video](https://youtu.be/d6HFfyDk4YE?si=VB8JTsN3X7hsB_I) and [example](examples/SLIM-Agents/using_slim_extract_model.py)  
 
@@ -615,7 +617,7 @@ if __name__ == "__main__":
 
 -**GGUF - Getting Started** - check out examples - GGUF ([example](examples/Models/using_gguf.py)) and Videos [video](https://www.youtube.com/watch?v=ZJyQIZNJ45E)  
 
-
+-**Optimizing Accuracy of RAG Prompts** - check out [example](examples/Models/adjusting_sampling_settings.py) and videos - [part I](https://youtu.be/7oMTGhSKuNY?si=14mS2pftk7NoKQbC) and [part II](https://youtu.be/iXp1tj-pPjM?si=T4teUAISnSWgtThu)  
 
 ## 🌱 Getting Started
 
@@ -782,13 +784,12 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
-**Wednesday, May 8 - v0.2.13-WIP Update**  
+**Sunday, May 12 - v0.2.13**  
 - New GGUF streaming method with [basic example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/gguf_streaming.py) and [phi3 local chatbot](https://github.com/llmware-ai/llmware/tree/main/examples/UI/gguf_streaming_chatbot.py)  
 - Significant cleanups in ancillary imports and dependencies to reduce install complexity - note: the updated requirements.txt and setup.py files.  
 - Defensive code to provide informative warning of any missing dependencies in specialized parts of the code, e.g., OCR, Web Parser.  
 - Updates of tests, notice and documentation.   
-- OpenAIConfigs created to support Azure OpenAI.  
-- Changes are merged in main branch with further updates coming - expect to release PyPi 0.2.13 by Sunday, May 12 EOD.  
+- OpenAIConfigs created to support Azure OpenAI.   
   
 **Sunday, May 5 - v0.2.12 Update**  
 - Launched ["bling-phi-3"](https://huggingface.co/llmware/bling-phi-3) and ["bling-phi-3-gguf"](https://huggingface.co/llmware/bling-phi-3-gguf) in ModelCatalog - newest and most accurate BLING/DRAGON model  
