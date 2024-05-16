@@ -253,7 +253,12 @@ class Utilities:
             for z in range(0, len(cfile)):
                 # intercept a line too large here
                 if sys.getsizeof(cfile[z]) < max_csv_size:
-                    c.writerow(cfile[z])
+                    try:
+                        # unusual, but if unable to write a particular element, then will catch error and skip
+                        c.writerow(cfile[z])
+                    except:
+                        logging.warning(f"warning: could not write item in row {z} - skipping")
+                        pass
                 else:
                     logging.error("error:  CSV ERROR:   Row exceeds MAX SIZE: %s %s", sys.getsizeof(cfile[z])
                                   ,cfile[z])
@@ -804,7 +809,12 @@ class Utilities:
 
     def convert_media_file_to_wav(self, path_to_file_to_convert, save_path=None, file_out="converted_file.wav"):
 
-        """ Utility method that converts wide range of video/audio file formats into .wav for transcription. """
+        """ Utility method that converts wide range of video/audio file formats into .wav for transcription.
+        To use this method requires two separate installs:
+
+            1.  pydub - e.g., `pip3 install pydub`
+            2.  lib install ffmpeg, e.g., brew install ffmpeg (MacOS)
+        """
 
         # import ffmpeg -> need to import the core lib (brew install ffmpeg)
 
@@ -849,6 +859,26 @@ class Utilities:
         secure_fn = secure_fn.replace(" ", "_")
 
         return secure_fn
+
+    def split_ocr_special_field1(self,special_field_text):
+
+        """ Utility method to unpack a special_field text from an OCR block that will have the link
+        back to the original document and block id. """
+
+        doc_block = special_field_text.split("&")
+        output_dict = {}
+
+        for elements in doc_block:
+
+            key, value = elements.split("-")
+            try:
+                value = int(value)
+            except:
+                logging.warning(f"warning: could not convert value into integer as expected - {key} - {value}")
+
+            output_dict.update({key: value})
+
+        return output_dict
 
 
 class CorpTokenizer:
