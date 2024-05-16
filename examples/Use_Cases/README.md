@@ -46,16 +46,21 @@ In this repository, we feature several 'end-to-end' examples that show how to us
 
     - Start running natural language queries on CSVs with Postgres and slim-sql-tool.  
     - Load a sample 'customer_table.csv' into Postgres
-    - Start running natural language queries that get converted into SQL and query the DB
+    - Start running natural language queries that get converted into SQL and query the DB  
     
 
 6.  [**Contract Analysis**](https://www.github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/contract_analysis_on_laptop_with_bling_models.py)  
 
     - Extract key information from set of employment agreement  
-    - Use a simple retrieval strategy with keyword search to identify key provisions and topic areas 
-    - Prompt LLM to read the key provisions and answer questions based on those source materials
+    - Use a simple retrieval strategy with keyword search to identify key provisions and topic areas  
+    - Prompt LLM to read the key provisions and answer questions based on those source materials  
 
+7.  [**Slicing and Dicing Office Docs**](https://www.github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/slicing_and_dicing_office_docs.py)  
 
+    - Shows a variety of advanced parsing techniques with Office document formats packaged in ZIP archives  
+    - Extracts tables and images, runs OCR against the embedded images, exports the whole library, and creates dataset  
+    
+    
 Check back often - we are updating these examples regularly - and many of these examples have companion videos as well.  
 
 
