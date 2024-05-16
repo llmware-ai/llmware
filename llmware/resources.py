@@ -628,7 +628,7 @@ class MongoRetrieval:
                 logging.info("update: mongo lookup - could not find _id into ObjectID - %s", value)
                 value = value
 
-        target = list(self.collection.find({key:value}, no_cursor_timeout=True))
+        target = list(self.collection.find({key:value}))
 
         return target
 
@@ -639,7 +639,9 @@ class MongoRetrieval:
 
         """Retrieves whole collection in Mongo- will return as a Cursor object"""
 
-        all_output = self.collection.find({}, no_cursor_timeout=True)
+        # update: removing no_cursor_timeout=True
+        # setting timeout to 30 minutes = 1,800,000 milliseconds
+        all_output = self.collection.find({}).max_time_ms(1800000)
 
         cursor = DBCursor(all_output,self, "mongo")
 
@@ -843,7 +845,7 @@ class MongoRetrieval:
         """Applies the custom query directly to the DB and returns the results"""
 
         # will force exhausting cursor iterable into list - designed for relatively small in-memory retrievals
-        results = list(self.collection.find(query_filter, no_cursor_timeout=True))
+        results = list(self.collection.find(query_filter))
 
         return results
 
