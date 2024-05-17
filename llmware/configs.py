@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+
 """The configs module implements the configuration logic using classes for llmware.
 
 The implementation includes the central llmware config class LLMWareConfig, and the config classes for all
@@ -19,9 +20,18 @@ supported text index databases and vector databases.
 
 import os
 import platform
+import logging
 
 from llmware.exceptions import HomePathDoesNotExistException, UnsupportedEmbeddingDatabaseException, \
     UnsupportedCollectionDatabaseException, UnsupportedTableDatabaseException, ConfigKeyException
+
+try:
+    from colorama import Fore
+    COLOR_WHITE = Fore.WHITE
+    COLOR_RESET = Fore.RESET
+except:
+    COLOR_WHITE = ""
+    COLOR_RESET = ""
 
 
 class LLMWareConfig:
@@ -55,8 +65,9 @@ class LLMWareConfig:
              "debug_mode": 0,
              "llmware_sample_files_bucket": "llmware-sample-docs",
              "llmware_public_models_bucket": "llmware-public-models",
-             "shared_lib_path": os.path.join(os.path.dirname(os.path.realpath(__file__)), "lib")
-
+             "shared_lib_path": os.path.join(os.path.dirname(os.path.realpath(__file__)), "lib"),
+             "logging_level": logging.WARNING,
+             "logging_format": COLOR_WHITE + '%(levelname)-4s: %(message)s' + COLOR_RESET
              }
 
     @classmethod
@@ -340,6 +351,41 @@ class LLMWareConfig:
         if active_db == "sqlite": pw = SQLiteConfig.get_db_pw()
 
         return pw
+
+    @classmethod
+    def get_logging_level(cls):
+        return cls._conf["logging_level"]
+
+    @classmethod
+    def set_logging_level(cls, log_level_str):
+
+        log_level_str = log_level_str.upper()
+
+        accepted_levels = ["INFO", "DEBUG", "WARNING", "ERROR","CRITICAL"]
+        if log_level_str not in accepted_levels:
+            raise ConfigKeyException(f"Exception: proposed logging level does not correspond to a "
+                                     f"recognized level, e.g., {accepted_levels}")
+
+        if log_level_str == "INFO": new_level = logging.INFO
+        elif log_level_str == "DEBUG": new_level = logging.DEBUG
+        elif log_level_str == "WARNING": new_level = logging.WARNING
+        elif log_level_str == "ERROR": new_level = logging.ERROR
+        elif log_level_str == "CRITICAL": new_level = logging.CRITICAL
+        else:
+            new_level = logging.DEBUG
+
+        cls._conf["logging_level"] = new_level
+
+        return new_level
+
+    @classmethod
+    def get_logging_format(cls):
+        return cls._conf["logging_format"]
+
+    @classmethod
+    def set_logging_format(cls, formatting_str):
+        cls._conf["logging_format"] = formatting_str
+        return True
 
 
 class MilvusConfig:
