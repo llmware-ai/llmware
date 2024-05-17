@@ -12,13 +12,8 @@
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
 
-"""The models module implements the model registry, the catalog for models and prompts, and all the currently
-supported models, which includes the SLIM model series, the DRAGON model series, the BLING model series,
-and the BERT model series.
-
-Besides the logic mentioned above, this module also implements the configuration for BERT and the
-inference server of llmware.
-"""
+"""The models module implements the model registry, the catalog for models and prompts, and classes that
+implement the interface for each of the supported models. """
 
 import logging
 import json
@@ -27,6 +22,7 @@ import tempfile
 import ast
 import time
 from collections import deque
+import shutil
 
 from torch import tensor, nn, cuda, no_grad, ones, long, LongTensor, argmax, multinomial, cat, squeeze
 
@@ -1609,16 +1605,16 @@ class ModelCatalog:
         result = {"gpu_found": False, "drivers_current": False,
                   "gpu_name": "", "driver": "", "multiple_gpu": False}
 
+
         try:
             from subprocess import Popen, PIPE
-            from distutils import spawn
         except:
             if not suppress_warnings:
                 logging.warning("update: unable to check if gpu available")
             return result
 
         if sys.platform.lower() == "win32":
-            nvidia_smi = spawn.find_executable('nvidia-smi')
+            nvidia_smi = shutil.which('nvidia-smi')
         elif sys.platform.lower().startswith("linux"):
             nvidia_smi = "nvidia-smi"
         else:
