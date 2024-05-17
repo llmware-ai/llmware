@@ -57,7 +57,7 @@ GEM
       jekyll-seo-tag (>= 2.0)
       rake (>= 12.3.1)
     kramdown (2.4.0)
-      rexml (>= 3.2.7)
+      rexml 
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
     liquid (4.0.4)
