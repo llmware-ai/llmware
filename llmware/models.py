@@ -967,6 +967,7 @@ class ModelCatalog:
         downloader = hf_hub_download(gguf_repo,
                                      gguf_file,
                                      local_dir=local_model_repo_path,
+                                     local_dir_use_symlinks=False,
                                      token=api_key)
 
         #   remove ongoing links, if any, created by attributes not in the file repo
@@ -995,7 +996,8 @@ class ModelCatalog:
 
         from huggingface_hub import snapshot_download
 
-        snapshot = snapshot_download(repo_name, local_dir=local_model_repo_path, token=api_key)
+        snapshot = snapshot_download(repo_name, local_dir=local_model_repo_path, token=api_key,
+                                     local_dir_use_symlinks=False)
 
         files_created = os.listdir(local_model_repo_path)
 
