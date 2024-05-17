@@ -595,6 +595,8 @@ if __name__ == "__main__":
 
 ## 🔥 What's New? 🔥  
 
+-**Best New Small RAG Model** - BLING finetune of Phi-3 - "bling-phi-3-gguf" - see the [video](https://youtu.be/cViMonCAeSc?si=L6jX0sRdZAmKtRcz)  
+
 -**Web Services with Agent Calls for Financial Research** - end-to-end scenario - [video](https://youtu.be/l0jzsg1_Ik0?si=hmLhpT1iv_rxpkHo) and [example](examples/Use_Cases/web_services_slim_fx.py)  
 
 -**Voice Transcription with WhisperCPP** - [getting_started](examples/Models/using-whisper-cpp-getting-started.py), [using_sample_files](examples/Models/using-whisper-cpp-sample-files.py), and [analysis_use_case](examples/Use_Cases/parsing_great_speeches.py) with [great_speeches_video](https://youtu.be/5y0ez5ZBpPE?si=KVxsXXtX5TzvlEws)    
@@ -788,6 +790,13 @@ Interested in contributing to llmware? Information on ways to participate can be
 Questions and discussions are welcome in our [github discussions](https://github.com/llmware-ai/llmware/discussions).  
 
 ## 📣  Release notes and Change Log  
+
+**Friday, May 17 - v0.2.14-WIP**  
+- New OCR image parsing methods with [example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/slicing_and_dicing_office_docs.py)  
+- Adding first part of logging improvements (WIP) in Configs and Models.    
+- New embedding model added to catalog - industry-bert-loans.  
+- Updates to model import methods and configurations.  
+- Changes merged into main repo with PyPi release scheduled for the weekend.  
 
 **Sunday, May 12 - v0.2.13**  
 - New GGUF streaming method with [basic example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/gguf_streaming.py) and [phi3 local chatbot](https://github.com/llmware-ai/llmware/tree/main/examples/UI/gguf_streaming_chatbot.py)  
