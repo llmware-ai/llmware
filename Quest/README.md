@@ -2,7 +2,7 @@
 AI Bloks Package Quest  
 ===============
 
-> This repository is dedicated to submissions for the 011-RAGs with [AI Bloks Package QuineQuest](https://quine.notion.site/011-RAGs-with-AI-Bloks-0253bf0d4b0843af935ed2d3a3772f67). 
+> This repository is dedicated to submissions for the 011-RAGs with [AI Bloks Package Quine Quest](https://quine.notion.site/011-RAGs-with-AI-Bloks-0253bf0d4b0843af935ed2d3a3772f67). 
 
 <br>
 
