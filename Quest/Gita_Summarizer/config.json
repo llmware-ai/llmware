@@ -1,0 +1,245 @@
+{
+ "model_name": "slim-summary-tool",
+ "model_ft_base": "slim-summary",
+ "quantization": "4Q_K_M GGUF",
+ "model_base": "stabilityai/stablelm-3b-4e1t",
+ "model_type": "stablelm",
+ "tokenizer": "llmware/slim-summary",
+ "parameters": "2.7 billion",
+ "description": "slim-summary is a function-calling model, fine-tuned to output structured dictionaries",
+ "prompt_wrapper": "human_bot",
+ "prompt_format": "<human> {In the context of Mahabaratha} <summarize> {optional text to guide summary} {(optional target list size)} </summarize>\n<bot>:",
+ "output_format": "['key point1', 'key point2', 'key point3', ...]",
+ "primary_keys": ["no primary key - returns a list, not dict"],
+ "output_values": ["list of summary points"],
+ "publisher": "llmware",
+ "release_date": "march 2024",
+ "test_set": [
+    
+          {
+            "context": "Arjuna is Brother of Bhima. Arjuna is Brother of Karna. Arjuna is conflicted about fighting in the battle of Kurukshetra, seeing his relatives, teachers, and friends on both sides of the battlefield. Overwhelmed by sorrow and compassion, he questions the morality of the war and expresses his doubts, ultimately refusing to fight and seeking guidance from Krishna."
+          },
+          {
+            "context": "Krishna begins to instruct Arjuna, explaining the nature of the soul as eternal and indestructible, beyond physical death. Emphasizing the importance of performing one's duty without attachment to results, Krishna urges Arjuna to rise above dualities and remain steadfast in yoga (discipline), introducing the concepts of Sankhya (knowledge) and Karma Yoga (selfless action)."
+          },
+          {
+            "context": "Krishna explains the importance of performing one's duty (dharma) through selfless action, emphasizing that actions should be performed without attachment to their outcomes. He describes the cycle of sacrifice (yajna) and its role in sustaining the world, warning against attachment to inaction and stressing the importance of leading by example."
+          },
+          {
+            "context": "Krishna reveals the eternal nature of his teachings, passed down through generations, and explains the concept of divine incarnations (avatars) that come to restore dharma. Highlighting the significance of acquiring knowledge through a guru (teacher), Krishna explains how selfless actions, performed with the right knowledge, lead to liberation."
+          },
+          {
+            "context": "Krishna compares the paths of renunciation (sannyasa) and selfless action (karma yoga), asserting that both lead to the same goal, but karma yoga is easier for most people. He states that a true renunciant is one who performs actions without attachment, describing the qualities of a person who has attained peace and liberation."
+          },
+          {
+            "context": "Krishna outlines the practice of meditation (dhyana yoga) for self-realization, explaining the importance of controlling the mind and senses. He stresses that a disciplined and balanced lifestyle is essential for successful meditation, describing the characteristics of a true yogi who sees all beings with equal vision."
+          },
+          {
+            "context": "Krishna elaborates on his divine nature and the material and spiritual energies, explaining how everything in existence is a manifestation of his energy. He describes the four types of devotees who worship him and the rarity of those who seek knowledge, emphasizing the importance of understanding the ultimate truth beyond material nature."
+          },
+          {
+            "context": "Arjuna inquires about the nature of Brahman (the Absolute), karma, and the self. Krishna explains the eternal nature of the soul and the cycle of birth and death, describing the significance of remembering God at the time of death. He outlines different paths leading to liberation and the significance of cosmic cycles."
+          },
+          {
+            "context": "Krishna reveals the most confidential knowledge of his supreme nature, describing the relationship between the material world and his divine energy. He emphasizes devotional service (bhakti yoga) as the highest form of worship and assures that those who surrender to him with devotion are protected and liberated."
+          },
+          {
+            "context": "Krishna lists his divine manifestations and opulences in the world, explaining that he is the source of all spiritual and material worlds. Arjuna acknowledges Krishna's supreme position and requests to know more about his divine powers, prompting Krishna to detail his many opulent forms and manifestations."
+          },
+          {
+            "context": "Arjuna is conflicted about fighting in the battle of Kurukshetra, seeing his relatives, teachers, and friends on both sides of the battlefield. Overwhelmed by sorrow and compassion, he questions the morality of the war and expresses his doubts, ultimately refusing to fight and seeking guidance from Krishna."
+          },
+          {
+            "context": "Krishna begins to instruct Arjuna, explaining the nature of the soul as eternal and indestructible, beyond physical death. Emphasizing the importance of performing one's duty without attachment to results, Krishna urges Arjuna to rise above dualities and remain steadfast in yoga (discipline), introducing the concepts of Sankhya (knowledge) and Karma Yoga (selfless action)."
+          },
+          {
+            "context": "Krishna explains the importance of performing one's duty (dharma) through selfless action, emphasizing that actions should be performed without attachment to their outcomes. He describes the cycle of sacrifice (yajna) and its role in sustaining the world, warning against attachment to inaction and stressing the importance of leading by example."
+          },
+          {
+            "context": "Krishna reveals the eternal nature of his teachings, passed down through generations, and explains the concept of divine incarnations (avatars) that come to restore dharma. Highlighting the significance of acquiring knowledge through a guru (teacher), Krishna explains how selfless actions, performed with the right knowledge, lead to liberation."
+          },
+          {
+            "context": "Krishna compares the paths of renunciation (sannyasa) and selfless action (karma yoga), asserting that both lead to the same goal, but karma yoga is easier for most people. He states that a true renunciant is one who performs actions without attachment, describing the qualities of a person who has attained peace and liberation."
+          },
+          {
+            "context": "Krishna outlines the practice of meditation (dhyana yoga) for self-realization, explaining the importance of controlling the mind and senses. He stresses that a disciplined and balanced lifestyle is essential for successful meditation, describing the characteristics of a true yogi who sees all beings with equal vision."
+          },
+          {
+            "context": "Krishna elaborates on his divine nature and the material and spiritual energies, explaining how everything in existence is a manifestation of his energy. He describes the four types of devotees who worship him and the rarity of those who seek knowledge, emphasizing the importance of understanding the ultimate truth beyond material nature."
+          },
+          {
+            "context": "Arjuna inquires about the nature of Brahman (the Absolute), karma, and the self. Krishna explains the eternal nature of the soul and the cycle of birth and death, describing the significance of remembering God at the time of death. He outlines different paths leading to liberation and the significance of cosmic cycles."
+          },
+          {
+            "context": "Krishna reveals the most confidential knowledge of his supreme nature, describing the relationship between the material world and his divine energy. He emphasizes devotional service (bhakti yoga) as the highest form of worship and assures that those who surrender to him with devotion are protected and liberated."
+          },
+          {
+            "context": "Krishna lists his divine manifestations and opulences in the world, explaining that he is the source of all spiritual and material worlds. Arjuna acknowledges Krishna's supreme position and requests to know more about his divine powers, prompting Krishna to detail his many opulent forms and manifestations."
+          },
+          {
+            "context": "Arjuna asks Krishna about the qualities of a person who is steady in wisdom and unwavering in devotion. Krishna explains that such a person is free from desires, egotism, and attachment, remaining calm in pleasure and pain. They are self-controlled, focused on the self, and devoted to Krishna, thus achieving true peace and liberation."
+          },
+          {
+            "context": "Krishna discusses the three modes of material nature: goodness (sattva), passion (rajas), and ignorance (tamas). He explains how these modes influence human behavior and consciousness. By transcending these modes through devotion and self-realization, one can attain liberation and be free from the cycle of birth and death."
+          },
+          {
+            "context": "Arjuna is taught about the process of creation and destruction in the material universe. Krishna explains that he is the source of all creation and that everything arises from his divine will. He also describes the periodic dissolution of the universe and the eternal nature of the soul, which is unaffected by these changes."
+          },
+          {
+            "context": "Krishna describes the path of devotion (bhakti yoga) as the most accessible and effective means of attaining union with the divine. He emphasizes that pure love and unwavering faith in Krishna lead to spiritual fulfillment. Devotees who surrender to him are guided and protected, ultimately reaching the supreme abode."
+          },
+          {
+            "context": "Krishna explains the importance of self-discipline and austerity in spiritual practice. He outlines various forms of austerity related to the body, speech, and mind. These practices, when performed with sincerity and devotion, purify the practitioner and help in overcoming the ego, leading to spiritual growth and enlightenment."
+          },
+          {
+            "context": "Arjuna learns about the significance of karma and the law of cause and effect. Krishna explains that every action has consequences, and one must perform duties selflessly to avoid the bondage of karma. By dedicating all actions to Krishna and remaining detached from the outcomes, one can achieve freedom and peace."
+          },
+          {
+            "context": "Krishna describes the eternal soul's journey through various lifetimes and the impact of one's actions and desires on this journey. He emphasizes the importance of spiritual knowledge and the pursuit of self-realization to break free from the cycle of birth and death, ultimately merging with the divine consciousness."
+          },
+          {
+            "context": "Krishna reveals his universal form (Vishvarupa) to Arjuna, displaying his infinite and all-encompassing nature. Arjuna is awestruck and overwhelmed by the vision, realizing Krishna's supreme power and divinity. This revelation reinforces Arjuna's faith and resolves, preparing him to fulfill his duty as a warrior with renewed determination."
+          },
+          {
+            "context": "Arjuna inquires about the difference between the material and spiritual worlds. Krishna explains that the material world is temporary and full of suffering, while the spiritual world is eternal and blissful. By transcending material desires and attachments through devotion and knowledge, one can attain the spiritual realm."
+          },
+          {
+            "context": "Krishna emphasizes the importance of righteousness and the role of a king in upholding dharma (moral order). He advises Arjuna to perform his duty as a warrior without selfish motives, ensuring justice and protecting the righteous. Krishna assures Arjuna that by following his guidance, he will attain both material and spiritual success."
+          },
+        
+        
+        {
+            "context": "Arjuna is conflicted about fighting in the battle of Kurukshetra, seeing his relatives, teachers, and friends on both sides of the battlefield. Overwhelmed by sorrow and compassion, he questions the morality of the war and expresses his doubts, ultimately refusing to fight and seeking guidance from Krishna."
+        },
+        {
+            "context": "Krishna begins to instruct Arjuna, explaining the nature of the soul as eternal and indestructible, beyond physical death. Emphasizing the importance of performing one's duty without attachment to results, Krishna urges Arjuna to rise above dualities and remain steadfast in yoga (discipline), introducing the concepts of Sankhya (knowledge) and Karma Yoga (selfless action)."
+        },
+        {
+            "context": "Krishna explains the importance of performing one's duty (dharma) through selfless action, emphasizing that actions should be performed without attachment to their outcomes. He describes the cycle of sacrifice (yajna) and its role in sustaining the world, warning against attachment to inaction and stressing the importance of leading by example."
+        },
+        {
+            "context": "Krishna reveals the eternal nature of his teachings, passed down through generations, and explains the concept of divine incarnations (avatars) that come to restore dharma. Highlighting the significance of acquiring knowledge through a guru (teacher), Krishna explains how selfless actions, performed with the right knowledge, lead to liberation."
+        },
+        {
+            "context": "Krishna compares the paths of renunciation (sannyasa) and selfless action (karma yoga), asserting that both lead to the same goal, but karma yoga is easier for most people. He states that a true renunciant is one who performs actions without attachment, describing the qualities of a person who has attained peace and liberation."
+        },
+        {
+            "context": "Krishna outlines the practice of meditation (dhyana yoga) for self-realization, explaining the importance of controlling the mind and senses. He stresses that a disciplined and balanced lifestyle is essential for successful meditation, describing the characteristics of a true yogi who sees all beings with equal vision."
+        },
+        {
+            "context": "Krishna elaborates on his divine nature and the material and spiritual energies, explaining how everything in existence is a manifestation of his energy. He describes the four types of devotees who worship him and the rarity of those who seek knowledge, emphasizing the importance of understanding the ultimate truth beyond material nature."
+        },
+        {
+            "context": "Arjuna inquires about the nature of Brahman (the Absolute), karma, and the self. Krishna explains the eternal nature of the soul and the cycle of birth and death, describing the significance of remembering God at the time of death. He outlines different paths leading to liberation and the significance of cosmic cycles."
+        },
+        {
+            "context": "Krishna reveals the most confidential knowledge of his supreme nature, describing the relationship between the material world and his divine energy. He emphasizes devotional service (bhakti yoga) as the highest form of worship and assures that those who surrender to him with devotion are protected and liberated."
+        },
+        {
+            "context": "Krishna lists his divine manifestations and opulences in the world, explaining that he is the source of all spiritual and material worlds. Arjuna acknowledges Krishna's supreme position and requests to know more about his divine powers, prompting Krishna to detail his many opulent forms and manifestations."
+        },
+        {
+            "context": "Arjuna asks Krishna about the qualities of a person who is steady in wisdom and unwavering in devotion. Krishna explains that such a person is free from desires, egotism, and attachment, remaining calm in pleasure and pain. They are self-controlled, focused on the self, and devoted to Krishna, thus achieving true peace and liberation."
+        },
+        {
+            "context": "Krishna discusses the three modes of material nature: goodness (sattva), passion (rajas), and ignorance (tamas). He explains how these modes influence human behavior and consciousness. By transcending these modes through devotion and self-realization, one can attain liberation and be free from the cycle of birth and death."
+        },
+        {
+            "context": "Arjuna is taught about the process of creation and destruction in the material universe. Krishna explains that he is the source of all creation and that everything arises from his divine will. He also describes the periodic dissolution of the universe and the eternal nature of the soul, which is unaffected by these changes."
+        },
+        {
+            "context": "Krishna describes the path of devotion (bhakti yoga) as the most accessible and effective means of attaining union with the divine. He emphasizes that pure love and unwavering faith in Krishna lead to spiritual fulfillment. Devotees who surrender to him are guided and protected, ultimately reaching the supreme abode."
+        },
+        {
+            "context": "Krishna explains the importance of self-discipline and austerity in spiritual practice. He outlines various forms of austerity related to the body, speech, and mind. These practices, when performed with sincerity and devotion, purify the practitioner and help in overcoming the ego, leading to spiritual growth and enlightenment."
+        },
+        {
+            "context": "Arjuna learns about the significance of karma and the law of cause and effect. Krishna explains that every action has consequences, and one must perform duties selflessly to avoid the bondage of karma. By dedicating all actions to Krishna and remaining detached from the outcomes, one can achieve freedom and peace."
+        },
+        {
+            "context": "Krishna describes the eternal soul's journey through various lifetimes and the impact of one's actions and desires on this journey. He emphasizes the importance of spiritual knowledge and the pursuit of self-realization to break free from the cycle of birth and death, ultimately merging with the divine consciousness."
+        },
+        {
+            "context": "Krishna reveals his universal form (Vishvarupa) to Arjuna, displaying his infinite and all-encompassing nature. Arjuna is awestruck and overwhelmed by the vision, realizing Krishna's supreme power and divinity. This revelation reinforces Arjuna's faith and resolves, preparing him to fulfill his duty as a warrior with renewed determination."
+        },
+        {
+            "context": "Arjuna inquires about the difference between the material and spiritual worlds. Krishna explains that the material world is temporary and full of suffering, while the spiritual world is eternal and blissful. By transcending material desires and attachments through devotion and knowledge, one can attain the spiritual realm."
+        },
+        {
+            "context": "Krishna emphasizes the importance of righteousness and the role of a king in upholding dharma (moral order). He advises Arjuna to perform his duty as a warrior without selfish motives, ensuring justice and protecting the righteous. Krishna assures Arjuna that by following his guidance, he will attain both material and spiritual success."
+        },
+        {
+            "context": "Krishna explains the nature of faith and how it differs among individuals based on their inherent qualities. He describes the three types of faith—sattvic (pure), rajasic (passionate), and tamasic (ignorant)—and how these influence one's actions and destiny. By cultivating pure faith, one can progress spiritually and achieve liberation."
+        },
+        {
+            "context": "Arjuna asks Krishna about the ultimate purpose of human life. Krishna explains that the purpose is to realize one's divine nature and attain union with the supreme consciousness. He emphasizes the importance of selfless service, devotion, and spiritual knowledge as the means to achieve this ultimate goal."
+        },
+        {
+            "context": "Krishna discusses the concept of divine and demonic qualities inherent in human beings. He explains that divine qualities lead to liberation and spiritual growth, while demonic qualities lead to bondage and suffering. By cultivating divine qualities such as humility, compassion, and self-control, one can attain a higher state of being."
+        },
+        {
+            "context": "Krishna elaborates on the importance of surrendering to the divine will. He assures Arjuna that by surrendering to him with complete faith and devotion, all sins will be forgiven and one will attain eternal peace. Krishna emphasizes that true liberation comes from complete surrender and devotion to the supreme being."
+        },
+        {
+            "context": "Arjuna learns about the significance of selfless service and its role in spiritual growth. Krishna explains that selfless actions performed with a pure heart and without attachment to the results lead to spiritual purification and liberation. By dedicating all actions to the divine, one can achieve ultimate fulfillment and peace."
+        },
+        {
+            "context": "Krishna discusses the importance of controlling the mind and senses to achieve spiritual progress. He explains that an uncontrolled mind leads to confusion and suffering, while a disciplined mind leads to clarity and peace. Through meditation, self-discipline, and devotion, one can control the mind and attain spiritual enlightenment."
+        },
+        {
+            "context": "Krishna reveals the secret of his divine play (lila) and the role it plays in the cosmic order. He explains that his incarnations and activities are meant to establish dharma and guide souls towards liberation. By understanding and participating in his divine play with devotion, one can transcend material existence and attain spiritual bliss."
+        },
+            {
+            "context": "Arjuna expresses his concern about the consequences of war, including the destruction of family traditions and the proliferation of irreligion. Krishna responds by explaining the eternal nature of the soul and the impermanence of the physical body, encouraging Arjuna to fulfill his duty as a warrior without attachment to the results."
+            },
+            {
+            "context": "Krishna elaborates on the concept of sacrifice (yajna) and its various forms, including charity, austerity, and worship. He explains that all actions should be performed as offerings to the divine, leading to spiritual elevation and liberation. By dedicating one's life to selfless service and devotion, one can attain union with the supreme."
+            },
+            {
+            "context": "Arjuna seeks clarification on the nature of the self and its relationship to the material world. Krishna explains that the self is distinct from the body and mind, existing eternally beyond birth and death. He describes the self as a fragment of the divine consciousness, experiencing the material world through the senses and mind."
+            },
+            {
+                "context": "Arjuna, the third Pandava prince and a skilled archer, stands on the battlefield of Kurukshetra facing a moral dilemma. As he surveys the opposing army, he recognizes familiar faces among his own kin and revered teachers on the enemy side. Overwhelmed by conflicting emotions of duty, loyalty, and compassion, Arjuna is torn between his role as a warrior and his reluctance to engage in a fratricidal war. Faced with the prospect of shedding the blood of his loved ones, Arjuna is consumed by doubt and seeks guidance from his charioteer, Lord Krishna, to navigate the ethical complexities of his situation and find clarity amidst the chaos of war."
+              },
+              
+            {
+            "context": "Krishna discusses the importance of discernment (buddhi) in making wise decisions and distinguishing between right and wrong actions. He explains that discernment arises from spiritual knowledge and intuition, guiding one towards righteous conduct and liberation. By cultivating discernment through self-awareness and introspection, one can navigate life's challenges with wisdom."
+            },
+            {
+            "context": "Arjuna expresses his confusion about the conflicting paths of renunciation and selfless action. Krishna clarifies that both paths are valid and lead to liberation, depending on one's individual temperament and stage of spiritual evolution. He encourages Arjuna to follow the path that resonates with his innermost nature and leads to spiritual growth."
+            },
+            {
+            "context": "Krishna reveals the divine nature of his devotees and their special relationship with him. He explains that those who surrender to him with unwavering faith and devotion are dear to him and receive his protection and guidance. Through loving service and devotion, one can establish a personal relationship with the divine and attain spiritual perfection."
+            },
+            {
+            "context": "Arjuna seeks guidance on how to recognize a wise person and engage in meaningful discourse with them. Krishna describes the qualities of a wise person, including humility, compassion, and selflessness. He advises Arjuna to approach wise beings with reverence and humility, seeking their guidance on the path to spiritual enlightenment."
+            },
+            {
+            "context": "Krishna explains the concept of detachment (vairagya) and its significance in spiritual practice. He describes detachment as the ability to remain unaffected by the fluctuations of the material world, maintaining inner peace and equanimity. By cultivating detachment through self-awareness and spiritual knowledge, one can transcend material desires and attain liberation."
+            },
+            {
+            "context": "Arjuna asks Krishna about the nature of divine knowledge and its role in spiritual realization. Krishna explains that divine knowledge is eternal and transcendent, revealing the ultimate truth beyond the limitations of the material world. Through spiritual inquiry and contemplation, one can attain direct knowledge of the self and the divine."
+            },
+            {
+            "context": "Krishna discusses the importance of humility and surrender in the spiritual path. He explains that true humility arises from recognizing one's dependence on the divine and surrendering one's ego at the feet of the supreme. By surrendering to the divine will with humility and devotion, one can attain spiritual liberation and divine grace."
+            },
+            {
+            "context": "Arjuna expresses his desire to know the essence of yoga and its practical application in daily life. Krishna explains that yoga is the path to union with the divine, encompassing various practices such as meditation, self-discipline, and devotion. By integrating yoga into every aspect of life, one can attain spiritual harmony and realization."
+            },
+            {
+            "context": "Krishna reveals the secret of inner peace and happiness, which lies in self-realization and detachment from the material world. He explains that true happiness is not dependent on external circumstances but arises from the realization of one's divine nature. By seeking the source of happiness within, one can experience lasting joy and contentment."
+            },
+            {
+            "context": "Arjuna seeks guidance on how to overcome the obstacles of doubt and delusion on the spiritual path. Krishna advises Arjuna to cultivate faith and surrender to the divine will, trusting in the wisdom of the scriptures and the guidance of spiritual teachers. By seeking refuge in the divine and following the path of righteousness, one can overcome all obstacles and attain spiritual enlightenment."
+            },
+            {
+            "context": "Krishna discusses the significance of devotion (bhakti) as the highest form of spiritual practice. He explains that devotion arises from pure love and surrender to the divine, transcending all barriers and leading to union with the supreme. Through selfless devotion and loving service, one can attain divine grace and spiritual liberation."
+            },
+            {
+            "context": "Arjuna asks Krishna about the nature of time and its influence on human life. Krishna explains that time is a manifestation of the divine and governs the cycles of creation and destruction in the universe. He describes the eternal nature of the soul, which transcends time and undergoes countless lifetimes in the material world."
+            }
+        
+        
+            ]
+        }
+        
