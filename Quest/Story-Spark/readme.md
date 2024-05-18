@@ -1,6 +1,7 @@
 # Story Spark
 
 AI-powered brainstorming tool that sparks creative ideas for writing projects.
+
 # Video Example for app usage:
 [![Example Video](https://img.youtube.com/vi/mdxuFBPnhUM/0.jpg)](https://www.youtube.com/watch?v=mdxuFBPnhUM)
 
