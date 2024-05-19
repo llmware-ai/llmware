@@ -11,15 +11,15 @@ AI Bloks Package Quest
 To submit your project, simply fork this repository, add your project to your fork, and then submit a pull request back to this repository. **Didn't get it? Don't worry, follow the below steps:**
 
 - First head over to the [LLMWARE REPO](https://github.com/llmware-ai/llmware), and then fork it. Follow the below steps.
-- 
+ 
 ![fork](https://github.com/llmware-ai/llmware/assets/117426013/138cc497-30f5-4a83-a5ea-91bdce932892)
 
 - Now, after forking the repo, add your project to that fork repo.
     1. Clone the repo to your local system.
-    2. 
+       
     ![clone](https://github.com/llmware-ai/llmware/assets/117426013/ea4d63bd-7a25-4519-b859-1d771d606562)
 
-    3. After cloning, head over to the Quest folder for submission.
+    2. After cloning, head over to the Quest folder for submission.
     ```git
     cd Quest
     ```
