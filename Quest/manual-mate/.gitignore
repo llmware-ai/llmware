@@ -1,0 +1,45 @@
+# Compiled Python files
+*.py[cod]
+**/__pycache__/
+
+# Virtual environment
+venv/
+env/
+
+# Package distributions
+dist/
+build/
+*.egg-info/
+
+# Compiled files
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# Configuration files with sensitive information
+.env
+
+# Input and output files
+input_data/*.pdf
+output_data/*.pdf
+output_data/__pycache__/
+
+# IDE-specific files and directories
+.idea/
+.vscode/
+
+# Miscellaneous
+.DS_Store
+Thumbs.db
+
+# OS specific hidden files
+.directory
+
+# Node modules (if using Node.js)
+node_modules/
