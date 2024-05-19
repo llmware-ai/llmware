@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <ul>
+                <li><a href="#summarize">Summarize Notes</a></li>
+                <li><a href="#sentiment">Analyze Sentiment</a></li>
+                <li><a href="#chatbot">Chat with StudyBot</a></li>
+                <li><a href="https://github.com/llmware-ai/llmware/tree/main/docs" class="rounded-button">LLMware Docs</a></li>
+                <li><a href="#summarize" class="btn rounded-button">Get Started</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <section class="section" id="home">
+            <div class="content">
+                <h1>Welcome to <span style="color: #E297DF;" > StudyDash! </span> </h1>
+                <p>StudyDash is your ultimate study companion designed to streamline your study experience. It integrates advanced AI tools powered by LLMware to provide powerful features such as document summarization, sentiment analysis for essays, and interactive Q&A with a chatbot.</p>
+                <ul>
+                    <li><strong>Summarize Notes:</strong> Quickly summarize long texts to save time and improve efficiency.</li>
+                    <li><strong>Analyze Sentiment:</strong> Analyze the sentiment of essays or articles to understand the emotional tone.</li>
+                    <li><strong>Chat with StudyBot:</strong> Get answers to your study-related questions in real-time.</li>
+                </ul>
+            </div>
+            <div class="image-container">
+                <img src="static/home.jpg" alt="StudyDash Image">
+            </div>
+        </section>
+
+        <section class="section" id="summarize">
+            <div class="content">
+                <h2><span style="color: #E297DF;" >Summarize</span> Notes</h2>
+                <form id="summarizeForm">
+                    <div class="form-group">
+                        <label for="documentText">Input Document Text:</label>
+                        <textarea class="form-control" id="documentText" name="document_text" rows="10" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="modelSelect">Select Model:</label>
+                        <select class="form-control" id="modelSelect" name="model_name">
+                            <option value="bling-phi-3-gguf">bling-phi-3-gguf</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Summarize Notes</button>
+                </form>
+                <hr>
+                <h3>Document Summary:</h3>
+                <div id="summaryOutput" class="output-box"></div>
+            </div>
+        </section>
+
+        <section class="section" id="sentiment">
+            <div class="content">
+                <h2>Analyze <span style="color: #E297DF;" >Sentiment</span></h2>
+                <form id="sentimentForm">
+                    <div class="form-group">
+                        <label for="essayText">Input Essay Text:</label>
+                        <textarea class="form-control" id="essayText" name="essay_text" rows="10" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Analyze Sentiment</button>
+                </form>
+                <hr>
+                <h3>Sentiment Analysis Result:</h3>
+                <div id="sentimentOutput" class="output-box"></div>
+            </div>
+        </section>
+
+        <section class="section" id="chatbot">
+            <div class="content">
+                <h2>Chat with <span style="color: #E297DF;" >StudyBot</span></h2>
+                <form id="chatForm">
+                    <div class="form-group">
+                        <label for="userInput">You:</label>
+                        <input type="text" class="form-control" id="userInput" name="user_input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modelSelectChat">Select Model:</label>
+                        <select class="form-control" id="modelSelectChat" name="model_name">
+                            <option value="bling-phi-3-gguf">bling-phi-3-gguf</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </form>
+                <hr>
+                <div id="chatOutput" class="chat-output output-box"></div>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>
