@@ -5,8 +5,6 @@ nav_order: 1
 description: overview of the major modules and classes of LLMWare  
 permalink: /architecture
 ---
-
-
 # LLMWare Architecture
 ===============
 

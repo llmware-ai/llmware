@@ -778,6 +778,18 @@ class Library:
 
         return 1
 
+    def run_ocr_on_images(self, add_to_library=False,chunk_size=400,min_size=10, realtime_progress=True):
+
+        """ Convenience method in Library class to pass Library to Parser to run OCR on all of the images
+        found in the Library, and OCR-extracted text from the images directly into the Library as additional
+        blocks. """
+
+        output = Parser(library=self).ocr_images_in_library(add_to_library=add_to_library,
+                                                            chunk_size=chunk_size,min_size=min_size,
+                                                            realtime_progress=realtime_progress)
+
+        return output
+
 
 class LibraryCatalog:
     """Implements the management of tracking details for libraries via the library card, which is stored
