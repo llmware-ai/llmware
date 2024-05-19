@@ -21,12 +21,18 @@ css='''
     }
     [data-testid="column"]>div>div {
         overflow: auto;
-        height: 60vh;
+        height: 50vh;
     }
 
     div[data-testid="element-container"] iframe {
     max-width: 35vh;
-}
+    }
+
+    [data-testid="stSidebar"]{
+        min-width: 400px;
+        max-width: 800px;
+    }
+
 </style>
 '''
 st.markdown(css, unsafe_allow_html=True)
@@ -106,76 +112,6 @@ def process_audio(uploaded_file):
 
     return transcription, audio_bytes
 
-# Main function to run the Streamlit app
-def main():
-    # Set up the title and description
-    # st.write("# LLMSoundWare")
-    st.title("LLMSoundWare")
-    st.write("Upload an audio file to transcribe and analyze. You can also record audio using the microphone.")
-
-    # Create two columns
-    col1, col2 = st.columns(2)
-
-    # Left column for audio processing
-    with col1:
-        # Upload sound file
-        uploaded_file = st.file_uploader("Upload audio file", type=["wav", "m4a", "mp3"])
-
-        wav_audio_data = st_audiorec()
-
-    if wav_audio_data is not None:
-        st.audio(wav_audio_data, format='audio/wav')
-        # Create a BytesIO object from recorded audio data
-        recorded_audio_bytes = BytesIO(wav_audio_data)
-
-        # Process recorded audio
-        if st.button("Process Recorded Audio"):
-            transcription, audio_bytes = process_audio(recorded_audio_bytes)
-            st.session_state.audio_transcription = transcription
-            st.session_state.audio_bytes = audio_bytes
-            st.session_state.analysis_results = analyze_transcription(transcription)
-            display_results()
-
-    # Button to start processing
-    if uploaded_file:
-        st.audio(uploaded_file, format='audio/wav')
-        if st.button("Process Audio"):
-            # Perform audio processing
-            transcription, audio_bytes = process_audio(uploaded_file)
-            st.session_state.audio_transcription = transcription
-            st.session_state.audio_bytes = audio_bytes
-            st.session_state.analysis_results = analyze_transcription(transcription)
-            #display_results()
-
-    # Display transcription and analysis if available
-    if st.session_state.audio_transcription:
-        display_results()
-
-    # Right column for chat assistant
-    with col2:
-        st.write("Chat with the Dragon")
-        # Display chat messages from history on app rerun
-        st.markdown("###### Chat History")
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-        # Accept user input
-        # prompt = st.chat_input("You can ask me about the content :D")
-        st.markdown("###### Current Prompt")
-        if prompt := st.chat_input("You can ask me about the content :D"):
-            # Display user message in chat message container
-            with st.chat_message("user"):
-                st.markdown(prompt)
-            # Add user message to chat history
-            st.session_state.messages.append({"role": "user", "content": prompt})
-
-            # Generate and display assistant response
-            with st.chat_message("assistant"):
-                response = ''.join(response_generator(prompt, st.session_state.audio_transcription))
-                st.markdown(response)
-            # Add assistant response to chat history
-            st.session_state.messages.append({"role": "assistant", "content": response})
-
 # Function to analyze transcription
 def analyze_transcription(transcription):
     cleaned_transcription = re.sub(r'\[.*?\]', '', transcription)
@@ -201,18 +137,23 @@ def analyze_transcription(transcription):
 # Function to display the results of audio analysis
 def display_results():
     results = st.session_state.analysis_results
-    st.text_area("Transcription", results["cleaned_transcription"], height=200)
-    create_gauge_chart(results["sentiment"])  
-    st.write("### Overview")  
-    display_function(results["topic"], 'topic', 'It looks like the audio is about')
-    display_function(results["category"], 'category', 'The category of audio is')
-    display_function(results["intent"], 'intent', 'The intent of the audio is')
-    display_function(results["emotions"], 'emotions', 'The emotions in the audio are')
-    display_ner(results["ner"])
-    display_summary(results["summary"])
+    # Using "with" notation
+    with st.sidebar:
+        st.write("### Transcription")  
+        st.text_area("Transcription", results["cleaned_transcription"], height=200, label_visibility="collapsed")
+        st.write("### Overview")  
+        display_function(results["topic"], 'topic', 'It looks like the audio is about')
+        display_function(results["category"], 'category', 'The category of audio is')
+        display_function(results["intent"], 'intent', 'The intent of the audio is')
+        display_function(results["emotions"], 'emotions', 'The emotions in the audio are')
+        create_gauge_chart(results["sentiment"])  
+        display_summary(results["summary"])
+        display_ner(results["ner"])
+        
+        
 
 # Function to create a gauge chart
-def create_gauge_chart(sentiment_score):
+def create_gauge_chart(sentiment_score, width=400, height=300):
     # Define sentiment colors
     colors = {'negative': 'red', 'neutral': 'yellow', 'positive': 'green'}
 
@@ -244,12 +185,14 @@ def create_gauge_chart(sentiment_score):
                 'line': {'color': "red", 'width': 4},
                 'thickness': 0.75,
                 'value': 50}
-        }))
+        }),
+        layout=dict(width=width, height=height)
+        )
     # Add sentiment value as annotation
     fig.add_annotation(
         x=0.5,
         y=0.4,
-        text="Confidence",
+        text="",
         showarrow=False,
         font=dict(
             family="Arial",
@@ -304,6 +247,76 @@ def get_badge_color(confidence_score):
         return "orange"
     else:
         return "red"
+
+# Main function to run the Streamlit app
+def main():
+    # Set up the title and description
+    st.title("LLMSoundWare")
+    st.write("Upload an audio file to transcribe and analyze. You can also record audio using the microphone.")
+
+    # Create two columns
+    col1, col2 = st.columns(2)
+
+    # Left column for audio processing
+    with col1:
+        # Upload sound file
+        uploaded_file = st.file_uploader("Upload audio file", type=["wav", "m4a", "mp3"], label_visibility="collapsed")
+
+        wav_audio_data = st_audiorec()
+
+    if wav_audio_data is not None:
+        st.audio(wav_audio_data, format='audio/wav')
+        # Create a BytesIO object from recorded audio data
+        recorded_audio_bytes = BytesIO(wav_audio_data)
+
+        # Process recorded audio
+        if st.button("Process Recorded Audio"):
+            transcription, audio_bytes = process_audio(recorded_audio_bytes)
+            st.session_state.audio_transcription = transcription
+            st.session_state.audio_bytes = audio_bytes
+            st.session_state.analysis_results = analyze_transcription(transcription)
+            # display_results()
+
+    # Button to start processing
+    if uploaded_file:
+        st.audio(uploaded_file, format='audio/wav')
+        if st.button("Process Audio"):
+            # Perform audio processing
+            transcription, audio_bytes = process_audio(uploaded_file)
+            st.session_state.audio_transcription = transcription
+            st.session_state.audio_bytes = audio_bytes
+            st.session_state.analysis_results = analyze_transcription(transcription)
+            #display_results()
+
+    # Display transcription and analysis if available
+    if st.session_state.audio_transcription:
+        display_results()
+
+    # Right column for chat assistant
+    with col2:
+        st.write("Chat with the Dragon")
+        # Display chat messages from history on app rerun
+        st.markdown("###### Chat History")
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+        # Accept user input
+        st.markdown("###### Current Prompt")
+        if prompt := st.chat_input("You can ask me about the content :D"):
+            # Display user message in chat message container
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            # Add user message to chat history
+            st.session_state.messages.append({"role": "user", "content": prompt})
+
+            # Generate and display assistant response
+            with st.chat_message("assistant"):
+                response = ''.join(response_generator(prompt, st.session_state.audio_transcription))
+                st.markdown(response)
+            # Add assistant response to chat history
+            st.session_state.messages.append({"role": "assistant", "content": response})
+
+
 
 if __name__ == "__main__":
     main()
