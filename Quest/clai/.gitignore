@@ -1,0 +1,4 @@
+cmd/clai
+cmd/clai.exe
+clai_pythonenv/*
+server/__pycache__/*
