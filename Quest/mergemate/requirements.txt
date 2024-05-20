@@ -1,0 +1,2 @@
+PyGithub
+llmware==0.2.14
