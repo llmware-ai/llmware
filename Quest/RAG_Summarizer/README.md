@@ -6,7 +6,7 @@ Summarize any pdf with the help of RAG_Summarizer which using LLMWare
 
 ## Demo
 
-
+https://github.com/vedant-spatil/RAG_Summarizer/assets/120024788/5ca110c3-fe17-4489-b37f-8f7994a7ce26
 
 ## Set up
 
