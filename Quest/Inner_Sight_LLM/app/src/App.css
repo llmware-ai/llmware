@@ -1,0 +1,44 @@
+
+
+#app-container{
+    margin: 2% 0px 0px 5%;
+}
+
+#app-logo{
+    width: 60px; 
+    height: 60px;
+}
+
+
+#app-caption {
+    text-align: center;
+}
+
+#caption-head{
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    font-size: 50px;
+    font-weight: 550;
+    margin-top: 5%;
+}
+
+#caption-body{
+    font-size: 18px;
+}
+
+#start-btn{
+    width: 30%;
+    height: 70px;
+    border-radius: 7px;
+    font-size: 35px;
+    border: 2px solid #120e0d;
+    background-color: #f3f1e5;
+    color: #120e0d;
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    margin: 5% 0px 0px 35%;
+}
+
+#start-btn:hover{
+    cursor: pointer;
+    color: #f3f1e5;
+    background-color: #120e0d;
+}
