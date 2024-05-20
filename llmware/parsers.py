@@ -4056,6 +4056,116 @@ class Parser:
 
         return output
 
+    def ocr_images_in_library(self, add_to_library=False, chunk_size=400, min_size=10,
+                              realtime_progress=True):
+
+        """ Assumes that a Library is passed in the Parser constructor, and that the Library already contains
+        some parsed content with at least some images found.   This method will identify the images extracted
+        across the entire library, and then run an OCR against each image looking for text to extract, apply
+        text chunking rules, and then save the new OCR-extracted text in the library database.
+
+        Output, by default, is verbose and displays real-time progress from the OCR to be able to evaluate the
+        quality before confirming `add_to_library = True`.   To remove the verbose screen output, set
+        `realtime_progress = False`. """
+
+        if not self.library:
+            raise LLMWareException(message="Exception: Parser - ocr_images_in_library - is intended to be used "
+                                           "in conjunction with a loaded Library.   To use, you can call the "
+                                           "Library class convenience method - .ocr_on_images method.")
+
+        from importlib import util
+        if not util.find_spec("pytesseract"):
+            raise LLMWareException(message="Exception: Parser - ocr_images_in_library - requires additional "
+                                           "dependencies to be installed on your system.  \nTo use this method, "
+                                           "please implement two prerequisites:"
+                                           "\n1. pytesseract - pip3 install pytesseract"
+                                           "\n2. lib tesseract - core library and can be installed:"
+                                           "\n        -mac os:  brew install tesseract"
+                                           "\n        -ubuntu:  sudo apt install libtesseract-dev"
+                                           "\n        -windows: use GUI download installer")
+
+        library_name = self.library.library_name
+        image_path = self.library.image_path
+
+        #   check here to see the images extracted from the original parsing
+        if realtime_progress:
+            print("update: image source file path: ", image_path)
+
+        #   query the collection DB by content_type == "image"
+        image_blocks = CollectionRetrieval(library_name).filter_by_key("content_type", "image")
+        doc_update_list = {}
+        new_text_created = 0
+
+        #   iterate through the image blocks found
+        for i, block in enumerate(image_blocks):
+
+            #   "external_files" points to the image name that will be found in the image_path above for the library
+            img_name = block["external_files"]
+
+            #   each doc_ID is unique for the library collection
+            doc_id = block["doc_ID"]
+
+            #   block_IDs are unique only for the document, and generally run in sequential ascending order
+            block_id = block["block_ID"]
+
+            #   note: _id not used, but it is a good lookup key that can be easily inserted in special_field1 below
+            bid = block["_id"]
+
+            #   preserve_spacing == True will keep \n \r \t and other white space
+            #   preserve_spacing == False collapses the white space into a single space for 'more dense' text only
+            output = ImageParser(text_chunk_size=chunk_size).process_ocr(image_path, img_name, preserve_spacing=False)
+
+            if realtime_progress:
+                print("update: realtime progress- ocr output: ", output)
+
+            #   good to do a test run with 'add_to_library' == False before writing to the collection
+            if add_to_library:
+
+                for text_chunk in output:
+
+                    if text_chunk.strip():
+
+                        # optional to keep only more substantial chunks of text
+                        if len(text_chunk) > min_size:
+
+                            #   ad hoc tracker to keep incrementing the block_id for every new image in a particular doc
+                            if doc_id in doc_update_list:
+                                new_block_id = doc_update_list[doc_id]
+                                doc_update_list.update({doc_id: new_block_id + 1})
+                            else:
+                                new_block_id = 100000
+                                doc_update_list.update({doc_id: new_block_id + 1})
+
+                            new_block = block
+
+                            #   feel free to adapt these attributes to fit for purpose
+                            new_block.update({"block_ID": new_block_id})
+                            new_block.update({"content_type": "text"})
+                            new_block.update({"embedding_flags": {}})
+                            new_block.update({"text_search": text_chunk})
+
+                            #   writes a special entry in 'special_field1' of the database
+                            #   this special entry captures the link back to the original 'image' block
+                            #   it can be unpacked by splitting on '&' and '-' to retrieve the doc_id and block_id
+
+                            output = f"document-{doc_id}&block-{block_id}"
+                            new_block.update({"special_field1": output})
+
+                            #   new _id will be assigned by the database directly
+                            if "_id" in new_block:
+                                del new_block["_id"]
+
+                            if realtime_progress:
+                                print("update: writing new text block - ", new_text_created,
+                                      doc_id, block_id, text_chunk, new_block)
+
+                            #   creates the new record
+                            CollectionWriter(library_name).write_new_parsing_record(new_block)
+
+                            new_text_created += 1
+
+        return new_text_created
+
 
 class ImageParser:
 

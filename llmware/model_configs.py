@@ -46,6 +46,12 @@ global_model_repo_catalog_list = [
       "link": "https://huggingface.co/llmware/industry-bert-sec-v0.1", "custom_model_files": [], "custom_model_repo": "",
       "hf_repo": "llmware/industry-bert-sec-v0.1"},
 
+     {"model_name": 'industry-bert-loans', "display_name": "industry-bert-loans",
+       "model_family": "HFEmbeddingModel", "model_category": "embedding", "model_location": "hf_repo",
+       "embedding_dims": 768, "context_window": 512,
+       "link": "https://huggingface.co/llmware/industry-bert-loans",
+       "custom_model_files": [], "custom_model_repo": "", "hf_repo": "llmware/industry-bert-loans"},
+
   {"model_name": 'nomic-ai/nomic-embed-text-v1', "display_name": "nomic-text-v1",
    "model_family": "HFEmbeddingModel",
    "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 768, "context_window": 8192,
@@ -529,7 +535,7 @@ global_model_repo_catalog_list = [
     # new llama-3 quantized models
     {"model_name": "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF", "display_name": "llama-3-instruct-qf-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 8192, "instruction_following": False, "prompt_wrapper": "llama_3",
+     "context_window": 8192, "instruction_following": False, "prompt_wrapper": "llama_3_chat",
      "temperature": 0.0, "sample_default": False, "trailing_space": "",
      "gguf_file": "Meta-Llama-3-8B-Instruct.Q4_K_M.gguf",
      "gguf_repo": "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF",
@@ -538,7 +544,7 @@ global_model_repo_catalog_list = [
 
     {"model_name": "QuantFactory/Meta-Llama-3-8B-GGUF", "display_name": "llama-3-base-qf-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 8192, "instruction_following": False, "prompt_wrapper": "llama_3",
+     "context_window": 8192, "instruction_following": False, "prompt_wrapper": "llama_3_chat",
      "temperature": 0.0, "sample_default": False, "trailing_space": "",
      "gguf_file": "Meta-Llama-3-8B.Q4_K_M.gguf",
      "gguf_repo": "QuantFactory/Meta-Llama-3-8B-GGUF",
@@ -547,12 +553,21 @@ global_model_repo_catalog_list = [
 
  {"model_name": "bartowski/Meta-Llama-3-8B-Instruct-GGUF", "display_name": "llama-3-instruct-bartowski-gguf",
     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-    "context_window": 8192, "instruction_following": False, "prompt_wrapper": "llama_3",
+    "context_window": 8192, "instruction_following": False, "prompt_wrapper": "llama_3_chat",
     "temperature": 0.0, "sample_default": False, "trailing_space": "",
     "gguf_file": "Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
     "gguf_repo": "bartowski/Meta-Llama-3-8B-Instruct-GGUF",
     "link": "https://huggingface.co/bartowski/Meta-Llama-3-8B-Instruct-GGUF",
     "custom_model_files": [], "custom_model_repo": ""},
+
+ {"model_name": "tiny-llama-chat-gguf", "display_name": "tiny-llama-chat-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 2048, "instruction_following": False, "prompt_wrapper": "hf_chat",
+  "temperature": 0.3, "sample_default": True, "trailing_space": "",
+  "gguf_file": "tiny-llama-chat.gguf",
+  "gguf_repo": "llmware/bonchon",
+  "link": "https://huggingface.co/llmware/bonchon",
+  "custom_model_files": [], "custom_model_repo": ""},
 
  # end - new llama-3 quantized models
 

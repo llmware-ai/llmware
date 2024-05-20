@@ -595,9 +595,13 @@ if __name__ == "__main__":
 
 ## 🔥 What's New? 🔥  
 
+-**Best New Small RAG Model** - BLING finetune of Phi-3 - "bling-phi-3-gguf" - see the [video](https://youtu.be/cViMonCAeSc?si=L6jX0sRdZAmKtRcz)  
+
 -**Web Services with Agent Calls for Financial Research** - end-to-end scenario - [video](https://youtu.be/l0jzsg1_Ik0?si=hmLhpT1iv_rxpkHo) and [example](examples/Use_Cases/web_services_slim_fx.py)  
 
--**Voice Transcription with WhisperCPP** - [getting_started](examples/Models/using-whisper-cpp-getting-started.py), [using_sample_files](examples/Models/using-whisper-cpp-sample-files.py), and [analysis_use_case](examples/Use_Cases/parsing_great_speeches.py)    
+-**Voice Transcription with WhisperCPP** - [getting_started](examples/Models/using-whisper-cpp-getting-started.py), [using_sample_files](examples/Models/using-whisper-cpp-sample-files.py), and [analysis_use_case](examples/Use_Cases/parsing_great_speeches.py) with [great_speeches_video](https://youtu.be/5y0ez5ZBpPE?si=KVxsXXtX5TzvlEws)    
+
+-**Phi-3 GGUF Streaming Local Chatbot with UI** - setup your own Phi-3-gguf chatbot on your laptop in minutes - [example](examples/UI/gguf_streaming_chatbot.py)  
 
 -**Small, specialized, function-calling Extract Model** - introducing slim-extract - [video](https://youtu.be/d6HFfyDk4YE?si=VB8JTsN3X7hsB_I) and [example](examples/SLIM-Agents/using_slim_extract_model.py)  
 
@@ -615,7 +619,7 @@ if __name__ == "__main__":
 
 -**GGUF - Getting Started** - check out examples - GGUF ([example](examples/Models/using_gguf.py)) and Videos [video](https://www.youtube.com/watch?v=ZJyQIZNJ45E)  
 
-
+-**Optimizing Accuracy of RAG Prompts** - check out [example](examples/Models/adjusting_sampling_settings.py) and videos - [part I](https://youtu.be/7oMTGhSKuNY?si=14mS2pftk7NoKQbC) and [part II](https://youtu.be/iXp1tj-pPjM?si=T4teUAISnSWgtThu)  
 
 ## 🌱 Getting Started
 
@@ -758,6 +762,11 @@ The llmware repo can be pulled locally to get access to all the examples, or to 
 git clone git@github.com:llmware-ai/llmware.git
 ```
 
+After cloning the repo, depending upon your IDE enviroment, you may need to take these additional steps:  
+1.  **install requirements.txt** - inside the /llmware path - e.g., ```pip3 install -r llmware/requirements.txt```   (If you copy the requirements.txt file into the root of the project folder, then many IDEs will auto install the requirements and/or you can then run the canonical `pip3 install -r requirements.txt`)   
+2.  **run examples** - copy the example .py file into the root project path.   (We have seen several IDEs that will attempt to run interactively from the nested /example path, and then not have access to the /llmware module.  We will look into fixing this with a small automation script, but for now, the easy fix is to just copy the example you want to run into the root path).  
+3.  **install vector db** - to use a vector db, you will need to separately install the python library for that vector db, e.g., `pip3 install pymilvus`, or `pip3 install chromadb`.   
+   
 <details>  
     
 <summary> ✨  <b>Roadmap - Where are we going ... </b>  </summary>
@@ -782,12 +791,19 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
-**Wednesday, May 8 - v0.2.13-WIP Update**  
+**Friday, May 17 - v0.2.14-WIP**  
+- New OCR image parsing methods with [example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/slicing_and_dicing_office_docs.py)  
+- Adding first part of logging improvements (WIP) in Configs and Models.    
+- New embedding model added to catalog - industry-bert-loans.  
+- Updates to model import methods and configurations.  
+- Changes merged into main repo with PyPi release scheduled for the weekend.  
+
+**Sunday, May 12 - v0.2.13**  
+- New GGUF streaming method with [basic example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/gguf_streaming.py) and [phi3 local chatbot](https://github.com/llmware-ai/llmware/tree/main/examples/UI/gguf_streaming_chatbot.py)  
 - Significant cleanups in ancillary imports and dependencies to reduce install complexity - note: the updated requirements.txt and setup.py files.  
 - Defensive code to provide informative warning of any missing dependencies in specialized parts of the code, e.g., OCR, Web Parser.  
 - Updates of tests, notice and documentation.   
-- OpenAIConfigs created to support Azure OpenAI.  
-- Changes are merged in main branch with further updates coming - expect to release PyPi 0.2.13 by end of week.  
+- OpenAIConfigs created to support Azure OpenAI.   
   
 **Sunday, May 5 - v0.2.12 Update**  
 - Launched ["bling-phi-3"](https://huggingface.co/llmware/bling-phi-3) and ["bling-phi-3-gguf"](https://huggingface.co/llmware/bling-phi-3-gguf) in ModelCatalog - newest and most accurate BLING/DRAGON model  

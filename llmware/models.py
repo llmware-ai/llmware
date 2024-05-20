@@ -12,13 +12,8 @@
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
 
-"""The models module implements the model registry, the catalog for models and prompts, and all the currently
-supported models, which includes the SLIM model series, the DRAGON model series, the BLING model series,
-and the BERT model series.
-
-Besides the logic mentioned above, this module also implements the configuration for BERT and the
-inference server of llmware.
-"""
+"""The models module implements the model registry, the catalog for models and prompts, and classes that
+implement the interface for each of the supported models. """
 
 import logging
 import json
@@ -27,6 +22,7 @@ import tempfile
 import ast
 import time
 from collections import deque
+import shutil
 
 from torch import tensor, nn, cuda, no_grad, ones, long, LongTensor, argmax, multinomial, cat, squeeze
 
@@ -44,6 +40,9 @@ from llmware.gguf_configs import _LlamaModel, _LlamaContext, _LlamaBatch, _Llama
 
 from transformers import logging as transformers_logging
 transformers_logging.set_verbosity_error()
+
+logging.basicConfig(format=LLMWareConfig().get_logging_format(),
+                    level=LLMWareConfig().get_logging_level())
 
 
 class _ModelRegistry:
@@ -154,8 +153,9 @@ class _ModelRegistry:
 
                     # permits registering of new model card but issues warning
 
-                    print(f"update: this prompt wrapper - {pwrap} - is not registered which may lead to unpredictable "
-                      f"results in inference - you should register this prompt format for better results.")
+                    logging.warning(f"update: this prompt wrapper - {pwrap} - is not registered which may lead "
+                                    f"to unpredictable results in inference - you should register this prompt "
+                                    f"format for better results.")
 
         return True
 
@@ -165,7 +165,20 @@ class _ModelRegistry:
         """ Adds a model to the registry """
 
         if cls.validate(model_card_dict):
+
+            #   confirm that no overlap in names with model already in the catalog
+
+            for i, model in enumerate(cls.registered_models):
+                if (model["model_name"] in [model_card_dict["model_name"], model_card_dict["display_name"]] or
+                        model["display_name"] in [model_card_dict["model_name"], model_card_dict["display_name"]]):
+
+                    raise LLMWareException(message=f"Exception: model name overlaps with another model already "
+                                                   f"in the ModelCatalog - {model}")
+
+            #   go ahead and add model to the catalog
+
             cls.registered_models.append(model_card_dict)
+
         else:
             raise ModelCardNotRegisteredException("New-Model-Card-Missing-Keys")
 
@@ -208,6 +221,19 @@ class _ModelRegistry:
             raise ModelNotFoundException(model_name)
 
         return model_found
+
+    def new_model_registry(cls, model_registry):
+
+        #   remove current models
+        cls.registered_models = []
+
+        #   add new model registry
+        for i, model in enumerate(model_registry):
+
+            if cls.validate(model):
+                cls.registered_models.append(model)
+
+        return True
 
 
 class ModelCatalog:
@@ -259,13 +285,35 @@ class ModelCatalog:
         # will add to check manifest in global repo and make available for pull down
         return 0
 
-    def save_model_registry(self, fp, fn="llmware_supported_models_manifest.json"):
+    def save_model_registry(self, fp=None, fn="llmware_supported_models_manifest.json"):
 
         """ Utility method to export global model list to json file """
+
+        if not fp:
+            fp = LLMWareConfig().get_model_repo_path()
 
         json_dict = json.dumps(self.global_model_list, indent=1)
         with open(os.path.join(fp, fn), "w", encoding='utf-8') as outfile:
             outfile.write(json_dict)
+
+        return 0
+
+    def load_model_registry(self, fp=None, fn="llmware_supported_models_manifest.json"):
+
+        """ Utility method to load global model list from json file.  Will remove the current
+        global model list and replace with the model cards from file. """
+
+        if not fp:
+            fp = LLMWareConfig().get_model_repo_path()
+
+        model_list = json.load(open(os.path.join(fp,fn), "r"))
+
+        _ModelRegistry().new_model_registry(model_list)
+
+        self.global_model_list = _ModelRegistry().get_model_list()
+
+        for i, model in enumerate(self.global_model_list):
+            logging.debug(f"models: {i} - {model}")
 
         return 0
 
@@ -478,8 +526,6 @@ class ModelCatalog:
 
         #   if model not found, then return None, and downstream calling function responsible for handling
 
-        # print("update: lookup_model_card - ", model_card)
-
         return model_card
 
     def locate_and_retrieve_model_bits (self, model_card, api_key=None):
@@ -503,9 +549,11 @@ class ModelCatalog:
                             if len(model_card["custom_model_files"]) > 0:
                                 if os.path.exists(os.path.join(model_card["custom_model_repo"],
                                                                model_card["custom_model_files"][0])):
+
                                     # confirmed that custom path and at least model artifact exist
-                                    print("update: returning custom model path: ", model_card["custom_model_repo"],
-                                          model_card["custom_model_files"])
+                                    logging.info(f"update: returning custom model path: "
+                                                 f"{model_card['custom_model_repo']} - "
+                                                 f"{model_card['custom_model_files']}")
 
                                     return model_card["custom_model_repo"]
                 else:
@@ -521,17 +569,22 @@ class ModelCatalog:
 
         if os.path.exists(model_location) and not self.force_reload:
             model_parts_in_folder = os.listdir(model_location)
-            if len(model_parts_in_folder) > 0:
 
-                # print("update: found model parts - ", model_parts_in_folder)
+            #   improved safety check - looks for specific gguf file in folder (mitigates risk of incomplete
+            #   download triggering an error that is awkward to fix)
 
-                return model_location
+            if model_card["model_family"] == "GGUFGenerativeModel":
+                if "gguf_file" in model_card:
+                    if model_card["gguf_file"] in model_parts_in_folder:
+                        return model_location
+                else:
+                    if len(model_parts_in_folder) > 0:
+                        logging.debug(f"update: found model parts - {model_parts_in_folder}")
+                        return model_location
 
         logging.info("update: ModelCatalog - this model - %s - is not in local repo - %s, so pulling "
                         "from global repo - please note that this may take a little time to load "
                         "for the first time.", model_folder_name, LLMWareConfig.get_model_repo_path())
-
-        logging.info("update: ModelCatalog - pulling model from global repo - %s ", model_folder_name)
 
         if model_card["model_family"] not in ["GGUFGenerativeModel", "WhisperCPPModel"]:
 
@@ -539,7 +592,6 @@ class ModelCatalog:
         else:
 
             #   GGUF models pulled directly from HF repos
-            logging.info("update: pulling GGUF model from HF - %s - %s", model_location, model_card)
 
             if "snapshot" in model_card:
                 # pull snapshot from gguf repo in model card
@@ -559,7 +611,11 @@ class ModelCatalog:
 
     def _instantiate_model_class_from_string(self, model_class, model_name, model_card, api_key=None):
 
-        """ Internal utility method to instantiate model classes from strings. """
+        """ Internal utility method to instantiate model classes from strings.
+
+        NOTE: this method will be replaced and deprecated for importlib dynamic lookup in upcoming release.
+
+        """
 
         # by default - if model not found - return None
         my_model = None
@@ -902,17 +958,35 @@ class ModelCatalog:
 
         # model_path = os.path.join(local_model_repo_path, self.model_name)
 
-        logging.info("update: pull_model_from_repo - %s - %s", local_model_repo_path, model_name)
-
         if not os.path.exists(local_model_repo_path):
             os.mkdir(local_model_repo_path)
+
+        logging.info(f"update: logging - pulling model from repo - {gguf_repo} - "
+                     f"and will cache into local folder - {local_model_repo_path}")
 
         downloader = hf_hub_download(gguf_repo,
                                      gguf_file,
                                      local_dir=local_model_repo_path,
-                                     # note: change to save bits in local model repo, not symlink to HF .cache
                                      local_dir_use_symlinks=False,
                                      token=api_key)
+
+        #   remove ongoing links, if any, created by attributes not in the file repo
+        files_created = os.listdir(local_model_repo_path)
+        if ".huggingface" in files_created:
+            try:
+                shutil.rmtree(os.path.join(local_model_repo_path,".huggingface"))
+                logging.debug("removed: .huggingface")
+            except:
+                logging.info(f"update: .huggingface folder created in repo and not auto-removed.")
+                pass
+
+        if ".gitattributes" in files_created:
+            try:
+                os.remove(os.path.join(local_model_repo_path, ".gitattributes"))
+                logging.debug("removed: .gitattributes")
+            except:
+                logging.info(f"update: .gitattributes created in repo and not auto-removed.")
+                pass
 
         return local_model_repo_path
 
@@ -924,6 +998,27 @@ class ModelCatalog:
 
         snapshot = snapshot_download(repo_name, local_dir=local_model_repo_path, token=api_key,
                                      local_dir_use_symlinks=False)
+
+        files_created = os.listdir(local_model_repo_path)
+
+        logging.debug(f"update: on download of snapshot - files created - {files_created}")
+
+        #   clean up any residual download artifacts in model folder
+        if ".huggingface" in files_created:
+            try:
+                shutil.rmtree(os.path.join(local_model_repo_path,".huggingface"))
+                logging.debug("removed: .huggingface")
+            except:
+                logging.info(f"warning: .huggingface folder created in repo and not auto-removed.")
+                pass
+
+        if ".gitattributes" in files_created:
+            try:
+                os.remove(os.path.join(local_model_repo_path, ".gitattributes"))
+                logging.debug("removed: .gitattributes")
+            except:
+                logging.info(f"warning: .gitattributes created in repo and not auto-removed.")
+                pass
 
         return local_model_repo_path
 
@@ -938,8 +1033,6 @@ class ModelCatalog:
 
         if not tool_list:
             tool_list = _ModelRegistry().get_llm_fx_tools_list()
-
-        logging.info("update: ModelCatalog - get_toolset - %s ", tool_list)
 
         for tool in tool_list:
 
@@ -1301,7 +1394,7 @@ class ModelCatalog:
 
         #   if very short output, then can not remediate - assume that a bigger problem happened with the inference
         if len(input_string) < starter:
-            # print("update: llm response very short - could not remediate and convert to dict or list")
+            #   llm response very short - could not remediate and convert to dict or list
             return "string", input_string
 
         start = -1
@@ -1321,7 +1414,7 @@ class ModelCatalog:
                 list_start = x
 
         if start < 0 and list_start < 0:
-            # print("update: remediation not successful - could not find a start marker for dictionary or list")
+            # remediation not successful - could not find a start marker for dictionary or list
             return "string", input_string
 
         #  based on the start marker, determine the target output type
@@ -1609,16 +1702,16 @@ class ModelCatalog:
         result = {"gpu_found": False, "drivers_current": False,
                   "gpu_name": "", "driver": "", "multiple_gpu": False}
 
+
         try:
             from subprocess import Popen, PIPE
-            from distutils import spawn
         except:
             if not suppress_warnings:
                 logging.warning("update: unable to check if gpu available")
             return result
 
         if sys.platform.lower() == "win32":
-            nvidia_smi = spawn.find_executable('nvidia-smi')
+            nvidia_smi = shutil.which('nvidia-smi')
         elif sys.platform.lower().startswith("linux"):
             nvidia_smi = "nvidia-smi"
         else:
@@ -1744,7 +1837,7 @@ class PromptCatalog:
             else:
                 updated_instruction += t + " "
 
-        logging.info(f"update: prompt catalog - constructed dynamic instruction - {updated_instruction}")
+        logging.debug(f"update: prompt catalog - constructed dynamic instruction - {updated_instruction}")
 
         return updated_instruction.strip()
 
@@ -1763,7 +1856,7 @@ class PromptCatalog:
         if not prompt_card:
             prompt_card = PromptCatalog().lookup_prompt(prompt_name)
 
-        logging.info(f"update: prompt_card - {prompt_card}")
+        logging.debug(f"update: prompt_card - {prompt_card}")
 
         core_prompt = ""
 
@@ -1787,15 +1880,12 @@ class PromptCatalog:
         """
         if "instruction" in prompt_card:
             prompt_card["instruction"] = self.parse_instruction_for_user_vars(prompt_card,inference_dict=inference_dict)
-            print("update: prompt_card instruction - ", prompt_card)
             core_prompt += prompt_card["instruction"]
         """
 
         prompt_dict = {"core_prompt": core_prompt, "prompt_card": prompt_card}
 
-        # print("update - core prompt built - ", core_prompt)
-
-        logging.info(f"update: prompt created - {prompt_dict}")
+        logging.debug(f"update: prompt created - {prompt_dict}")
 
         return prompt_dict
 
@@ -1827,7 +1917,6 @@ class PromptCatalog:
 
         else:
             wrapped_prompt = self.wrap_custom(text, prompt_wrapper, instruction=instruction)
-            # print("update: wrapped prompt - ", wrapped_prompt)
             return wrapped_prompt
 
     #   deprecated - replaced by wrap_custom builder function
@@ -1845,15 +1934,11 @@ class PromptCatalog:
     #   wip - create ability to customize template
     def wrap_custom(self, text, wrapper_type, instruction=None):
 
-        # print("update: wrapper_type - ", wrapper_type)
-
         prompt_out = ""
 
         if wrapper_type in self.prompt_wrapper_lookup:
 
             prompt_template = self.prompt_wrapper_lookup[wrapper_type]
-
-            # print("update: found prompt template - ", prompt_template)
 
             if "system_start" in prompt_template:
 
@@ -2363,8 +2448,6 @@ class OllamaModel:
                 messages = [{"role": "user", "content": full_prompt}]
                 uri = self.uri + "chat"
 
-                # print("messages: ", messages, uri)
-
                 response = requests.post(uri,
                                          json={"model": self.model_name,
                                                "messages": messages, "stream": self.stream_mode})
@@ -2374,8 +2457,6 @@ class OllamaModel:
                 output = json.loads(response.text)
 
                 text_out = output["message"]["content"]
-
-                # print("text only - ", output["message"]["content"])
 
                 pt = 0
                 ct = 0
@@ -2414,8 +2495,6 @@ class OllamaModel:
                 output = json.loads(response.text)
 
                 text_out = output["response"]
-
-                # print("response - generate - ", text_out)
 
                 pt = 0
                 ct = 0
@@ -2834,7 +2913,7 @@ class ClaudeModel:
 
         output_response = {"llm_response": text_out, "usage": usage}
 
-        logging.info(f"update: output_response - anthropic: {output_response}")
+        logging.debug(f"update: output_response - anthropic: {output_response}")
      
         return output_response
 
@@ -2966,7 +3045,7 @@ class GoogleGenModel:
             response = self.model.predict(prompt=prompt_enriched,
                                           temperature=0.7)
 
-            logging.info(f"google model response: {response.text}")
+            logging.debug(f"google model response: {response.text}")
          
             text_out = response.text
 
@@ -2992,7 +3071,7 @@ class GoogleGenModel:
         
         output_response = {"llm_response": text_out, "usage": usage}
 
-        logging.info("update: output_response - google: %s ", output_response)
+        logging.debug("update: output_response - google: %s ", output_response)
 
         return output_response
     
@@ -3269,7 +3348,7 @@ class CohereGenModel:
 
         prompt_enriched = prompt
 
-        logging.info("update: in cohere model inference: %s - %s", prompt_enriched, self.add_prompt_engineering)
+        logging.debug("update: in cohere model inference: %s - %s", prompt_enriched, self.add_prompt_engineering)
 
         prompt_enriched = self.prompt_engineer(prompt_enriched,self.add_context, inference_dict=inference_dict)
 
@@ -3318,21 +3397,18 @@ class CohereGenModel:
 
         except Exception as e:
 
-            # print(traceback.format_exc())
-
             text_out = "/***ERROR***/"
 
             usage = {"input": 0, "output": 0, "total": 0, "metric": "chars",
                      "processing_time": time.time() - time_start}
 
-            # raise LLMInferenceResponseException(e)
             logging.error("error: Cohere model inference produced error - %s - ", e)
 
         # will look to capture usage metadata
 
         output_response = {"llm_response": text_out, "usage": usage}
 
-        logging.info("update:  output response - cohere : %s ", output_response)
+        logging.debug("update:  output response - cohere : %s ", output_response)
 
         return output_response
 
@@ -3490,7 +3566,7 @@ class AIBReadGPTModel:
 
                     output_response = {"llm_response": response, "usage": usage}
 
-                    logging.info("update: output_response - aib-read-gpt - %s", output_response)
+                    logging.debug("update: output_response - aib-read-gpt - %s", output_response)
 
                 if keys == "message":
                     logging.error("error - output not received from model")
@@ -3773,8 +3849,6 @@ class OpenAIEmbeddingModel:
 
         response = client.embeddings.create(model=self.model_name, input=text_prompt)
 
-        # logging.info("update: response: %s ", response)
-
         if input_len == 1:
             embedding = response.data[0].embedding
         else:
@@ -3858,7 +3932,7 @@ class CohereEmbeddingModel:
         output = []
         for i, emb in enumerate(response.embeddings):
 
-            logging.info("update: embedding - %s - %s ", i, emb)
+            logging.debug("update: embedding - %s - %s ", i, emb)
 
             # normalization of the Cohere embedding vector improves performance
             emb_vec = np.array(emb) / np.linalg.norm(emb)
@@ -3962,7 +4036,7 @@ class GoogleEmbeddingModel:
                 new_batch = text_list[x*google_max_samples_per_inference:
                                       min((x+1)*google_max_samples_per_inference, len(text_list))]
 
-                logging.info("update: new batch - %s - %s ", x, len(new_batch))
+                logging.debug("update: new batch - %s - %s ", x, len(new_batch))
 
                 embeddings_from_google = model.get_embeddings(new_batch)
 
@@ -4296,7 +4370,7 @@ class HFGenerativeModel:
 
             if self.use_gpu:
                 self.model.to('cuda')
-                logging.info("update: HFGenerative loading - moving model to cuda")
+                logging.debug("update: HFGenerative loading - moving model to cuda")
 
         else:
             logging.error("error: HFGenerativeModel - could not identify model  - ", model_name)
@@ -4565,8 +4639,6 @@ class HFGenerativeModel:
                     next_tokens_np = np.array(next_tokens.to('cpu'))
                 else:
 
-                    # print("next tokens: ", next_tokens)
-
                     next_tokens_np = np.array(next_tokens)
 
                 self.output_tokens.append(next_tokens_np[0])
@@ -4618,8 +4690,6 @@ class HFGenerativeModel:
             outputs_np = np.array(input_ids[0])
 
         output_only = outputs_np[input_token_len:]
-
-        # print("update: output only - ", output_only)
 
         output_str = self.tokenizer.decode(output_only)
 
@@ -4908,8 +4978,6 @@ class HFGenerativeModel:
             outputs_np = np.array(input_ids[0])
 
         output_only = outputs_np[input_token_len:]
-
-        # print("update: output only - ", output_only)
 
         output_str = self.tokenizer.decode(output_only)
 
@@ -6031,6 +6099,117 @@ class GGUFGenerativeModel:
 
         return output_response
 
+    def stream(self, prompt, add_context=None, add_prompt_engineering=None, api_key=None, inference_dict=None,
+                  get_logits=False, disable_eos=False):
+
+        """ Main method for text streaming generation. Returns a generator function that yields one
+        token at a time for real-time streaming to console or UI. """
+
+        # first prepare the prompt
+
+        if add_context:
+            self.add_context = add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        #   update default handling for no add_prompt_engineering
+
+        if not self.add_prompt_engineering:
+            if self.add_context:
+                self.add_prompt_engineering = "default_with_context"
+            else:
+                self.add_prompt_engineering = "default_no_context"
+
+        #   end - update
+
+        #   show warning if function calling model
+        if self.fc_supported:
+            logging.warning("warning: this is a function calling model - using .inference may lead to unexpected "
+                            "results.   Recommended to use the .function_call method to ensure correct prompt "
+                            "template packaging.")
+
+        # start with clean logits_record and output_tokens for each function call
+        self.logits_record = []
+        self.output_tokens = []
+
+        if get_logits:
+            self.get_logits = get_logits
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        # prompt = prompt
+
+        if self.add_prompt_engineering:
+            prompt_enriched = self.prompt_engineer(prompt, self.add_context, inference_dict=inference_dict)
+            prompt_final = prompt_enriched
+
+            # most models perform better with no trailing space or line-break at the end of prompt
+            #   -- in most cases, the trailing space will be ""
+            #   -- yi model prefers a trailing "\n"
+            #   -- keep as parameterized option to maximize generation performance
+            #   -- can be passed either thru model_card or model config from HF
+
+            prompt = prompt_final + self.trailing_space
+
+        # output_response = self._inference(text_prompt)
+
+        #   starts _inference here
+        completion_tokens = [] if len(prompt) > 0 else [self.token_bos()]
+
+        prompt_tokens = (
+            (
+                self.tokenize(prompt.encode("utf-8"), special=True)
+                if prompt != ""
+                else [self.token_bos()]
+            )
+            if isinstance(prompt, str)
+            else prompt
+        )
+
+        # confirm that input is smaller than context_window
+        input_len = len(prompt_tokens)
+        context_window = self.n_ctx()
+
+        if input_len > context_window:
+            logging.warning("update: GGUFGenerativeModel - input is too long for model context window - truncating")
+            min_output_len = 10
+            prompt_tokens = prompt_tokens[0:context_window-min_output_len]
+            input_len = len(prompt_tokens)
+
+        text = b""
+
+        # disable_eos = True
+
+        for token in self.generate(prompt_tokens):
+
+            completion_tokens.append(token)
+
+            if not disable_eos:
+                if token == self._token_eos:
+                    break
+
+            if len(completion_tokens) > self.max_output_len:
+                break
+
+            #   stop if combined input + output at context window size
+            if (input_len + len(completion_tokens)) >= context_window:
+                break
+
+            new_token = self.detokenize([token]).decode('utf-8',errors='ignore')
+
+            yield new_token
+
+        text_str = text.decode("utf-8", errors="ignore")
+
+        return text_str
+
 
 class WhisperCPPModel:
 
@@ -6278,8 +6457,8 @@ class WhisperCPPModel:
 
         if not file.endswith(".wav"):
 
-            print("update: WhisperCPPModel - inference - input file needs to be converted to .wav - "
-                  "will try to do right now.")
+            logging.info("update: WhisperCPPModel - inference - input file needs to be converted to .wav - "
+                         "will try to do right now.")
 
             new_file_path = Utilities().convert_media_file_to_wav(prompt,
                                                                   save_path=LLMWareConfig().get_tmp_path(),
@@ -6300,8 +6479,8 @@ class WhisperCPPModel:
                 return null_output
 
             else:
-                print(f"update: WhisperCPPModel - inference - file conversion to .wav successful - "
-                      f"new file at tmp path - {new_file_path}")
+                logging.info(f"update: WhisperCPPModel - inference - file conversion to .wav successful - "
+                             f"new file at tmp path - {new_file_path}")
 
                 file = new_file_path
 
@@ -6380,8 +6559,6 @@ class WhisperCPPModel:
                 if txt_split.startswith("[_BEG_]"):
                     txt_split= txt_split[len("[_BEG_]"):]
                 txt = " " + txt_split + " "
-
-            # print("segments: ", i, t0, t1, txt)
 
             all_text += txt
             text_chunks.append(txt)
@@ -6642,7 +6819,8 @@ class ModelResources:
             cls._ModelState.models_list.append(model_name)
             cls._ModelState.models_loaded += 1
 
-            print("update: ModelResources - ", cls._ModelState.models_loaded, cls._ModelState.models_list)
+            logging.info(f"update: ModelResources - {cls._ModelState.models_loaded} - "
+                         f"{cls._ModelState.models_list}")
 
     @classmethod
     def unload_model(cls, model_name):

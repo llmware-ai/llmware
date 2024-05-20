@@ -19,7 +19,8 @@ class Datasets:
     """Datasets class implements a set of data packaging tools to create 'model-ready' datasets using a variety of
     packaging strategies automatically derived from artifacts across llmware. """
 
-    def __init__(self, library=None, ds_folder=None, validation_split=0.1, testing_split=0.1, tokenizer=None):
+    def __init__(self, library=None, ds_folder=None, validation_split=0.1, testing_split=0.1, tokenizer=None,
+                 ds_id_mode="uuid"):
 
         #   loading a library object is required for most, but not all, of the dataset builds
         #   if no library passed, and it is required, then exception raised in the dataset builder method
@@ -61,7 +62,7 @@ class Datasets:
 
         #   base folder path for newly created dataset asset will start with .ds_base_name
         self.ds_base_name = "dataset_"
-        self.ds_id_mode = "uuid"
+        self.ds_id_mode = ds_id_mode
 
         #   after building dataset, this will be populated with the name of the current ds
         self.current_ds_name = ""
@@ -208,9 +209,12 @@ class Datasets:
 
         return ds_sample
 
-    def issue_new_ds_id (self, custom_id=None, mode="uuid"):
+    def issue_new_ds_id (self, custom_id=None, mode=None):
 
         """ Issues a new dataset id - which will be a UUID by default. """
+
+        if mode:
+            self.ds_id_mode = mode
 
         # issue new ds_id
         ds_id = "default_new"
@@ -219,13 +223,13 @@ class Datasets:
             ds_id = custom_id
         else:
 
-            if mode == "time_stamp":
+            if self.ds_id_mode == "time_stamp":
                 ds_id = str(Utilities().get_current_time_now())
 
-            elif mode == "uuid":
+            elif self.ds_id_mode == "uuid":
                 ds_id = str(Utilities().get_uuid())
 
-            elif mode == "random_number":
+            elif self.ds_id_mode == "random_number":
                 ds_id = str(random.randint(1000000, 9999999))
 
         # create new dataset specific folder
