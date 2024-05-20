@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Generator App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Story Generator</h1>
+    <form id="story-form">
+        <label for="genre">Genre:</label>
+        <input type="text" id="genre" name="genre" required>
+        <label for="character">Character:</label>
+        <textarea id="character" name="character" required></textarea>
+        <label for="setting">Setting:</label>
+        <textarea id="setting" name="setting" required></textarea>
+        <label for="conflict">Conflict:</label>
+        <textarea id="conflict" name="conflict" required></textarea>
+        <button type="submit">Generate Story</button>
+    </form>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div id="generated-story"></div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
