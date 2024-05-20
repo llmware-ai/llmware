@@ -1,0 +1,16 @@
+Sample table schema:
+
+table_name = "customer_info"
+fields = [
+    "customer_id integer",
+    "customer_name text",
+    "total_spend integer",
+]
+
+Sample queries:
+
+Select customer name, and total spend
+Filter customers with total spend greater than $1000
+Order customers by total spend in descending order
+Calculate the total spend of all customers
+Count the number of customers
