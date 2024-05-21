@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Judica - Login</title>
+    {% load static %}
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicons/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicons/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicons/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'favicons/site.webmanifest' %}">
+    <link rel="mask-icon" href="{% static 'favicons/safari-pinned-tab.svg' %}" color="#5bbad5">
+    <link rel="shortcut icon" href="{% static 'favicons/favicon.ico' %}">
+    <meta name="msapplication-TileColor" content="#2d89ef">
+    <meta name="msapplication-config" content="{% static 'favicons/browserconfig.xml' %}">
+    <meta name="theme-color" content="#ffffff">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #0a0f24;
+            color: #d1d8e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            width: 400px; /* Optional: Adjust width as needed */
+        }
+
+        .logo {
+            width: 200px;
+            margin: 0 auto;
+            display: block;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #2a5dc7;
+            margin-bottom: 20px;
+        }
+
+        table {
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            padding: 10px;
+            width: 300px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #4dabf7;
+        }
+
+        button[type="submit"] {
+            margin-top: 20px;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(45deg, #4dabf7, #8e9eab);
+            color: #ffffff;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+
+        button[type="submit"]:hover {
+            background: linear-gradient(45deg, #8e9eab, #4dabf7);
+            transform: translateY(-3px);
+        }
+
+        p {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+
+        a {
+            color: #4dabf7;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #2a5dc7;
+        }
+        .success-message {
+            color: #00cc00; 
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .error-messages {
+            color: #cc0000; 
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="centered-content">
+        <div class="container">
+            <img src="{% static 'images/logo.png' %}" alt="Judica Logo" class="logo">
+            <h1>Login to Judica</h1>
+            <form action="#" method="POST">
+                {% csrf_token %}
+                <table>
+                    <tr>
+                        <td><input type="text" name="username" placeholder="Username" required></td>
+                    </tr>
+                    <tr>
+                        <td><input type="password" name="password" placeholder="Password" required></td>
+                    </tr>
+                    <div class="messages">
+                        {% for message in messages %}
+                            {% if message.tags == 'success' %}
+                                <div class="success-message">{{ message }}</div>
+                            {% else %}
+                                <div class="error-message">{{ message }}</div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <tr>
+                        <td><button type="submit">Login</button></td>
+                    </tr>
+                </table>
+            </form>
+            <p>Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
+        </div>
+    </div>
+</body>
+</html>

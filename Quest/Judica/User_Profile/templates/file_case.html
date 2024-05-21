@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File a Case</title>
+    {% load static %}
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicons/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicons/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicons/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'favicons/site.webmanifest' %}">
+    <link rel="mask-icon" href="{% static 'favicons/safari-pinned-tab.svg' %}" color="#5bbad5">
+    <link rel="shortcut icon" href="{% static 'favicons/favicon.ico' %}">
+    <meta name="msapplication-TileColor" content="#2d89ef">
+    <meta name="msapplication-config" content="{% static 'favicons/browserconfig.xml' %}">
+    <meta name="theme-color" content="#ffffff">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #0a0f24;
+            color: #d1d8e0;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 170px;
+            background-color: #242731;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        .profile {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .profile img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+        }
+
+        .profile p {
+            margin: 5px 0;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%; 
+        }
+
+        nav ul li {
+            width: 100%; 
+            margin-bottom: 10px;
+        }
+
+        nav ul li a {
+            color: #d1d8e0;
+            text-decoration: none;
+            display: block;
+            padding: 10px 15px; 
+            border-radius: 5px;
+            width: 100%;
+            text-align: left;
+        }
+
+        nav ul li a.active {
+            background-color: #383e4d;
+            color: #d1d8e0;
+        }
+
+        nav ul li a:hover {
+            background-color: #333; /* Add hover effect for better UX */
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            background-color: #111;
+            padding: 10px;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        .footer a {
+            color: #d1d8e0;
+            text-decoration: none;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            background-color: #0a0f24;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #2a5dc7;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        select,
+        textarea,
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #444c56;
+            background-color: #242731;
+            color: #d1d8e0;
+            border-radius: 5px;
+        }
+
+        textarea {
+            height: 100px;
+        }
+
+        .file-drop-area {
+            position: relative;
+            width: 100%;
+            padding: 30px;
+            border: 2px dashed #444c56;
+            border-radius: 5px;
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .fake-btn {
+            background-color: #4dabf7;
+            color: white;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .red-btn {
+            background-color: #ff4d4d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        .red-btn:hover {
+            background-color: #ff3333;
+        }
+
+        .file-msg {
+            margin-top: 10px;
+            color: #d1d8e0;
+        }
+
+        .submit-button {
+            background: linear-gradient(to right, #4dabf7, #8e9eab);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="profile">
+                {% if user_profile.profile_photo %}
+                    <img src="{{ user_profile.profile_photo.url }}" alt="Profile Picture">
+                {% endif %}
+                <p>{{ user.username }}</p>
+                <p>{{ user.email }}</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{% url 'user_cases' %}" class="help-btn">Cases</a></li>
+                    <li><a href="{% url 'file_case' %}" class="active">File a Case</a></li>
+                    
+                </ul>
+            </nav>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="red-btn">Logout</button>
+            </form>
+
+        </div>
+        <div class="main-content">
+            <h1>File a Case</h1>
+            <p>You are about to file a case. You may be required to provide additional information or documents.</p>
+            <form id="caseForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="caseAgainst">Who is the case against?</label>
+                    <select id="caseAgainst" name="case_against">
+                        <option value="">Search for users</option>
+                        {% for user in all_users %}
+                            <option value="{{ user.id }}">{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="caseDetails">What are the details of the case?</label>
+                    <textarea id="caseDetails" name="details" placeholder="Enter case details here..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="fileUpload">Upload any necessary documents</label>
+                    <div class="file-drop-area">
+                        <span class="fake-btn">Browse files</span>
+                        <span class="file-msg">Drag and drop files here</span>
+                        <input class="file-input" type="file" name="document" style="display: none;">
+                    </div>
+                </div>
+                <button type="submit" class = "submit-button">Submit Case</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const fileInput = document.querySelector('.file-input');
+            const fileDropArea = document.querySelector('.file-drop-area');
+
+            fileDropArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const files = fileInput.files;
+                showFiles(files);
+            });
+
+            fileDropArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileDropArea.classList.add('active');
+            });
+
+            fileDropArea.addEventListener('dragleave', () => {
+                fileDropArea.classList.remove('active');
+            });
+
+            fileDropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileDropArea.classList.remove('active');
+                const files = e.dataTransfer.files;
+                showFiles(files);
+            });
+
+            function showFiles(files) {
+                let fileNames = Array.from(files).map(file => file.name).join(', ');
+                document.querySelector('.file-msg').textContent = fileNames || 'Drag and drop files here';
+            }
+        });
+    </script>
+</body>
+</html>

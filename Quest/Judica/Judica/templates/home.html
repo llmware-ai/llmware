@@ -1,0 +1,198 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Judica - AI Judge</title>
+    {% load static %}
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicons/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicons/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicons/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'favicons/site.webmanifest' %}">
+    <link rel="mask-icon" href="{% static 'favicons/safari-pinned-tab.svg' %}" color="#5bbad5">
+    <link rel="shortcut icon" href="{% static 'favicons/favicon.ico' %}">
+    <meta name="msapplication-TileColor" content="#2d89ef">
+    <meta name="msapplication-config" content="{% static 'favicons/browserconfig.xml' %}">
+    <meta name="theme-color" content="#ffffff">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #0a0f24;
+            color: #d1d8e0;
+        }
+
+        .container {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .logo {
+            width: 400px;
+            margin: 0 auto;
+            border-radius: 90%; 
+            animation: logoGlow 1.5s ease-in-out infinite alternate;
+        }
+
+        .github-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .github-button:hover {
+            transform: scale(1.1);
+            background-color: #f0f0f0;
+        }
+
+        .github-icon {
+            width: 30px;
+            margin-right: 10px;
+        }
+
+        h1 {
+            font-size: 4.0em;
+            color: #2a5dc7;
+            animation: textGlow 1.5s ease-in-out infinite alternate;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            margin: 10px;
+            padding: 15px 30px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #ffffff;
+            background: linear-gradient(45deg, #4dabf7, #8e9eab);
+            transition: background 0.3s ease, transform 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:hover {
+            background: linear-gradient(45deg, #8e9eab, #4dabf7);
+            transform: translateY(-3px);
+        }
+
+        .vote-btn {
+            display: inline-block;
+            margin: 10px;
+            padding: 15px 30px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #ffffff;
+            background: linear-gradient(45deg, #28a745, #8fbc8f);
+            transition: background 0.3s ease, transform 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .vote-btn:hover {
+            background: linear-gradient(45deg, #8fbc8f, #28a745);
+            transform: translateY(-3px);
+        }
+
+        .features {
+            margin: 50px 0;
+        }
+
+        .feature-item {
+            display: inline-block;
+            width: 30%;
+            padding: 20px;
+            margin: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-item h2 {
+            color: #4dabf7;
+        }
+
+        .footer {
+            margin-top: 50px;
+            padding: 20px;
+            background: #111;
+            color: #888;
+        }
+
+        @keyframes textGlow {
+            from {
+                text-shadow: 0 0 10px #4dabf7, 0 0 20px #4dabf7, 0 0 30px #4dabf7, 0 0 40px #4dabf7;
+            }
+            to {
+                text-shadow: 0 0 20px #4dabf7, 0 0 30px #4dabf7, 0 0 40px #4dabf7, 0 0 50px #4dabf7;
+            }
+        }
+
+        @keyframes logoGlow {
+            from {
+                box-shadow: 0 0 10px #4dabf7, 0 0 20px #4dabf7, 0 0 30px #4dabf7;
+            }
+            to {
+                box-shadow: 0 0 20px #4dabf7, 0 0 30px #4dabf7, 0 0 40px #4dabf7;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="https://github.com/Adhivp/Judica.git" target="_blank" class="github-button">
+            <img src="https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png" alt="GitHub Logo" class="github-icon">
+            <span>Adhivp/Judica</span>
+        </a>
+        <img src="{% static 'images/logo.png' %}" alt="Judica Logo" class="logo">
+        <h1>Welcome to Judica</h1>
+        <p>Revolutionizing Justice with AI</p>
+        <a href="{% url 'login' %}" class="btn">Login</a>
+        <a href="{% url 'register' %}" class="btn">Register</a>
+        <a href="https://quine.sh/repo/Adhivp-Judica-800699616" class="vote-btn">Vote on Quine</a>
+        
+        <div class="features">
+            <div class="feature-item">
+                <h2>AI-Powered Judgments</h2>
+                <p>Our advanced AI system delivers impartial and accurate judgments swiftly and efficiently.</p>
+            </div>
+            <div class="feature-item">
+                <h2>User Disputes Resolved</h2>
+                <p>Easily file and manage disputes. Let Judica mediate and provide a fair resolution to conflicts using advanced AI technology.</p>
+            </div>
+            <div class="feature-item">
+                <h2>Secure and Private</h2>
+                <p>All your data is secured with advanced encryption, ensuring your privacy and security at all times.</p>
+            </div>            
+            <div class="feature-item">
+                <h2>User-Friendly Interface</h2>
+                <p>Easy to navigate chat-like interface for smooth communication.</p>
+            </div>
+        </div>
+
+        <h2>Join Judica Today</h2>
+        <p>Experience the future of justice. Sign up now and be part of a revolutionary platform where justice is swift, fair, and impartial.</p>
+        <a href="{% url 'register' %}" class="btn">Get Started</a>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2024 Judica. All Rights Reserved.</p>
+    </div>
+
+    <script>
+        // JavaScript for future use
+    </script>
+</body>
+</html>
