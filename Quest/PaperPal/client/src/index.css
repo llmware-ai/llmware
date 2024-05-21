@@ -1,0 +1,44 @@
+* {
+  margin: 0;
+  font-family: "Oswald", sans-serif;
+}
+
+.app-main-div {
+  background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(0, 0, 0, 0.15) 100%
+    ),
+    radial-gradient(
+        at top center,
+        rgba(255, 255, 255, 0.4) 0%,
+        rgba(0, 0, 0, 0.4) 120%
+      )
+      #989898;
+  background-blend-mode: multiply, multiply;
+  height: 100vh;
+  padding: 1rem;
+}
+.upload-button {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 10px 20px;
+  border: 1px solid black;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  width: fit-content;
+}
+input[type="file"]::file-selector-button {
+  display: none;
+}
+input:hover {
+  cursor: pointer;
+}
+.chat-ip::placeholder {
+  color: black;
+}
