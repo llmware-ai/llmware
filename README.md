@@ -765,7 +765,8 @@ git clone git@github.com:llmware-ai/llmware.git
 After cloning the repo, depending upon your IDE enviroment, you may need to take these additional steps:  
 1.  **install requirements.txt** - inside the /llmware path - e.g., ```pip3 install -r llmware/requirements.txt```   (If you copy the requirements.txt file into the root of the project folder, then many IDEs will auto install the requirements and/or you can then run the canonical `pip3 install -r requirements.txt`)   
 2.  **run examples** - copy the example .py file into the root project path.   (We have seen several IDEs that will attempt to run interactively from the nested /example path, and then not have access to the /llmware module.  We will look into fixing this with a small automation script, but for now, the easy fix is to just copy the example you want to run into the root path).  
-3.  **install vector db** - to use a vector db, you will need to separately install the python library for that vector db, e.g., `pip3 install pymilvus`, or `pip3 install chromadb`.   
+3.  **install vector db** - to use a vector db, you will need to separately install the python library for that vector db, e.g., `pip3 install pymilvus`, or `pip3 install chromadb`.  
+4.  Note:  we have seen recently issues with Pytorch==2.3 on some platforms - if you run into any issues, we have seen that uninstalling Pytorch and downleveling to Pytorch==2.1 usually solves the problem.  
    
 <details>  
     
@@ -791,12 +792,16 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
-**Friday, May 17 - v0.2.14-WIP**  
+**Tuesday, May 21 - v0.2.15-WIP**  
+- Improvements in Model class handling of Pytorch and Transformers dependencies (just-in-time loading, if needed)  
+- Expanding API endpoint options and inference server functionality  
+- Updates to be merged in main branch by Wednesday, May 22 with PyPy release targeted for end of week  
+
+**Saturday, May 18 - v0.2.14**  
 - New OCR image parsing methods with [example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/slicing_and_dicing_office_docs.py)  
 - Adding first part of logging improvements (WIP) in Configs and Models.    
 - New embedding model added to catalog - industry-bert-loans.  
 - Updates to model import methods and configurations.  
-- Changes merged into main repo with PyPi release scheduled for the weekend.  
 
 **Sunday, May 12 - v0.2.13**  
 - New GGUF streaming method with [basic example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/gguf_streaming.py) and [phi3 local chatbot](https://github.com/llmware-ai/llmware/tree/main/examples/UI/gguf_streaming_chatbot.py)  
