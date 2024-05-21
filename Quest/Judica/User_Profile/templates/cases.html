@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.username }} Cases</title>
+    {% load static %}
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicons/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicons/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicons/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'favicons/site.webmanifest' %}">
+    <link rel="mask-icon" href="{% static 'favicons/safari-pinned-tab.svg' %}" color="#5bbad5">
+    <link rel="shortcut icon" href="{% static 'favicons/favicon.ico' %}">
+    <meta name="msapplication-TileColor" content="#2d89ef">
+    <meta name="msapplication-config" content="{% static 'favicons/browserconfig.xml' %}">
+    <meta name="theme-color" content="#ffffff">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #0a0f24;
+            color: #d1d8e0;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 200px;
+            background-color: #242731;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        .profile {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .profile img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+        }
+
+        .profile p {
+            margin: 5px 0;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+
+        nav ul li {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        nav ul li a {
+            color: #d1d8e0;
+            text-decoration: none;
+            display: block;
+            padding: 10px 15px;
+            border-radius: 5px;
+            width: 100%;
+            text-align: left;
+        }
+
+        nav ul li a.active {
+            background-color: #383e4d;
+            color: #d1d8e0;
+        }
+
+        nav ul li a:hover {
+            background-color: #333; /* Add hover effect for better UX */
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            background-color: #111;
+            padding: 10px;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        .footer a {
+            color: #d1d8e0;
+            text-decoration: none;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            background-color: #0a0f24;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #2a5dc7;
+        }
+
+        .case-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .case-list li {
+            background-color: #2c323f; /* Different color for each case */
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .case-details {
+            color: #d1d8e0;
+        }
+
+        .case-details p {
+            margin: 5px 0;
+        }
+
+        .case-details strong {
+            color: #2a5dc7;
+        }
+
+        .status-ongoing {
+            color: #f1c40f; /* Yellow for ongoing status */
+        }
+
+        .status-completed {
+            color: #2ecc71; /* Green for completed status */
+        }
+
+        .verdict-guilty {
+            color: #e74c3c; /* Red for guilty verdict */
+        }
+
+        .verdict-not-guilty {
+            color: #2ecc71; /* Green for not guilty verdict */
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #4dabf7;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            background-color: #3578e5;
+        }
+        .red-btn {
+            background-color: #ff4d4d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        .red-btn:hover {
+            background-color: #ff3333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="profile">
+                {% if user_profile.profile_photo %}
+                    <img src="{{ user_profile.profile_photo.url }}" alt="Profile Picture">
+                {% endif %}
+                <p>{{ user.username }}</p>
+                <p>{{ user.email }}</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{% url 'user_cases' %}" class="active">Cases</a></li>
+                    <li><a href="{% url 'file_case' %}" class="help-btn">File a Case</a></li>
+                </ul>
+            </nav>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="red-btn">Logout</button>
+            </form>
+        </div>
+        <div class="main-content">
+            <h1>User Cases</h1>
+            <ul class="case-list">
+                {% for case in user_cases %}
+                <li>
+                    <div class="case-details">
+                        <p><strong>Case ID:</strong> {{ case.id }}</p>
+                        <p><strong>Filed By:</strong> {{ case.filed_by.username }}</p>
+                        <p><strong>Case Against:</strong> {{ case.case_against.username }}</p>
+                        <p><strong>Details:</strong> {{ case.details }}</p>
+                        {% if case.document %}
+                        <p><strong>Document:</strong> <a href="{{ case.document.url }}">{{ case.document.name }}</a></p>
+                        {% endif %}
+                        <p><strong>Status:</strong> <span class="status-{{ case.status }}">{{ case.status|capfirst }}</span></p>
+                        <p><strong>Verdict:</strong> <span class="verdict-{{ case.verdict|lower }}">{{ case.verdict }}</span></p>
+                        <p><strong>Created At:</strong> {{ case.created_at }}</p>
+                        
+                        <a href="{% url 'courtroom_view' case.id %}" class="btn">Go to Courtroom</a>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

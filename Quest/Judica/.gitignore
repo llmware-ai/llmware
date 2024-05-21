@@ -1,0 +1,26 @@
+Judica_virtual_env
+media
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local development settings
+.env
+
+# Django development artifacts
+*.log
+*.pot
+*.pyc
+*.swp
+*.swo
+
+# Compiled Python files
+*.pyc
+
+# macOS specific files
+.DS_Store
+
+# Django migration files
+**/migrations/*.py
+**/migrations/*.pyc

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Courtroom</title>
+    {% load static %}
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicons/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicons/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicons/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'favicons/site.webmanifest' %}">
+    <link rel="mask-icon" href="{% static 'favicons/safari-pinned-tab.svg' %}" color="#5bbad5">
+    <link rel="shortcut icon" href="{% static 'favicons/favicon.ico' %}">
+    <meta name="msapplication-TileColor" content="#2d89ef">
+    <meta name="msapplication-config" content="{% static 'favicons/browserconfig.xml' %}">
+    <meta name="theme-color" content="#ffffff">
+    <style>
+        .logo {
+            width: 100px; 
+            height: 100px; 
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7)); 
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0a0f24;
+            color: #d1d8e0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .courtroom {
+            background-color: #1e1e2f;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #2a5dc7;
+        }
+        .header img {
+            height: 60px;
+            margin-left: 10px;
+        }
+        .participants {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .participant {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #d1d8e0;
+        }
+        .participant img {
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            margin-bottom: 5px;
+        }
+        .participantjudica {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #d1d8e0;
+            position: relative;
+        }
+        .participantjudica img {
+            border-radius: 50%;
+            width: 110px;
+            height: 110px;
+            margin-bottom: 5px;
+        }
+        .participant-details {
+            text-align: center;
+        }
+        .chat {
+            background-color: #12122c;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .chat .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+        }
+        .chat .message img {
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+        .chat .message-content {
+            max-width: 80%;
+        }
+        .message-header {
+            font-weight: bold;
+            color: #4dabf7;
+        }
+        .message-body {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .input-section {
+            display: flex;
+            align-items: center;
+        }
+        .input-section input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            margin-right: 10px;
+            background-color: #3b3b5c;
+            color: #d1d8e0;
+        }
+        .input-section button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(to right, #4dabf7, #8e9eab);
+            color: white;
+            cursor: pointer;
+        }
+        .chat .message.right {
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+            margin-left: auto;
+            width: fit-content;
+        }
+        .chat .message.right .message-content {
+            text-align: right;
+        }
+        .chat .message.right .message-body {
+            background-color: rgba(255, 255, 255, 0.1); 
+        }
+        .chat .message.right .message-header {
+            color: #669b3e; 
+        }
+        .chat .message.right img {
+            margin-left: 10px;
+            margin-right: 0;
+        }
+        .back-button, .verdict-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            background: linear-gradient(to right, #ff6b6b, #f06595);
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            width: 150px;
+        }
+        .back-button:hover, .verdict-button:hover {
+            background: linear-gradient(to right, #f06595, #ff6b6b);
+        }
+        .verdict-button {
+            position: absolute;
+            bottom: -60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="courtroom">
+        <div class="header">
+            <div>You are the {% if user == case.filed_by %}Petitioner{% else %}Defendant{% endif %}. Be respectful and concise.</div>
+        </div>
+        <a href="{% url 'user_cases' %}" class="back-button">Back to Cases</a>
+        <div class="participants">
+            <div class="participant">
+                <img src="{% if case.filed_by.userprofile.profile_photo %}{{ case.filed_by.userprofile.profile_photo.url }}{% else %}{% static 'images/default_profile.png' %}{% endif %}" alt="Petitioner">
+                <div class="participant-details">
+                    <div>{{ case.filed_by.username }}</div>
+                    <div>Petitioner</div>
+                </div>
+            </div>
+            <div class="participantjudica">
+                <img src="{% static 'images/logo.png' %}" alt="Judica AI" class="logo">
+                <div class="participant-details">
+                    <div>Judica</div>
+                    <div>AI Judge</div>
+                </div>
+                <a href="{% url 'verdict_view' case.id %}" class="verdict-button">Final Verdict</a>
+            </div>
+            <div class="participant">
+                <img src="{% if case.case_against.userprofile.profile_photo %}{{ case.case_against.userprofile.profile_photo.url }}{% else %}{% static 'images/default_profile.png' %}{% endif %}" alt="Defendant">
+                <div class="participant-details">
+                    <div>{{ case.case_against.username }}</div>
+                    <div>Defendant</div>
+                </div>
+            </div>
+        </div>
+        <div class="chat">
+            {% for chat in case.courtroom.chats.all %}
+            <div class="message{% if chat.sender_role == 'Petitioner' and chat.sender == user or chat.sender_role == 'Defendant' and chat.sender == user %} right{% endif %}">
+                <img src="{% if chat.sender_role == 'Petitioner' %}{{ case.filed_by.userprofile.profile_photo.url }}{% elif chat.sender_role == 'Defendant' %}{{ case.case_against.userprofile.profile_photo.url }}{% else %}{% static 'images/logo.png' %}{% endif %}" alt="{{ chat.sender_role }}">
+                <div class="message-content">
+                    <div class="message-header">{{ chat.sender_role }}</div>
+                    <div class="message-body">
+                        <p>{{ chat.message }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <form id="messageForm" method="post" action="{% url 'send_message' case.id %}">
+            {%csrf_token %}
+            <div class="input-section">
+                <input type="text" name="message" placeholder="Your message here" id="userMessage">
+                <button type="submit">Send</button>
+            </div>
+        </form>
+    </div>
+</body>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chat = document.querySelector('.chat');
+        chat.scrollTop = chat.scrollHeight;
+    });
+</script>
+</html>
+
