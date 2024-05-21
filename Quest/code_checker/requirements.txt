@@ -1,0 +1,7 @@
+transformers
+datasets
+torch
+scikit-learn
+flask
+llmware
+streamlit
