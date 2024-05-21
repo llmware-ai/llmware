@@ -19,8 +19,10 @@ for i, sample in enumerate(test_set):
     #   key line:  invoke function call on the model, with boolean function, and pass the question as the parameter
     response = model.function_call(sample["context"], function="boolean", params=[question])
 
+    print("response: ", response)
+
     #   analyze the logits
-    analysis = ModelCatalog().get_fx_scores(response,model.hf_tokenizer_name)
+    analysis = ModelCatalog().get_fx_scores(response,"slim-boolean-tool")
 
     #   display to the screen
     print("\nllm_response: ", i, question, response["llm_response"])
