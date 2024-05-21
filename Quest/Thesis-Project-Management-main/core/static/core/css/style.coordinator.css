@@ -1,0 +1,12 @@
+#approve-action {
+    color: blue
+}
+
+#reject-action {
+    color: red
+}
+
+.action-button{
+    margin-right: 1rem;
+    font-size: 1rem;
+}

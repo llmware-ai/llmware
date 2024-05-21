@@ -1,0 +1,13 @@
+#add-project-button {
+    background-color: blue;
+    color: white;
+    padding: 10px 1rem;
+    font-size: 1.5rem;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.no-underline{
+    text-decoration: none;
+}

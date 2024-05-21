@@ -1,0 +1,62 @@
+#create-new-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+}
+
+#create-new-group>div:nth-child(1) {
+
+    background-color: rgb(240 240 240);
+    padding: 1.5rem 3rem;
+
+    display: flex;
+    flex-direction: column;
+    border-radius: 20px;
+
+    box-shadow: 0 25px 50px -10px rgb(0 0 0 / 0.25);
+    width: 45%;
+}
+
+h2 {
+    font-size: 1.8rem;
+}
+
+form>p {
+    display: flex;
+    flex-direction: column;
+
+    margin: 10px 10px;
+}
+
+form>p>label {
+    font-size: 1.1rem;
+    margin: 5px;
+}
+
+input {
+    border-radius: 8px;
+    border: none;
+
+    padding: 10px 6px;
+    font-size: 1rem;
+
+    outline: none;
+}
+
+#create-group-button {
+    margin: 10px;
+    margin-top: 1rem;
+    width: 100%;
+    background-color: rgb(59 130 246);
+    border: none;
+    border-radius: 10px;
+    padding: 8px 0px;
+
+
+    font-size: 1.1rem;
+    color: white;
+
+    cursor: pointer;
+}

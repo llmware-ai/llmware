@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block stylesheet %}
+    <link rel="stylesheet" href="{%static 'core/css/style.view_project_applications.css' %}" />
+{% endblock stylesheet %}
+
+{% block body %}
+    <div id="student-applications">
+        <h1>{{project.title}}</h1>
+
+        <div>
+            <h2>Student Application</h2>
+            <div class="application-lists">
+                {% for application in application_list  %}
+                    <div class="application-list">
+                        <div class="group-field">
+                            <div class="label">
+                                Group ID
+                            </div>
+                            <div class="group-field-value" id="group_id">
+                                {{application.group_id}}
+                            </div>
+                        </div>
+                        <div class="group-field">
+                            <div class="label">
+                                Group Name
+                            </div>
+                            <div class="group-field-value">
+                                {{application.group}}
+                            </div>
+                        </div>
+                        <div class="group-field">
+                            <div class="label">
+                                Group Members
+                            </div>
+                            <div class="group-field-value">
+                                {% for member in application.members  %}
+                                    <span>{{member}}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="group-field">
+                            <div class="label">
+                                Why are you interested?
+                            </div>
+                            <div class="group-field-value">
+                                {{application.why_interested}}
+                            </div>
+                        </div>
+                        <div class="group-field">
+                            <div class="label">
+                                Relevant_skills
+                            </div>
+                            <div class="group-field-value">
+                                {{application.relevant_skills}}
+                            </div>
+                        </div>
+                        <div class="group-field">
+                            <div class="label">
+                                How do you contribute?
+                            </div>
+                            <div class="group-field-value">
+                                {{application.how_to_contribute}}
+                            </div>
+                        </div>
+                        <div class="group-field">
+                            <div class="label">
+                                Application Status
+                            </div>
+                            <div>
+                                {% if application.is_application_approved %}
+                                    <span class="status-badge status-approved">Approved</span>
+                                {% elif application.is_rejected_by_supervisor %}
+                                    <span class="status-badge status-rejected">Rejected</span>
+                                {% else %}
+                                    <span class="status-badge status-pending">Pending</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if not application.is_rejected_by_supervisor and not application.is_application_approved %}
+                            <div class="group-field">
+                                <div class="label">
+                                    Application Action
+                                </div>
+                                <div>
+                                        <a href="{% url 'accept-application' id=id group_id=application.group_id %}" id="approve-action" class="action-button">Accept</a>
+                                        <a href="{% url 'reject-application' group_id=application.group_id %}" id="reject-action" class="action-button">Reject</a>
+                                </div>
+                            </div>
+
+                            <div class="group-field">
+                                <div class="label">
+                                    LLM Action
+                                </div>
+                                <div id="analysis-sentiment" class="status-badge" group_id="{{application.group_id}}">
+                                    Analysis Sentiment
+                                </div>
+                                <div id="query-application">
+                                    <a href="{% url 'query-analysis' group_id=application.group_id%}">
+                                        Query Application
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock  %}
+
+{% block javascript %}
+    <script src="{% static 'core/js/script.view_project_applications.js' %}"></script>
+{% endblock javascript %}

@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block stylesheet %}
+    <link rel="stylesheet" href="{%static 'core/css/style.single_project.css' %}" />
+{% endblock stylesheet %}
+{% block title %}
+    {{project.title}}
+{% endblock title %}
+
+{% block body %}
+    <div id="single-project">
+        <h2 id="title">{{project.title}}</h2>
+        <div id="supervisor" class="single-project-field">
+            <div class="label">Project Supervisor</div>
+            <div class="single-project-field-value">{{project.supervisor}}</div>
+        </div>
+        <div class="single-project-field">
+            <div class="label">Categories</div>
+            <div class="single-project-field-value">
+                {% for category in project.categories %}
+                    <span>
+                        {{category}}
+                    </span>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="single-project-field">
+            <div class="label">
+                Available
+            </div>
+            <div class="single-project-field-value">
+                {% for available in project.available_for %}
+                    <span>
+                        {{available}}
+                    </span>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="single-project-field">
+            <div class="label">Field of Research</div>
+            <div class="single-project-field-value">
+                {% for field in project.fields_of_research %}
+                    <span>
+                        {{field}}
+                    </span>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="single-project-field">
+            <div class="label" >
+                Description
+            </div>
+            <div class="single-project-field-value">
+                {{project.description}}
+            </div>
+        </div>
+
+        {% if user.get_role == "Student" %}
+            <div class="single-project-field">
+                <div class="label">
+                    Application Status
+                </div>
+                <div>
+                    {% if project.id == applied_project.topic_number  %}
+                        {% if project.is_approved_by_supervisor  %}
+                            <span class="status-badge status-approved">Approved</span>
+                        {% else %}
+                            <span class="status-badge status-pending">Pending</span>
+                        {% endif %}
+                    {% elif project.accepted_group %}
+                        Accepted to
+                        <a href="{% url 'view_single_project' role=user.get_role topic_number=project.accepted_group.id %}">
+                            <span class="bold">{{project.accepted_group.name}}</span>
+                        </a>
+                    {% elif project.can_apply  %}
+                        <a href="{% url 'apply-project' id=project.id %}">
+                            <span class="status-badge"  id="project-apply-button">Apply</span>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% if project.can_apply  %}
+            {% elif project.id == applied_project.topic_number and not project.accepted_group  %}
+                <div class="single-project-field">
+                    <div>
+                        Application Action
+                    </div>
+                    <div>
+                        {% if can_apply %}
+                        {% else %}
+                            {% if applied_project.topic_number == project.id  %}
+                                <span class="status-badge"  id="project-applied">Applied</span>
+                                <a href="{% url 'withdraw-project' id=group.id %}">
+                                    <span class="status-badge"  id="project-applied-withdraw">Withdraw</span>
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
+
+        {% if user.get_role == "Student" %}
+        {% else %}
+            <div class="single-project-field">
+                <div class="label" >
+                    Status
+                </div>
+                <div>
+                    {% if project.is_approved  %}
+                        <span class="status-badge status-approved">Approved</span>
+                    {% elif project.is_rejected %}
+                        <span class="status-badge status-rejected">Rejected</span>
+                    {% else %}
+                        <span class="status-badge status-pending">Pending</span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if user.get_role == "Supervisor" %}
+        <div class="single-project-field">
+            <div class="label" >
+                Student Application
+            </div>
+            <div class="single-project-field-value">
+                {% if project.total_application_count > 0 %}
+                    <a href="{% url 'view-applications' id=project.id %}" class="bold no-underline">
+                        View Application({{project.total_application_count}})
+                    </a>
+                {% else %}
+                    No Application
+                {% endif %}
+            </div>
+        {% endif %}
+        {% if user.get_role == "Coordinator" and not project.is_approved and not project.is_rejected%}
+        <div class="single-project-field">
+            <div class="label" >
+                Application Status
+            </div>
+            <div>
+                <a href="{% url 'approve' project_number=project.id %}" id="approve-action" class="action-button">Approve</a>
+                <a href="{% url 'reject-project' project_number=project.id %}" id="reject-action" class="action-button">Reject</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+{% endblock body %}

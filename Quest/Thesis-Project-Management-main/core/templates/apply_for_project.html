@@ -1,0 +1,26 @@
+{% extends "base.html" %} 
+{% load static %} 
+
+{% block title %} 
+    Application Form
+{% endblock title %} 
+
+{% block stylesheet %}
+    <link rel="stylesheet" href="{% static 'core/css/style.apply_for_project.css' %}" />
+{% endblock stylesheet %} 
+
+{% block body %}
+    <section id="apply-for-project">
+        <div>
+            <div>
+                <h2>{{project}}</h2>
+            </div>
+            <form method="post">
+                {% csrf_token %} 
+                {{form.as_p}}
+
+                <button type="submit" id="submit-application-button">Submit Application</button>
+            </form>
+        </div>
+    </section>
+{% endblock body %}

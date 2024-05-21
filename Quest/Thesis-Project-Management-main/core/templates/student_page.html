@@ -1,0 +1,21 @@
+{% extends "dashboard.html" %}
+{% load static %}
+
+{% block stylesheet %}
+    {{block.super}}
+    <link rel="stylesheet" href="{%static 'core/css/style.student_page.css' %}" />
+{% endblock stylesheet %}
+
+{% block group_details %}
+<div id="joined-group">
+    <h1>Group Details</h1>
+    <div>
+        <a href="{% url 'view-group' id=group.id %}" id="group-name">
+            <div>{{group}}</div>
+        </a>
+        <a href="{% url 'leave-group' id=group.id %}" id="leave-group">
+            <div>Leave</div>
+        </a>
+    </div>    
+</div>
+{% endblock group_details %}

@@ -1,0 +1,102 @@
+.group-button {
+    margin-top: 3rem;
+}
+
+.group-button>a>button {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 1.2rem;
+    margin-right: 2rem;
+}
+
+.create-group-button {
+    background-color: rgb(4, 13, 4);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: white;
+}
+
+.join-group-button {
+    background-color: rgb(27, 27, 241);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: white;
+}
+
+#leave-group{
+    text-decoration: none !important;
+}
+
+#project-apply-button {
+    background-color: blue;
+    color: white;
+    padding: 8px 1.5rem;
+    border-radius: 10px;
+    margin-left: 1rem;
+    cursor: pointer;
+}
+
+#project-applied {
+    border-color: rgb(0, 136, 0);
+    border: solid 2px;
+    color: rgb(0, 136, 0);
+    padding: 6px 10px;
+    border-radius: 10px;
+    margin-left: 1rem;
+    letter-spacing: 1px;
+}
+
+#project-applied-withdraw {
+    margin: 10px 0px;
+    background-color: red;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-left: 1rem;
+    cursor: pointer;
+}
+
+#joined-group {
+    margin: .5rem 0rem;
+    display: block !important;
+    background-color: rgb(250 250 250);
+    width: 100%;
+    padding: 2rem .5rem;
+    border-radius: 10px;
+}
+
+#joined-group>h1 {
+    font-size: 1.5rem;
+}
+
+#joined-group>div {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    gap: 3rem;
+}
+
+#joined-group>div>a {
+    text-decoration: none;
+}
+
+#group-name,
+#leave-group {
+    padding: .3rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    color: white;
+    cursor: pointer;
+}
+
+#group-name {
+    background-color: rgb(32, 32, 255);
+}
+
+#leave-group {
+    background-color: rgb(255, 32, 32);
+}

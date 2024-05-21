@@ -1,0 +1,72 @@
+h2 {
+    font-size: 1.8rem;
+}
+
+
+form>p {
+    display: flex;
+    flex-direction: column;
+
+    margin: 10px 10px;
+}
+
+form>p>label {
+    font-size: 1.1rem;
+    margin: 5px;
+    color:gray
+}
+
+#query-application {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+}
+
+#query-application>div:nth-child(1) {
+
+    background-color: rgb(240 240 240);
+    padding: 1.5rem 3rem;
+
+    display: flex;
+    flex-direction: column;
+    border-radius: 20px;
+
+    box-shadow: 0 25px 50px -10px rgb(0 0 0 / 0.25);
+    width: 45%;
+}
+
+
+input,
+textarea {
+    border-radius: 8px;
+    border: none;
+
+    padding: 10px 6px;
+    font-size: 1rem;
+
+    outline: none;
+}
+
+#submit-button {
+    margin-top: 1rem;
+    background-color: rgb(59 130 246);
+    border: none;
+    border-radius: 10px;
+    padding: 8px 0px;
+
+
+    width: 100%;
+    font-size: 1.1rem;
+    color: white;
+}
+
+#answer {
+    margin-top: 16px
+}
+
+.answer {
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+}

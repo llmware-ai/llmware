@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    Create new project
+{% endblock title %}
+
+{% block stylesheet %}
+    <link rel="stylesheet" href="{% static 'core/css/style.project_form.css' %}" />
+{% endblock stylesheet %}
+
+{% block body %}
+<section id="create-new-project">
+    <div>
+        <h2>Create New Project</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="title">Title:</label>
+                {{ form.title }}
+                <span class="error-msg">{{ form.title.errors }}</span>
+            </div>
+            <div class="form-group">
+                <label for="description">Description:</label>
+                {{ form.description }}
+                <span class="error-msg">{{ form.description.errors }}</span>
+            </div>
+            <div class="form-group">
+                <label for="available_for">Available For:</label>
+                {{ form.available_for }}
+                <span class="error-msg">{{ form.available_for.errors }}</span>
+            </div>
+            <div class="form-group">
+                <label for="categories">Categories:</label>
+                {{ form.categories }}
+                <span class="error-msg">{{ form.categories.errors }}</span>
+            </div>
+            <div class="form-group">
+                <label for="fields_of_research">Fields of Research:</label>
+                {{ form.fields_of_research }}
+                <span class="error-msg">{{ form.fields_of_research.errors }}</span>
+            </div>
+        
+            <button type="submit" id="submit-button">Save</button>
+        </form>
+    </div>
+</section>
+{% endblock body %}
