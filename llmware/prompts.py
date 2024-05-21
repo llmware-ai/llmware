@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+
 """The prompts module implements the Prompt class, which manages the inference process. This includes
 pre-processing, executing, and post-processing of inferences and tracking the state of related inferences,
 e.g. in conversational language models.
@@ -233,7 +234,7 @@ class Prompt:
     def load_model(self, gen_model,api_key=None, from_hf=False, trust_remote_code=False,
                    # new options added
                    use_gpu=True, sample=False, get_logits=False,
-                   max_output=200, temperature=0.0):
+                   max_output=200, temperature=0.0, api_endpoint=None):
 
         """Load model into prompt object by selecting model name """
 
@@ -243,7 +244,8 @@ class Prompt:
         if not from_hf:
             self.llm_model = self.model_catalog.load_model(gen_model, api_key=self.llm_model_api_key,
                                                            use_gpu=use_gpu, sample=sample, get_logits=get_logits,
-                                                           max_output=max_output, temperature=temperature)
+                                                           max_output=max_output, temperature=temperature,
+                                                           api_endpoint=api_endpoint)
         else:
 
             pt_loader = PyTorchLoader(api_key=api_key,trust_remote_code=trust_remote_code, custom_loader=None)
