@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block stylesheet %}
+    {{block.super}}
+    <link rel="stylesheet" href="{%static 'core/css/style.view_group.css' %}" />
+{% endblock stylesheet %}
+
+{% block title %}
+    {{ group.name }}
+{% endblock title %}
+
+{% block body %}
+    <div>
+        <h2 id="group-name">{{group.name}}</h2>
+        <div class="group-detail-field">
+            <div class="label">Group Members</div>
+            <div class="group-detail-field-value">
+                {% for member in group.members %}
+                    <span>{{member}}</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if group.applied_project %}
+            <div class="group-detail-field">
+                <div class="label">Applied Project</div>
+                <div class="group-detail-field-value">
+                    <a href="{% url 'view_single_project' role=user.get_role topic_number=group.applied_project.topic_number%}">
+                        {{group.applied_project.title}}
+                    </a>
+                </div>
+            </div>
+
+
+            <div class="group-detail-field">
+                <div class="label">Application Status</div>
+                <div>
+                    {% if group.is_approved_by_supervisor  %}
+                        <span class="status-badge status-approved">Approved</span>
+                    {% elif group.is_rejected_by_supervisor %}
+                        <span class="status-badge status-rejected">Rejected</span>
+                    {% else %}
+                        <span class="status-badge status-pending">Pending</span>
+                    {% endif %}
+                </div>
+            </div>
+
+
+            {% if not group.is_approved_by_supervisor  and not group.is_rejected_by_supervisor%}
+                <div class="group-detail-field">
+                    <div class="label">Application Action</div>
+                    <div>
+                        <span class="status-badge"  id="project-applied">Applied</span>
+                        <a href="{% url 'withdraw-project' id=group.id %}">
+                            <span class="status-badge"  id="project-applied-withdraw">Withdraw</span>
+                        </a>
+                    </div>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock body %}
+

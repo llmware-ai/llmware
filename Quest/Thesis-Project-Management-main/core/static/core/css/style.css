@@ -1,0 +1,36 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: local('Poppins'),
+        url('../fonts/Poppins-Regular.ttf') format("truetype");
+}
+
+
+li {
+    list-style-type: none;
+}
+
+body {
+    font-family: 'Poppins';
+}
+
+.bold {
+    font-weight: 600;
+}
+
+a {
+    text-decoration: underline;
+    color: black;
+}
+
+
+
+button {
+    border: none;
+    outline: none;
+}

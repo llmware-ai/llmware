@@ -1,0 +1,80 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    height: 100vh;
+    width: 100vw;
+    background-color: #f0f0f0;
+}
+
+.container {
+    background-color: white;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 10px;
+    border: 2px solid white;
+    margin: 5% auto;
+    padding: 40px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+img {
+    margin: auto;
+    max-width: 100px;
+    height: auto;
+}
+
+label {
+    color: #333;
+    margin-bottom: 5px;
+}
+
+input,
+button {
+    height: 40px;
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 0 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+input:focus,
+button:focus {
+    outline: none;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+
+.logo-image {
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px;
+    padding: 5px
+}
+
+#university-name {
+    font-size: 1.5rem;
+    margin: 20px 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    text-align: center;
+}

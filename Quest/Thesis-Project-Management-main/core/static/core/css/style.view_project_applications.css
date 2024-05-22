@@ -1,0 +1,126 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#student-applications {
+    margin: 1rem 16rem;
+    padding: 2rem 3rem;
+
+    background-color: rgb(245 245 245);
+    border-radius: 16px;
+
+    display: flex;
+    flex-direction: column;
+    width: 60%;
+}
+
+#student-applications>h1 {
+    font-size: 1.8rem;
+
+}
+
+#student-applications>div>h2 {
+    margin-top: 1.5rem;
+    font-size: 1.4rem;
+}
+
+.application-list {
+    margin-top: 1rem;
+    padding: 5px 8px;
+    background-color: rgb(235, 235, 235);
+    border-radius: 16px;
+}
+
+.label {
+    margin: 2px 0px;
+    font-size: 0.85rem;
+    color: rgb(49, 49, 49);
+}
+
+.group-field {
+    margin: 16px;
+}
+
+.group-field-value {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.group-field-value>span {
+    display: block;
+}
+
+.bold {
+    font-weight: 600;
+}
+
+#approve-action {
+    color: blue
+}
+
+#reject-action {
+    color: red
+}
+
+.action-button {
+    margin-right: 1rem;
+    font-size: 1rem;
+}
+
+.status-badge {
+    margin-top: 10px;
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    width: auto;
+}
+
+.status-pending {
+    background-color: #f5dc00;
+    color: #222;
+}
+
+.status-rejected {
+    background-color: red;
+    color: #fff;
+}
+
+.status-approved {
+    background-color: #85f889;
+    color: #222;
+}
+
+#analysis-sentiment {
+    background-color: blue;
+    color: #fff;
+    cursor: pointer;
+}
+
+.sentiment-value {
+    cursor: pointer;
+    background-color: transparent !important;
+    color: black !important
+}
+
+#query-application {
+    margin-top: 10px;
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    width: auto;
+
+    background-color: green;
+    color: #fff;
+    cursor: pointer;
+}
+
+#query-application>a {
+    text-decoration: none;
+    color: white
+}

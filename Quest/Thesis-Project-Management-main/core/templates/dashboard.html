@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% load get_initial %}
+
+{% block stylesheet %}
+    {{block.super}}
+    <link rel="stylesheet" href="{%static 'core/css/style.dashboard.css' %}" />
+{% endblock stylesheet %}
+
+{% block title %}
+    {{user}} | {{user.get_role}}
+{% endblock title %}
+
+{% block body %}
+    <section id="header">
+        <div>Projects</div>
+
+        {% if user.get_role == "Student" %}
+
+        {% else %}
+            <div>
+                <ul id="project-status-list">
+                    <li class="project-status bold" data-status="all">All</li>
+                    <li class="project-status" data-status="approved">Approved</li>
+                    <li class="project-status" data-status="pending">Pending</li>
+                    <li class="project-status" data-status="rejected">Rejected</li>
+                </ul>
+            </div>
+        {% endif %}
+
+        <div id="profile">
+            <div id="profile-name-badge">{{user|get_initial}}</div>
+            <div id="profile-info">
+                <div id="profile-name">{{user}}</div>
+                <div id="profile-position">{{user.get_role}}</div>
+            </div>
+            <a href="{% url 'logout'%}">
+                <div id="logout-tooltip" class="tooltip hidden">Logout</div>
+            </a>
+        </div>
+    </section>
+    
+    {% if user.get_role == "Student" and not has_joined_group %}
+        <div class="group-button">
+            <a href="{% url 'create-group' %}"><button class="create-group-button">Create Group</button></a>
+            <a href="{% url 'join-group' %}"><button class="join-group-button">Join Group</button></a>
+        </div>
+    {% else %}
+        <div id="project-info">
+            {% if user.get_role == "Student" %}
+            {% else %}
+                <div>
+                    <div id="total-project">
+                        <div class="project-count">{{project_list|length}}</div>
+                        <div class="project-count-detail">Total Projects</div>
+                    </div>
+                    <div id="approved-project">
+                        <div class="project-count">{{project_list|filter_attribute:"True,False"|length}}</div>
+                        <div class="project-count-detail">Approved Projects</div>
+                    </div>  
+                    <div id="pending-project">
+                        <div class="project-count">{{project_list|filter_attribute:"False,False"|length}}</div>
+                        <div class="project-count-detail">Pending Projects</div>
+                    </div>
+                    <div id="rejected-project">
+                        <div class="project-count">{{project_list|filter_attribute:"False,True"|length}}</div>
+                        <div class="project-count-detail">Rejected Projects</div>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% block add_project %}
+            {% endblock add_project %}
+
+            {% block group_details %}
+            {% endblock group_details %}
+        </div>
+
+        <section id="project-section">
+                <table class="project-table">
+                    <thead>
+                        <tr>
+                            <th>Project name</th>
+                            <th>Category</th>
+                            
+                            {% if user.get_role == "Supervisor" %}
+                            {% else %}
+                                <th>Supervisor</th>
+                            {% endif %}
+
+                            {% if  user.get_role == "Student" %}
+                                <th>Application Status</th>
+                            {% endif%}
+
+                            {% if  user.get_role == "Student" %}
+                                <th>Application Actions</th>
+                            {% else%}
+                                <th class="status-column">Status</th>
+                            {% endif %}
+
+                            {% if user.get_role == "Supervisor" %}
+                                <th>Student Application</th>
+                            {% endif %}
+
+                            {% if user.get_role == "Coordinator" %}
+                                <th>Actions</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in project_list %}
+                            <tr class="table-row">
+                                <td>
+                                    <a href="{% url 'view_single_project' role=user.get_role.lower topic_number=project.id %}">
+                                        {{project.title}}
+                                    </a>
+                                </td>
+                                <td>{{project.categories|join:", "}}</td>
+
+
+                                {% if user.get_role == "Supervisor" %}
+                                {% else %}
+                                    <td>{{project.supervisor}}</td>
+                                {% endif %}
+
+                                {% if  user.get_role == "Student" and project.id == applied_project.id %}
+                                    <td>
+                                        {% if applied_project.is_approved_by_supervisor %}
+                                            <span class="status-badge status-approved">Approved</span>
+                                        {% elif applied_project.is_rejected_by_supervisor %}
+                                            <span class="status-badge status-rejected">Rejected</span>
+                                        {% else %}
+                                            <span class="status-badge status-pending">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                {% elif project.accepted_group  %}
+                                    <td>
+                                        Accepted to <a href="{% url 'view-group' id=project.accepted_group.id %}">{{project.accepted_group.name}}</a>
+                                    </td>
+                                {% elif can_apply %}
+                                    <td>
+                                        <a href="{% url 'apply-project' id=project.id %}">
+                                            <span class="status-badge"  id="project-apply-button">Apply</span>
+                                        </a>
+                                    </td>
+                                {% endif%}
+
+                                
+
+
+                                {% if  user.get_role == "Student"%}
+                                    {% if can_apply %}
+                                    {% else %}
+                                        {% if applied_project.id == project.id and not project.accepted_group %}
+                                            <td>
+                                                <span class="status-badge"  id="project-applied">Applied</span>
+                                                <a href="{% url 'withdraw-project' id=group.id %}">
+                                                    <span class="status-badge"  id="project-applied-withdraw">Withdraw</span>
+                                                </a>
+                                            </td>
+                                        {% endif %}
+                                    {% endif %}
+                                {% else%}
+                                    <td>
+                                        {% if project.is_approved  %}
+                                            <span class="status-badge status-approved">Approved</span>
+                                        {% elif project.is_rejected %}
+                                            <span class="status-badge status-rejected">Rejected</span>
+                                        {% else %}
+                                            <span class="status-badge status-pending">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+
+                                {% if user.get_role == "Supervisor" %}
+                                    <td>                                        
+                                        {% if project.total_application_count > 0%}
+                                            <a href="{% url 'view-applications' id=project.id %}" class="bold no-underline">
+                                                View Application({{project.total_application_count}})
+                                            </a>
+                                        {% else %}
+                                            No Application
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+
+                                {% if not project.is_rejected %}
+                                    {% if not project.is_approved and user.get_role == "Coordinator" %}
+                                        <td>
+                                            <a href="{% url 'approve' project_number=project.id %}" id="approve-action" class="action-button">Approve</a>
+                                            <a href="{% url 'reject-project' project_number=project.id %}" id="reject-action" class="action-button">Reject</a>
+                                        </td>    
+                                    {% endif %}
+                                {% endif %}
+                            </tr>
+                        {% endfor %} 
+                    </tbody>
+                </table>
+        </section>              
+    {% endif %}
+{% endblock body %}
+
+{%block javascript%} 
+    <script src="{% static 'core/js/script.dashboard.js' %}"></script>
+{%endblock%}

@@ -1,0 +1,110 @@
+body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+body>div {
+    margin: 1rem 16rem;
+    padding: 2rem 3rem;
+
+    background-color: rgb(245 245 245);
+    border-radius: 16px;
+
+    display: flex;
+    flex-direction: column;
+    width: 60%;
+}
+
+#title {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+}
+
+.label {
+    margin: 2px 0px;
+    font-size: 0.85rem;
+    color: rgb(49, 49, 49);
+}
+
+.single-project-field {
+    margin: 16px;
+}
+
+.single-project-field-value {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.single-project-field-value>span{
+    display: block;
+}
+
+.status-badge {
+    margin-top: 10px;
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    width: auto;
+}
+
+.status-pending {
+    background-color: #f5dc00;
+    color: #222;
+}
+
+.status-rejected {
+    background-color: red;
+    color: #fff;
+}
+
+.status-approved {
+    background-color: #85f889;
+    color: #222;
+}
+
+#project-apply-button {
+    background-color: blue;
+    color: white;
+    padding: 8px 1.5rem;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+#project-applied {
+    border-color: rgb(0, 136, 0);
+    border: solid 2px;
+    color: rgb(0, 136, 0);
+    padding: 6px 10px;
+    border-radius: 10px;
+    letter-spacing: 1px;
+}
+
+#project-applied-withdraw {
+    margin: 10px 0px;
+    background-color: red;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-left: 1rem;
+    cursor: pointer;
+}
+
+.bold{
+    font-weight: 600;
+}
+
+#approve-action {
+    color: blue
+}
+
+#reject-action {
+    color: red
+}
+
+.action-button{
+    margin-right: 1rem;
+    font-size: 1rem;
+}

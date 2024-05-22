@@ -1,0 +1,19 @@
+
+{% extends "dashboard.html" %}
+{% load static %}
+
+{% block stylesheet %}
+    {{block.super}}
+    <link rel="stylesheet" href="{%static 'core/css/style.supervisor_page.css' %}" />
+{% endblock stylesheet %}
+
+{% block add_project %}
+    <div>
+        <a href="{% url 'add-project' %}">
+            <button id="add-project-button">Add Project</button>
+        </a>    
+    </div>
+{% endblock add_project %}
+
+
+

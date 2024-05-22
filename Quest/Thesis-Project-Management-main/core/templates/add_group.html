@@ -1,0 +1,25 @@
+{% extends "base.html" %} 
+{% load static %} 
+
+{% block title %} 
+    Create new group
+{% endblock title %} 
+
+{% block stylesheet %}
+    <link rel="stylesheet" href="{% static 'core/css/style.add_group.css' %}" />
+{% endblock stylesheet %} 
+
+{% block body %}
+    <section id="create-new-group">
+        <div>
+            <div>
+                <h2>Create new group</h2>
+            </div>
+            <form method="post">
+                {% csrf_token %} 
+                {{form.as_p}}
+                <button type="submit" id="create-group-button">Create group</button>
+            </form>
+        </div>
+    </section>
+{% endblock body %}

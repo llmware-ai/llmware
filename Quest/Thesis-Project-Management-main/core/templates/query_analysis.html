@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block stylesheet %}
+    <link rel="stylesheet" href="{%static 'core/css/style.query_analysis.css' %}" />
+{% endblock stylesheet %}
+
+
+{% block body %}
+    <section id="query-application">
+        <div>
+            <div id="question">
+                    <h2>
+                        Query Application
+                    </h2>
+                    {% if form %}
+                        <form action="" method="post">
+                            {{ form.as_p }}
+                            {% csrf_token %}
+                            <button type="submit" id="submit-button">Submit</button>
+                        </form>
+                    {% endif %}
+                </div>  
+            <div id="answer">
+                <label>
+                    Answer
+                </label>
+                <div class="answer">
+                    {{answer}}
+                </div>
+                <label>
+                    Explanation
+                </label>
+                <div class="answer">
+                    {{explanation}}
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock body %}
+

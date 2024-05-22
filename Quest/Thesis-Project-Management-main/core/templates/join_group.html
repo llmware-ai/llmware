@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    Join group
+{% endblock title %}
+
+{% block stylesheet %}
+    <link rel="stylesheet" href="{% static 'core/css/style.join_group.css' %}" />
+{% endblock stylesheet %}
+
+{% block body %}
+    <section id="join-new-group">
+        <div>
+            <div>
+                <h2>Join group</h2>
+            </div>
+            <form id="join-group-form">
+                {% csrf_token %}
+                <select name="group" id="group-select">
+                    {% for group in group_list %}
+                        <option value="{{ group.id }}">
+                            {{ group.name }} ({{ group.member_count }} members)
+                        </option>
+                    {% endfor %}
+                </select>
+                <a href="#" id="join-group-link">
+                    <button type="button" id="join-group-button">
+                        Join Group
+                    </button>
+                </a>
+            </form>
+        </div>
+    </section>
+    <script src="{% static 'core/js/script.join_group.js' %}"></script>
+{% endblock body %}

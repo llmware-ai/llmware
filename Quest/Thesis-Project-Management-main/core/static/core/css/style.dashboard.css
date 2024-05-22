@@ -1,0 +1,228 @@
+body {
+    margin: 3rem 15rem;
+}
+
+
+/* Project Header section */
+#header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#header>div:nth-child(1) {
+    font-size: 2.2rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+#project-status-list {
+    display: flex;
+}
+
+.project-status {
+    margin: 0px 1.5rem;
+    font-size: 1.05rem;
+    cursor: pointer;
+}
+
+#profile {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    cursor: pointer;
+}
+
+
+
+#profile-name-badge {
+    padding: 1rem;
+    width: 3rem;
+    height: 3rem;
+
+    background-color: rgb(200, 200, 200);
+    border-radius: 50%;
+    font-size: 1.5rem;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#profile-info {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.9rem;
+}
+
+#profile-name {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+#profile-position {
+    color: rgb(70, 70, 70);
+}
+
+/* Tooltip styles */
+.tooltip {
+    position: absolute;
+    top: 120%; /* Position below the profile div */
+    left: 80%;
+    transform: translateX(-50%);
+    background-color: red;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s, opacity 0.3s;
+}
+
+.tooltip.hidden {
+    visibility: hidden;
+    opacity: 0;
+}
+
+.tooltip.visible {
+    visibility: visible;
+    opacity: 1;
+}
+/* Project Info Section */
+#project-info {
+    margin-top: 3rem;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#project-info>div:nth-child(1) {
+    display: flex;
+    gap: 3rem;
+
+}
+
+.project-count {
+    font-size: 4rem;
+}
+
+.project-count-detail {
+    margin-left: 3px;
+    color: black;
+}
+
+#total-project,
+#pending-project,
+#approved-project,
+#rejected-project {
+    padding: 3px 2rem;
+    background-color: rgb(248, 248, 248);
+    width: 14rem;
+    height: 6rem;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+
+    border-radius: 1rem;
+}
+
+#total-project {
+    color: rgb(0, 0, 255);
+}
+
+#approved-project {
+    color: rgb(0, 255, 0);
+}
+
+#pending-project {
+    color: rgb(255, 183, 0)
+}
+#rejected-project{
+    color: red;
+}
+
+
+#add-project-button {
+    background-color: blue;
+    color: white;
+    padding: 10px 1rem;
+    font-size: 1.5rem;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+/* Project Table section */
+#project-section {
+    margin-top: 3rem;
+}
+
+.project-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    letter-spacing: 1px;
+
+
+    border-radius: 8px;
+    overflow: hidden;
+
+}
+
+.project-table th,
+.project-table td {
+    padding: 12px 8px;
+    text-align: left;
+}
+
+.project-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    font-size: 1.1rem;
+    width: calc(100% /var(--num-columns));
+}
+
+.project-table tbody tr {
+    border-bottom: 1px solid #ddd;
+}
+
+.project-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.project-table tbody tr:hover {
+    background-color: #e9e9e9;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.status-pending {
+    background-color: #faee89;
+    color: #222;
+}
+
+.status-rejected {
+    background-color: red;
+    color: #fff;
+}
+
+.status-approved {
+    background-color: #85f889;
+    color: #222;
+}
+
+.action-button{
+    text-decoration: none;
+}
