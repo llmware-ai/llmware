@@ -9,6 +9,7 @@ import os
 from llmware.library import Library
 from llmware.retrieval import Query
 from llmware.setup import Setup
+from llmware.configs import LLMWareConfig
 
 
 def embeddings_lancedb (library_name):
@@ -59,6 +60,8 @@ def embeddings_lancedb (library_name):
 
 
 if __name__ == "__main__":
+
+    LLMWareConfig().set_active_db("sqlite")
 
     library_name = "embedding_test_0"
 

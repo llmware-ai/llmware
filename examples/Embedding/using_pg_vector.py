@@ -1,7 +1,7 @@
 
-"""This example shows how to use PG Vector (Postgres) as a vector embedding database with llmware"""
+"""This example shows how to use PG Vector (Postgres) as a vector embedding database with llmware
 
-""" (A) Python Dependencies - 
+    (A) Python Dependencies -
 
     As a first step, you should pip install three Postgres dependencies not included in the llmware package:
     1.  pip3 install psycopg-binary
@@ -35,6 +35,7 @@ import os
 from llmware.setup import Setup
 from llmware.library import Library
 from llmware.retrieval import Query
+from llmware.configs import LLMWareConfig
 
 #  example default postgres install with database = postgres & user = postgres
 os.environ["USER_MANAGED_PG_DB_NAME"] = "postgres"
@@ -64,6 +65,8 @@ def build_lib (library_name, folder="Agreements"):
 
 
 # start script
+
+LLMWareConfig().set_active_db("postgres")
 
 print("update: Step 1- starting here- building library- parsing PDFs into text chunks")
 

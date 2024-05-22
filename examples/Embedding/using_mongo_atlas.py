@@ -1,8 +1,5 @@
 
-# This example demonstrates working with MongoDB Atlas
-
-"""
-You can use Mongo Atlas in 2 ways:
+"""This example demonstrates working with MongoDB Atlas.  You can use Mongo Atlas in 2 ways:
 
 1. Only as a vector DB (and use local or another mongo for data storage)
    In this case, you can set the following environment variable:
@@ -12,7 +9,8 @@ You can use Mongo Atlas in 2 ways:
    In this case, you can set the following environment configuration:
       LLMWareConfig().set_config("collection_db_uri", "mongo+srv://<username>:<password>@<cluster-domain>..."
 
-This example demonstrates the 2nd approach
+This example demonstrates the 2nd approach.
+
 """
 
 import os

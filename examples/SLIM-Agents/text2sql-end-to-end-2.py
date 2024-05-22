@@ -1,5 +1,4 @@
 
-
 """ This example shows an end-to-end recipe for querying SQL database using only natural language.
 
     The example shows the following steps:
@@ -14,6 +13,9 @@
         E.  Returns result
     3.  All work performed on an integrated 'llmware-sqlite-experimental.db' that can be deleted safely anytime
      as part of experimentation lifecycle.
+
+    UPDATE: please see also the related example in Use_Cases/agent_with_custom_tables.py, which illustrates a more
+    generalized version of this script running on Postgres.
 
 """
 
@@ -57,7 +59,7 @@ def sql_e2e_test_script(table_name="customers1",create_new_table=False):
 
     #  Pass direct queries to the DB
 
-    query_list = ["Which customers are vip customers?",
+    query_list = ["Which customers have vip customer status of yes?",
                   "What is the highest annual spend of any customer?",
                   "Which customer has account number 1234953",
                   "Which customer has the lowest annual spend?",
