@@ -27,7 +27,7 @@ Vector Databases.  This software provides integration to a wide variety of vecto
 
 General Purpose Databases.  This software provides integration to three core database resources - Postgres, MongoDB and SQLite.  llmware connects to these resources using open source Python and C drivers.  Users need to install these databases separately and indendently, subject to the licensing terms from those vendors.  llmware does not provide any licenses to databases, and llmware does not require the use of a database for a wide range of use cases.
 
-Huggingface Integration.  This software provides features and functions that enable access to models, tokenizers and datasets hosted in Huggingface repositories and accessible via the Huggingface transformers, tokenizers, datasets and huggingface-hub libraries.  In providing interfaces to these resources, llmware uses transformers, in particular, which is provided by Huggingface under an Apache 2.0 license (see www.github.com/huggingface/transformers.git).  In addition, related to these interfaces, llmware provides code that was influenced, derived, and in a few limited cases, copied, from transformers source code to faciliate the integration.   Some of this transformers code, especially the underlying model class code, is subject to additional copyright notices from HuggingFace, Google AI, EleutherAI, NVIDIA and potentially others for specific models.  For use of any individual third party model, accessed through a Huggingface repository, we recommend reviewing the individual model card to confirm the licensing terms and other associated copyrights.
+Huggingface Integration.  This software provides features and functions that enable access to models, tokenizers and datasets hosted in Huggingface repositories and accessible via the Huggingface transformers, tokenizers, datasets and huggingface-hub libraries.  In providing interfaces to these resources, llmware uses transformers, in particular, which is provided by Huggingface under an Apache 2.0 license (see www.github.com/huggingface/transformers.git).  In addition, related to these interfaces, llmware provides code that was influenced, derived, and in a few limited cases, copied, from transformers source code to facilitate the integration.   Some of this transformers code, especially the underlying model class code, is subject to additional copyright notices from HuggingFace, Google AI, EleutherAI, NVIDIA and potentially others for specific models.  For use of any individual third party model, accessed through a Huggingface repository, we recommend reviewing the individual model card to confirm the licensing terms and other associated copyrights.
 
 =================================================================================================
 
@@ -39,37 +39,40 @@ Please note that the list below includes 'first-level' dependencies but does not
    
 3-clause BSD License (https://opensource.org/license/bsd-3-clause/)
    * Software: libzip (https://libzip.org/)  [C library]
-   * Software: lxml (https://github.com/lxml/lxml) [Python pip install]
    * Software: numpy (https://github.com/numpy/numpy) [Python pip install]
    * Software: torch (https://github.com/pytorch/pytorch) [Python pip install]
-   * Software: Werkzeug (https://github.com/pallets/werkzeug/) [Python pip install]
    * Software: colorama (https://github.com/tartley/colorama) [Python pip install]
+   * Software - Optional - lxml (https://github.com/lxml/lxml) [Optional / Python pip install]
 
 Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
    * Software: boto3 (https://github.com/boto/boto3) [Python pip install]
    * Software: mongo-c-driver (https://github.com/mongodb/mongo-c-driver) [C library]
-   * Software: pymilvus (https://github.com/milvus-io/pymilvus)  [Python pip install]
    * Software: pymongo (http://github.com/mongodb/mongo-python-driver)  [Python pip install]
-   * Software: pytesseract (https://github.com/madmaze/pytesseract)  [Python pip install]
    * Software: tokenizers (https://github.com/huggingface/tokenizers) [Python pip install]
    * Software: transformers (https://github.com/huggingface/transformers) [Python pip install]
-   * Software: datasets (https://github.com/huggingface/datasets) [Python pip install]
    * Software: huggingface-hub (https://github.com/huggingface/huggingface-hub) [Python pip install]
-   * Software: sentence-transformers (https://github.com/UKPLabs/sentence-transformers) [Python pip install]
-   * Software: yfinance (https://github.com/ranaroussi/yfinance) [Python pip install]
-   * Software: chromadb (https://github.com/chroma-core/chroma) [Python pip install]
-   * Optional: neo4j-python-driver (https://github.com/neo4j/neo4j-python-driver) [Optional / Python pip install]
-   * Optional: Tiny-Llama base model (https://github.com/jzhang38/TinyLlama) [Separate Download and install]
-   * Optional: tesseract (https://github.com/tesseract-ocr/tesseract) [Optional / not included / C library]
+   * Software: requests (https://github.com/psf/requests) [Python pip install]
+   * Software - Optional - pymilvus (https://github.com/milvus-io/pymilvus)  [Optional / Python pip install]
+   * Software - Optional - pytesseract (https://github.com/madmaze/pytesseract)  [Optional / Python pip install]
+   * Software - Optional - datasets (https://github.com/huggingface/datasets) [Optional / Python pip install]
+   * Software - Optional - sentence-transformers (https://github.com/UKPLabs/sentence-transformers) [Optional / Python pip install]
+   * Software - Optional - yfinance (https://github.com/ranaroussi/yfinance) [Optional / Python pip install]
+   * Software - Optional - chromadb (https://github.com/chroma-core/chroma) [Optional / Python pip install]
+   * Optional - Optional - neo4j-python-driver (https://github.com/neo4j/neo4j-python-driver) [Optional / Python pip install]
+   * Optional - Optional - Tiny-Llama base model (https://github.com/jzhang38/TinyLlama) [Separate Download and install]
+   * Optional - Optional - tesseract (https://github.com/tesseract-ocr/tesseract) [Optional / not included / C library]
    
 ICS License (https://opensource.org/license/isc-license-txt)
    * Software: librosa - source code and license at: https://github.com/librosa/librosa [Python pip install]
-   
+
+
 Database Drivers used in llmware
    * Mongo C driver - libmongoc / libbson - Apache 2.0 (https://www.github.com/mongodb/mongo-c-driver) [C library]
    * PostgreSQL C driver - libpq - PostgresSQL Global Development Group (https://www.github.com/postgres/postgres/blob/master/copyright) [C library]
    * PostgreSQL psycopg - unmodified and linked dynamically from pypi release - GNU Lesser General Public License (https://www.github.com/psyocopg/psycopg/LICENSE.txt) [Python pip install]
    * SQLite C driver - libsqlite3 - (https://www.github.com/LuaDist/libsqlite3) [C library]
+   * psycopg2 & psycopg2-binary - GNU Lesser General Public License - no modifications - it is provided through pip install as standard python library
+
 
 PNG Reference Library License
    * libpng: source code and license (https://github.com/pnggroup/libpng) [C library]
@@ -81,17 +84,17 @@ MIT License (https://opensource.org/license/mit/)
    * Software: libxml2 (https://github/com/GNOME/libxml2) [C library]
    * Software: llama.cpp (https://github.com/ggerganov/llama.cpp) [C/C++ library]
    * Software: whisper.cpp (https://github.com/ggerganov/whisper.cpp) [C/C++ library]
-   * Software: beautifulsoup4 (https://pypi.org/project/beautifulsoup4/) [Python pip install]
    * Software: openai (https://github.com/openai/openai-python) [Python pip install]
-   * Software: pdf2image (https://github.com/Belval/pdf2image)  [Python pip install]
-   * Software: word2number (https://github.com/akshaynagpal/w2n) [Python pip install]
    * Software: Wikipedia-API (https://github.com/martin-majlis/Wikipedia-API) [Python pip install]
-   * Software: tabulate (https://github.com/astanin/python-tabulate) [Python pip install]
    * Software: einops (https://github.com/arogozhinov/einops) [Python pip install]
+   * Software - Optional - beautifulsoup4 (https://pypi.org/project/beautifulsoup4/) [Optional / Python pip install]
    * Software - Optional - Whisper models - openai (https://github.com/openai/whisper) [Separate download and install]
-   * Software - Optional - anthropic (https://github.com/anthropics/anthropic-sdk-python) [Python pip install]
-   * Software - Optional - faise-cpu (https://github.com/kyamagu/faiss-wheels) [Python pip install]
-   * Software - Optional - cohere (https://github.com/cohere-ai/cohere-python) [Python pip install]
+   * Software - Optional - anthropic (https://github.com/anthropics/anthropic-sdk-python) [Optional / Python pip install]
+   * Software - Optional - faise-cpu (https://github.com/kyamagu/faiss-wheels) [Optional / Python pip install]
+   * Software - Optional - cohere (https://github.com/cohere-ai/cohere-python) [Optional / Python pip install]
+   * Software - Optional - tabulate (https://github.com/astanin/python-tabulate) [Optional / Python pip install]
+   * Software - Optional - pdf2image (https://github.com/Belval/pdf2image)  [Optional / Python pip install]
+   * Software - Optional - word2number (https://github.com/akshaynagpal/w2n) [Optional / Python pip install]
    
 zlib License (https://github.com/madler/zlib/blob/develop/LICENSE)
    * Software: zlib (https://www.zlib.net/) [C library]
@@ -148,6 +151,37 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
+Name: einops
+License: MIT
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+Name: wikipedia-api
+License: MIT
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+Name: openai (python sdk)
+License: MIT
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
 Name: mongo-c-driver (libmongoc and libbson)
 License: Apache 2.0 Copyright Notice
 
@@ -164,6 +198,182 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 
+Name: pymongo
+License: Apache 2.0 Copyright Notice
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+Name: boto3
+License: Apache 2.0 Copyright Notice
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+Name: requests
+License: Apache 2.0 Copyright Notice
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+Name: transformers (Huggingface)
+License: Apache 2.0 Copyright Notice
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+Name: tokenizers (Huggingface)
+License: Apache 2.0 Copyright Notice
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+Name: huggingface_hub (HuggingFace)
+License: Apache 2.0 Copyright Notice
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+Name: librosa
+License: ISC License
+Copyright (c) 2013--2023, librosa development team.
+Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+Name: psycopg  [no modifications - it is provided through pip install as standard python library]
+License: Lesser GPL
+
+psycopg2 is free software: you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+psycopg2 is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+License for more details.
+
+In addition, as a special exception, the copyright holders give
+permission to link this program with the OpenSSL library (or with
+modified versions of OpenSSL that use the same license as OpenSSL),
+and distribute linked combinations including the two.
+
+You must obey the GNU Lesser General Public License in all respects for
+all of the code used other than OpenSSL. If you modify file(s) with this
+exception, you may extend this exception to your version of the file(s),
+but you are not obligated to do so. If you do not wish to do so, delete
+this exception statement from your version. If you delete this exception
+statement from all source files in the program, then also delete it here.
+
+You should have received a copy of the GNU Lesser General Public License
+along with psycopg2 (see the doc/ directory.)
+If not, see <https://www.gnu.org/licenses/>.
+
+
+
+Name: numpy
+License: BSD-3-Clause
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Name: torch
+License: BSD-3-Clause
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Name: colorama
+License: BSD-3-Clause
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
 Name: libzip
 License: BSD-3-Clause
 
@@ -176,6 +386,31 @@ Redistribution and use in source and binary forms, with or without modification,
 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Name: pgvector
+License: Postgres License
+
+Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+
+Portions Copyright (c) 1994, The Regents of the University of California
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose, without fee, and without a written agreement
+is hereby granted, provided that the above copyright notice and this
+paragraph and the following two paragraphs appear in all copies.
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
+ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO
+PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 Name: libpq
