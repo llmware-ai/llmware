@@ -4,15 +4,19 @@
 [![discord](https://img.shields.io/badge/Chat%20on-Discord-blue?logo=discord&logoColor=white)](https://discord.gg/MhZn5Nc39h)   
 [![Documentation](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml/badge.svg)](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml)
 
-## 🧰🛠️🔩The Ultimate Toolkit for RAG Pipelines with Small, Specialized Models  
+## 🧰🛠️🔩Building Enterprise RAG Pipelines with Small, Specialized Models  
 
-From quickly building POCs to scalable LLM Apps for the enterprise, LLMWare is packed with all the tools you need. 
+`llmware` provides a unified framework for building LLM-based applications (e.g, RAG, Agents), using small, specialized models that can be deployed privately, integrated with enterprise knowledge sources safely and securely, and cost-effectively tuned and adapted for any business process.  
 
-`llmware` is an integrated framework with over 50+ models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.  
+ `llmware` has two main components:  
+ 
+ 1.  **RAG Pipeline** - integrated components for the full lifecycle of connecting knowledge sources to generative AI models; and 
 
-This project provides a comprehensive set of tools that anyone can use - from a beginner to the most sophisticated AI developer - to rapidly build industrial-grade, knowledge-based enterprise LLM applications. 
+ 2.  **50+ small, specialized models** fine-tuned for key tasks in enterprise process automation, including fact-based question-answering, classification, summarization, and extraction.  
 
-Our specific focus is on making it easy to integrate open source small specialized models and connecting enterprise knowledge safely and securely. 
+By bringing together both of these components, along with integrating leading open source models and underlying technologies, `llmware` offers a comprehensive set of tools to rapidly build knowledge-based enterprise LLM applications.  
+
+Most of our examples can be run without a GPU server - get started right away on your laptop.   
 
 [Join us on Discord](https://discord.gg/MhZn5Nc39h)   |  [Watch Youtube Tutorials](https://www.youtube.com/@llmware)  | [Explore our Model Families on Huggingface](https://www.huggingface.co/llmware)   
 
@@ -37,7 +41,7 @@ Writing code with`llmware` is based on a few main concepts:
 
 
 ```python
-#   50+ Models in Catalog with 20+ RAG-optimized BLING, DRAGON and Industry BERT models
+#   150+ Models in Catalog with 50+ RAG-optimized BLING, DRAGON and Industry BERT models
 #   Full support for GGUF, HuggingFace, Sentence Transformers and major API-based models
 #   Easy to extend to add custom models - see examples
 
@@ -780,9 +784,8 @@ After cloning the repo, depending upon your IDE enviroment, you may need to take
 - 💡 Enterprise scalability - containerization, worker deployments and Kubernetes  
 - 💡 Integration of SQL and other scale enterprise data sources  
 - 💡 Multi-step, multi-model Agent-based workflows with small, specialized function-calling models  
-- 💡 New Documentation - **Coming Soon**  
 
-Like our models, we aspire for llmware to be "small, but mighty" - easy to use and get started, but packing a powerful punch!
+Like our models, we aspire for llmware to be "small, but mighty" - easy to use and get started, but packing a powerful punch!  
 
 </details>
 
