@@ -1,5 +1,6 @@
 
 """ This example demonstrates how to parse a document 'in-flight' as part of a Prompt using "Prompt with Sources"
+
     1.  Load sample documents
     2.  Create a Prompt object
     3.  Load a locally-run BLING model (may take a few minutes to download the first time from HuggingFace)
@@ -53,7 +54,7 @@ def prompt_source (model_name):
             print("Source created from document: ", source)
 
             # calling the LLM with 'source' information from the contract automatically packaged into the prompt
-            responses = prompter.prompt_with_source(research["prompt"], prompt_name="just_the_facts", temperature=0.3)
+            responses = prompter.prompt_with_source(research["prompt"], prompt_name="default_with_context", temperature=0.3)
 
             for r, response in enumerate(responses):
                 print("\nLLM Response: ", response["llm_response"])

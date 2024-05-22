@@ -1,13 +1,12 @@
 
-"""
-#                   *** FAST START - extract financial tables from PDF documents ***
-#
-#   extract_pdf_tables - shows end-to-end flow to automatically extract tables from PDFs
-#   the sample documents (~15 financial documents - mostly 10Ks and annual reports) are available in public S3 repo
-#   note: this example assumes that you have installed MongoDB - see instructions in README
-#
-#   this example is also reviewed in the llmware YouTube video 'Extract Tables from PDFs'
-#   Check out this video on the llmware Youtube channel at:  https://www.youtube.com/watch?v=YYcimVQEgO8&t=4s
+""" This example illustrates how to ** extract financial tables from PDF documents **
+
+   extract_pdf_tables - shows end-to-end flow to automatically extract tables from PDFs
+   the sample documents (~15 financial documents - mostly 10Ks and annual reports) are available in public S3 repo
+
+   this example is also reviewed in the llmware YouTube video 'Extract Tables from PDFs'
+   Check out this video on the llmware Youtube channel at:  https://www.youtube.com/watch?v=YYcimVQEgO8&t=4s
+
 """
 
 import os
@@ -56,6 +55,8 @@ def extract_pdf_tables(library_name):
 
 
 if __name__ == "__main__":
+
+    LLMWareConfig().set_active_db("sqlite")
 
     p = extract_pdf_tables("pdf_table_lib_example")
 
