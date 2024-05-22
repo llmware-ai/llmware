@@ -1,7 +1,7 @@
 
-"""This example shows how to use Qdrant as a vector embedding database with llmware"""
+"""This example shows how to use Qdrant as a vector embedding database with llmware
 
-""" (A) Python Dependencies - 
+    (A) Python Dependencies -
 
     As a first step, you should pip install dependencies not included in the llmware package:
         -- pip3 install qdrant-client
@@ -23,7 +23,7 @@ import os
 from llmware.setup import Setup
 from llmware.library import Library
 from llmware.retrieval import Query
-
+from llmware.configs import LLMWareConfig
 
 
 def build_lib (library_name, folder="Agreements"):
@@ -50,6 +50,8 @@ def build_lib (library_name, folder="Agreements"):
 
 
 # start script
+
+LLMWareConfig().set_active_db("sqlite")
 
 print("update: Step 1- starting here- building library- parsing PDFs into text chunks")
 

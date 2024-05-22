@@ -1,9 +1,9 @@
 
 """This example shows how to use ChromaDB as a vector embedding database with llmware with the
     default configuration of using ChromaDB as a local persistent file-based vector db, with options
-    for both in-memory and client-server installations. """
+    for both in-memory and client-server installations.
 
-""" (A) Python Dependencies - 
+    (A) Python Dependencies -
 
     As a first step, confirm that you have installed chromadb, e.g., `pip3 install chromadb` 
     

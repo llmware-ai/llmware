@@ -1,12 +1,10 @@
 
-"""
-#                   *** FAST START to create vector embeddings from documents ***
-#
-#   docs2vecs_with_milvus-un_resolutions - parses, text chunks and embeds 500 United Nations (UN) Resolutions
-#   the sample documents (500 PDFs - 2-15 pages each) can be pulled down from a public S3 repo with the command:
-#           sample_files_path = Setup().load_sample_files()
+""" This example demonstrates parsing, text chunking and embedding with 500 United Nations (UN) Resolutions.
+The sample documents (500 PDFs - 2-15 pages each) can be pulled down from a public S3 repo with the command:
+          sample_files_path = Setup().load_sample_files()
 
-#   note: the example assumes that you have installed Milvus and MongoDB per the separate instructions in the README
+    note: the example assumes that you have installed Milvus and MongoDB per the separate instructions in the README
+
 """
 
 
@@ -15,6 +13,7 @@ from llmware.library import Library
 from llmware.retrieval import Query
 from llmware.setup import Setup
 from llmware.status import Status
+from llmware.configs import LLMWareConfig
 
 
 def parse_and_generate_vector_embeddings(library_name):
@@ -75,6 +74,8 @@ def parse_and_generate_vector_embeddings(library_name):
 
 
 if __name__ == "__main__":
+
+    LLMWareConfig().set_active_db("mongo")
 
     # pick any name for the library
     user_selected_name = "un_resolutions500"

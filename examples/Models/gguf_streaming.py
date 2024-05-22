@@ -29,13 +29,14 @@ chat_models = ["phi-3-gguf",
 model_name = chat_models[0]
 
 #   maximum output can be set optionally at any number up to the "max_output_tokens" set
-model = ModelCatalog().load_model(model_name, max_output=200)
+model = ModelCatalog().load_model(model_name, max_output=500)
 
 text_out = ""
 
 token_count = 0
 
-prompt = "I am interested in gaining an understanding of the banking industry.  What topics should I research?"
+# prompt = "I am interested in gaining an understanding of the banking industry.  What topics should I research?"
+prompt = "What are the benefits of small specialized LLMs?"
 
 #   since model.stream provides a generator, then use as follows to consume the generator
 

@@ -1,11 +1,11 @@
-"""
-#                   *** FAST START to create vector embeddings from documents ***
-#
-#   docs2vecs_with_milvus-contracts - parses, text chunks and embeds legal contracts
-#   the sample documents (~80 legal template contracts) can be pulled down from a public S3 repo with the command:
-#           sample_files_path = Setup().load_sample_files()
 
-#   note: the example assumes that you have installed Milvus and MongoDB per the separate instructions in the README
+""" This example illustrates parsing, text chunking, embedding and then executing in a RAG prompt process using
+~80 legal documents.  The example was originally developed for a joint webinar hosted with Milvus.
+
+    Please feel free to substitute other vector databases in the example, if you prefer.
+
+    The example uses sample documents (~80 legal template contracts) that can be pulled down with the command:
+           sample_files_path = Setup().load_sample_files()
 """
 
 
@@ -15,6 +15,7 @@ from llmware.retrieval import Query
 from llmware.setup import Setup
 from llmware.status import Status
 from llmware.prompts import Prompt
+from llmware.configs import LLMWareConfig
 
 
 def rag (library_name):
@@ -88,7 +89,11 @@ def rag (library_name):
 
 if __name__ == "__main__":
 
+    #   feel free to change to sqlite or postgres (if installed)
+    LLMWareConfig().set_active_db("mongo")
+
     # pick any name for the library
     user_selected_name = "contracts_rag10"
     rag(user_selected_name)
+
 

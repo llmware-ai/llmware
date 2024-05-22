@@ -25,6 +25,8 @@ from llmware.setup import Setup
 from llmware.library import Library
 from llmware.retrieval import Query
 from llmware.models import ModelCatalog
+from llmware.configs import LLMWareConfig
+
 
 os.environ["USER_MANAGED_OPENAI_API_KEY"] = "<INSERT YOUR OPEN API KEY HERE>"
 
@@ -142,6 +144,10 @@ if __name__ == "__main__":
     #       -- good sample query for UN-Resolutions, e.g. "what are key initiatives to promote sustainability?"
     #
     #   try substituting different vector-db, e.g, "pg_vector" | "redis" | "faiss"
+
+    #   please note: to use multiple embeddings on a library requires either Mongo or Postgres as text collection
+
+    LLMWareConfig().set_active_db("mongo")
 
     multiple_embeddings_same_db_same_lib(document_folder="Agreements",
                                          sample_query="what is the sale bonus?",

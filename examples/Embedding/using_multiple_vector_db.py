@@ -21,6 +21,7 @@ from llmware.setup import Setup
 from llmware.library import Library
 from llmware.retrieval import Query
 from llmware.models import ModelCatalog
+from llmware.configs import LLMWareConfig
 
 os.environ["USER_MANAGED_OPENAI_API_KEY"] = "<INSERT YOUR OPEN AI KEY HERE>"
 
@@ -128,6 +129,8 @@ def multiple_embeddings_and_multiple_vector_dbs(document_folder=None,sample_quer
 
 
 if __name__ == "__main__":
+
+    LLMWareConfig().set_active_db("mongo")
 
     multiple_embeddings_and_multiple_vector_dbs(document_folder="Agreements",
                                                 sample_query="what is the base salary?",

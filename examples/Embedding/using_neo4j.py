@@ -1,7 +1,7 @@
 
-"""This example shows how to use Neo4j as a vector embedding database with llmware"""
+"""This example shows how to use Neo4j as a vector embedding database with llmware
 
-""" (A) Python Dependencies - 
+    (A) Python Dependencies -
 
     As a first step, you should pip install theh Neo4j driver, which is not included in the llmware package:
     1.  pip3 install neo4j 
@@ -33,6 +33,7 @@ import os
 from llmware.setup import Setup
 from llmware.library import Library
 from llmware.retrieval import Query
+from llmware.configs import LLMWareConfig
 
 #  example default Neo4j install with database = llmware & user = neo4j
 os.environ["NEO4J_URI"] = "neo4j://localhost:7687"
@@ -67,6 +68,8 @@ def build_lib (library_name, folder="Agreements"):
 # start script
 
 print("update: Step 1- starting here- building library- parsing PDFs into text chunks")
+
+LLMWareConfig().set_active_db("sqlite")
 
 lib = build_lib("neo4j_lib_0")
 
