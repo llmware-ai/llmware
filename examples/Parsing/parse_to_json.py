@@ -1,6 +1,7 @@
 
 """This example demonstrates how to parse documents in memory and output directly to json file
       -- Does not require the use of database
+      -- Useful for parsing-on-the-fly and then extracting output into another step in a pipeline
 """
 
 import os

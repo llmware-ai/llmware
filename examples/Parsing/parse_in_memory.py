@@ -22,19 +22,30 @@ def parsing_files_into_memory(folder_name):
 
     files = os.listdir(ingestion_file_path)
 
+    print(f"\t\t--total of {len(files)} documents found in folder path - will parse each one.")
+
     for i, doc in enumerate(files):
 
         parser_output = Parser().parse_one(ingestion_file_path,doc,save_history=False)
 
         if parser_output:
-            print(f"update: parser output - ", doc, len(parser_output))
+            print(f"\nupdate: parsed document - {i} - {doc}")
+            print(f"update: extracted {len(parser_output)} blocks of information - showing first 10 blocks for display:")
+
+            if len(parser_output) < 10:
+                sample_display_len = len(parser_output)
+            else:
+                sample_display_len = 10
+
+            parser_output = parser_output[0:sample_display_len]
+
             for j, blocks in enumerate(parser_output):
                 text = blocks["text"]
                 if len(text) > 100:
-                    text = text[0:100]
-                print(f"update: blocks - ", j, blocks["doc_ID"], blocks["block_ID"], text)
+                    text = text[0:100] + " ... "
+                print(f"update: block - {blocks['block_ID']} - {text}")
         else:
-            print(f"update: did not find any content for file - {doc}")
+            print(f"\nupdate: did not find any content for file - {doc}")
 
     return 0
 
@@ -52,6 +63,6 @@ if __name__ == "__main__":
     # this is a list of document folders that will be pulled down by calling Setup()
     sample_folders = ["Agreements", "Invoices", "UN-Resolutions-500", "SmallLibrary", "FinDocs", "AgreementsLarge"]
 
-    library_name = "parsing_test_lib_6"
+    library_name = "parsing_test_lib_0"
     selected_folder = sample_folders[0]
     output = parsing_files_into_memory (selected_folder)

@@ -23,15 +23,19 @@ import time
 
 from llmware.parsers import Parser
 from llmware.setup import Setup
+from llmware.configs import LLMWareConfig
 
 from importlib import util
 if not util.find_spec("pytesseract") or not util.find_spec("pdf2image"):
     print("\nto run this example, please install pytesseract and pdf2image - and there may be core libraries "
           "that need to be installed as well - see comments above more details.")
 
+
 def parsing_pdf_by_ocr ():
 
     print(f"Example - Parsing PDF with Scanned Pages")
+
+    LLMWareConfig().set_active_db("sqlite")
 
     # Load the llmware sample files
     print (f"\nstep 1 - loading the llmware sample files")
