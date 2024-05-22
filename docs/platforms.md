@@ -1,7 +1,7 @@
 ---
 layout: default
-title: Platform Support| llmware
-nav_order: 1
+title: Platform Support
+nav_order: 2
 description: llmware is an integrated framework with over 50+ models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
 permalink: /platform_support
 ---
@@ -72,7 +72,6 @@ LLMWareConfig().set_llmware_path_name("llmware_data2")
 # check the new llmware home path
 llmware_fp = LLMWareConfig().get_llmware_path()
 print("updated llmware path: ", llmware_fp)
-
 
 ```
 

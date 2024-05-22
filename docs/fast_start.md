@@ -1,12 +1,12 @@
 ---
 layout: default
-title: Fast Start Series | llmware
-nav_order: 1
+title: Fast Start Series
+nav_order: 3
 description: llmware is an integrated framework with over 50+ models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
 permalink: /fast_start
 ---
 Fast Start: Learning RAG with llmware through 6 examples 
-===============
+---
 
 **Welcome to llmware!**    
 
@@ -20,7 +20,7 @@ Platforms:
 - Mac M1/M2/M3, Windows, Linux (Ubuntu 20 or Ubuntu 22 preferred)  
 - RAM: 16 GB minimum  
 - Python 3.9, 3.10, 3.11, 3.12
-- Pull the latest version of llmware == 0.2.13 (as of mid-May 2024)  
+- Pull the latest version of llmware == 0.2.14 (as of mid-May 2024)  
 - Please note that we have updated the examples from the original versions, to use new features in llmware, so there may be minor differences with the videos, which are annotated in the comments in each example.    
   
 There are 6 examples, designed to be used step-by-step, but each is self-contained,  

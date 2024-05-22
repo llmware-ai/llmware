@@ -1,7 +1,7 @@
 ---
 layout: default
-title: Common Troubleshooting Tips | llmware
-nav_order: 1
+title: Troubleshooting
+nav_order: 8
 description: llmware is an integrated framework with over 50+ models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
 permalink: /troubleshooting
 ---
@@ -22,14 +22,14 @@ ___
     -- If you cloned the repository, please confirm that the /lib folder has been copied into your local path.  
 
 
-3.  **Pytorch Model not loading**
+3. **Pytorch Model not loading**
 
    -- Confirm the obvious stuff - correct model name, model exists in Huggingface repository, connected to the Internet with open ports for HTTPS connection, etc.  
 
    -- Check Pytorch version - update Pytorch to >2.0, which is required for many recent models released in the last 6 months, and in some cases, may require other dependencies not included in the llmware package.  
         --note: we have seen some compatibility issues with Pytorch==2.3 on Wintel platforms - if you run into these issues, we recommend using a back-level Pytorch==2.1, which we have seen fixing the issue.  
 
-4.  **GGUF Model not loading**
+4. **GGUF Model not loading**
 
    -- Confirm that you are using llmware>=0.2.11 for the latest GGUF support.  
 
@@ -54,10 +54,10 @@ If you have any trouble, feel free to raise an Issue and we can provide you with
    -- Specific GGUF model - if you are successfully using other GGUF models, and only having problems with a specific model, then please raise an Issue, and share the specific model and architecture.  
 
 
-5.  **Example not working as expected** - please raise an issue, so we can evaluate and fix any bugs in the example code.  Also, pull requests are always especially welcomed with a fix or improvement in an example.  
+5. **Example not working as expected** - please raise an issue, so we can evaluate and fix any bugs in the example code.  Also, pull requests are always especially welcomed with a fix or improvement in an example.  
 
 
-6.  **Model not leveraging CUDA available in environment.**  
+6. **Model not leveraging CUDA available in environment.**  
 
     -- **Check CUDA drivers installed correctly** - easy check of the NVIDIA CUDA drivers is to use `nvidia-smi` and `nvcc --version` from the command line.  Both commands should respond positively with details on the versions and implementations.  Any errors indicates that either the driver or CUDA toolkit are not installed or recognized.  It can be complicated at times to debug the environment, usually with some trial and error.   See extensive [Nvidia Developer documentation](https://docs.nvidia.com) for trouble-shooting steps, specific to your environment.  
 

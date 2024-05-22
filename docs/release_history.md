@@ -1,13 +1,12 @@
 ---
 layout: default
-title: Release History | llmware
-nav_order: 1
+title: Release History 
+nav_order: 7
 description: llmware is an integrated framework with over 50+ models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
 permalink: /release_history
 ---
-
 Release History
-===============
+---
 
 - For Specific Wheels:  [Wheel Archives](https://www.github.com/llmware-ai/llmware/tree/main/wheel_archives)  
 - For Features Details: [Main README-'Release notes and Change Log'](https://www.github.com/llmware-ai/llmware/tree/main/)  
