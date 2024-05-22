@@ -1,12 +1,12 @@
 ---
 layout: default
 title: Architecture  
-nav_order: 1
+nav_order: 5
 description: overview of the major modules and classes of LLMWare  
 permalink: /architecture
 ---
 # LLMWare Architecture
-===============
+---
 
 llmware is characterized by a logically integrated set of data pipelines involved in building LLM-based workflows, centered on two main sub-pipelines with high-level interfaces intended to provide an abstraction layer over individual 'end point' components to promote code re-use and the ability to easily 'swap' different components with minimal, if any, code change:  
 

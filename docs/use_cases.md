@@ -1,12 +1,12 @@
 ---
 layout: default
-title: Use Cases | llmware
-nav_order: 1
+title: Use Cases  
+nav_order: 4
 description: llmware is an integrated framework with over 50+ models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
 permalink: /use_cases
 ---
 🚀 Use Cases Examples  🚀  
-===============
+---
 
 **End-to-End Scenarios**    
 

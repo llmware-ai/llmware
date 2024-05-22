@@ -1,12 +1,12 @@
 ---
 layout: default
-title: Videos | llmware
-nav_order: 1
+title: Videos
+nav_order: 6
 description: llmware is an integrated framework with over 50+ models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
 permalink: /videos
 ---
 llmware Youtube Video Channel
-===============
+---
 
 **Tutorial Videos** - check out our Youtube channel for high-impact 5-10 minute tutorials on the latest examples.  
 

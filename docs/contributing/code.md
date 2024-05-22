@@ -5,7 +5,7 @@ parent: Contributing
 nav_order: 1
 permalink: /contributing/code
 ---
-# Contiributing code
+# Contributing code
 One way to contribute to ``llmware`` is by contributing to the code base.
 
 We briefly describe some of the important modules of ``llmware`` next, so you can more easily navigate the code base.
