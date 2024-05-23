@@ -802,10 +802,11 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
-**Wednesday, May 22 - v0.2.15-WIP**  
+See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
+
+**Wednesday, May 22 - v0.2.15**  
 - Improvements in Model class handling of Pytorch and Transformers dependencies (just-in-time loading, if needed)  
-- Expanding API endpoint options and inference server functionality  
-- Updates merged in main branch with PyPy release targeted for Thursday, May 23 by EOD    
+- Expanding API endpoint options and inference server functionality - see new [client access options](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/llmware_inference_api_client.py)  and [server_launch](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/llmware_inference_server.py)  
 
 **Saturday, May 18 - v0.2.14**  
 - New OCR image parsing methods with [example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/slicing_and_dicing_office_docs.py)  
