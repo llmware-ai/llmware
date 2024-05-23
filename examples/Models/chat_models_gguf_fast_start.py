@@ -75,12 +75,13 @@ if __name__ == "__main__":
     #   please note that these models will produce multiple bulletpoints and paragraph length answers, so
     #   it can take ~30 seconds for each response on a typical Mac M1 laptop
 
-    #   we have tested four leading open source 7B chat models
     #   for full citations and links, please go to www.huggingface.co/llmware/bonchon model repository
-    #   If you don't know TheBloke ... now you do!   He has a large library of GGUF models ...
     #       -- TheBloke/OpenHermes-2.5-Mistral-7B-GGUF
     #       -- TheBloke/zephyr-7B-beta-GGUF
     #       -- TheBloke/Starling-LM-7B-alpha-GGUF
-    #       --  TheBloke/Llama-2-7B-Chat-GGUF
+    #       -- TheBloke/Llama-2-7B-Chat-GGUF
+    #
+    #       -- Llama-3:  bartowski/Meta-Llama-3-8B-Instruct-GGUF
+    #       -- Phi-3:    microsoft/Phi-3-mini-4k-instruct-gguf
 
-    output = run_test("TheBloke/Llama-2-7B-Chat-GGUF",ds)
+    output = run_test("bartowski/Meta-Llama-3-8B-Instruct-GGUF",ds)

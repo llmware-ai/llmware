@@ -1,5 +1,13 @@
 
-""" This example demonstrates prompting local BLING models with provided context"""
+""" This example demonstrates prompting local BLING models with provided context - easy to select among different
+BLING models between 1B - 4B, including both Pytorch versions and GGUF quantized versions, and to swap out the
+hello_world questions with your own test set.
+
+    NOTE: if you are running on a CPU with limited memory (e.g., <16 GB of RAM), we would recommend sticking to
+the 1B parameter models, or using the quantized GGUF versions.  You may get out-of-memory errors and/or very
+slow performance with ~3B parameter Pytorch models.  Even with 16 GB+ of RAM, the 3B Pytorch models should run but
+will be slow (without GPU acceleration).  """
+
 
 import time
 from llmware.prompts import Prompt
@@ -351,8 +359,9 @@ def hello_world_questions():
     return test_list
 
 
-# this is the main script to be run
 def bling_meets_llmware_hello_world (model_name):
+
+    """ Simple inference loop that loads a model and runs through a series of test questions. """
 
     t0 = time.time()
     test_list = hello_world_questions()
@@ -385,6 +394,7 @@ def bling_meets_llmware_hello_world (model_name):
 if __name__ == "__main__":
 
     # list of 'rag-instruct' laptop-ready bling models on HuggingFace
+
     model_list = ["llmware/bling-1b-0.1",
                   "llmware/bling-tiny-llama-v0",
                   "llmware/bling-1.4b-0.1",
@@ -393,7 +403,13 @@ if __name__ == "__main__":
                   "llmware/bling-sheared-llama-1.3b-0.1",
                   "llmware/bling-sheared-llama-2.7b-0.1",
                   "llmware/bling-red-pajamas-3b-0.1",
-                  "llmware/bling-stable-lm-3b-4e1t-v0"
+                  "llmware/bling-stable-lm-3b-4e1t-v0",
+                  "llmware/bling-phi-3",
+
+                  # use GGUF models too
+                  "bling-phi-3-gguf",           # quantized bling-phi-3
+                  "bling-answer-tool",          # quantized bling-tiny-llama
+                  "bling-stablelm-3b-tool"      # quantized bling-stablelm-3b
                   ]
 
     #   try the newest bling model - 'tiny-llama'
