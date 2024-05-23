@@ -60,7 +60,15 @@ In this repository, we feature several 'end-to-end' examples that show how to us
     - Shows a variety of advanced parsing techniques with Office document formats packaged in ZIP archives  
     - Extracts tables and images, runs OCR against the embedded images, exports the whole library, and creates dataset  
     
+8. **LLMWare Private Inference Server**
+
+    - Set up server in minutes on CPU, GPU or local - [server](https://www.github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/llmware_inference_server.py)  
     
+    - Run 3 different modes of client access to the API - [client](https://www.github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/llmware_inference_api_client.py)  
+   
+    - Supports rapid development, testing and prototyping and flexibility of deployment models for wide range of RAG and Agent use cases  
+
+
 Check back often - we are updating these examples regularly - and many of these examples have companion videos as well.  
 
 

@@ -1,14 +1,20 @@
 
+""" This example is intended to work in conjunction with the "launch_llmware_inference_server.py" example.
+
+    This shows how to set up the client, e.g., developer laptop, to quickly integrate the 'pop up' inference server
+
+    Before using this script, please implement the steps in "launch_llmware_inference_server.py" example
+
+    Note:  this is not intended to be a production-grade inference server
+    It is intended for fast, simple, easy-to-use and platform-agnostic to rapidly test and develop LLM-based apps
+    in a private-cloud, self-hosted environment.
+
+    Please also see examples/Use_Cases/llmware_inference_api_client.py for other ways to leverage the API endpoint.
+
+"""
+
 from llmware.models import ModelCatalog, LLMWareModel
 from llmware.prompts import Prompt
-
-#   This example is intended to work in conjunction with the "launch_llmware_inference_server.py" example
-#   This shows how to set up the client, e.g., developer laptop, to quickly integrate the 'pop up' infererence server
-#   Before using this script, please implement the steps in "launch_llmware_inference_server.py" example
-#
-#   Note:  this is not intended to be a production-grade inference server
-#   It is intended for fast, simple, easy-to-use and platform-agnostic to rapidly test and develop LLM-based apps
-#   in a private-cloud, self-hosted environment.
 
 
 def client_code_setup_inference_server(server_uri_string, server_secret_key):
