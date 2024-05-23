@@ -8,14 +8,14 @@ Wheel Archives: `llmware` pip install from pypy
 1.  Download a selected wheel, unzip, and then deploy the code directly into a project.   (Only selected wheels kept in the archive - raise an issue if there is a particular wheel you are looking for - and we can post by request.)  
 2.  Place the wheel archive in a folder, and in that folder path, run:  
 
-```pip3 install llmware-0.2.10-py3-none-any.whl```  
+```pip3 install llmware-0.2.15-py3-none-any.whl```  
 
 New wheels are built generally on PyPy on a weekly basis and updated on PyPy versioning.   The development repo is updated  
 and current at all times, but may have updates that are not yet in the PyPy wheel.  
 
 All wheels are built and tested on:  
 
-1.  Mac Metal  
+1.  Mac Metal (M1+)  
 2.  Windows x86 (+ with CUDA)  
 3.  Linux x86 (+ with CUDA) - most testing on Ubuntu 22 and Ubuntu 20 - which are recommended.  
 4.  Mac x86 (see 0.2.11 note below)  
@@ -23,8 +23,14 @@ All wheels are built and tested on:
 
 **Release Notes**  
 
---**0.2.13** released in the week of May 12, 2024 - clean up of dependencies in both requirements.txt and Setup (PyPi) - install of vector db python sdk (e.g., pymilvus, chromadb, etc) is now required as a separate step outside of the pip3 install llmware - attempt to keep dependency matrix as simple as possible and avoid potential dependency conflicts on install, especially for packages which in turn have a large number of dependencies.  If you run into any issues with install dependencies, please raise an issue.   
+--**0.2.15** released in the week of May 20, 2024 - removed pytorch dependency as a global import, and shifted to dynamically loading of torch in the event that it is called in a specific model class.   This enables running most of llmware code and examples without pytorch or transformers loaded.   The main areas of torch (and transformers) dependency is in using HFGenerativeModels and HFEmbeddingModels.   
 
+  - note: we have seen some new errors caused with Pytorch 2.3 - which are resolved by down-leveling to `pip3 install torch==2.1`  
+  - note: there are a couple of new warnings from within transformers and huggingface_hub libraries - these can be safely ignored.  We have seen that keeping `local_dir_use_symlinks = False` when pulling model artifacts from Huggingface is still the safer option in some environments.   
+
+--**0.2.13** released in the week of May 12, 2024 - clean up of dependencies in both requirements.txt and Setup (PyPi) - install of vector db python sdk (e.g., pymilvus, chromadb, etc) is now required as a separate step outside of the pip3 install llmware - attempt to keep dependency matrix as simple as possible and avoid potential dependency conflicts on install, especially for packages which in turn have a large number of dependencies.  If you run into any issues with install dependencies, please raise an issue. 
+
+    
 --**0.2.12** released in the week of May 5, 2024 - added Python 3.12 support, and deprecated the use of faiss for v3.12+.   We have changed the "Fast Start" no-install option to use chromadb or lancedb rather than faiss.   Refactoring of code especially with Datasets, Graph and Web Services as separate modules.  
 
 --**0.2.11** released in the week of April 29, 2024 - updated GGUF libs for Phi-3 and Llama-3 support, and added new prebuilt shared libraries to support WhisperCPP.  We are also deprecating support for Mac x86 going forward - will continue to support on most major components but not all new features going forward will be built specifically for Mac x86 (which Apple stopped shipping in 2022).  Our intent is to keep narrowing our testing matrix to provide better support on key platforms.  We have also added better safety checks for older versions of Mac OS running on M1/M2/M3 (no_acc option in GGUF and Whisper libs), as well as a custom check to find CUDA drivers on Windows (independent of Pytorch).  
