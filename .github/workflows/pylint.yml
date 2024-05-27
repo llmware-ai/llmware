@@ -1,0 +1,44 @@
+name: Pylint
+
+on:
+  push:
+    branches: ["main"]
+
+  pull_request:
+    types: ["opened"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+
+jobs:
+  build:
+    # ubuntu-latest doesn't have all the needed Python version. Hence we need to specify Ubuntu 20.04.
+    # See issue https://github.com/razorpay/razorpay-python/pull/265
+    runs-on: ubuntu-20.04
+    continue-on-error: true
+    strategy:
+      matrix:
+        python-version: ["3.9.0", "3.10.0", "3.11.0", "3.12.0"]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      timeout-minutes: 10
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip' # caching pip dependencies
+        cache-dependency-path: '**/setup.py'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Analysing the code with pylint
+      run: |
+        pylint $(git ls-files '*.py')

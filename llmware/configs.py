@@ -35,7 +35,6 @@ except:
 
 
 class LLMWareConfig:
-
     """LLMWare global configuration object - use set/get to update """
 
     if platform.system() == "Windows":
