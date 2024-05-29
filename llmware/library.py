@@ -40,7 +40,7 @@ from llmware.exceptions import LibraryNotFoundException, SetUpLLMWareWorkspaceEx
 class Library:
     """Implements the interface to manage a collection of texts and images as a ``Library``.
 
-    ``Library`` is responsible for managing a collection of unstructured inofrmation, i.e. a library is a
+    ``Library`` is responsible for managing a collection of unstructured information, i.e. a library is a
     collection of texts and images.
 
     Returns
