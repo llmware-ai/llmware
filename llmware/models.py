@@ -1,4 +1,4 @@
-# Copyright 2023 llmware
+# Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -60,11 +60,25 @@ class _ModelRegistry:
     #   pulls default model list from model_configs.py
     registered_models = global_model_repo_catalog_list
 
-    model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel", "WhisperCPPModel",
-                     "LLMWareSemanticModel", "HFEmbeddingModel", "OpenChatModel", "OllamaModel",
-                     "OpenAIGenModel", "ClaudeModel", "GoogleGenModel",
-                     "CohereGenModel", "JurassicModel", "AIBReadGPTModel",
-                     "OpenAIEmbeddingModel", "CohereEmbeddingModel","GoogleEmbeddingModel"]
+    #   global list of supported model classes with module lookup - and placeholder for other attributes over time
+    model_classes = {"HFGenerativeModel": {"module": "llmware.models", "open_source":True},
+                     "LLMWareModel": {"module": "llmware.models", "open_source": True},
+                     "GGUFGenerativeModel": {"module": "llmware.models", "open_source":True},
+                     "WhisperCPPModel": {"module": "llmware.models", "open_source": True},
+                     "LLMWareSemanticModel": {"module": "llmware.models", "open_source": True},
+                     "HFEmbeddingModel": {"module": "llmware.models", "open_source": True},
+                     "OpenChatModel": {"module": "llmware.models", "open_source": True},
+                     "OllamaModel":{"module": "llmware.models", "open_source": True},
+                     "OpenAIGenModel":{"module": "llmware.models", "open_source": False},
+                     "ClaudeModel":{"module": "llmware.models", "open_source": False},
+                     "GoogleGenModel":{"module": "llmware.models", "open_source": False},
+                     "CohereGenModel":{"module": "llmware.models", "open_source": False},
+                     "JurassicModel":{"module": "llmware.models", "open_source": False},
+                     "AIBReadGPTModel":{"module": "llmware.models", "open_source": True},
+                     "OpenAIEmbeddingModel":{"module": "llmware.models", "open_source": False},
+                     "CohereEmbeddingModel":{"module": "llmware.models", "open_source": False},
+                     "GoogleEmbeddingModel":{"module": "llmware.models", "open_source": False}
+                     }
 
     #   model card validation for registering new model - required attributes
     min_required_fields = ["model_name", "model_family", "model_category"]
@@ -76,11 +90,11 @@ class _ModelRegistry:
 
     registered_wrappers = global_model_finetuning_prompt_wrappers_lookup
 
-    #   list of function calling classifier tools
+    #   list of specialized function calling tools
 
     llm_fx_tools = ["ner", "sentiment", "topics", "ratings", "emotions", "nli",
                     "intent", "sql", "answer", "category", "tags", "summary", "xsum", "extract",
-                    "boolean", "sa-ner","tags-3b"]
+                    "boolean", "sa-ner","tags-3b", "q_gen", "qa_gen"]
 
     llm_fx_tools_map = {"ner": "slim-ner-tool",
                         "sentiment": "slim-sentiment-tool",
@@ -93,13 +107,14 @@ class _ModelRegistry:
                         "answer": "bling-answer-tool",
                         "category": "slim-category-tool",
                         "intent": "slim-intent-tool",
-                        # new tools added
                         "summary": "slim-summary-tool",
                         "xsum": "slim-xsum-tool",
                         "extract": "slim-extract-tool",
                         "boolean": "slim-boolean-tool",
                         "sa-ner": "slim-sa-ner-tool",
-                        "tags-3b": "slim-tags-3b-tool"
+                        "tags-3b": "slim-tags-3b-tool",
+                        "q_gen": "slim-q-gen-tiny-tool",
+                        "qa_gen": "slim-qa-gen-tiny-tool"
                         }
 
     @classmethod
@@ -113,12 +128,12 @@ class _ModelRegistry:
         return cls.model_classes
 
     @classmethod
-    def add_model_class(cls, new_class):
+    def add_model_class(cls, new_class, module="llmware.models", open_source=False):
 
-        """ Adds a new model class.  By default, it assumes that the module is the current module,
-        e.g., 'llmware.models'. These options will be expanded in upcoming releases. """
+        """ Adds a new model with flexibility to instantiate in new module. By default, it
+        assumes that the module is the current one, e.g., 'llmware.models'. """
 
-        cls.model_classes.append(new_class)
+        cls.model_classes.update({new_class:{"module": module, "open_source": open_source}})
 
     @classmethod
     def get_wrapper_list(cls):
@@ -268,12 +283,6 @@ class ModelCatalog:
         #   Builds on standard model classes with standard inference
 
         self.model_classes = _ModelRegistry().get_model_classes()
-
-        #   hard-coded list to be replaced in future release
-        self.open_source_model_classes = ["HFGenerativeModel", "LLMWareModel", "GGUFGenerativeModel",
-                                          "LLMWareSemanticModel","HFEmbeddingModel", "OpenChatModel",
-                                          "OllamaModel", "WhisperCPPModel"]
-
         self.global_model_list = _ModelRegistry().get_model_list()
 
         self.account_name = None
@@ -318,6 +327,23 @@ class ModelCatalog:
         model_list = json.load(open(os.path.join(fp,fn), "r"))
 
         _ModelRegistry().new_model_registry(model_list)
+
+        self.global_model_list = _ModelRegistry().get_model_list()
+
+        return 0
+
+    def add_model_cards_from_file(self, fp=None, fn="custom_models_manifest.json"):
+
+        """ Utility method that loads model cards from a single json file and incrementally adds
+        to the model global model list.  """
+
+        if not fp:
+            fp = LLMWareConfig().get_model_repo_path()
+
+        model_add_list = json.load(open(os.path.join(fp, fn), "r"))
+
+        for i, model in enumerate(model_add_list):
+            _ModelRegistry().add_model(model)
 
         self.global_model_list = _ModelRegistry().get_model_list()
 
@@ -672,12 +698,14 @@ class ModelCatalog:
         
         raise ModelNotFoundException(model_folder_name)
 
-    def _instantiate_model_class_from_string(self, model_class, model_name, model_card, api_key=None,
-                                             api_endpoint=None):
+    def _instantiate_model_class_from_string_deprecated(self, model_class, model_name, model_card, api_key=None,
+                                                        api_endpoint=None):
 
-        """ Internal utility method to instantiate model classes from strings.
+        """ DEPRECATED - Internal utility method to instantiate model classes from strings.  Provides an
+        explicit lookup to model class - deprecated and replaced with dynamic import to provide more
+        flexibility and extensibility to add new model classes from other modules.
 
-        NOTE: this method will be replaced and deprecated for importlib dynamic lookup in upcoming release.
+        NOTE: will be removed in upcoming release.
 
         """
 
@@ -785,6 +813,45 @@ class ModelCatalog:
             if model_class == "WhisperCPPModel":
 
                 my_model = WhisperCPPModel(model_name=model_name,model_card=model_card)
+
+        return my_model
+
+    def _instantiate_model_class_from_string(self, model_class, model_name, model_card, api_key=None,
+                                             api_endpoint=None):
+
+        """ Internal utility method to instantiate model classes from strings. """
+
+        # by default - if model not found - return None
+        my_model = None
+        context_window= 2048    # used in generative models - use 2048 as default safe backup
+        embedding_dims = None   # used in embedding models
+
+        if "context_window" in model_card:
+            context_window = model_card["context_window"]
+
+        if "embedding_dims" in model_card:
+            embedding_dims = model_card["embedding_dims"]
+
+        if model_class in self.model_classes:
+
+            module = self.model_classes[model_class]["module"]
+            model_module = importlib.import_module(module)
+            if hasattr(model_module, model_class):
+                model_class = getattr(model_module, model_class)
+
+                my_model = model_class(model_name=model_name, context_window=context_window,
+                                       api_key=api_key,
+                                       trust_remote_code=True,
+                                       model_card=model_card,
+                                       use_gpu_if_available=self.use_gpu,
+                                       get_logits=self.get_logits,
+                                       temperature=self.temperature,
+                                       max_output=self.max_output,
+                                       sample=self.sample,
+                                       embedding_dims=embedding_dims,
+                                       api_endpoint=api_endpoint)
+        else:
+            raise LLMWareException(message=f"Exception: {model_class} not found.")
 
         return my_model
 
@@ -921,14 +988,20 @@ class ModelCatalog:
 
     def list_open_source_models(self):
 
-        """ Lists the open source models in the ModelCatalog. This method will be updated/replaced in
-        future release. """
+        """ Lists the open source models in the ModelCatalog. """
 
         open_source_models = []
 
+        open_source_class = []
+        model_classes = _ModelRegistry().get_model_classes()
+        for key, value in model_classes.items():
+            if "open_source" in value:
+                if value["open_source"]:
+                    open_source_class.append(key)
+
         for x in self.global_model_list:
 
-            if x["model_family"] in self.open_source_model_classes:
+            if x["model_family"] in open_source_class:
                 open_source_models.append(x)
 
         return open_source_models
