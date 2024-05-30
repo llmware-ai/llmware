@@ -385,7 +385,7 @@ class Library:
     def update_embedding_status (self, status_message, embedding_model, embedding_db,
                                  embedded_blocks=0, embedding_dims=0,time_stamp="NA",delete_record=False):
 
-        """ Invoked at the end of the embedding job to update the library card and embedding record -- generally,
+        """Invoked at the end of the embedding job to update the library card and embedding record -- generally,
         this method does not need to be invoked directly 
         
             Parameters
