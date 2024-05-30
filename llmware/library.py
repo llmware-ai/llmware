@@ -342,7 +342,7 @@ class Library:
 
     def check_if_library_exists(self, library_name, account_name="llmware"):
 
-        """ Check if library exists by library string name 
+        """Check if library exists by library string name.
         
             Parameters
             ----------
