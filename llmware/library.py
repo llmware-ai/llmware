@@ -1115,7 +1115,7 @@ class Library:
 
     def add_pdf_by_ocr(self, input_folder=None):
 
-        """ Alternative method to ingest PDFs that are scanned, or can not be otherwise parsed 
+        """Alternative method to ingest PDFs that are scanned, or can not be otherwise parsed.
         
             Parameters
             ----------
