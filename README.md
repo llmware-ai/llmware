@@ -804,6 +804,13 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
+**Wednesday, May 29 - v0.3.0-WIP**  
+- Added two new SLIM models to catalog and agent processes - ['q-gen'](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/using-slim-q-gen.py) and ['qa-gen'](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/using-slim-qa-gen.py)    
+- Updated model class instantiation to provide more extensibility to add new classes in different modules  
+- Planning to remove torch and transformers from pip install package  
+- If cloning the repo, please see the new welcome_to_llmware.sh and welcome_to_llmware_windows.sh fast install scripts  
+- Changes merged in main branch and will be released in pypi targeting end of week  
+  
 **Wednesday, May 22 - v0.2.15**  
 - Improvements in Model class handling of Pytorch and Transformers dependencies (just-in-time loading, if needed)  
 - Expanding API endpoint options and inference server functionality - see new [client access options](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/llmware_inference_api_client.py)  and [server_launch](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/llmware_inference_server.py)  

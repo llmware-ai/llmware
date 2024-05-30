@@ -1,5 +1,20 @@
+
+# Copyright 2023-2024 llmware
+
+# Licensed under the Apache License, Version 2.0 (the "License"); you
+# may not use this file except in compliance with the License.  You
+# may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.  See the License for the specific language governing
+# permissions and limitations under the License.
+
 """The agents module implements the two classes LLMfx and SQLTables, where LLMfx manages
-Structured Language Instruction Models (SLIMs), the agents and SQLTables handels
+Structured Language Instruction Models (SLIMs), the agents and SQLTables handles
 creating and accessing external SQL data. LLmfx currently only supports SLIM models, other model
 classes will be added over time. And SQLTables is an experimantal feature for creating and accessing SQLite.
 
@@ -24,7 +39,8 @@ from llmware.resources import CustomTable
 
 
 class LLMfx:
-    """Provides an interface to models to interact with text, e.g. to first perform named entity recogintion
+
+    """Provides an interface to models to interact with text, e.g. to first perform named entity recognition
     (ner) and then answer a question you want to have answered.
 
     ``LLMfx`` provides a high-level orchestration abstraction that implements multi-model, multi-step processes
@@ -49,20 +65,6 @@ class LLMfx:
     llmfx : LLMfx
         A new ``LLMfx`` object.
 
-    Examples
-    ----------
-    >>> import llmware.agents
-    >>> llmware_agent = llmare.agents.LLMfx()
-    >>> llmware_agent.load_work(
-        'My name is Michael Jones, and I am a long-time customer. '
-        'The Mixco product is not working currently, and it is having a negative impact '
-        'on my business, as we can not deliver our products while it is down. '
-        'This is the fourth time that I have called.  My account number is 93203, and '
-        'my user name is mjones. Our company is based in Tampa, Florida.')
-    >>> llmware_agent.exec_function_call('ratings')
-    >>> llmware_agent.answer('What is a short shummary?', key='summary')
-    >>> llmware_agent.answer('What is the customer\'s account number and user name?', key='customer_info')
-    >>> llmware_agent.show_report()
     """
 
     def __init__(self, api_key=None, verbose=True, analyze_mode=True): 
@@ -889,6 +891,33 @@ class LLMfx:
         context = "Evidence: " + text1 + "\n" + "Conclusion: " + text2
 
         return self.exec_function_call("nli", text=context, params=params)
+
+    def q_gen(self, text=None, params=None):
+
+        """ Executes a question-gen function call on a text, if passed directly, or will pull current work item from
+        the queue.  Returns value output dictionary with the generated question.  """
+
+        if not params:
+            params = ["question"]
+
+        if isinstance(params, str):
+            params = [params]
+
+        return self.exec_function_call("q_gen", text=text, params=params)
+
+    def qa_gen(self, text=None, params=None):
+
+        """ Executes a question-answer gen function call on a text, if passed directly, or will pull current work
+        item from the queue.  Returns value output dictionary with two keys - "question" and "answer" generated. """
+
+        if not params:
+            # default parameter key
+            params = ["question, answer"]
+
+        if isinstance(params, str):
+            params = [params]
+
+        return self.exec_function_call("qa_gen", text=text, params=params)
 
     def verify_llm_response(self, input_context, llm_response):
 
