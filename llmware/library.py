@@ -814,7 +814,7 @@ class Library:
 
     def pull_files_from_cloud_bucket (self, aws_access_key=None, aws_secret_key=None, bucket_name=None):
 
-        """ Pull files from private S3 bucket into local cache for further processing 
+        """Pull files from private S3 bucket into local cache for further processing.
         
             Parameters
             ----------
