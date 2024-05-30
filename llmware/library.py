@@ -586,7 +586,7 @@ class Library:
                    verbose_level=2, copy_files_to_library=True):
 
         """Main method to integrate documents into a Library - pass a local filepath folder and all files will be
-        routed to appropriate parser by file type extension 
+        routed to appropriate parser by file type extension.
         
             Parameters
             ----------
