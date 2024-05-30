@@ -132,7 +132,7 @@ class Library:
     # explicit constructor to create a new library
     def create_new_library(self, library_name, account_name="llmware"):
 
-        """ Explicit constructor to create a new library with selected name.
+        """Explicit constructor to create a new library with selected name.
 
             If a library with the same name already exists, it will load the existing library.
 
