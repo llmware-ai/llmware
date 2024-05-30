@@ -948,7 +948,7 @@ class Library:
 
     def delete_library(self, library_name=None, confirm_delete=False):
 
-        """ Deletes all artifacts of a library 
+        """Deletes all artifacts of a library.
         
             Parameters
             ----------
