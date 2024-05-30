@@ -466,7 +466,7 @@ class Library:
 
     def get_knowledge_graph_status (self):
 
-        """ Gets the status of creating the knowledge graph for the current library from the library card 
+        """Gets the status of creating the knowledge graph for the current library from the library card.
         
             Returns
             -------
