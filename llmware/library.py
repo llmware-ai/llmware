@@ -1181,7 +1181,7 @@ class Library:
 
     def get_all_library_cards(self, account_name='llmware'):
 
-        """ Get all library cards for all libraries on account 
+        """Get all library cards for all libraries on account.
         
             Parameters
             ----------
