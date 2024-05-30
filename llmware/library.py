@@ -1199,7 +1199,7 @@ class Library:
 
     def delete_installed_embedding(self, embedding_model_name, vector_db, vector_db_api_key=None):
 
-        """ Deletes an installed embedding on specific combination of vector_db + embedding_model_name 
+        """Deletes an installed embedding on specific combination of vector_db + embedding_model_name.
         
             Parameters
             ----------
