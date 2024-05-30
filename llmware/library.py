@@ -1,4 +1,4 @@
-# Copyright 2023 llmware
+# Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -14,7 +14,7 @@
 
 """The library module implements the logic for managing unstructured information (the text).
 
-The module implements the two classes Library and LibraryCatalog. Library is responsible for organising a
+The module implements the two classes Library and LibraryCatalog. Library is responsible for organizing a
 collection of text and is the interface for the Parser and Embedding classes. In addition, the Library object
 is passed to the Query and Prompt objects. The Library class uses the LibraryCatalog for creating, deleting,
 updating, and other tasks pertaining to Libraries via the Library Card.
@@ -38,28 +38,16 @@ from llmware.exceptions import LibraryNotFoundException, SetUpLLMWareWorkspaceEx
 
 
 class Library:
-    """Implements the interface to manage a collection of texts and images as a ``Library``.
 
-    ``Library`` is responsible for managing a collection of unstructured inofrmation, i.e. a library is a
-    collection of texts and images.
+    """Implements the interface to manage a collection of unstructured information as a ``Library``, i.e. a
+    library is an indexed collection of texts, tables and images extracted from parsed files.
 
     Returns
     -------
     library : Library
         A new ``Library`` object.
-
-    Examples
-    ----------
-    >>> import os
-    >>> import llmware.library
-    >>> import llmware.setup
-    >>> sample_files_path = llmware.setup.Setup().load_sample_files(over_write=True)
-    >>> agreements_path = os.path.join(sample_files_path, 'Agreements')
-    >>> library = llmare.library.Library().create_new_library('my-new-library')
-    >>> library.add_files(agreements_path)
-    >>> library_card = library.get_library_card()
-    >>> library_card['documents']
     """
+
     def __init__(self):
 
         # default settings for basic parameters
@@ -631,12 +619,15 @@ class Library:
 
         return embeddings
 
-    def delete_library(self, library_name=None, confirm_delete=False):
+    def delete_library(self, library_name=None, confirm_delete=False, account_name="llmware"):
 
         """ Deletes all artifacts of a library """
 
         if library_name:
             self.library_name = library_name
+
+            #   loads the library specific path information if required
+            self.load_library(library_name,account_name=account_name)
 
         success_code = 1
 
