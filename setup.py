@@ -53,7 +53,7 @@ setup(
     python_requires=">=3.9",
     zip_safe=True,
     install_requires=[
-        'boto3==1.24.53',
+        'boto3>=1.24.53',
         'huggingface-hub>=0.19.4',
         'numpy>=1.23.2',
         'openai>=1.0.0',
