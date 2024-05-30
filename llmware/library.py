@@ -742,7 +742,7 @@ class Library:
     def export_library_to_jsonl_file(self, output_fp, output_fn, include_text=True, include_tables=True,
                                      include_images=False, dict_keys=None):
 
-        """ Exports collection of text chunks to a jsonl file 
+        """Exports collection of text chunks to a jsonl file.
         
             Parameters
             ----------
