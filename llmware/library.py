@@ -1159,7 +1159,7 @@ class Library:
 
     def add_office(self, input_folder=None):
 
-        """ Convenience method to directly add PDFs only -  note, in most cases, 'add_files' is the better option.
+        """Convenience method to directly add PDFs only -  note, in most cases, 'add_files' is the better option.
         
             Parameters
             ----------
