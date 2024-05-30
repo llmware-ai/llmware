@@ -558,7 +558,7 @@ class Library:
     def add_file(self, file_path):
 
         """Ingests, parses, text chunks and indexes a single selected file to a library -
-        provide the full path to file 
+        provide the full path to file.
         
             Parameters
             ----------
