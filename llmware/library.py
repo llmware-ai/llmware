@@ -1022,7 +1022,7 @@ class Library:
 
     def add_website (self, url, get_links=True, max_links=5):
 
-        """ Main method to ingest a website into a library 
+        """Main method to ingest a website into a library.
         
             Parameters
             ----------
