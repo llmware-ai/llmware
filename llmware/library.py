@@ -521,7 +521,7 @@ class Library:
     def set_incremental_docs_blocks_images(self, added_docs=0, added_blocks=0, added_images=0, added_pages=0,
                                            added_tables=0):
 
-        """ Updates the library card with incremental counters after completing a parsing job 
+        """Updates the library card with incremental counters after completing a parsing job.
         
             Parameters
             ----------
