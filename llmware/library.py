@@ -1048,7 +1048,7 @@ class Library:
 
     def add_wiki(self, topic_list,target_results=10):
 
-        """ Main method to add a wikipedia article to a library - enter a list of topics 
+        """Main method to add a wikipedia article to a library - enter a list of topics.
         
             Parameters
             ----------
