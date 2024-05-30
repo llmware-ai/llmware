@@ -506,7 +506,7 @@ class Library:
 
     def get_and_increment_doc_id(self):
 
-        """ Convenience method in library class - mirrors method in LibraryCatalog - increments, tracks and provides a
+        """Convenience method in library class - mirrors method in LibraryCatalog - increments, tracks and provides a
         unique doc id for the library 
         
             Returns
