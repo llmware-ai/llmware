@@ -257,7 +257,7 @@ class Library:
 
     def load_library(self, library_name, account_name="llmware"):
 
-        """ Load an existing library by invoking the library string name 
+        """Load an existing library by invoking the library string name.
 
             Parameters
             ----------
