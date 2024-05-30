@@ -437,7 +437,7 @@ class Library:
 
     def get_embedding_status (self):
 
-        """ Pulls the embedding record for the current library from the library card 
+        """Pulls the embedding record for the current library from the library card.
         
             Returns
             -------
