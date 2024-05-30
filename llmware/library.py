@@ -685,7 +685,7 @@ class Library:
     def export_library_to_txt_file(self, output_fp=None, output_fn=None, include_text=True, include_tables=True,
                                    include_images=False):
 
-        """ Exports library collection of indexed text chunks to a txt file 
+        """Exports library collection of indexed text chunks to a txt file.
         
             Parameters
             ----------
