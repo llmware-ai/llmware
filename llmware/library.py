@@ -306,7 +306,7 @@ class Library:
 
     def get_library_card(self, library_name=None, account_name="llmware"):
 
-        """ Retrieves the library card dictionary with key attributes of library
+        """Retrieves the library card dictionary with key attributes of library.
 
             Parameters
             ----------
