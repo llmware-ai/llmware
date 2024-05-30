@@ -131,7 +131,6 @@ class Library:
 
     # explicit constructor to create a new library
     def create_new_library(self, library_name, account_name="llmware"):
-
         """Explicit constructor to create a new library with selected name.
 
             If a library with the same name already exists, it will load the existing library.
@@ -256,7 +255,6 @@ class Library:
         return self
 
     def load_library(self, library_name, account_name="llmware"):
-
         """Load an existing library by invoking the library string name.
 
             Parameters
@@ -305,7 +303,6 @@ class Library:
         return self
 
     def get_library_card(self, library_name=None, account_name="llmware"):
-
         """Retrieves the library card dictionary with key attributes of library.
 
             Parameters
@@ -341,7 +338,6 @@ class Library:
         return library_card
 
     def check_if_library_exists(self, library_name, account_name="llmware"):
-
         """Check if library exists by library string name.
         
             Parameters
@@ -384,7 +380,6 @@ class Library:
 
     def update_embedding_status (self, status_message, embedding_model, embedding_db,
                                  embedded_blocks=0, embedding_dims=0,time_stamp="NA",delete_record=False):
-
         """Invoked at the end of the embedding job to update the library card and embedding record -- generally,
         this method does not need to be invoked directly.
         
@@ -436,7 +431,6 @@ class Library:
         return True
 
     def get_embedding_status (self):
-
         """Pulls the embedding record for the current library from the library card.
         
             Returns
@@ -465,7 +459,6 @@ class Library:
         return embedding_record
 
     def get_knowledge_graph_status (self):
-
         """Gets the status of creating the knowledge graph for the current library from the library card.
         
             Returns
@@ -485,7 +478,6 @@ class Library:
         return status_message
 
     def set_knowledge_graph_status (self, status_message):
-
         """Updates the knowledge graph status on the library card after creating a knowledge graph.
         
             Parameters
@@ -505,7 +497,6 @@ class Library:
         return True
 
     def get_and_increment_doc_id(self):
-
         """Convenience method in library class - mirrors method in LibraryCatalog - increments, tracks and provides a
         unique doc id for the library.
         
@@ -520,7 +511,6 @@ class Library:
 
     def set_incremental_docs_blocks_images(self, added_docs=0, added_blocks=0, added_images=0, added_pages=0,
                                            added_tables=0):
-
         """Updates the library card with incremental counters after completing a parsing job.
         
             Parameters
@@ -556,7 +546,6 @@ class Library:
         return True
 
     def add_file(self, file_path):
-
         """Ingests, parses, text chunks and indexes a single selected file to a library -
         provide the full path to file.
         
@@ -584,7 +573,6 @@ class Library:
                    get_images=True,get_tables=True, smart_chunking=1, max_chunk_size=600,
                    table_grid=True, get_header_text=True, table_strategy=1, strip_header=False,
                    verbose_level=2, copy_files_to_library=True):
-
         """Main method to integrate documents into a Library - pass a local filepath folder and all files will be
         routed to appropriate parser by file type extension.
         
@@ -684,7 +672,6 @@ class Library:
 
     def export_library_to_txt_file(self, output_fp=None, output_fn=None, include_text=True, include_tables=True,
                                    include_images=False):
-
         """Exports library collection of indexed text chunks to a txt file.
         
             Parameters
@@ -741,7 +728,6 @@ class Library:
 
     def export_library_to_jsonl_file(self, output_fp, output_fn, include_text=True, include_tables=True,
                                      include_images=False, dict_keys=None):
-
         """Exports collection of text chunks to a jsonl file.
         
             Parameters
@@ -813,7 +799,6 @@ class Library:
         return file_location
 
     def pull_files_from_cloud_bucket (self, aws_access_key=None, aws_secret_key=None, bucket_name=None):
-
         """Pull files from private S3 bucket into local cache for further processing.
         
             Parameters
@@ -839,7 +824,6 @@ class Library:
         return files_copied
 
     def generate_knowledge_graph(self):
-
         """Builds a statistical co-occurrence matrix for a library.
         
             Returns
@@ -856,7 +840,6 @@ class Library:
     def install_new_embedding (self, embedding_model_name=None, vector_db=None,
                                from_hf= False, from_sentence_transformer=False, model=None, tokenizer=None, model_api_key=None,
                                vector_db_api_key=None, batch_size=500, max_len=None, use_gpu=True):
-
         """Main method for installing a new embedding on a library.
         
             Parameters
@@ -947,7 +930,6 @@ class Library:
         return embeddings
 
     def delete_library(self, library_name=None, confirm_delete=False):
-
         """Deletes all artifacts of a library.
         
             Parameters
@@ -991,7 +973,6 @@ class Library:
         return success_code
 
     def update_block (self, doc_id, block_id, key, new_value):
-
         """Convenience method to update the record of a specific block - identified by doc_ID and block_ID
         in text collection database.
         
@@ -1021,7 +1002,6 @@ class Library:
         return completed
 
     def add_website (self, url, get_links=True, max_links=5):
-
         """Main method to ingest a website into a library.
         
             Parameters
@@ -1047,7 +1027,6 @@ class Library:
         return self
 
     def add_wiki(self, topic_list,target_results=10):
-
         """Main method to add a wikipedia article to a library - enter a list of topics.
         
             Parameters
@@ -1070,7 +1049,6 @@ class Library:
         return self
 
     def add_dialogs(self, input_folder=None):
-
         """Main method to add an AWS dialog transcript into a library.
         
             Parameters
@@ -1092,7 +1070,6 @@ class Library:
         return self
 
     def add_image(self, input_folder=None):
-
         """Main method to add image and scanned OCR content into a library.
         
             Parameters
@@ -1114,7 +1091,6 @@ class Library:
         return self
 
     def add_pdf_by_ocr(self, input_folder=None):
-
         """Alternative method to ingest PDFs that are scanned, or can not be otherwise parsed.
         
             Parameters
@@ -1136,7 +1112,6 @@ class Library:
         return self
 
     def add_pdf(self, input_folder=None):
-
         """Convenience method to directly add PDFs only - note, in most cases, 'add_files' is the better option.
         
             Parameters
@@ -1158,7 +1133,6 @@ class Library:
         return self
 
     def add_office(self, input_folder=None):
-
         """Convenience method to directly add PDFs only -  note, in most cases, 'add_files' is the better option.
         
             Parameters
@@ -1180,7 +1154,6 @@ class Library:
         return self
 
     def get_all_library_cards(self, account_name='llmware'):
-
         """Get all library cards for all libraries on account.
         
             Parameters
@@ -1198,7 +1171,6 @@ class Library:
         return library_cards
 
     def delete_installed_embedding(self, embedding_model_name, vector_db, vector_db_api_key=None):
-
         """Deletes an installed embedding on specific combination of vector_db + embedding_model_name.
         
             Parameters
@@ -1242,7 +1214,6 @@ class Library:
         return 1
 
     def run_ocr_on_images(self, add_to_library=False,chunk_size=400,min_size=10, realtime_progress=True):
-
         """Convenience method in Library class to pass Library to Parser to run OCR on all of the images
         found in the Library, and OCR-extracted text from the images directly into the Library as additional
         blocks. 
