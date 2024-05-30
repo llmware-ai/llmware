@@ -857,7 +857,7 @@ class Library:
                                from_hf= False, from_sentence_transformer=False, model=None, tokenizer=None, model_api_key=None,
                                vector_db_api_key=None, batch_size=500, max_len=None, use_gpu=True):
 
-        """ Main method for installing a new embedding on a library 
+        """Main method for installing a new embedding on a library.
         
             Parameters
             ----------
