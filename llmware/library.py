@@ -993,7 +993,7 @@ class Library:
     def update_block (self, doc_id, block_id, key, new_value):
 
         """Convenience method to update the record of a specific block - identified by doc_ID and block_ID
-        in text collection database 
+        in text collection database.
         
             Parameters
             ----------
