@@ -805,6 +805,7 @@ Questions and discussions are welcome in our [github discussions](https://github
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
 **Wednesday, May 29 - v0.3.0-WIP**  
+- Added support for new Milvus Lite embedded 'no-install' database - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Embedding/using_milvus_lite.py).   
 - Added two new SLIM models to catalog and agent processes - ['q-gen'](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/using-slim-q-gen.py) and ['qa-gen'](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/using-slim-qa-gen.py)    
 - Updated model class instantiation to provide more extensibility to add new classes in different modules  
 - Planning to remove torch and transformers from pip install package  
