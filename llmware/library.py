@@ -1093,7 +1093,7 @@ class Library:
 
     def add_image(self, input_folder=None):
 
-        """ Main method to add image and scanned OCR content into a library 
+        """Main method to add image and scanned OCR content into a library.
         
             Parameters
             ----------
