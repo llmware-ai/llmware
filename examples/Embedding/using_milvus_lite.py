@@ -1,10 +1,10 @@
 
-"""" This example is a fast start with Milvus Lite, which is a 'no-install' file-based version of Milvus, intended
+""" This example is a fast start with Milvus Lite, which is a 'no-install' file-based version of Milvus, intended
 for rapid prototyping.   A couple of key points to note:
 
     -- Platform - per Milvus docs, Milvus Lite is designed for Mac and Linux (not on Windows currently)
     -- PyMilvus - need to `pip install pymilvus>=2.4.2`
-    -- within LLMWare:  set MilvusConfig("lite", True)
+    -- within LLMWare:  set MilvusConfig().set_config("lite", True)
 """
 
 import os
