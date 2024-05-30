@@ -1071,7 +1071,7 @@ class Library:
 
     def add_dialogs(self, input_folder=None):
 
-        """ Main method to add an AWS dialog transcript into a library 
+        """Main method to add an AWS dialog transcript into a library.
         
             Parameters
             ----------
