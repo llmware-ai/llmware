@@ -486,7 +486,7 @@ class Library:
 
     def set_knowledge_graph_status (self, status_message):
 
-        """ Updates the knowledge graph status on the library card after creating a knowledge graph 
+        """Updates the knowledge graph status on the library card after creating a knowledge graph.
         
             Parameters
             ----------
