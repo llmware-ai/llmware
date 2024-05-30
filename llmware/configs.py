@@ -29,9 +29,38 @@ try:
     from colorama import Fore
     COLOR_WHITE = Fore.WHITE
     COLOR_RESET = Fore.RESET
+    COLOR_RED = Fore.RED
+    COLOR_YELLOW = Fore.YELLOW
+    COLOR_GREEN= Fore.GREEN
+    COLOR_BLUE = Fore.BLUE
 except:
     COLOR_WHITE = ""
     COLOR_RESET = ""
+    COLOR_RED = ""
+    COLOR_YELLOW = ""
+    COLOR_GREEN = ""
+    COLOR_BLUE = ""
+
+
+class CustomFormatter(logging.Formatter):
+
+    """ CustomFormatter - Configuration of global logging formatting - WIP. """
+
+    format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+
+    FORMATS = {
+        logging.DEBUG: COLOR_GREEN + format + COLOR_RESET,
+        logging.INFO: COLOR_WHITE + format + COLOR_RESET,
+        logging.WARNING: COLOR_YELLOW + format + COLOR_YELLOW,
+        logging.ERROR: COLOR_RED + format + COLOR_RESET,
+        logging.CRITICAL: COLOR_RED + format + COLOR_RESET,
+        25: COLOR_BLUE + format + COLOR_RESET
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
 
 
 class LLMWareConfig:
@@ -67,7 +96,8 @@ class LLMWareConfig:
              "llmware_public_models_bucket": "llmware-public-models",
              "shared_lib_path": os.path.join(os.path.dirname(os.path.realpath(__file__)), "lib"),
              "logging_level": logging.WARNING,
-             "logging_format": COLOR_WHITE + '%(levelname)-4s: %(message)s' + COLOR_RESET
+             "logging_format": COLOR_WHITE + '%(levelname)-4s: %(message)s' + COLOR_RESET,
+             "logging_level_by_module": {"llmware.embeddings": 20, "llmware.models": 30}
              }
 
     @classmethod
@@ -387,6 +417,45 @@ class LLMWareConfig:
         cls._conf["logging_format"] = formatting_str
         return True
 
+    @classmethod
+    def get_logging_level_by_module(cls, module):
+        if module in cls._conf["logging_level_by_module"]:
+            return cls._conf["logging_level_by_module"][module]
+        else:
+            raise ConfigKeyException(module)
+
+
+class VectorDBRegistry:
+
+    """ Registry of supported Vector DBs, and the class module used to interface with the DB. """
+
+    vector_db_list = {"milvus": {"module": "llmware.embeddings", "class": "EmbeddingMilvus"},
+                      "chromadb": {"module": "llmware.embeddings", "class": "EmbeddingChromaDB"},
+                      "qdrant": {"module": "llmware.embeddings", "class": "EmbeddingQdrant"},
+                      "postgres": {"module": "llmware.embeddings", "class": "EmbeddingPGVector"},
+                      "pg_vector": {"module": "llmware.embeddings", "class": "EmbeddingPGVector"},
+                      "redis": {"module": "llmware.embeddings", "class": "EmbeddingRedis"},
+                      "neo4j": {"module": "llmware.embeddings", "class": "EmbeddingNeo4j"},
+                      "lancedb": {"module": "llmware.embeddings", "class": "EmbeddingLanceDB"},
+                      "faiss": {"module": "llmware.embeddings", "class": "EmbeddingFAISS"},
+                      "pinecone": {"module": "llmware.embeddings", "class": "EmbeddingPinecone"},
+                      "mongo_atlas": {"module": "llmware.embeddings", "class": "EmbeddingMongoAtlas"}
+                      }
+    @classmethod
+    def get_vector_db_list(cls):
+        """ List current view of implemented supported vector db for embeddings. """
+        return cls.vector_db_list
+
+    @classmethod
+    def add_vector_db(cls, db_name, vector_db_class, module="llmware.embeddings"):
+        """ Adds a vector db including the module and class. """
+        new_entry = {db_name: {"module": module, "class": vector_db_class}}
+        cls.vector_db_list.update(new_entry)
+        return True
+
+
+logging.basicConfig(format=LLMWareConfig().get_logging_format(), level=LLMWareConfig().get_logging_level())
+
 
 class MilvusConfig:
 
@@ -395,7 +464,13 @@ class MilvusConfig:
     _conf = {"host": os.environ.get("MILVUS_HOST", "localhost"),
              "port": os.environ.get("MILVUS_PORT", 19530),
              "db_name": os.environ.get("MILVUS_DB", "default"),
-             "partitions": []}
+             "partitions": [],
+
+             # new attributes to support embedded milvus lite
+             "lite": False,
+             "lite_folder_path": LLMWareConfig().get_library_path(),
+             "lite_name": "milvus_lite.db",
+             }
 
     @classmethod
     def get_config(cls, name):
