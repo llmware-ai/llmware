@@ -386,7 +386,7 @@ class Library:
                                  embedded_blocks=0, embedding_dims=0,time_stamp="NA",delete_record=False):
 
         """Invoked at the end of the embedding job to update the library card and embedding record -- generally,
-        this method does not need to be invoked directly 
+        this method does not need to be invoked directly.
         
             Parameters
             ----------
