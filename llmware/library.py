@@ -840,7 +840,7 @@ class Library:
 
     def generate_knowledge_graph(self):
 
-        """ Builds a statistical co-occurrence matrix for a library 
+        """Builds a statistical co-occurrence matrix for a library.
         
             Returns
             -------
