@@ -1,4 +1,4 @@
-boto3==1.24.53  
+boto3>=1.24.53  
 numpy>=1.23.2
 openai>=1.0
 pymongo>=4.7.0
