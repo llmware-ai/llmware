@@ -1243,7 +1243,7 @@ class Library:
 
     def run_ocr_on_images(self, add_to_library=False,chunk_size=400,min_size=10, realtime_progress=True):
 
-        """ Convenience method in Library class to pass Library to Parser to run OCR on all of the images
+        """Convenience method in Library class to pass Library to Parser to run OCR on all of the images
         found in the Library, and OCR-extracted text from the images directly into the Library as additional
         blocks. 
         
