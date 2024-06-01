@@ -30,8 +30,28 @@ my_library.add_files(input_folder_path=path_to_my_library_files, chunk_size=600)
 
 ### How can I set the embedding store?
 #### "I want to use a specific embedding store"
+You can set the embedding store with the ``vector_db`` parameter of the ``install_new_embedding`` method, which you call on a ``Library`` object eacht time you want to create an embedding for a *library*.
+
+The ``install_new_embedding`` method from the ``Library`` class has a ``vector_db`` parameter that sets the embedding store.
+At the moment of this writting, *LLMWare* supports the embedding stores [chromadb](https://github.com/chroma-core/chroma), [neo4j](https://github.com/neo4j/neo4j), [milvus](https://github.com/milvus-io/milvus), [pg_vector](https://github.com/pgvector/pgvector), [postgres](https://github.com/postgres/postgres), [redis](https://github.com/redis/redis), [pinecone](https://www.pinecone.io/), [faiss](https://github.com/facebookresearch/faiss), [qdrant](https://github.com/qdrant/qdrant), [mongo atlas](https://www.mongodb.com/products/platform/atlas-database), and [lancedb](https://github.com/lancedb/lancedb).
+In the following example, we create the same embeddings three times for the same library, but store them in three different embedding stores.
+```python
+import logging
+from pathlib import Path
+
+from llmware.configs import LLMWareConfig
+from llmware.library import Library
 
 
+logging.info(f'Currently supported embedding stores: {LLMWareConfig().get_supported_vector_db()}')
+
+library = Library().create_new_library(library_name='embedding_store_example')
+library.add_files(input_foler_path=Path('~/llmware_data/sample_files/Agreements'))
+
+library.install_new_embedding(vector_db="pg_vector")
+library.install_new_embedding(vector_db="milvus")
+library.install_new_embedding(vector_db="faiss")
+```
 
 ### How can I set the collection store?
 #### "I want to use a specific collection store"
