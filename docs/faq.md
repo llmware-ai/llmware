@@ -78,7 +78,45 @@ logging.info(f'Currently active collection store: {LLMWareConfig.get_active_db()
 
 ### How can I retrieve more context?
 #### "I want to retrieve more context from a query"
+One way to retrieve more context is to set the ``result_count`` parameter of the ``query``, ``text_query``, and ``semantic_query`` methods from the ``Query`` class.
+By increasing ``result_count``, the number of retrieved results is increased which increases the context size.
 
+The ``Query`` class has the methods ``query``, ``text_query``, and ``semantic_query`` methods which allow to set the number of retrieved results with ``result_count``.
+On a side note, ``query`` is a wrapper function for ``text_query`` and ``semantic_query``.
+The value of ``result_count`` is passed on to the queried embedding store to control the number of retrieved results.
+For example, for *pgvector* ``result_count`` is passed on to the value after the ``LIMIT`` keyword.
+In the ``SQL`` example below, you can see the resulting ``SQL`` query of ``LLMWare`` if ``result_count=10``, the name of the collectoin being ``agreements``, and the query vector being ``[1, 2, 3]``.
+```sql
+SELECT
+    id,
+    block_mongo_id,
+    embedding <-> '[1, 2, 3]' AS distance,
+    text
+FROM agreements
+ORDER BY distance
+LIMIT 10;
+```
+In the following example, we execute the same query against a library twice but change the number of retrieved results from ``3`` to ``6``.
+```python
+import logging
+from pathlib import Path
+
+from llmware.configs import LLMWareConfig
+from llmware.library import Library
+from llmware.retrieval import Query
+
+logging.info(f'Currently supported embedding stores: {LLMWareConfig().get_supported_vector_db()}')
+
+library = Library().create_new_library(library_name='context_size_example')
+library.add_files(input_foler_path=Path('~/llmware_data/sample_files/Agreements'))
+library.install_new_embedding(vector_db="pg_vector")
+
+query = Query(library)
+query_results = query.semantic_query(query='salary', result_count=3, results_only=True)
+logging.info(f'Number of results: {len(query_results)}')
+query_results = query.semantic_query(query='salary', result_count=6, results_only=True)
+logging.info(f'Number of results: {len(query_results)}')
+```
 
 ### How can I set the Large Language Model?
 #### "I want to use a different LLM"
