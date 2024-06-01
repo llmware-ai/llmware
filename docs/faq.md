@@ -32,8 +32,28 @@ my_library.add_files(input_folder_path=path_to_my_library_files, chunk_size=600)
 #### "I want to use a specific embedding store"
 
 
-### How can I set the data store?
-#### "I want to use a specific data store"
+
+### How can I set the collection store?
+#### "I want to use a specific collection store"
+You can set the collection store with the ``set_active_db`` method of the ``LLMWareConfig`` class.
+
+The collection store is set using the ``LLMWareConfig`` class with the ``set_active_db`` method.
+At the time of writting, **LLMWare** supports the three collection stores *MongoDB*, *Postgres*, and *SQLite* - which is the default.
+You can retrieve the supported collection store with the method ``get_supported_collection_db``.
+In the example below, we first print the currently active collection store, then we retrieve the supported collection stores, before we swith to *Postgres*.
+
+```python
+import logging
+
+from llmware.configs import LLMWareConfig
+
+
+logging.info(f'Currently active collection store: {LLMWareConfig.get_active_db()}')
+logging.info(f'Currently supported collection stores: {LLMWareConfig().get_supported_collection_db()}')
+
+LLMWareConfig.set_active_db("postgres")
+logging.info(f'Currently active collection store: {LLMWareConfig.get_active_db()}')
+```
 
 
 ### How can I retrieve more context?
