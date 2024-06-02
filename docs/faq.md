@@ -120,6 +120,35 @@ logging.info(f'Number of results: {len(query_results)}')
 
 ### How can I set the Large Language Model?
 #### "I want to use a different LLM"
+You can set the Large Language Model (LLM) with the ``gen_model`` parameter of the ``load_model`` method from the ``Prompt`` class.
+
+The ``Prompt`` class has the method ``load_model`` with the ``gen_model`` parameter which sets the LLM.
+The ``gen_model`` parameter is passed on to the ``ModelCatalog`` class, which loads the LLM either from HuggingFace or from another source.
+The ``ModelCatalog`` allows you to **list all available models** with the method ``list_generative_mdoels``, or just the local models ``list_generative_local_models``, or just the open source models ``list_open_source_models``.
+In the example below, we log all available LLMs, including the ones that are available locally and the open source ones, and also create the prompters.
+Each prompter uses a different LLM from our [BLING model series](https://llmware.ai/about), which you can also find on [HuggingFace](https://huggingface.co/collections/llmware/bling-models-6553c718f51185088be4c91a).
+
+```python
+import logging
+
+from llmware.models import ModelCatalog
+from llmware.prompts import Prompt
+
+
+llm_gen = ModelCatalog().list_generative_models()
+logging.info(f'List of all LLMs: {llm_gen}')
+
+llm_gen_local = ModelCatalog().list_generative_local_models()
+logging.info(f'List of all local LLMs: {llm_local}')
+
+llm_gen_open_source = ModelCatalog().list_open_source_models()
+logging.info(f'List of all open source LLMs: {llm_gen_open_source}')
+
+
+prompter_bling_1b = Prompt().load_model(gen_model='llmware/bling-1b-0.1')
+prompter_bling_tiny_llama = Prompt().load_model(gen_model='llmware/bling-tiny-llama-v0')
+prompter_bling_falcon_1b = Prompt().load_model(gen_model='llmware/bling-falcon-1b-0.1')
+```
 
 ### How can I set the embedding model?
 #### "I want to use a different embedding model"
