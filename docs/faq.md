@@ -152,3 +152,26 @@ prompter_bling_falcon_1b = Prompt().load_model(gen_model='llmware/bling-falcon-1
 
 ### How can I set the embedding model?
 #### "I want to use a different embedding model"
+You can set the embedding model with the ``embedding_model_name`` parameter of the ``install_new_embedding`` method from the ``Library`` class.
+
+The ``Library`` class has the method ``install_new_embedding`` with the ``embedding_model_name`` parameter which sets the embedding model.
+The ``ModelCatalog`` allows you to **list all available embedding models** with the ``list_embedding_models`` method.
+In the following example, we list all available embedding models, and then we create a library with the name ``embedding_models_example``, which we embedd two times with embedding models ``'mini-lm-sber'`` and ``'industry-bert-contracts'``.
+
+```python
+import logging
+
+from llmware.models import ModelCatalog
+from llmware.library import Library
+
+
+embedding_models = ModelCatalog().list_generative_models()
+logging.info(f'List of embedding models: {embedding_models}')
+
+
+library = Library().create_new_library(library_name='embedding_models_example')
+library.add_files(input_foler_path=Path('~/llmware_data/sample_files/Agreements'))
+
+library.install_new_embedding(embedding_model_name='mini-lm-sber')
+library.install_new_embedding(embedding_model_name='industry-bert-contracts')
+```
