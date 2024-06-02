@@ -1,4 +1,4 @@
-# Copyright 2023 llmware
+# Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -14,7 +14,7 @@
 
 """The library module implements the logic for managing unstructured information (the text).
 
-The module implements the two classes Library and LibraryCatalog. Library is responsible for organising a
+The module implements the two classes Library and LibraryCatalog. Library is responsible for organizing a
 collection of text and is the interface for the Parser and Embedding classes. In addition, the Library object
 is passed to the Query and Prompt objects. The Library class uses the LibraryCatalog for creating, deleting,
 updating, and other tasks pertaining to Libraries via the Library Card.
@@ -38,28 +38,16 @@ from llmware.exceptions import LibraryNotFoundException, SetUpLLMWareWorkspaceEx
 
 
 class Library:
-    """Implements the interface to manage a collection of texts and images as a ``Library``.
 
-    ``Library`` is responsible for managing a collection of unstructured inofrmation, i.e. a library is a
-    collection of texts and images.
+    """Implements the interface to manage a collection of unstructured information as a ``Library``, i.e. a
+    library is an indexed collection of texts, tables and images extracted from parsed files.
 
     Returns
     -------
     library : Library
         A new ``Library`` object.
-
-    Examples
-    ----------
-    >>> import os
-    >>> import llmware.library
-    >>> import llmware.setup
-    >>> sample_files_path = llmware.setup.Setup().load_sample_files(over_write=True)
-    >>> agreements_path = os.path.join(sample_files_path, 'Agreements')
-    >>> library = llmare.library.Library().create_new_library('my-new-library')
-    >>> library.add_files(agreements_path)
-    >>> library_card = library.get_library_card()
-    >>> library_card['documents']
     """
+
     def __init__(self):
 
         # default settings for basic parameters
@@ -131,8 +119,25 @@ class Library:
 
     # explicit constructor to create a new library
     def create_new_library(self, library_name, account_name="llmware"):
+        """Explicit constructor to create a new library with selected name.
 
-        """ Explicit constructor to create a new library with selected name """
+            If a library with the same name already exists, it will load the existing library.
+
+            Checks if library_name is safe. If not, it will change library_name to a safe name. 
+
+            Parameters
+            ----------
+            library_name : str
+                name of the library to create
+
+            account_name : str, default="llmware"
+                name of the account associated with the library
+
+            Returns
+            -------
+            library : Library
+                A new ``Library`` object representing the newly created or loaded existing library
+        """
 
         # note: default behavior - if library with same name already exists, then it loads existing library
 
@@ -238,8 +243,21 @@ class Library:
         return self
 
     def load_library(self, library_name, account_name="llmware"):
+        """Load an existing library by invoking the library string name.
 
-        """ Load an existing library by invoking the library string name """
+            Parameters
+            ----------
+            library_name : str
+                Name of the library to load
+
+            account_name : str, default="llmware"
+                Name of the account associated with the library
+        
+            Returns
+            -------
+            library : Library
+                A new ``Library`` object representing the loaded library
+        """
 
         # first check that library exists
         library_exists = self.check_if_library_exists(library_name, account_name=account_name)
@@ -273,8 +291,21 @@ class Library:
         return self
 
     def get_library_card(self, library_name=None, account_name="llmware"):
+        """Retrieves the library card dictionary with key attributes of library.
 
-        """ Retrieves the library card dictionary with key attributes of library """
+            Parameters
+            ----------
+            library_name : str, default=None
+                Name of the library to retrieve. If not provided, uses self.library_name
+
+            account_name : str, default="llmware"
+                Name of the account associated to the library. If not provided, uses self.account_name
+        
+            Returns
+            -------
+            library_card : dict or None
+                The library card dictionary containing key atrributes of the library. If not found, returns None
+        """
 
         library_card = None
 
@@ -295,8 +326,22 @@ class Library:
         return library_card
 
     def check_if_library_exists(self, library_name, account_name="llmware"):
+        """Check if library exists by library string name.
+        
+            Parameters
+            ----------
+            library_name : str
+                Name of library to check.
 
-        """ Check if library exists by library string name """
+            account_name : str, default="llmware"
+                Name of account associated with library.
+
+            Returns
+            -------
+            library_card : dict or None
+                The library card dict if the library exists. If not found, returns None.
+
+        """
 
         # first look in library catalog
         library_card = LibraryCatalog().get_library_card(library_name, account_name=account_name)
@@ -323,9 +368,37 @@ class Library:
 
     def update_embedding_status (self, status_message, embedding_model, embedding_db,
                                  embedded_blocks=0, embedding_dims=0,time_stamp="NA",delete_record=False):
+        """Invoked at the end of the embedding job to update the library card and embedding record -- generally,
+        this method does not need to be invoked directly.
+        
+            Parameters
+            ----------
+            status_message : str
+                Status message for the embedding process. If "delete", the record will be marked for deletion.
 
-        """ Invoked at the end of the embedding job to update the library card and embedding record -- generally,
-        this method does not need to be invoked directly """
+            embedding_model : str
+                Name of the embedding model used.
+
+            embedding_db : str
+                Name of the embedding database used.
+
+            embedded_blocks : int, default=0
+                Number of embedded blocks.
+
+            embedding_dims : int, default=0
+                Dimensions of the embedding.
+
+            time_stamp : str, default="NA"
+                Timestamp of the embedding process.
+
+            delete_record : bool, default=False
+                If True, marks the record for deletion.
+
+            Returns
+            -------
+            bool
+                True if the embedding status was successfully updated.
+        """
 
         #   special handling for updating "embedding" in update_library_card
         #   -- append/insert this new embedding dict to the end of the embedding list
@@ -346,8 +419,14 @@ class Library:
         return True
 
     def get_embedding_status (self):
-
-        """ Pulls the embedding record for the current library from the library card """
+        """Pulls the embedding record for the current library from the library card.
+        
+            Returns
+            -------
+            embedding_record : list or None
+                The embedding record, which is a list of dictionaries containing embedding status, model, and database.
+                If the library card or embedding record is not found, returns None.
+        """
 
         library_card = LibraryCatalog(self).get_library_card(self.library_name, account_name=self.account_name)
 
@@ -368,8 +447,13 @@ class Library:
         return embedding_record
 
     def get_knowledge_graph_status (self):
-
-        """ Gets the status of creating the knowledge graph for the current library from the library card """
+        """Gets the status of creating the knowledge graph for the current library from the library card.
+        
+            Returns
+            -------
+            status_message : str
+                The status of the knowledge graph creation for the current library.
+        """
 
         library_card = LibraryCatalog(self).get_library_card(self.library_name, self.account_name)
 
@@ -382,8 +466,18 @@ class Library:
         return status_message
 
     def set_knowledge_graph_status (self, status_message):
+        """Updates the knowledge graph status on the library card after creating a knowledge graph.
+        
+            Parameters
+            ----------
+            status_message : str
+                The status message to set for the knowledge graph.
 
-        """ Updates the knowledge graph status on the library card after creating a knowledge graph """
+            Returns
+            -------
+            bool
+                True if the knowledge graph status was successfully updated.
+        """
 
         update_dict = {"knowledge_graph": status_message}
         updater = LibraryCatalog(self).update_library_card(self.library_name,update_dict, account_name=self.account_name)
@@ -391,17 +485,44 @@ class Library:
         return True
 
     def get_and_increment_doc_id(self):
-
-        """ Convenience method in library class - mirrors method in LibraryCatalog - increments, tracks and provides a
-        unique doc id for the library """
+        """Convenience method in library class - mirrors method in LibraryCatalog - increments, tracks and provides a
+        unique doc id for the library.
+        
+            Returns
+            -------
+            unique_doc_id : int
+                The new unique document ID for the library.
+        """
 
         unique_doc_id = LibraryCatalog(self).get_and_increment_doc_id(self.library_name)
         return unique_doc_id
 
     def set_incremental_docs_blocks_images(self, added_docs=0, added_blocks=0, added_images=0, added_pages=0,
                                            added_tables=0):
+        """Updates the library card with incremental counters after completing a parsing job.
+        
+            Parameters
+            ----------
+            added_docs : int, default=0
+                Number of documents added.
 
-        """ Updates the library card with incremental counters after completing a parsing job """
+            added_blocks : int, default=0
+                Number of blocks added.
+
+            added_images : int, default=0
+                Number of images added.
+
+            added_pages : int, default=0
+                Number of pages added.
+
+            added_tables : int, default=0
+                Number of tables added.
+
+            Returns
+            -------
+            bool
+                True if the incremental counters were successfully updated.
+        """
 
         # updates counting parameters at end of parsing
         updater = LibraryCatalog(self).set_incremental_docs_blocks_images(added_docs=added_docs,
@@ -413,9 +534,19 @@ class Library:
         return True
 
     def add_file(self, file_path):
+        """Ingests, parses, text chunks and indexes a single selected file to a library -
+        provide the full path to file.
+        
+            Parameters
+            ----------
+            file_path : str
+                The full path to the file to be ingested and indexed.
 
-        """ Ingests, parses, text chunks and indexes a single selected file to a library -
-        provide the full path to file """
+            Returns
+            -------
+            self : Library
+                The updated ``Library`` object after adding the file.
+        """
 
         # Ensure the input path exists
         os.makedirs(LLMWareConfig.get_input_path(), exist_ok=True)
@@ -430,9 +561,56 @@ class Library:
                    get_images=True,get_tables=True, smart_chunking=1, max_chunk_size=600,
                    table_grid=True, get_header_text=True, table_strategy=1, strip_header=False,
                    verbose_level=2, copy_files_to_library=True):
+        """Main method to integrate documents into a Library - pass a local filepath folder and all files will be
+        routed to appropriate parser by file type extension.
+        
+            Parameters
+            ----------
+            input_folder_path : str, default=None
+                The path to the folder containing files to be ingested. If not provided, defaults to None.
 
-        """ Main method to integrate documents into a Library - pass a local filepath folder and all files will be
-        routed to appropriate parser by file type extension """
+            encoding : str, default="utf-8"
+                The encoding to use for reading files.
+
+            chunk_size : int, default=400
+                The size of text chunks to create during parsing.
+
+            get_images : bool, default=True
+                Whether to extract images from the documents.
+
+            get_tables : bool, default=True
+                Whether to extract tables from the documents.
+
+            smart_chunking : int, default=1
+                The strategy for smart chunking of text.
+
+            max_chunk_size : int, default=600
+                The maximum size of text chunks.
+
+            table_grid : bool, default=True
+                Whether to use a grid for tables.
+
+            get_header_text : bool, default=True
+                Whether to extract header text from the documents.
+
+            table_strategy : int, default=1
+                The strategy to use for table extraction.
+
+            strip_header : bool, default=False
+                Whether to strip headers from the documents.
+
+            verbose_level : int, default=2
+                The level of verbosity for logging.
+
+            copy_files_to_library : bool, default=True
+                Whether to copy the files to the library.
+
+            Returns
+            -------
+            output_results : dict or None
+                A dictionary containing the results of the document integration process, including counts of added documents,
+                blocks, images, pages, tables, and rejected files. If the library card could not be identified, returns None.
+                """
 
         if not input_folder_path:
             input_folder_path = LLMWareConfig.get_input_path()
@@ -482,8 +660,30 @@ class Library:
 
     def export_library_to_txt_file(self, output_fp=None, output_fn=None, include_text=True, include_tables=True,
                                    include_images=False):
+        """Exports library collection of indexed text chunks to a txt file.
+        
+            Parameters
+            ----------
+            output_fp : str, default=None
+                The file path where the output file will be saved. If not provided, defaults to None.
 
-        """ Exports library collection of indexed text chunks to a txt file """
+            output_fn : str, default=None
+                The name of the output file. If not provided, defaults to None.
+
+            include_text : bool, default=True
+                Whether to include text content in the export.
+
+            include_tables : bool, default=True
+                Whether to include tables in the export.
+
+            include_images : bool, default=False
+                Whether to include images in the export.
+
+            Returns
+            -------
+            file_location : str
+                The location of the exported txt file.
+        """
 
         if not output_fp:
             output_fp = self.output_path
@@ -516,8 +716,33 @@ class Library:
 
     def export_library_to_jsonl_file(self, output_fp, output_fn, include_text=True, include_tables=True,
                                      include_images=False, dict_keys=None):
+        """Exports collection of text chunks to a jsonl file.
+        
+            Parameters
+            ----------
+            output_fp : str
+                The file path where the output file will be saved.
 
-        """ Exports collection of text chunks to a jsonl file """
+            output_fn : str
+                The name of the output file.
+
+            include_text : bool, default=True
+                Whether to include text content in the export.
+
+            include_tables : bool, default=True
+                Whether to include tables in the export.
+
+            include_images : bool, default=False
+                Whether to include images in the export.
+
+            dict_keys : list of str, default=None
+                The keys to include in the JSONL entries. If not provided, defaults to None.
+
+            Returns
+            -------
+            file_location : str
+                The location of the exported JSONL file.
+        """
 
         if not output_fp:
             output_fp = self.output_path
@@ -562,8 +787,24 @@ class Library:
         return file_location
 
     def pull_files_from_cloud_bucket (self, aws_access_key=None, aws_secret_key=None, bucket_name=None):
+        """Pull files from private S3 bucket into local cache for further processing.
+        
+            Parameters
+            ----------
+            aws_access_key : str, default=None
+                The AWS access key for connecting to the S3 bucket.
 
-        """ Pull files from private S3 bucket into local cache for further processing """
+            aws_secret_key : str, default=None
+                The AWS secret key for connecting to the S3 bucket.
+
+            bucket_name : str, default=None
+                The name of the S3 bucket from which to pull files.
+
+            Returns
+            -------
+            files_copied : list
+                A list of file paths that were copied from the S3 bucket to the local cache.
+        """
 
         files_copied = CloudBucketManager().connect_to_user_s3_bucket (aws_access_key, aws_secret_key,
                                                                        bucket_name, LLMWareConfig.get_input_path())
@@ -571,8 +812,13 @@ class Library:
         return files_copied
 
     def generate_knowledge_graph(self):
-
-        """ Builds a statistical co-occurrence matrix for a library """
+        """Builds a statistical co-occurrence matrix for a library.
+        
+            Returns
+            -------
+            int
+                Returns 0 after successfully generating the knowledge graph and updating the status.
+        """
 
         kg = Graph(library=self).build_graph()
         self.set_knowledge_graph_status("yes")
@@ -582,8 +828,48 @@ class Library:
     def install_new_embedding (self, embedding_model_name=None, vector_db=None,
                                from_hf= False, from_sentence_transformer=False, model=None, tokenizer=None, model_api_key=None,
                                vector_db_api_key=None, batch_size=500, max_len=None, use_gpu=True):
+        """Main method for installing a new embedding on a library.
+        
+            Parameters
+            ----------
+            embedding_model_name : str, default=None
+                The name of the embedding model to use.
 
-        """ Main method for installing a new embedding on a library """
+            vector_db : str, default=None
+                The name of the vector database to use.
+
+            from_hf : bool, default=False
+                Whether the model is from Hugging Face.
+
+            from_sentence_transformer : bool, default=False
+                Whether the model is a Sentence Transformer.
+
+            model : object, default=None
+                The pre-loaded model to use.
+
+            tokenizer : object, default=None
+                The tokenizer associated with the pre-loaded model.
+
+            model_api_key : str, default=None
+                The API key for accessing the model.
+
+            vector_db_api_key : str, default=None
+                The API key for accessing the vector database.
+
+            batch_size : int, default=500
+                The batch size to use for embedding.
+
+            max_len : int, default=None
+                The maximum length for embedding.
+
+            use_gpu : bool, default=True
+                Whether to use GPU for embedding.
+
+            Returns
+            -------
+            embeddings : dict or None
+                The created embeddings dict, or None if no embeddings could be created.
+        """
 
         embeddings = None
         my_model = None
@@ -631,12 +917,31 @@ class Library:
 
         return embeddings
 
-    def delete_library(self, library_name=None, confirm_delete=False):
 
-        """ Deletes all artifacts of a library """
+    def delete_library(self, library_name=None, confirm_delete=False, account_name="llmware"):
+
+        """ Deletes all artifacts of a library 
+        
+            Parameters
+            ----------
+            library_name : str, default=None
+                The name of the library to delete. If not provided, defaults to None.
+
+            confirm_delete : bool, default=False
+                Confirmation flag to proceed with deletion. Must be set to True to delete the library.
+
+            Returns
+            -------
+            success_code : int
+                Returns 1 if the deletion was successful, or -1 if an error occurred.
+        
+        """
 
         if library_name:
             self.library_name = library_name
+
+            #   loads the library specific path information if required
+            self.load_library(library_name,account_name=account_name)
 
         success_code = 1
 
@@ -662,9 +967,28 @@ class Library:
         return success_code
 
     def update_block (self, doc_id, block_id, key, new_value):
+        """Convenience method to update the record of a specific block - identified by doc_ID and block_ID
+        in text collection database.
+        
+            Parameters
+            ----------
+            doc_id : int
+                The ID of the document containing the block to update.
 
-        """ Convenience method to update the record of a specific block - identified by doc_ID and block_ID
-        in text collection database """
+            block_id : int
+                The ID of the block to update.
+
+            key : str
+                The key in the block record to update.
+
+            new_value : str
+                The new value to set for the specified key.
+
+            Returns
+            -------
+            completed : bool
+                True if the block was successfully updated, False otherwise.
+        """
 
         completed = (CollectionWriter(self.library_name, account_name=self.account_name).
                      update_block(doc_id, block_id,key,new_value,self.default_keys))
@@ -672,8 +996,24 @@ class Library:
         return completed
 
     def add_website (self, url, get_links=True, max_links=5):
+        """Main method to ingest a website into a library.
+        
+            Parameters
+            ----------
+            url : str
+                The URL of the website to ingest.
 
-        """ Main method to ingest a website into a library """
+            get_links : bool, default=True
+                Whether to follow and ingest links found on the website.
+
+            max_links : int, default=5
+                The maximum number of links to follow and ingest.
+
+            Returns
+            -------
+            self : Library
+                The updated ``Library`` object after ingesting the website.
+        """
 
         Parser(library=self).parse_website(url,get_links=get_links,max_links=max_links)
         CollectionWriter(self.library_name, account_name=self.account_name).build_text_index()
@@ -681,8 +1021,21 @@ class Library:
         return self
 
     def add_wiki(self, topic_list,target_results=10):
+        """Main method to add a wikipedia article to a library - enter a list of topics.
+        
+            Parameters
+            ----------
+            topic_list : list of str
+                A list of topics to search for on Wikipedia.
 
-        """ Main method to add a wikipedia article to a library - enter a list of topics """
+            target_results : int, default=10
+                The target number of results to retrieve for each topic.
+
+            Returns
+            -------
+            self : Library
+                The updated ``Library`` object after adding the Wikipedia articles.
+        """
 
         Parser(library=self).parse_wiki(topic_list,target_results=target_results)
         CollectionWriter(self.library_name, account_name=self.account_name).build_text_index()
@@ -690,8 +1043,18 @@ class Library:
         return self
 
     def add_dialogs(self, input_folder=None):
+        """Main method to add an AWS dialog transcript into a library.
+        
+            Parameters
+            ----------
+            input_folder : str, default=None
+                The path to the folder containing the dialog transcripts. If not provided, defaults to None.
 
-        """ Main method to add an AWS dialog transcript into a library """
+            Returns
+            -------
+            self : Library
+                The updated ``Library`` object after adding the dialog transcripts.
+        """
 
         if not input_folder:
             input_folder = LLMWareConfig.get_input_path()
@@ -701,8 +1064,18 @@ class Library:
         return self
 
     def add_image(self, input_folder=None):
+        """Main method to add image and scanned OCR content into a library.
+        
+            Parameters
+            ----------
+            input_folder : str, default=None
+                The path to the folder containing the images. If not provided, defaults to None
 
-        """ Main method to add image and scanned OCR content into a library """
+            Returns
+            -------
+            self : Library
+                The updated ``Library`` object after adding the image and OCR content.
+        """
 
         if not input_folder:
             input_folder = LLMWareConfig.get_input_path()
@@ -712,8 +1085,18 @@ class Library:
         return self
 
     def add_pdf_by_ocr(self, input_folder=None):
+        """Alternative method to ingest PDFs that are scanned, or can not be otherwise parsed.
+        
+            Parameters
+            ----------
+            input_folder : str, default=None
+                The path to the folder containing the PDFs. If not provided, defaults to None
 
-        """ Alternative method to ingest PDFs that are scanned, or can not be otherwise parsed """
+            Returns
+            -------
+            self : Library
+                The updated ``Library`` object after adding the PDFs through OCR.
+        """
 
         if not input_folder:
             input_folder = LLMWareConfig.get_input_path()
@@ -723,8 +1106,18 @@ class Library:
         return self
 
     def add_pdf(self, input_folder=None):
+        """Convenience method to directly add PDFs only - note, in most cases, 'add_files' is the better option.
+        
+            Parameters
+            ----------
+            input_folder : str, default=None
+                The path to the folder containing the PDFs. If not provided, defaults to None
 
-        """ Convenience method to directly add PDFs only - note, in most cases, 'add_files' is the better option."""
+            Returns
+            -------
+            self : Library
+                The updated ``Library`` object after adding the PDFs.
+        """
 
         if not input_folder:
             input_folder = LLMWareConfig.get_input_path()
@@ -734,8 +1127,18 @@ class Library:
         return self
 
     def add_office(self, input_folder=None):
+        """Convenience method to directly add PDFs only -  note, in most cases, 'add_files' is the better option.
+        
+            Parameters
+            ----------
+            input_folder : str, default=None
+                The path to the folder containing the Office documents. If not provided, defaults to None.
 
-        """ Convenience method to directly add PDFs only -  note, in most cases, 'add_files' is the better option."""
+            Returns
+            -------
+            self : Library
+                The updated ``Library`` object after adding the Office documents.
+        """
 
         if not input_folder:
             input_folder = LLMWareConfig.get_input_path()
@@ -745,15 +1148,41 @@ class Library:
         return self
 
     def get_all_library_cards(self, account_name='llmware'):
+        """Get all library cards for all libraries on account.
+        
+            Parameters
+            ----------
+            account_name : str, default='llmware'
+                The name of the account for which to retrieve all library cards.
 
-        """ Get all library cards for all libraries on account """
+            Returns
+            -------
+            library_cards : list of dict
+                A list of all library card dictionaries for the specified account.
+        """
 
         library_cards = LibraryCatalog(account_name=account_name).all_library_cards()
         return library_cards
 
     def delete_installed_embedding(self, embedding_model_name, vector_db, vector_db_api_key=None):
+        """Deletes an installed embedding on specific combination of vector_db + embedding_model_name.
+        
+            Parameters
+            ----------
+            embedding_model_name : str
+                The name of the embedding model to delete.
 
-        """ Deletes an installed embedding on specific combination of vector_db + embedding_model_name """
+            vector_db : str
+                The name of the vector database from which to delete the embedding.
+
+            vector_db_api_key : str, default=None
+                The API key for accessing the vector database. If not provided, defaults to None
+
+            Returns
+            -------
+            int
+                Returns 1 if the embedding was successfully deleted.
+        """
 
         # insert safety check - confirm that this is valid combination with installed embedding
         lib_card = LibraryCatalog(self).get_library_card(self.library_name)
@@ -779,10 +1208,29 @@ class Library:
         return 1
 
     def run_ocr_on_images(self, add_to_library=False,chunk_size=400,min_size=10, realtime_progress=True):
-
-        """ Convenience method in Library class to pass Library to Parser to run OCR on all of the images
+        """Convenience method in Library class to pass Library to Parser to run OCR on all of the images
         found in the Library, and OCR-extracted text from the images directly into the Library as additional
-        blocks. """
+        blocks. 
+        
+            Parameters
+            ----------
+            add_to_library : bool, default=False
+                Whether to add the OCR-extracted text directly into the Library as additional blocks.
+
+            chunk_size : int, default=400
+                The size of text chunks to create during OCR processing.
+
+            min_size : int, default=10
+                The minimum size of text chunks to consider during OCR processing.
+
+            realtime_progress : bool, default=True
+                Whether to display real-time progress during OCR processing.
+
+            Returns
+            -------
+            output : int
+                Returns 1 if running the OCR on the images was successful.
+        """
 
         output = Parser(library=self).ocr_images_in_library(add_to_library=add_to_library,
                                                             chunk_size=chunk_size,min_size=min_size,

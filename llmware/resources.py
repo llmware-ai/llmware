@@ -1,4 +1,4 @@
-# Copyright 2023 llmware
+# Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -11,10 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
-"""The resources module implements the text index databases that are used in conjunction with the vector
-databases.
 
-Currently, llmware supports MongoDB, Postgres, and SQLite as text index databases.
+"""The resources module implements the text index databases that are used as the foundation for creating a
+Library in LLMWare, and a wide range of supporting methods, including text query retrieval, library card
+ management, tracking of embedding progress and status, and the ability to create custom tables.  The text index
+ is used as the 'master' source of aggregating and access unstructured information that has been parsed and
+ organized into Library collections.
+
+Currently, llmware supports MongoDB, Postgres, and SQLite as text index databases, and supports the use of both
+Postgres and SQLIte for creation of custom (SQL) tables.
+
 """
 
 import platform
@@ -1636,16 +1642,23 @@ class PGWriter:
 
             sql_instruction = f"DROP TABLE {self.library_name};"
 
-            results = self.conn.cursor().execute(sql_instruction)
-            self.conn.commit()
-            self.conn.close()
+            #   returns TRUE if table does not exist & FALSE if table exists
+            table_does_not_exist = self.check_if_table_build_required()
 
-            return 1
+            #   if FALSE ... drop the table
+            if not table_does_not_exist:
+                results = self.conn.cursor().execute(sql_instruction)
+                self.conn.commit()
+                self.conn.close()
+                return 1
+            else:
+                logging.warning(f"update: PGWriter - request to drop table not executed because table "
+                                f"could not be found in the database.")
+                return -1
 
         logging.warning("update: library not destroyed - need to set confirm_destroy = True")
 
-        self.conn.commit()
-
+        # self.conn.commit()
         self.conn.close()
 
         return 0
@@ -2748,10 +2761,20 @@ class SQLiteWriter:
         if confirm_destroy:
 
             sql_instruction = f"DROP TABLE {self.library_name};"
-            results = self.conn.cursor().execute(sql_instruction)
-            self.conn.commit()
-            self.conn.close()
-            return 1
+
+            #   returns TRUE if table does not exist & FALSE if table exists
+            table_does_not_exist = self.check_if_table_build_required()
+
+            #   if FALSE ... drop the table
+            if not table_does_not_exist:
+                results = self.conn.cursor().execute(sql_instruction)
+                self.conn.commit()
+                self.conn.close()
+                return 1
+            else:
+                logging.warning(f"update: SQLiteWriter - request to drop table not executed because table "
+                                f"could not be found in the database.")
+                return -1
 
         logging.warning("update: library not destroyed - need to set confirm_destroy = True")
         self.conn.close()

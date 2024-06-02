@@ -1,4 +1,4 @@
-# Copyright 2023 llmware
+# Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -19,7 +19,6 @@ creating a new embedding, as well as searching and deleting the vector index. Th
 _EmbeddingUtils class, which provides a set of functions used by all vector database classes.
 """
 
-
 import os
 import logging
 import numpy as np
@@ -28,80 +27,63 @@ import time
 import uuid
 import itertools
 from importlib import util
-
-from pymongo import MongoClient
-
-try:
-    from pymilvus import connections, utility, FieldSchema, CollectionSchema, DataType, Collection
-except ImportError:
-    pass
-
-try:
-    import faiss
-except ImportError:
-    pass
-
-# note: update- adding psycopg and postgres to core llmware package in version 0.2.0
-try:
-    from pgvector.psycopg import register_vector
-    import psycopg
-except ImportError:
-    pass
-
-#   optional imports of redis - not in project requirements
-try:
-    import redis
-    from redis.commands.search.field import TagField, TextField, NumericField
-    from redis.commands.search.indexDefinition import IndexDefinition, IndexType
-    from redis.commands.search.query import Query
-    from redis.commands.search.field import VectorField
-except ImportError:
-    pass
-
-#   optional imports of qdrant - not in project requirements
-try:
-    from qdrant_client import QdrantClient
-    from qdrant_client.http.models import Distance, VectorParams, PointStruct
-except ImportError:
-    pass
-
-#   optional import of pinecone - not in project requirements
-try:
-    from pinecone import Pinecone, ServerlessSpec
-except ImportError:
-    pass
-
-#   optional import of lancedb - not in project requirements
-try:
-    import lancedb
-except ImportError:
-    pass
-
-#   optional import of neo4j - not in project requirements
-try:
-    import neo4j
-    from neo4j import GraphDatabase
-except:
-    pass
-
-#   optional import of chromadb - not in project requirements
-try:
-    import chromadb
-except:
-    pass
-
+import importlib
 
 from llmware.configs import LLMWareConfig, MongoConfig, MilvusConfig, PostgresConfig, RedisConfig, \
-    PineconeConfig, QdrantConfig, Neo4jConfig, LanceDBConfig, ChromaDBConfig
+    PineconeConfig, QdrantConfig, Neo4jConfig, LanceDBConfig, ChromaDBConfig, VectorDBRegistry
 from llmware.exceptions import (UnsupportedEmbeddingDatabaseException, EmbeddingModelNotFoundException,
-                                DependencyNotInstalledException)
+                                DependencyNotInstalledException, LLMWareException)
 from llmware.resources import CollectionRetrieval, CollectionWriter
 from llmware.status import Status
 from llmware.util import Utilities
 
+""" By default, no vector db drivers are loaded into global program space unless and until they are invoked.  Within 
+each embedding class handler, there is a check if GLOBAL_{VECTOR_DB}_IMPORT is False, and if so, then the module 
+is loaded, and the GLOBAL_{VECTOR_DB}_IMPORT is set to True.  """
+
+pymilvus = None
+GLOBAL_PYMILVUS_IMPORT = False
+
+chromadb = None
+GLOBAL_CHROMADB_IMPORT = False
+
+lancedb = None
+GLOBAL_LANCEDB_IMPORT = False
+
+faiss = None
+GLOBAL_FAISS_IMPORT = False
+
+neo4j = None
+GLOBAL_NEO4J_IMPORT = False
+
+qdrant_client = None
+GLOBAL_QDRANT_IMPORT = False
+
+pinecone = None
+GLOBAL_PINECONE_IMPORT = False
+
+redis = None
+GLOBAL_REDIS_IMPORT = False
+
+#   pgvector requires import of both pgvector and psycopg
+pgvector = None
+GLOBAL_PGVECTOR_IMPORT = False
+
+psycopg = None
+GLOBAL_PSYCOPG_IMPORT = False
+
+#   used in mongo-atlas
+pymongo = None
+GLOBAL_PYMONGO_IMPORT = False
+
+logger = logging.getLogger(__name__)
+log_level = LLMWareConfig().get_logging_level_by_module("llmware.embeddings")
+logger.setLevel(level=log_level)
+
 
 class EmbeddingHandler:
-    """Provides an interface to all supported vector dabases, which is used by the ``Library`` class.
+
+    """Provides an interface to all supported vector databases, which is used by the ``Library`` class.
 
     ``EmbeddingHandler`` is responsible for embedding-related interactions between a library and a vector
     store. This includes creating, reading, updating, and deleting (CRUD) embeddings. The ``EmbeddingHandler``,
@@ -118,9 +100,12 @@ class EmbeddingHandler:
     embedding_handler : EmbeddingHandler
         A new ``EmbeddingHandler`` object.
     """
+
     def __init__(self, library):
 
-        self.supported_embedding_dbs = LLMWareConfig().get_supported_vector_db()
+        # self.supported_embedding_dbs = LLMWareConfig().get_supported_vector_db()
+        self.supported_embedding_dbs = VectorDBRegistry().get_vector_db_list()
+
         self.library = library
    
     def create_new_embedding(self, embedding_db, model, doc_ids=None, batch_size=500):
@@ -138,7 +123,7 @@ class EmbeddingHandler:
                         embedded_blocks = embedding_status["embedded_blocks"]
                     else:
                         embedded_blocks = -1
-                        logging.warning("update: embedding_handler - unable to determine if embeddings have "
+                        logger.warning("update: embedding_handler - unable to determine if embeddings have "
                                         "been properly counted and captured.   Please check if databases connected.")
 
                     self.library.update_embedding_status("yes", model.model_name, embedding_db,
@@ -180,47 +165,22 @@ class EmbeddingHandler:
 
         if not embedding_db in self.supported_embedding_dbs:
             raise UnsupportedEmbeddingDatabaseException(embedding_db)
-         
-        if embedding_db == "milvus": 
-            return EmbeddingMilvus(self.library, model=model, model_name=model_name,
-                                   embedding_dims=embedding_dims)
 
-        if embedding_db == "faiss": 
-            return EmbeddingFAISS(self.library, model=model, model_name=model_name,
-                                  embedding_dims=embedding_dims)
+        vdb = self.supported_embedding_dbs[embedding_db]
 
-        if embedding_db == "pinecone": 
-            return EmbeddingPinecone(self.library, model=model, model_name=model_name,
-                                     embedding_dims=embedding_dims)
+        #   dynamically load the module/class for the specific embedding handler
+        vdb_module = vdb["module"]
+        vdb_class = vdb["class"]
+        vdb_module = importlib.import_module(vdb_module)
 
-        if embedding_db == "mongo_atlas": 
-            return EmbeddingMongoAtlas(self.library, model=model,model_name=model_name,
-                                       embedding_dims=embedding_dims)
+        if hasattr(vdb_module, vdb_class):
+            model_class = getattr(vdb_module, vdb_class)
 
-        if embedding_db == "redis":
-            return EmbeddingRedis(self.library, model=model, model_name=model_name,
-                                  embedding_dims=embedding_dims)
+            return model_class(self.library, model=model, model_name=model_name,embedding_dims=embedding_dims)
 
-        if embedding_db == "qdrant":
-            return EmbeddingQdrant(self.library, model=model, model_name=model_name,
-                                   embedding_dims=embedding_dims)
-        
-        if embedding_db == "lancedb":
-            return EmbeddingLanceDB(self.library, model=model, model_name=model_name,
-                                   embedding_dims=embedding_dims)
-  
-        #   note: pg_vector == postgres (two aliases provided)
-        if embedding_db in ["pg_vector", "postgres"]:
-            return EmbeddingPGVector(self.library,model=model, model_name=model_name,
-                                     embedding_dims=embedding_dims)
-
-        if embedding_db == "neo4j":
-            return EmbeddingNeo4j(self.library, model=model, model_name=model_name,
-                                   embedding_dims=embedding_dims)
-
-        if embedding_db == "chromadb":
-            return EmbeddingChromaDB(self.library, model=model, model_name=model_name,
-                                   embedding_dims=embedding_dims)
+        else:
+            raise LLMWareException(message=f"Exception: could not find class implementation for {embedding_db}, which "
+                                           f"is expected at: {vdb_module} - {vdb_class}.")
 
     def generate_index_name(self, account_name, library_name, model_name, max_component_length=19):
 
@@ -242,6 +202,7 @@ class EmbeddingHandler:
 
 
 class _EmbeddingUtils:
+
     """Provides functions to vector stores, such as creating names for the text collection database as well
     as creating names for vector such, and creating a summary of an embedding process.
 
@@ -271,6 +232,7 @@ class _EmbeddingUtils:
     embedding_utils : _EmbeddingUtils
         A new ``_EmbeddingUtils`` object.
     """
+
     def __init__(self, library_name=None, model_name=None, account_name=None,db_name=None,
                  embedding_dims=None):
 
@@ -343,8 +305,6 @@ class _EmbeddingUtils:
                              "embedding_dims": self.embedding_dims,
                              "time_stamp": Utilities().get_current_time_now()}
 
-        # print("update: embedding_summary - ", embedding_summary)
-
         return embedding_summary
 
     def update_text_index(self, block_ids, current_index):
@@ -391,9 +351,8 @@ class _EmbeddingUtils:
 
 class EmbeddingMilvus:
 
-    """Implements the vector database Milvius.
-
-    ``EmbeddingMivlus`` implements the interface to the ``Milvus`` vector store. It is used by the
+    """
+    ``EmbeddingMilvus`` implements the interface to the ``Milvus`` vector store. It is used by the
     ``EmbeddingHandler``.
 
     Parameters
@@ -423,15 +382,25 @@ class EmbeddingMilvus:
         self.account_name = library.account_name
         self.milvus_alias = "default"
 
-        # Connect to milvus
-        # Instantiate client.
-        if not util.find_spec("pymilvus"):
-            raise DependencyNotInstalledException("pip3 install pymilvus")
+        self.use_milvus_lite = MilvusConfig().get_config("lite")
 
-        connections.connect(self.milvus_alias,
-                            host=MilvusConfig.get_config("host"),
-                            port=MilvusConfig.get_config("port"),
-                            db_name=MilvusConfig.get_config("db_name"))
+        #   confirm that pymilvus installed
+
+        global GLOBAL_PYMILVUS_IMPORT
+        if not GLOBAL_PYMILVUS_IMPORT:
+            if util.find_spec("pymilvus"):
+
+                try:
+                    global pymilvus
+                    pymilvus = importlib.import_module("pymilvus")
+                    GLOBAL_PYMILVUS_IMPORT = True
+                except:
+                    raise LLMWareException(message="Exception: could not load pymilvus module.")
+
+            else:
+                raise LLMWareException(message="Exception: need to import pymilvus to use this class.")
+
+        # end dynamic import here
 
         # look up model card
         if not model and not model_name:
@@ -455,23 +424,74 @@ class EmbeddingMilvus:
         self.collection_name = self.utils.create_safe_collection_name()
         self.collection_key = self.utils.create_db_specific_key()
 
-        #   if collection does not exist, create it
-        if not utility.has_collection(self.collection_name):
-            fields = [
-                FieldSchema(name="block_mongo_id", dtype=DataType.VARCHAR, is_primary=True, max_length=30,auto_id=False),
-                FieldSchema(name="block_doc_id", dtype=DataType.INT64),
-                FieldSchema(name="embedding_vector", dtype=DataType.FLOAT_VECTOR, dim=self.embedding_dims)
-            ]
+        if self.use_milvus_lite:
 
-            collection = Collection(self.collection_name, CollectionSchema(fields))
-            index_params = {
-                "metric_type": "L2",
-                "index_type": "IVF_FLAT",
-                "params": {"nlist": 1024}
-            }
-            collection.create_index("embedding_vector", index_params)
+            logger.info(f"update: EmbeddingHandler - Milvus - selecting 'lite' version.  If you intend to use "
+                        f"a server-based version of Milvus, please set: MilvusConfig().set_config('lite', False).")
 
-        self.collection = Collection(self.collection_name)
+            lite_path = MilvusConfig().get_config("lite_folder_path")
+            lite_db_name = MilvusConfig().get_config("lite_name")
+
+            self.collection = pymilvus.MilvusClient(os.path.join(lite_path, lite_db_name))
+
+            #   check if collection_name found in list of collections - load, if exists, else create new
+            if self.collection_name in self.collection.list_collections():
+                self.collection.load_collection(self.collection_name)
+            else:
+                schema = self.collection.create_schema(
+                    auto_id=False,
+                    enable_dynamic_field=True,
+                )
+
+                # add fields to schema
+                schema.add_field(field_name="block_mongo_id", datatype=pymilvus.DataType.VARCHAR, is_primary=True,
+                                 max_length=30, auto_id=False)
+                schema.add_field(field_name="block_doc_id", datatype=pymilvus.DataType.INT64)
+                schema.add_field(field_name="embedding_vector", datatype=pymilvus.DataType.FLOAT_VECTOR, dim=self.embedding_dims)
+
+                index_params = self.collection.prepare_index_params()
+
+                # add index
+                index_params.add_index(
+                    field_name="embedding_vector",
+                    metric_type="L2",
+                )
+
+                self.collection.create_collection(collection_name=self.collection_name,
+                                                  dimension=self.embedding_dims,
+                                                  schema=schema,
+                                                  index_params=index_params)
+
+        else:
+
+            #   connect to Milvus server
+
+            logger.info(f"update: EmbeddingHandler - Milvus - connecting to Milvus server instance.  To use "
+                        f"Milvus 'lite', set MilvusConfig().set_config('lite', True).")
+
+            pymilvus.connections.connect(self.milvus_alias,
+                                host=MilvusConfig.get_config("host"),
+                                port=MilvusConfig.get_config("port"),
+                                db_name=MilvusConfig.get_config("db_name"))
+
+            if not pymilvus.utility.has_collection(self.collection_name):
+                fields = [
+                    pymilvus.FieldSchema(name="block_mongo_id",
+                                         dtype=pymilvus.DataType.VARCHAR, is_primary=True, max_length=30,auto_id=False),
+                    pymilvus.FieldSchema(name="block_doc_id", dtype=pymilvus.DataType.INT64),
+                    pymilvus.FieldSchema(name="embedding_vector", dtype=pymilvus.DataType.FLOAT_VECTOR,
+                                         dim=self.embedding_dims)
+                ]
+
+                collection = pymilvus.Collection(self.collection_name, pymilvus.CollectionSchema(fields))
+                index_params = {
+                    "metric_type": "L2",
+                    "index_type": "IVF_FLAT",
+                    "params": {"nlist": 1024}
+                }
+                collection.create_index("embedding_vector", index_params)
+
+            self.collection = pymilvus.Collection(self.collection_name)
 
     def create_new_embedding(self, doc_ids = None, batch_size=500):
 
@@ -486,8 +506,6 @@ class EmbeddingMilvus:
         embeddings_created = 0
         current_index = 0
         finished = False
-
-        # all_blocks_iter = iter(all_blocks_cursor)
 
         while not finished:
 
@@ -510,12 +528,24 @@ class EmbeddingMilvus:
                 block_ids.append(str(block["_id"]))
                 doc_ids.append(int(block["doc_ID"]))
                 sentences.append(text_search)
-            
+
             if len(sentences) > 0:
+
                 # Process the batch
                 vectors = self.model.embedding(sentences)
                 data = [block_ids, doc_ids, vectors]
-                self.collection.insert(data)
+
+                if self.use_milvus_lite:
+
+                    d=[]
+                    for i, vec in enumerate(vectors):
+                        new_row = {"block_mongo_id": block_ids[i], "block_doc_id": doc_ids[i], "embedding_vector": vec}
+                        d.append(new_row)
+
+                    self.collection.insert(data=d, collection_name=self.collection_name)
+
+                else:
+                    self.collection.insert(data)
 
                 current_index = self.utils.update_text_index(block_ids,current_index)
 
@@ -524,44 +554,80 @@ class EmbeddingMilvus:
                 status.increment_embedding_status(self.library_name, self.model_name, len(sentences))
 
                 # will add configuration options to show/display
-                print (f"update: embedding_handler - Milvus - Embeddings Created: {embeddings_created} of {num_of_blocks}")
-        
-        self.collection.flush()
+                logger.info(f"update: embedding_handler - Milvus - Embeddings Created: {embeddings_created} of {num_of_blocks}")
+
+        if not self.use_milvus_lite:
+            self.collection.flush()
 
         embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
 
-        logging.info("update: EmbeddingHandler - Milvus - embedding_summary - %s", embedding_summary)
+        logger.info(f"update: EmbeddingHandler - Milvus - embedding_summary - {embedding_summary}")
 
         return embedding_summary
 
     def search_index(self, query_embedding_vector, sample_count=10):
 
-        self.collection.load()
+        if not self.use_milvus_lite:
+            self.collection.load()
 
-        search_params = {
-            "metric_type": "L2",
-            "params": {"nprobe": 10}
-        }
+            search_params = {
+                "field_name": "embedding_vector",
+                "metric_type": "L2",
+                "params": {"nprobe": 10}
+            }
 
-        # TODO: add optional / configurable partitions
+            # TODO: add optional / configurable partitions
 
-        result = self.collection.search(
-            data=[query_embedding_vector],
-            anns_field="embedding_vector",
-            param=search_params,
-            limit=sample_count,
-            output_fields=["block_mongo_id"]
-        )
+            result = self.collection.search(
+                data=[query_embedding_vector],
+                anns_field="embedding_vector",
+                param=search_params,
+                limit=sample_count,
+                output_fields=["block_mongo_id"]
+            )
+
+        else:
+
+            search_params = {
+                "field_name": "embedding_vector",
+                "metric_type": "L2",
+                # "params": {"nprobe": 10}
+            }
+
+            result = self.collection.search(collection_name=self.collection_name,
+                data=[query_embedding_vector],
+                anns_field="embedding_vector",
+                search_params=search_params,
+                limit=sample_count,
+                output_fields=["block_mongo_id"]
+            )
 
         block_list = []
         for hits in result:
             for hit in hits:
-                _id = hit.entity.get('block_mongo_id')
+
+                if self.use_milvus_lite:
+
+                    try:
+                        # _id = int(hit["entity"]["block_mongo_id"])
+                        _id = hit["entity"]["block_mongo_id"]
+                    except:
+                        logger.warning(f"update: EmbeddingHandler - Milvus - search - unexpected - "
+                                       f"could not convert to number - {hit}")
+                        _id = -1
+                else:
+                    _id = hit.entity.get('block_mongo_id')
 
                 block_result_list = self.utils.lookup_text_index(_id)
 
                 for block in block_result_list:
-                    block_list.append((block, hit.distance))
+
+                    if self.use_milvus_lite:
+                        distance = hit["distance"]
+                    else:
+                        distance = hit.distance
+
+                    block_list.append((block, distance))
 
                 """
                 try:
@@ -576,10 +642,16 @@ class EmbeddingMilvus:
    
     def delete_index(self):
 
-        collection = Collection(self.collection_name)
-        collection.release()
-        utility.drop_collection(self.collection_name)
-        connections.disconnect(self.milvus_alias)
+        if not self.use_milvus_lite:
+
+            collection = pymilvus.Collection(self.collection_name)
+            collection.release()
+            pymilvus.utility.drop_collection(self.collection_name)
+            pymilvus.connections.disconnect(self.milvus_alias)
+
+        else:
+            # delete
+            res = self.collection.delete(collection_name=self.collection_name)
 
         # Synchronize and remove embedding flag from collection db
         self.utils.unset_text_index()
@@ -588,6 +660,7 @@ class EmbeddingMilvus:
 
 
 class EmbeddingFAISS:
+
     """Implements the vector database FAISS.
 
     ``EmbeddingFAISS`` implements the interface to the ``FAISS`` vector database. It is used by the
@@ -612,7 +685,24 @@ class EmbeddingFAISS:
     embedding_faiss : EmbeddingFAISS
         A new ``EmbeddingFAISS`` object.
     """
+
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
+
+        global GLOBAL_FAISS_IMPORT
+        if not GLOBAL_FAISS_IMPORT:
+            if util.find_spec("faiss"):
+
+                try:
+                    global faiss
+                    faiss = importlib.import_module("faiss")
+                    GLOBAL_FAISS_IMPORT = True
+                except:
+                    raise LLMWareException(message="Exception: could not load faiss module.")
+
+            else:
+                raise LLMWareException(message="Exception: need to import faiss to use this class.")
+
+        # end dynamic import here
 
         self.library = library
         self.library_name = library.library_name
@@ -715,7 +805,7 @@ class EmbeddingFAISS:
                 status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
 
                 # will add options to display/hide
-                print (f"update: embedding_handler - FAISS - Embeddings Created: {embeddings_created} of {num_of_blocks}")
+                logger.info(f"update: embedding_handler - FAISS - Embeddings Created: {embeddings_created} of {num_of_blocks}")
         
         # Ensure any existing file is removed before saving
         if os.path.exists(self.embedding_file_path):
@@ -725,7 +815,7 @@ class EmbeddingFAISS:
 
         embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
 
-        logging.info("update: EmbeddingHandler - FAISS - embedding_summary - %s", embedding_summary)
+        logger.info(f"update: EmbeddingHandler - FAISS - embedding_summary - {embedding_summary}")
 
         return embedding_summary
 
@@ -768,9 +858,10 @@ class EmbeddingFAISS:
         return 1
 
 class EmbeddingLanceDB:
+
     """Implements the vector database LanceDB.
 
-    ``EmbeddingLancDB`` implements the interface to the ``LanceDB`` vector database. It is used by the
+    ``EmbeddingLanceDB`` implements the interface to the ``LanceDB`` vector database. It is used by the
     ``EmbeddingHandler``.
 
     Parameters
@@ -792,56 +883,77 @@ class EmbeddingLanceDB:
     embedding_lancedb : EmbeddingLanceDB
         A new ``EmbeddingLanceDB`` object.
     """
+
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
-            self.uri = LanceDBConfig().get_config("uri")
-            self.library = library
-            self.library_name = self.library.library_name
-            self.account_name = self.library.account_name
 
-            # look up model card
-            if not model and not model_name:
-                raise EmbeddingModelNotFoundException("no-model-or-model-name-provided")
+        #   confirm that lancedb installed
 
-            self.model = model
-            self.model_name = model_name
-            self.embedding_dims = embedding_dims
+        global GLOBAL_LANCEDB_IMPORT
+        if not GLOBAL_LANCEDB_IMPORT:
+            if util.find_spec("lancedb"):
 
-            # if model passed (not None), then use model name
-            if self.model:
-                self.model_name = self.model.model_name
-                self.embedding_dims = model.embedding_dims
+                try:
+                    global lancedb
+                    lancedb = importlib.import_module("lancedb")
+                    GLOBAL_LANCEDB_IMPORT = True
+                except:
+                    raise LLMWareException(message="Exception: could not load lancedb module.")
 
-            # initialize LanceDB
-            self.index = None
+            else:
+                raise LLMWareException(message="Exception: need to import lancedb to use this class.")
 
-            # initiate connection to LanceDB locally
-            try:
-                self.db = lancedb.connect(self.uri)
-            except:
-                raise ImportError(
-                    "Exception - could not connect to LanceDB - please check:"
-                    "1.  LanceDB python package is installed, e.g,. 'pip install lancedb', and"
-                    "2.  The uri is properly set.")
-            self.utils = _EmbeddingUtils(library_name=self.library_name,
-                                     model_name=self.model_name,
-                                     account_name=self.account_name,
-                                     db_name="lancedb",
-                                     embedding_dims=self.embedding_dims)
+        # end dynamic import here
 
-            self.collection_name = self.utils.create_safe_collection_name()
-            self.collection_key = self.utils.create_db_specific_key()
+        self.uri = LanceDBConfig().get_config("uri")
+        self.library = library
+        self.library_name = self.library.library_name
+        self.account_name = self.library.account_name
 
-            # build new name here
-            # self.index_name = self.collection_name
+        # look up model card
+        if not model and not model_name:
+            raise EmbeddingModelNotFoundException("no-model-or-model-name-provided")
 
-            if self.collection_name not in self.db.table_names():
-                self.index = self._init_table(self.collection_name)
-                # you don't need to create an index with lanceDB upto million vectors is efficiently supported with peak performance,
-                # Creating an index will fasten the search process and it needs to be done once table has some vectors already.
+        self.model = model
+        self.model_name = model_name
+        self.embedding_dims = embedding_dims
 
-            # connect to table
-            self.index = self.db.open_table(self.collection_name)
-        
+        # if model passed (not None), then use model name
+        if self.model:
+            self.model_name = self.model.model_name
+            self.embedding_dims = model.embedding_dims
+
+        # initialize LanceDB
+        self.index = None
+
+        # initiate connection to LanceDB locally
+        try:
+            self.db = lancedb.connect(self.uri)
+        except:
+            raise ImportError(
+                "Exception - could not connect to LanceDB - please check:"
+                "1.  LanceDB python package is installed, e.g,. 'pip install lancedb', and"
+                "2.  The uri is properly set.")
+
+        self.utils = _EmbeddingUtils(library_name=self.library_name,
+                                 model_name=self.model_name,
+                                 account_name=self.account_name,
+                                 db_name="lancedb",
+                                 embedding_dims=self.embedding_dims)
+
+        self.collection_name = self.utils.create_safe_collection_name()
+        self.collection_key = self.utils.create_db_specific_key()
+
+        # build new name here
+        # self.index_name = self.collection_name
+
+        if self.collection_name not in self.db.table_names():
+            self.index = self._init_table(self.collection_name)
+            # you don't need to create an index with lanceDB upto million vectors is efficiently supported with peak performance,
+            # Creating an index will fasten the search process and it needs to be done once table has some vectors already.
+
+        # connect to table
+        self.index = self.db.open_table(self.collection_name)
+
     def _init_table(self,table_name):
 
             try:
@@ -856,7 +968,6 @@ class EmbeddingLanceDB:
             tbl = self.db.create_table(table_name, schema=schema, mode="overwrite")
             return tbl
 
-    
     def create_new_embedding(self, doc_ids = None, batch_size=500):
 
             all_blocks_cursor, num_of_blocks = self.utils.get_blocks_cursor(doc_ids=doc_ids)
@@ -901,9 +1012,8 @@ class EmbeddingLanceDB:
                         vectors_ingest = [{ 'id' : block_id,'vector': vector.tolist()} for block_id,vector in zip(block_ids,vectors)]
                         self.index.add(vectors_ingest)
                     except Exception as e :
-                        print(self.index)
-                        print('schema',self.index.schema)
-                        raise e
+                        raise LLMWareException(message=f"Exception: LanceDB - {e} - {self.index} - schema - "
+                                                       f"{self.index.schema}")
 
                     current_index = self.utils.update_text_index(block_ids,current_index)
 
@@ -911,11 +1021,12 @@ class EmbeddingLanceDB:
                     status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
 
                     # will add options to configure to show/hide
-                    print (f"update: embedding_handler - Lancedb - Embeddings Created: {embeddings_created} of {num_of_blocks}")
+                    logger.info (f"update: embedding_handler - Lancedb - Embeddings Created: "
+                                  f"{embeddings_created} of {num_of_blocks}")
 
             embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
 
-            logging.info("update: EmbeddingHandler - Lancedb - embedding_summary - %s", embedding_summary)
+            logger.info(f"update: EmbeddingHandler - Lancedb - embedding_summary - {embedding_summary}")
 
             return embedding_summary
     
@@ -942,8 +1053,7 @@ class EmbeddingLanceDB:
             #         block_list.append((block, match._distance))
                     
         except Exception as e:
-            print("result df cols" ,result.columns, type(result))
-            raise e
+            raise LLMWareException(message=f"Exception: LanceDB - {e}")
 
         return block_list
 
@@ -958,6 +1068,7 @@ class EmbeddingLanceDB:
 
 
 class EmbeddingPinecone:
+
     """Implements the vector database Pinecone.
 
     ``EmbeddingPinecone`` implements the interface to the ``Pinecone`` vector database. It is used by the
@@ -982,6 +1093,7 @@ class EmbeddingPinecone:
     embedding_pinecone : EmbeddingPinecone
         A new ``EmbeddingPinecone`` object.
     """
+
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.api_key = PineconeConfig().get_config("pinecone_api_key")
@@ -1008,9 +1120,30 @@ class EmbeddingPinecone:
         # initialize pinecone
         self.index = None
 
+        global GLOBAL_PINECONE_IMPORT
+        if not GLOBAL_PINECONE_IMPORT:
+            if util.find_spec("pinecone"):
+
+                try:
+                    global pinecone
+                    pinecone = importlib.import_module("pinecone")
+                    GLOBAL_PINECONE_IMPORT = True
+                except:
+                    raise LLMWareException(message="Exception: could not load pinecone module.")
+
+            else:
+                raise LLMWareException(message="Exception: need to import pinecone to use this class.")
+
+        """
+        try:
+            from pinecone import Pinecone, ServerlessSpec
+        except ImportError:
+            pass
+        """
+
         # initiate connection to Pinecone
         try:
-            pinecone = Pinecone(api_key=self.api_key)
+            pinecone_client = pinecone.Pinecone(api_key=self.api_key)
         except:
             raise ImportError(
                 "Exception - could not connect to Pinecone - please check:"
@@ -1033,23 +1166,24 @@ class EmbeddingPinecone:
         # build new name here
         # self.index_name = self.collection_name
 
-        pinecone_indexes = [pincone_index['name'] for pincone_index in pinecone.list_indexes()]
+        pinecone_indexes = [pincone_index['name'] for pincone_index in pinecone_client.list_indexes()]
         if self.collection_name not in pinecone_indexes:
-            pinecone.create_index(
+            pinecone_client.create_index(
                 name=self.collection_name,
                 dimension=self.embedding_dims,
                 metric="euclidean",
-                spec=ServerlessSpec(
+                spec=pinecone.ServerlessSpec(
                     cloud=self.cloud,
                     region=self.region))
 
-            pinecone.describe_index(self.collection_name) # Waits for index to be created
+            pinecone_client.describe_index(self.collection_name) # Waits for index to be created
             # describe_index_stats()  # Returns: {'dimension': 8, 'index_fullness': 0.0, 'namespaces': {'': {'vector_count': 5}}}
 
         # connect to index
-        self.index = pinecone.Index(self.collection_name)
+        self.index = pinecone_client.Index(self.collection_name)
 
     def create_new_embedding(self, doc_ids = None, batch_size=100):
+
         def chunks(iterable, batch_size=100):
             """A helper function to break an iterable into chunks of size batch_size."""
             it = iter(iterable)
@@ -1057,7 +1191,6 @@ class EmbeddingPinecone:
             while chunk:
                 yield chunk
                 chunk = tuple(itertools.islice(it, batch_size))
-
 
         all_blocks_cursor, num_of_blocks = self.utils.get_blocks_cursor(doc_ids=doc_ids)
 
@@ -1111,11 +1244,12 @@ class EmbeddingPinecone:
                 status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
 
                 # will add options to configure to show/hide
-                print (f"update: embedding_handler - Pinecone - Embeddings Created: {embeddings_created} of {num_of_blocks}")
+                logger.info (f"update: embedding_handler - Pinecone - Embeddings Created: "
+                             f"{embeddings_created} of {num_of_blocks}")
 
         embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
 
-        logging.info("update: EmbeddingHandler - Pinecone - embedding_summary - %s", embedding_summary)
+        logger.info(f"update: EmbeddingHandler - Pinecone - embedding_summary - {embedding_summary}")
 
         return embedding_summary
 
@@ -1169,6 +1303,7 @@ class EmbeddingMongoAtlas:
     embedding_mongoatlas : EmbeddingMongoAtlas
         A new ``EmbeddingMongoAtlas`` object.
     """
+
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
         
         # Use a specified Mongo Atlas connection string if supplied.
@@ -1208,7 +1343,26 @@ class EmbeddingMongoAtlas:
         # self.index_name = self.collection_name
 
         # Connect and create a MongoClient
-        self.mongo_client = MongoClient(self.connection_uri)
+        #   confirm that qdrant installed
+
+        global GLOBAL_PYMONGO_IMPORT
+        if not GLOBAL_PYMONGO_IMPORT:
+            if util.find_spec("pymongo"):
+
+                try:
+                    global pymongo
+                    pymongo = importlib.import_module("pymongo")
+                    GLOBAL_PYMONGO_IMPORT = True
+                except:
+                    raise LLMWareException(message="Exception: could not load pymongo module.")
+
+            else:
+                raise LLMWareException(message="Exception: need to import pymongo to use this class.")
+
+        # end dynamic import here
+        # from pymongo import MongoClient
+
+        self.mongo_client = pymongo.MongoClient(self.connection_uri)
 
         # Make sure the Database exists by creating a dummy metadata collection
         self.embedding_db_name = "llmware_embeddings"
@@ -1302,28 +1456,33 @@ class EmbeddingMongoAtlas:
                 status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
 
                 # will add configuration options to hide/show
-                print (f"update: embedding_handler - Mongo Atlas - Embeddings Created: {embeddings_created} of {num_of_blocks}")
+                logger.info(f"update: embedding_handler - Mongo Atlas - Embeddings Created: "
+                            f"{embeddings_created} of {num_of_blocks}")
 
                 last_block_id = block_ids[-1]
 
         if embeddings_created > 0:
 
-            print(f"Embedding(Mongo Atlas): Waiting for {self.embedding_db_name}.{self.collection_name} to be ready for vector search...")
+            logger.info(f"Embedding(Mongo Atlas): Waiting for {self.embedding_db_name}.{self.collection_name} "
+                        f"to be ready for vector search...")
 
             start_time = time.time()
             self.wait_for_search_index(last_block_id, start_time)
             wait_time = time.time() - start_time
 
-            print(f"Embedding(Mongo Atlas): {self.embedding_db_name}.{self.collection_name} ready ({wait_time: .2f} seconds)")
+            logger.info(f"Embedding(Mongo Atlas): {self.embedding_db_name}.{self.collection_name} "
+                        f"ready ({wait_time: .2f} seconds)")
 
         embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
 
-        logging.info("update: EmbeddingHandler - Mongo Atlas - embedding_summary - %s", embedding_summary)
+        logger.info(f"update: EmbeddingHandler - Mongo Atlas - embedding_summary - {embedding_summary}")
 
         return embedding_summary
     
-    # After doc insertion we want to make sure the index is ready before proceeding
     def wait_for_search_index(self, last_block_id, start_time):
+
+        """ After doc insertion, we want to make sure the index is ready before proceeding ... """
+
         # If we've been waiting for 5 mins, then time out and just return
         if time.time() > start_time + (5 * 60):
             return
@@ -1396,6 +1555,7 @@ class EmbeddingMongoAtlas:
 
 
 class EmbeddingRedis:
+
     """Implements the use of Redis as a vector database.
 
     ``EmbeddingRedis`` implements the interface to ``Redis``. It is used by the
@@ -1420,6 +1580,7 @@ class EmbeddingRedis:
     embedding_redis : EmbeddingRedis
         A new ``EmbeddingRedis`` object.
     """
+
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.library = library
@@ -1429,6 +1590,34 @@ class EmbeddingRedis:
         # Connect to redis - use "localhost" & 6379 by default
         redis_host = RedisConfig().get_config("host")
         redis_port = RedisConfig().get_config("port")
+
+        """
+        try:
+            # import redis
+            from redis.commands.search.field import TagField, TextField, NumericField, VectorField
+            from redis.commands.search.indexDefinition import IndexDefinition, IndexType
+            from redis.commands.search.query import Query
+        except ImportError:
+            pass
+        """
+
+        #   confirm that redis installed
+
+        global GLOBAL_REDIS_IMPORT
+        if not GLOBAL_REDIS_IMPORT:
+            if util.find_spec("redis"):
+
+                try:
+                    global redis
+                    redis= importlib.import_module("redis")
+                    GLOBAL_REDIS_IMPORT = True
+                except:
+                    raise LLMWareException(message="Exception: could not load redis module.")
+
+            else:
+                raise LLMWareException(message="Exception: need to import redis to use this class.")
+
+        # end dynamic import here
 
         self.r = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
 
@@ -1455,18 +1644,19 @@ class EmbeddingRedis:
         try:
             # check to see if index exists
             self.r.ft(self.collection_name).info()
-            logging.info("update: embedding_handler - Redis - index already exists - %s", self.collection_name)
+            logger.info("update: embedding_handler - Redis - index already exists - %s", self.collection_name)
 
         except:
 
+            from redis.commands.search import field
             # schema
             schema = (
-                NumericField("id"),
-                TextField("text"),
-                TextField("block_mongo_id"),
-                NumericField("block_id"),
-                NumericField("block_doc_id"),
-                VectorField("vector",                 # Vector Field Name
+                field.NumericField("id"),
+                field.TextField("text"),
+                field.TextField("block_mongo_id"),
+                field.NumericField("block_id"),
+                field.NumericField("block_doc_id"),
+                field.VectorField("vector",                 # Vector Field Name
                             "FLAT", {     #  Vector Index Type: FLAT or HNSW
                                 "TYPE": "FLOAT32",          #  FLOAT32 or FLOAT64
                                 "DIM": self.embedding_dims,
@@ -1476,12 +1666,14 @@ class EmbeddingRedis:
             )
 
             # index Definition
-            definition = IndexDefinition(prefix=[self.DOC_PREFIX], index_type=IndexType.HASH)
+            from redis.commands.search.indexDefinition import IndexDefinition, IndexType
+            definition = IndexDefinition(prefix=[self.DOC_PREFIX],
+                                         index_type=IndexType.HASH)
 
             # create Index
             self.r.ft(self.collection_name).create_index(fields=schema, definition=definition)
 
-            logging.info("update: embedding_handler - Redis - creating new index - %s ", self.collection_name)
+            logger.info("update: embedding_handler - Redis - creating new index - %s ", self.collection_name)
 
     def create_new_embedding(self, doc_ids=None, batch_size=500):
 
@@ -1559,11 +1751,12 @@ class EmbeddingRedis:
                 status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
 
                 # will add configuration options to show/display
-                print(f"update: embedding_handler - Redis - Embeddings Created: {embeddings_created} of {num_of_blocks}")
+                logger.info(f"update: embedding_handler - Redis - Embeddings Created: "
+                             f"{embeddings_created} of {num_of_blocks}")
 
         embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
 
-        logging.info("update: EmbeddingHandler - Redis - embedding_summary - %s", embedding_summary)
+        logger.info(f"update: EmbeddingHandler - Redis - embedding_summary - {embedding_summary}")
 
         return embedding_summary
 
@@ -1572,7 +1765,7 @@ class EmbeddingRedis:
         query_embedding_vector = np.array(query_embedding_vector)
 
         query = (
-            Query(f"*=>[KNN {sample_count} @vector $vec as score]")
+            redis.commands.search.query.Query(f"*=>[KNN {sample_count} @vector $vec as score]")
             .sort_by("score")
             .return_fields("score", "block_mongo_id", "block_doc_id", "block_id","text")
             .paging(0, sample_count)
@@ -1587,8 +1780,6 @@ class EmbeddingRedis:
 
         block_list = []
         for j, res in enumerate(results):
-
-            # print("results: ", j, res)
 
             _id = str(res["block_mongo_id"])
             score = float(res["score"])
@@ -1612,6 +1803,7 @@ class EmbeddingRedis:
 
 
 class EmbeddingQdrant:
+
     """Implements the Qdrant vector database.
 
     ``EmbeddingQdrant`` implements the interface to ``Qdrant``. It is used by the
@@ -1636,13 +1828,40 @@ class EmbeddingQdrant:
     embedding_qdrant : EmbeddingQdrant
         A new ``EmbeddingQdrant`` object.
     """
+
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         self.library = library
         self.library_name = library.library_name
         self.account_name = library.account_name
 
-        self.qclient = QdrantClient(**QdrantConfig.get_config())
+        #   confirm that qdrant installed
+
+        global GLOBAL_QDRANT_IMPORT
+        if not GLOBAL_QDRANT_IMPORT:
+            if util.find_spec("qdrant_client"):
+
+                try:
+                    global qdrant_client
+                    qdrant_client = importlib.import_module("qdrant_client")
+                    GLOBAL_QDRANT_IMPORT = True
+                except:
+                    raise LLMWareException(message="Exception: could not load qdrant_client module.")
+
+            else:
+                raise LLMWareException(message="Exception: need to import qdrant_client to use this class.")
+
+        # end dynamic import here
+
+        """
+        try:
+            from qdrant_client import QdrantClient
+            from qdrant_client.http.models import Distance, VectorParams, PointStruct
+        except ImportError:
+            pass
+        """
+
+        self.qclient = qdrant_client.QdrantClient(**QdrantConfig.get_config())
 
         # look up model card
         self.model = model
@@ -1677,9 +1896,10 @@ class EmbeddingQdrant:
             self.collection = (
                 self.qclient.create_collection(
                     collection_name=self.collection_name,
-                    vectors_config=VectorParams(size=self.embedding_dims, distance=Distance.DOT), ))
+                    vectors_config=qdrant_client.http.models.VectorParams(size=self.embedding_dims,
+                                                                          distance=qdrant_client.http.models.Distance.DOT), ))
 
-            logging.info("update: embedding_handler - QDRANT - creating new collection - %s",
+            logger.info("update: embedding_handler - QDRANT - creating new collection - %s",
                          self.collection_name)
 
         else:
@@ -1731,15 +1951,15 @@ class EmbeddingQdrant:
                 for i, embedding in enumerate(vectors):
 
                     point_id = str(uuid.uuid4())
-                    ps = PointStruct(id=point_id, vector=embedding,
-                                     payload={"block_doc_id": doc_ids[i], "sentences": sentences[i],
-                                              "block_mongo_id": block_ids[i]})
+                    ps = qdrant_client.http.models.PointStruct(id=point_id, vector=embedding,
+                                                               payload={"block_doc_id": doc_ids[i],
+                                                                        "sentences": sentences[i],
+                                                                        "block_mongo_id": block_ids[i]})
 
                     points_batch.append(ps)
 
                 #   upsert a batch of points
-                self.qclient.upsert(collection_name=self.collection_name, wait=True,
-                                                     points=points_batch)
+                self.qclient.upsert(collection_name=self.collection_name, wait=True, points=points_batch)
 
                 points_batch = []
 
@@ -1752,12 +1972,12 @@ class EmbeddingQdrant:
                 status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
 
                 # will add configuration options to show/display
-                print(
-                    f"update: embedding_handler - Qdrant - Embeddings Created: {embeddings_created} of {num_of_blocks}")
+                logger.info(f"update: embedding_handler - Qdrant - Embeddings Created: "
+                            f"{embeddings_created} of {num_of_blocks}")
 
         embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
 
-        logging.info("update: EmbeddingHandler - Qdrant - embedding_summary - %s", embedding_summary)
+        logger.info(f"update: EmbeddingHandler - Qdrant - embedding_summary - {embedding_summary}")
 
         return embedding_summary
 
@@ -1768,8 +1988,6 @@ class EmbeddingQdrant:
 
         block_list = []
         for j, res in enumerate(search_results):
-
-            # print("results: ", j, res)
 
             _id = res.payload["block_mongo_id"]
 
@@ -1792,6 +2010,7 @@ class EmbeddingQdrant:
 
 
 class EmbeddingPGVector:
+
     """Implements the interface to the PGVector vector database.
 
     ``EmbeddingPGVector`` implements the interface to ``PGVector``. It is used by the
@@ -1816,6 +2035,7 @@ class EmbeddingPGVector:
     embedding_pgvector : EmbeddingPGVector
         A new ``EmbeddingPGVector`` object.
     """
+
     def __init__(self, library, model=None, model_name=None, embedding_dims=None, full_schema=False):
 
         self.library = library
@@ -1858,7 +2078,43 @@ class EmbeddingPGVector:
         #   --note:  in future releases, we will be building out more support for PostGres
         # self.full_schema = full_schema
 
-        #   Session connection
+        #   fist check for core postgres driver, and load if not present
+        global GLOBAL_PSYCOPG_IMPORT
+        if not GLOBAL_PSYCOPG_IMPORT:
+            if util.find_spec("psycopg"):
+
+                try:
+                    global psycopg
+                    psycopg = importlib.import_module("psycopg")
+                    GLOBAL_PSYCOPG_IMPORT = True
+                except:
+                    raise LLMWareException(message="Exception: could not load psycopg module.")
+
+            else:
+                raise LLMWareException(message="Exception: need to import psycopg to use this class.")
+
+        #   second check for pg_vector specific driver and load if not present
+        global GLOBAL_PGVECTOR_IMPORT
+        if not GLOBAL_PGVECTOR_IMPORT:
+            if util.find_spec("pgvector"):
+
+                try:
+                    global pgvector
+                    pgvector = importlib.import_module("pgvector")
+                    GLOBAL_PGVECTOR_IMPORT = True
+                except:
+                    raise LLMWareException(message="Exception: could not load pgvector module.")
+
+            else:
+                raise LLMWareException(message="Exception: need to import neo4j to use this class.")
+
+        """
+        try:
+            from pgvector.psycopg import register_vector
+            import psycopg
+        except ImportError:
+            pass
+        """
 
         #   note: for initial connection, need to confirm that the database exists
         self.conn = psycopg.connect(host=postgres_host, port=postgres_port, dbname=postgres_db_name,
@@ -1866,6 +2122,7 @@ class EmbeddingPGVector:
 
         # register vector extension
         self.conn.execute('CREATE EXTENSION IF NOT EXISTS vector')
+        from pgvector.psycopg import register_vector
         register_vector(self.conn)
 
         if not self.full_schema:
@@ -2033,13 +2290,13 @@ class EmbeddingPGVector:
                 status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
 
                 # will add configuration options to show/display
-                print(f"update: embedding_handler - PGVector - Embeddings Created: "
-                      f"{embeddings_created} of {num_of_blocks}")
+                logger.info(f"update: embedding_handler - PGVector - Embeddings Created: "
+                             f"{embeddings_created} of {num_of_blocks}")
 
         embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
         embedded_blocks = embedding_summary["embedded_blocks"]
 
-        logging.info("update: EmbeddingHandler - PG_Vector - embedding_summary - %s", embedding_summary)
+        logger.info(f"update: EmbeddingHandler - PG_Vector - embedding_summary - {embedding_summary}")
 
         # safety check on output
         if not isinstance(embedded_blocks, int):
@@ -2111,7 +2368,7 @@ class EmbeddingPGVector:
         cursor = self.conn.cursor()
         cursor.execute(drop_command)
 
-        logging.info("update: embedding_handler - PG Vector - table dropped - %s", self.collection_name)
+        logger.info("update: embedding_handler - PG Vector - table dropped - %s", self.collection_name)
 
         # Commit your changes in the database
         self.conn.commit()
@@ -2126,6 +2383,7 @@ class EmbeddingPGVector:
 
 
 class EmbeddingNeo4j:
+
     """Implements the interface to Neo4j as a vector database.
 
     ``EmbeddingNeo4j`` implements the interface to ``Neo4j``. It is used by the
@@ -2150,12 +2408,12 @@ class EmbeddingNeo4j:
     embedding_Neo4j : EmbeddingNeo4j
         A new ``EmbeddingNeo4j`` object.
     """
+
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         # look up model card
         if not model and not model_name:
             raise EmbeddingModelNotFoundException("no-model-or-model-name-provided")
-
 
         self.library = library
         self.library_name = library.library_name
@@ -2177,12 +2435,36 @@ class EmbeddingNeo4j:
         password = Neo4jConfig.get_config('password')
         database = Neo4jConfig.get_config('database')
 
+        global GLOBAL_NEO4J_IMPORT
+        if not GLOBAL_NEO4J_IMPORT:
+            if util.find_spec("neo4j"):
+
+                try:
+                    global neo4j
+                    neo4j = importlib.import_module("neo4j")
+                    GLOBAL_NEO4J_IMPORT = True
+                except:
+                    raise LLMWareException(message="Exception: could not load neo4j module.")
+
+            else:
+                raise LLMWareException(message="Exception: need to import neo4j to use this class.")
+
+        # end dynamic import here
+
+        #   optional import of neo4j - not in project requirements
+        """
+        try:
+            import neo4j
+            from neo4j import GraphDatabase
+        except:
+            pass
+        """
 
         # Connect to Neo4J and verify connection.
         # Code taken from the code below
         # https://github.com/langchain-ai/langchain/blob/master/libs/community/langchain_community/vectorstores/neo4j_vector.py#L165C9-L177C14
         try:
-            self.driver = GraphDatabase.driver(uri, auth=(user, password))
+            self.driver = neo4j.GraphDatabase.driver(uri, auth=(user, password))
             self.driver.verify_connectivity()
         except neo4j.exceptions.ServiceUnavailable:
             raise ValueError(
@@ -2306,11 +2588,11 @@ class EmbeddingNeo4j:
                 embeddings_created += len(sentences)
                 status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
 
-                print(f"update: embedding_handler - Neo4j - Embeddings Created: {embeddings_created} of {num_of_blocks}")
-
+                logger.info(f"update: embedding_handler - Neo4j - Embeddings Created: "
+                             f"{embeddings_created} of {num_of_blocks}")
 
         embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
-        logging.info(f'update: EmbeddingHandler - Neo4j - embedding_summary - {embedding_summary}')
+        logger.info(f'update: EmbeddingHandler - Neo4j - embedding_summary - {embedding_summary}')
 
         return embedding_summary
 
@@ -2334,15 +2616,17 @@ class EmbeddingNeo4j:
         return block_list
 
     def delete_index(self, index_name):
+
         try:
             self._query(f"DROP INDEX $index_name", {'index_name': index_name})
-        except DatabaseError: # Index did not exist yet
+        except neo4j.DatabaseError: # Index did not exist yet
             pass
 
         self.utils.unset_text_index()
 
     def _query(self, query, parameters=None):
-        from neo4j.exceptions import CypherSyntaxError
+
+        # from neo4j.exceptions import CypherSyntaxError
 
         parameters = parameters or {}
 
@@ -2350,7 +2634,7 @@ class EmbeddingNeo4j:
             try:
                 data = session.run(query, parameters)
                 return [d.data() for d in data]
-            except CypherSyntaxError as e:
+            except neo4j.exceptions.CypherSyntaxError as e:
                 raise ValueError(f'Cypher Statement is not valid\n{e}')
 
 
@@ -2386,6 +2670,23 @@ class EmbeddingChromaDB:
         #
         # General llmware set up code
         #
+        #   confirm that pymilvus installed
+
+        global GLOBAL_CHROMADB_IMPORT
+        if not GLOBAL_CHROMADB_IMPORT:
+            if util.find_spec("chromadb"):
+
+                try:
+                    global chromadb
+                    chromadb = importlib.import_module("chromadb")
+                    GLOBAL_CHROMADB_IMPORT = True
+                except:
+                    raise LLMWareException(message="Exception: could not load chromadb module.")
+
+            else:
+                raise LLMWareException(message="Exception: need to import chromadb to use this class.")
+
+        # end dynamic import here
 
         # look up model card
         if not model and not model_name:
@@ -2489,18 +2790,17 @@ class EmbeddingChromaDB:
                                      embeddings=vectors,
                                      metadatas=metadatas)
 
-
                 current_index = self.utils.update_text_index(block_ids, current_index)
 
                 # Update statistics
                 embeddings_created += len(sentences)
                 status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
 
-                print(f"update: embedding_handler - ChromaDB - Embeddings Created: {embeddings_created} of {num_of_blocks}")
-
+                logger.info(f"update: embedding_handler - ChromaDB - Embeddings Created: "
+                             f"{embeddings_created} of {num_of_blocks}")
 
         embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
-        logging.info(f'update: EmbeddingHandler - ChromaDB - embedding_summary - {embedding_summary}')
+        logger.info(f'update: EmbeddingHandler - ChromaDB - embedding_summary - {embedding_summary}')
 
         return embedding_summary
 
