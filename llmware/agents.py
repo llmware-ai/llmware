@@ -32,10 +32,14 @@ import sqlite3
 import json
 
 from llmware.models import ModelCatalog, _ModelRegistry
-from llmware.util import CorpTokenizer
+from llmware.util import CorpTokenizer, AgentWriter
 from llmware.configs import SQLiteConfig
 from llmware.exceptions import ModelNotFoundException
 from llmware.resources import CustomTable
+from llmware.configs import LLMWareConfig
+
+logger = logging.getLogger(__name__)
+logger.setLevel(level=LLMWareConfig().get_logging_level_by_module(__name__))
 
 
 class LLMfx:
@@ -54,8 +58,8 @@ class LLMfx:
         Sets the API key that used by the ``ModelCatalog`` to load models and logs.
 
     verbose : bool, optional, default=True
-        Sets whether ``print`` statements should be executed or not, e.g. if ```verbose=True```, then new
-        events that are written to the journal are printed to stdout.
+        Sets whether ``agent_writer.write`` statements should be executed or not, e.g. if ```verbose=True```, then new
+        events that are written to the journal are written to stdout.
 
     analyze_mode : bool, optional, default=True
         Sets whether logits should be retrieved when a tool is called with ``exec_function_call``.
@@ -69,8 +73,16 @@ class LLMfx:
 
     def __init__(self, api_key=None, verbose=True, analyze_mode=True): 
 
+        self.agent_writer = AgentWriter()
+
+        if self.agent_writer.mode == "file":
+            logger.info(f"update: AgentWriter mode set to file - writing agent work process to: "
+                         f"{os.path.join(self.agent_writer.fp_base, self.agent_writer.fn)}"
+                         f"\nTo change file: `LLMWareConfig().set_agent_file('new_file_name.txt')`"
+                         f"\nTo change to screen: `LLMWareConfig().set_agent_log('screen')")
+
         if verbose:
-            print("update: Launching LLMfx process")
+            self.agent_writer.write("update: Launching LLMfx process")
 
         self._supported_tools = _ModelRegistry().get_llm_fx_tools_list()
         self._default_tool_map = _ModelRegistry().get_llm_fx_mapping()
@@ -502,7 +514,7 @@ class LLMfx:
         self.step += 1
 
         if self.verbose:
-            print(f"step - \t{str(self.step)} - \t{journal_update}")
+            self.agent_writer.write(f"step - \t{str(self.step)} - \t{journal_update}")
 
         return True
 
@@ -1290,7 +1302,7 @@ class LLMfx:
             output = json.loads(output_raw.text)
             if "logits" in output:
                 logits = ast.literal_eval(output["logits"])
-                print("logits: ", logits)
+                self.agent_writer.write(f"logits: {logits}")
                 output["logits"] = logits
             if "output_tokens" in output:
                 ot_int = [int(x) for x in output["output_tokens"]]
@@ -1301,7 +1313,7 @@ class LLMfx:
             logging.warning("warning: api inference was not successful")
             output = {}
 
-        print(f"TEST: executed Agent call over API endpoint - {model_name} - {function} - {output}")
+        self.agent_writer.write(f"TEST: executed Agent call over API endpoint - {model_name} - {function} - {output}")
 
         return output
 
@@ -1363,7 +1375,6 @@ class SQLTables:
         column_info = self.conn.cursor().execute(sql_query_pragma)
 
         for entries in column_info:
-            # print("pragma - columns info output - ", entries)
             column_names.append(entries[1])
 
         return column_names
@@ -1542,8 +1553,6 @@ class SQLTables:
 
         new_record = ""
         for i in range(1, len(output)):
-
-            # print("update: inserting new record - ", i, output[i])
 
             self.insert_new_row(table_name,column_names,output[i])
 

@@ -1,5 +1,5 @@
 
-# Copyright 2023 llmware
+# Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -14,12 +14,8 @@
 # permissions and limitations under the License.
 
 
-"""The util module implements general helper functions with the Utilities class, and more specialized
- other classes.
-
-Among the more specializes other classes is whole word tokenizer with CorpTokenizer, and statistical
-NLP functions to calculate relationships between key words and concepts in a library.
-"""
+"""The util module implements general helper functions that are used across LLMWare, primarily within the Utilities
+class, along with a whole word (white space) tokenizer (CorpTokenizer) class, TextChunker and AgentWriter classes. """
 
 
 import csv
@@ -51,10 +47,9 @@ class Utilities:
 
     def get_module_graph_functions(self):
 
-        #   * C Utility functions *
-        # Load shared libraries based on current platform/architecture
+        """ Loads shared libraries for Graph module based on current platform/architecture. """
 
-        # Best ways we've found to detect machine architecture
+        # Detect based on machine architecture
         if platform.system() == "Windows":
             system = "windows"
             machine = "x86_64"
@@ -100,7 +95,9 @@ class Utilities:
 
     def get_module_pdf_parser(self):
 
-        # Best ways we've found to detect machine architecture
+        """ Loads shared libraries for the Parser module, based on machine architecture. """
+
+        # Detect machine architecture
         if platform.system() == "Windows":
             system = "windows"
             machine = "x86_64"
@@ -150,7 +147,9 @@ class Utilities:
 
     def get_module_office_parser(self):
 
-        # Best ways we've found to detect machine architecture
+        """ Load shared libraries for Office parser module based on machine architecture. """
+
+        # Detect machine architecture
         if platform.system() == "Windows":
             system = "windows"
             machine = "x86_64"
@@ -200,6 +199,9 @@ class Utilities:
 
     def get_default_tokenizer(self):
 
+        """ Retrieves an instance of default tokenizer. In most cases, this is the GPT2 tokenizer, which is a
+        good proxy for OpenAI and OpenAI-like GPTNeo models. """
+
         # gpt2 tokenizer is used in several places as a default tokenizer
 
         # check for llmware path & create if not already set up
@@ -231,16 +233,24 @@ class Utilities:
         return tokenizer
 
     def load_tokenizer_from_file(self, fp):
+
+        """ Loads tokenizer from file. """
+
         tokenizer = Tokenizer.from_file(fp)
         return tokenizer
 
     def get_uuid(self):
+
+        """ Generates a UUID. """
+
         import uuid
         # uses unique id creator from uuid library
         return uuid.uuid4()
 
     @staticmethod
     def file_save (cfile, file_path, file_name):
+
+        """ Saves an in-memory array to CSV file. """
 
         max_csv_size = 20000
         csv.field_size_limit(max_csv_size)
@@ -269,6 +279,9 @@ class Utilities:
 
     @staticmethod
     def file_load (in_path, delimiter=",",encoding='ISO-8859-1',errors='ignore'):
+
+        """ Loads a CSV array and outputs an in-memory array corresponding to the CSV structure. """
+
         record_file = open(in_path, encoding=encoding,errors=errors)
         c = csv.reader(record_file, dialect='excel', doublequote=False, delimiter=delimiter)
         output = []
@@ -280,6 +293,8 @@ class Utilities:
 
     @staticmethod
     def csv_save(rows, file_dir, file_name):
+
+        """ Saves CSV from in memory array consisting of list of rows as input. """
 
         full_path = Path(file_dir, file_name)
 
@@ -296,6 +311,8 @@ class Utilities:
     @staticmethod
     def get_top_bigrams (tokens, top_n):
 
+        """ Returns a list of top_n bigrams based on a list of tokens. """
+
         bigrams = []
         for z in range(1, len(tokens)):
             entry = (tokens[z-1] + "_" + tokens[z])
@@ -308,6 +325,8 @@ class Utilities:
 
     @staticmethod
     def get_top_trigrams (tokens, top_n):
+
+        """ Returns a list of top_n trigrams based on a list of tokens. """
 
         trigrams = []
         for z in range(2 ,len(tokens)):
@@ -322,6 +341,8 @@ class Utilities:
     @staticmethod
     def get_top_4grams (tokens, top_n):
 
+        """ Returns a list of top_n 4grams based on a list of tokens. """
+
         four_grams = []
         for z in range(3 ,len(tokens)):
             entry = (tokens[ z -3 ]+ "_" + tokens[ z -2] + "_" + tokens[ z -1] + "_" + tokens[z])
@@ -334,6 +355,9 @@ class Utilities:
 
     @staticmethod
     def compare_timestamps (t1, t2, time_str="%a %b %d %H:%M:%S %Y"):
+
+        """ Compares two time-stamps t1 and t2 provided as input and returns a time_delta_obj, along
+        with explicitly passing the days and seconds from the time_delta_obj. """
 
         t1_obj = datetime.strptime(t1, time_str)
         t2_obj = datetime.strptime(t2, time_str)
@@ -348,6 +372,9 @@ class Utilities:
     @staticmethod
     def get_current_time_now (time_str="%a %b %e %H:%M:%S %Y"):
 
+        """ Returns the current time, used for time-stamps - delivered in format from the optional input
+        time_str. """
+
         #   if time stamp is used in file_name, needs to be Windows standards compliant
         if platform.system() == "Windows":
             time_str = "%Y-%m-%d_%H%M%S"
@@ -356,11 +383,17 @@ class Utilities:
 
     @staticmethod
     def get_time_string_standard():
+
+        """ Returns the time stamp string standard used. """
+
         time_str_standard = "%a %b %e %H:%M:%S %Y"
         return time_str_standard
 
     @staticmethod
     def isfloat(num):
+
+        """ Checks if an input is a float number. """
+
         try:
             float(num)
             return True
@@ -369,6 +402,9 @@ class Utilities:
 
     @staticmethod
     def prep_filename_alt(filename_in, accepted_file_formats_list):
+
+        """ Prepares a filename and offers options to configure and provide safety checks to provide a 'safe'
+        filename. """
 
         success_code = 1
 
@@ -396,6 +432,8 @@ class Utilities:
     @staticmethod
     def safe_url(string):
 
+        """ Confirms that a string is a safe url. """
+
         try:
             import urllib.parse
             return urllib.parse.quote_plus(string)
@@ -405,6 +443,8 @@ class Utilities:
 
     @staticmethod
     def get_stop_words_master_list():
+
+        """ Returns a common set of english stop words. """
 
         stop_words = ["a", "able", "about","above","accordance","according", "accordingly","across","act","actually",
                       "added" ,"adj" ,"affected" ,"affecting" ,"affects" ,"after" ,"afterwards" ,"again" ,"against",
@@ -487,6 +527,8 @@ class Utilities:
 
     def load_stop_words_list (self, library_fp):
 
+        """ Loads a stop words list from file. """
+
         stop_words = self.get_stop_words_master_list()
 
         s = open(os.path.join(library_fp, "stop_words_list.txt"), "w", encoding='utf-8')
@@ -499,6 +541,9 @@ class Utilities:
         return stop_words
 
     def remove_stop_words(self, token_list):
+
+        """ Filters a list of tokens and removes stop words. """
+
         stop_words = self.get_stop_words_master_list()
 
         tokens_out = []
@@ -508,9 +553,10 @@ class Utilities:
 
         return tokens_out
 
-    # used by CorpTokenizer
     @staticmethod
     def clean_list (token_list):
+
+        """ Used by CorpTokenizer to provide a clean list stripping punctuation. """
 
         punctuation = ("-" ,"," ,"'", "/" ,"(')", "'('" ,":" ,".", "?" ,"%", "[", "]" ,"(')'" ,"('('" ,"'–'")
         clean_out = []
@@ -535,6 +581,8 @@ class Utilities:
 
     def sentence_splitter(self, sentence, key_word, marker_list):
 
+        """ Splits a sentence around a marker word. """
+
         text = []
         completion = []
         # will split sentence either 'before' or 'after' the marker
@@ -554,6 +602,8 @@ class Utilities:
 
     def prep_custom_mlm_label (self, input_sentence,key_word_list, mask_token_value="<mask>", mlm_prob=0.15):
 
+        """ Prepares a custom masked language label. """
+
         label_id = []
         for x in input_sentence:
             r = random.randint(1,100)
@@ -568,6 +618,16 @@ class Utilities:
         return label_id
 
     def fast_search_dicts(self, query,output_dicts, text_key="text", remove_stop_words=True):
+
+        """ Executes a fast in-memory exact search across a list of dictionaries
+
+            -- query: filtering query (exact match)
+            -- output_dicts: can be any list of dicts provided that the text_key is found in the dict
+            -- text_key: by default, this is "text", but can be configured to any field in the dict
+            -- remove_stop_words: set to True by default.
+
+            Returns a subset of the list of the dicts with only those entries that match the query
+        """
 
         #   will return a subset of the output_dicts that have the key_terms
         #   no ranking or prioritization - "match" or "no-match" only
@@ -635,6 +695,8 @@ class Utilities:
         
     def find_match(self, key_term, sentence):
 
+        """ Utility method that runs search for key_term in sentence. """
+
         matches_found = []
         for x in range(0,len(sentence)):
             match = 0
@@ -654,6 +716,9 @@ class Utilities:
         return matches_found
 
     def package_answer(self, raw_query, text_core, answer_window, x):
+
+        """ Takes a raw_query, text and answer_window as input and returns a context window around matches
+        to the query with the size of the answer_window. """
 
         answer = []
         l = len(text_core)
@@ -685,6 +750,8 @@ class Utilities:
 
     def split_context_row (self, context_row):
 
+        """ Splits a context row - internal utility method to support Graph class. """
+
         entries_list = []
         entries_weights = []
 
@@ -694,8 +761,9 @@ class Utilities:
 
         return entries_list, entries_weights
 
-    # need to update / remove
     def dataset_smart_packager(self, text_block, min_th=200, max_th=400):
+
+        """ Deprecated - will remove in future release. """
 
         # best outcome is to split at the end of a sentence
         # use simple regex command to split the sentence on end punctuation (e.g., '.', '!', '?')
@@ -740,6 +808,12 @@ class Utilities:
         return text_block, ""
 
     def replace_word_numbers(self, evidence):
+
+        """ Replaces word numbers with the actual number value.
+
+            -- uses the word2number python library, which can be imported separately with pip install.
+        """
+
         evidence_toks = evidence.split(" ")
 
         word_numbers_lookup = {"zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
@@ -755,7 +829,6 @@ class Utilities:
         nums_in_text_list = []
         percent_flag = False
 
-        # new - added on aug 26, 2023
         token_index_of_match_found = []
 
         for i, toks in enumerate(evidence_toks):
@@ -895,7 +968,9 @@ class CorpTokenizer:
         self.one_letter_removal = one_letter_removal
 
     def tokenize(self, text):
-        
+
+        """ Tokenizes an input text. """
+
         # strip the whitespace from the beginning and end of the text so we can tokenize the data
         text = text.strip()
         # start with basic whitespace tokenizing, 
@@ -903,7 +978,6 @@ class CorpTokenizer:
         #text2 = text.split(" ")
         # this line will split on whitespace regardless of tab or multispaces between words
         text2 = text.split()
-
 
         if self.remove_punctuation:
             text2 = Utilities().clean_list(text2)
@@ -959,6 +1033,8 @@ class TextChunker:
 
     def convert_text_to_chunks (self):
 
+        """ Converts text into chunks. """
+
         starter = 0
 
         while starter < len(self.text_chunk):
@@ -1000,6 +1076,8 @@ class TextChunker:
         return self.chunks
 
     def smooth_edge(self,starter,stopper):
+
+        """ Produces a 'smooth edge' between starter and stopper. """
 
         # default case is to return the whole text sample as single chunk
         smooth_stop = stopper
@@ -1060,4 +1138,60 @@ class TextChunker:
         # if no period or white space found, then return the original stopper
 
         return smooth_stop
+
+
+class AgentWriter:
+
+    """ Specialized Logging utility designed for capturing 'agent' and 'agent-like' inference outputs where
+    the intent is to capture a 'show-your-work' chain of logic, rather than a traditional log output, which is
+    generated through logging.  AgentWriter provides three basic options for capturing
+    this output:
+
+        -- 'screen'     - default - writes to stdout
+        -- 'file'       - writes to file
+        -- 'off'        - turns off (no action taken)
+        """
+
+    def __init__(self):
+
+        # options configured through global LLMWareConfigs
+        self.mode = LLMWareConfig().get_agent_writer_mode()
+        self.fp_base = LLMWareConfig().get_llmware_path()
+        self.fn = LLMWareConfig().get_agent_log_file()
+
+        self.file = os.path.join(self.fp_base, self.fn)
+
+        if self.mode == "screen":
+            self.writer = sys.stdout
+            self.file = None
+        elif self.mode == "file":
+            if os.path.exists(self.file):
+                self.writer = open(self.file, "a")
+            else:
+                self.writer = open(self.file, "w")
+        else:
+            # takes no action
+            self.writer = None
+            self.file = None
+
+    def write(self, text_message):
+
+        """ Writes output to selected output stream. """
+
+        if self.writer:
+            if self.mode == "file":
+                try:
+                    escape_ansi_color_codes = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+                    text_message = escape_ansi_color_codes.sub('', text_message)
+                except:
+                    pass
+            self.writer.write(text_message+"\n")
+
+    def close(self):
+
+        """ Closes at end of process if needed to close the file. """
+
+        if self.file:
+            self.writer.close()
+
 

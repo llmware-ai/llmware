@@ -97,7 +97,11 @@ class LLMWareConfig:
              "shared_lib_path": os.path.join(os.path.dirname(os.path.realpath(__file__)), "lib"),
              "logging_level": logging.WARNING,
              "logging_format": COLOR_WHITE + '%(levelname)-4s: %(message)s' + COLOR_RESET,
-             "logging_level_by_module": {"llmware.embeddings": 20, "llmware.models": 30}
+             "logging_level_by_module": {"llmware.embeddings": 20, "llmware.models": 30, "llmware.agents":20},
+             "agent_writer_mode": "screen",
+             "agent_log_file": "agent_log.txt",
+             "model_register": {"module": "llmware.models", "class": "register"},
+             "model_post_init": {"module": "llmware.models", "class": "post_init"}
              }
 
     @classmethod
@@ -423,6 +427,39 @@ class LLMWareConfig:
             return cls._conf["logging_level_by_module"][module]
         else:
             raise ConfigKeyException(module)
+
+    @classmethod
+    def set_logging_level_by_module(cls, module, level):
+
+        if module in cls._conf["logging_level_by_module"]:
+            cls._conf["logging_level_by_module"][module] = level
+        else:
+            cls._conf["logging_level_by_module"].update({module: level})
+
+        return cls._conf["logging_level_by_module"]
+
+    @classmethod
+    def get_agent_writer_mode(cls):
+        return cls._conf["agent_writer_mode"]
+
+    @classmethod
+    def set_agent_writer_mode(cls, mode):
+
+        if mode in ["screen", "file", "off"]:
+            cls._conf["agent_writer_mode"] = mode
+        else:
+            raise ConfigKeyException(mode)
+
+        return cls._conf["agent_writer_mode"]
+
+    @classmethod
+    def get_agent_log_file(cls):
+        return cls._conf["agent_log_file"]
+
+    @classmethod
+    def set_agent_log_file(cls, log_file_name):
+        cls._conf["agent_log_file"] = log_file_name
+        return cls._conf["agent_log_file"]
 
 
 class VectorDBRegistry:
