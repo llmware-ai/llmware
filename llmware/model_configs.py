@@ -241,9 +241,13 @@ global_model_repo_catalog_list = [
     {"model_name": "gpt-3.5-turbo-0125", "display_name": "GPT-3.5-Turbo-0125", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 16385},
 
-    # generative AIB models - aib-read-gpt - "main model"
-    {"model_name": "aib-read-gpt", "display_name": "AIB-READ-GPT", "model_family": "AIBReadGPTModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 2048},
+    # gpt-4o model announced in May 2024
+    {"model_name": "gpt-4o", "display_name": "GPT-4o", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
+
+    # gpt-4o-2024-0513 model announced in May 2024
+    {"model_name": "gpt-4o-2024-05-13", "display_name": "gpt-4o-2024-05-13", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
 
     # base supporting models and components
     {"model_name": "bert", "display_name": "Bert", "model_family": "BaseModel", "model_category": "base",
