@@ -1,5 +1,5 @@
 #   requirements_extras - optional libraries most often used in conjunction with llmware
-#   this libraries will be installed with the welcome_to_llmware.sh script and are used in many examples
+#   these libraries will be installed with the welcome_to_llmware.sh script and are used in many examples  
 
 torch>=1.13.1
 transformers>=4.36.0
