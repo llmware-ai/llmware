@@ -36,6 +36,8 @@ from llmware.resources import CloudBucketManager
 from llmware.configs import LLMWareConfig
 from llmware.exceptions import ModelNotFoundException, DependencyNotInstalledException, ModuleNotFoundException
 
+logger = logging.getLogger(__name__)
+
 
 class Utilities:
 
@@ -67,12 +69,12 @@ class Utilities:
 
         # deprecation warning for aarch64 linux
         if system == 'linux' and machine == 'aarch64':
-            logging.warning("Deprecation warning: as of llmware 0.2.7, we are deprecating support for aarch64 "
-                            "linux - we build, support and test on six other major platforms - Linux x86_64, "
-                            "Linux x86_64 with CUDA, Windows x86_64, Windows x86_64 with CUDA, Mac Metal, and "
-                            "Mac x86_64.  We will revisit platform support from time-to-time, due "
-                            "to availability and interest.  If you have an important need for "
-                            "support for aarch 64 linux, please raise an issue at github/llmware-ai/llmware.git")
+            logger.warning("Deprecation warning: as of llmware 0.2.7, we are deprecating support for aarch64 "
+                           "linux - we build, support and test on six other major platforms - Linux x86_64, "
+                           "Linux x86_64 with CUDA, Windows x86_64, Windows x86_64 with CUDA, Mac Metal, and "
+                           "Mac x86_64.  We will revisit platform support from time-to-time, due "
+                           "to availability and interest.  If you have an important need for "
+                           "support for aarch 64 linux, please raise an issue at github/llmware-ai/llmware.git")
 
         # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
         machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
@@ -85,8 +87,8 @@ class Utilities:
         try:
             _mod_utility = cdll.LoadLibrary(_path_graph)
         except:
-            logging.warning("warning: Module 'Graph Processor' could not be loaded from path - \n %s.\n",
-                            _path_graph)
+            logger.warning(f"warning: Module 'Graph Processor' could not be loaded from path - "
+                           f"\n {_path_graph}.\n")
 
         if not _mod_utility:
             raise ModuleNotFoundException("Graph Processor")
@@ -115,12 +117,12 @@ class Utilities:
 
         # deprecation warning for aarch64 linux
         if system == 'linux' and machine == 'aarch64':
-            logging.warning("Deprecation warning: as of llmware 0.2.7, we are deprecating support for aarch64 "
-                            "linux - we build, support and test on six other major platforms - Linux x86_64, "
-                            "Linux x86_64 with CUDA, Windows x86_64, Windows x86_64 with CUDA, Mac Metal, and "
-                            "Mac x86_64.  We will revisit from time-to-time, due "
-                            "to availability and interest.  If you have an important need for "
-                            "support for aarch 64 linux, please raise an issue at github/llmware-ai/llmware.git")
+            logger.warning("Deprecation warning: as of llmware 0.2.7, we are deprecating support for aarch64 "
+                           "linux - we build, support and test on six other major platforms - Linux x86_64, "
+                           "Linux x86_64 with CUDA, Windows x86_64, Windows x86_64 with CUDA, Mac Metal, and "
+                           "Mac x86_64.  We will revisit from time-to-time, due "
+                           "to availability and interest.  If you have an important need for "
+                           "support for aarch 64 linux, please raise an issue at github/llmware-ai/llmware.git")
 
         # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
         machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
@@ -136,8 +138,8 @@ class Utilities:
 
         except:
             # catch error, if possible
-            logging.warning("warning: Module 'PDF Parser' could not be loaded from path - \n %s.\n",
-                            _path_pdf)
+            logger.warning(f"warning: Module 'PDF Parser' could not be loaded from path - "
+                           f"\n {_path_pdf}.\n")
 
         #   if no module loaded, then raise exception
         if not _mod_pdf:
@@ -167,12 +169,12 @@ class Utilities:
 
         # deprecation warning for aarch64 linux
         if system == 'linux' and machine == 'aarch64':
-            logging.warning("Deprecation warning: as of llmware 0.2.7, we are deprecating support for aarch64 "
-                            "linux - we build, support and test on six other major platforms - Linux x86_64, "
-                            "Linux x86_64 with CUDA, Windows x86_64, Windows x86_64 with CUDA, Mac Metal, and "
-                            "Mac x86_64.  We will revisit from time-to-time, due "
-                            "to availability and interest.  If you have an important need for "
-                            "support for aarch 64 linux, please raise an issue at github/llmware-ai/llmware.git")
+            logger.warning("Deprecation warning: as of llmware 0.2.7, we are deprecating support for aarch64 "
+                           "linux - we build, support and test on six other major platforms - Linux x86_64, "
+                           "Linux x86_64 with CUDA, Windows x86_64, Windows x86_64 with CUDA, Mac Metal, and "
+                           "Mac x86_64.  We will revisit from time-to-time, due "
+                           "to availability and interest.  If you have an important need for "
+                           "support for aarch 64 linux, please raise an issue at github/llmware-ai/llmware.git")
 
         # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
         machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
@@ -188,8 +190,8 @@ class Utilities:
         except:
 
             # catch the error, if possible
-            logging.warning("warning: Module 'Office Parser' could not be loaded from path - \n %s.\n",
-                            _path_office)
+            logger.warning(f"warning: Module 'Office Parser' could not be loaded from path - "
+                           f"\n {_path_office}.\n")
 
         # if no module loaded, then raise exception
         if not _mod:
@@ -218,8 +220,8 @@ class Utilities:
 
             #   if not found locally, then pull from global repo
 
-            logging.info("update: gpt2 tokenizer used as default - not in local model repository, so pulling "
-                            "from global repo - this may take a few seconds the first time to download.")
+            logger.info("update: gpt2 tokenizer used as default - not in local model repository, so pulling "
+                        "from global repo - this may take a few seconds the first time to download.")
 
             files = CloudBucketManager().pull_single_model_from_llmware_public_repo(model_name="gpt2")
 
@@ -267,11 +269,11 @@ class Utilities:
                         # unusual, but if unable to write a particular element, then will catch error and skip
                         c.writerow(cfile[z])
                     except:
-                        logging.warning(f"warning: could not write item in row {z} - skipping")
+                        logger.warning(f"warning: could not write item in row {z} - skipping")
                         pass
                 else:
-                    logging.error("error:  CSV ERROR:   Row exceeds MAX SIZE: %s %s", sys.getsizeof(cfile[z])
-                                  ,cfile[z])
+                    logger.error(f"error:  CSV ERROR:   Row exceeds MAX SIZE: {sys.getsizeof(cfile[z])} - "
+                                 f"{cfile[z]}")
 
         csvfile.close()
 
@@ -303,7 +305,7 @@ class Utilities:
             try:
                 writer.writerows(rows)
             except csv.Error as e:
-                logging.exception("Exception writing csv file")
+                logger.error("Exception writing csv file - not successful.")
                 return False
 
         return True
@@ -438,7 +440,7 @@ class Utilities:
             import urllib.parse
             return urllib.parse.quote_plus(string)
         except TypeError:
-            logging.exception("Error encoding string (%s)", string)
+            logger.error(f"Error encoding string - {string}")
             return ""
 
     @staticmethod
@@ -770,8 +772,6 @@ class Utilities:
 
         sentences = list(re.split('(?<=[.!?])', text_block))
 
-        # logging.info("update: dataset smart packager - len sentences: %s ", len(sentences))
-
         if len(sentences) == 1 or len(sentences) == 0:
             # easy case - text block ends with "." -> return the whole block
             return text_block, ""
@@ -850,16 +850,16 @@ class Utilities:
                             my_num = w2n.word_to_num(num_toks_in_progress) * 0.01
                         except:
                             my_num = -9999.1234
-                            logging.info("update: could not import word2number to look for 'number-words' - if "
-                                         "you wish to use, `pip3 install word2number`")
+                            logger.info("update: could not import word2number to look for 'number-words' - if "
+                                        "you wish to use, `pip3 install word2number`")
                     else:
                         try:
                             from word2number import w2n
                             my_num = w2n.word_to_num(num_toks_in_progress)
                         except:
                             my_num = -9999.1234
-                            logging.info("update: could not import word2number to look for 'number-words' - if "
-                                         "you wish to use, `pip3 install word2number`")
+                            logger.info("update: could not import word2number to look for 'number-words' - if "
+                                        "you wish to use, `pip3 install word2number`")
 
                     if my_num != -9999.1234:
                         text_with_numbers += str(my_num) + " "
@@ -875,8 +875,8 @@ class Utilities:
                 # add next token
                 text_with_numbers += toks + " "
 
-        logging.info("update: text_with_numbers output: %s ", text_with_numbers)
-        logging.info("update: nums found list: %s ", nums_in_text_list)
+        logger.info(f"update: text_with_numbers output: {text_with_numbers}")
+        logger.info(f"update: nums found list: {nums_in_text_list}")
 
         return text_with_numbers, nums_in_text_list, token_index_of_match_found
 
@@ -900,7 +900,7 @@ class Utilities:
         #   format = "m4a" works
         fmt = path_to_file_to_convert.split(".")[-1]
         if fmt not in ["mp3", "m4a", "mp4", "wma", "aac", "ogg", "flv"]:
-            logging.warning(f"warning: file format - {fmt} - is not recognized and can not be converted.")
+            logger.warning(f"warning: file format - {fmt} - is not recognized and can not be converted.")
             return None
 
         try:
@@ -908,10 +908,10 @@ class Utilities:
             outfile_path = os.path.join(save_path, file_out)
             given_audio.export(outfile_path, format="wav")
         except:
-            logging.warning(f"warning: could not successfully convert file @ {path_to_file_to_convert} to .wav - "
-                            f"one common issue is the need to install ffmpeg which is a core audio/video "
-                            f"processing library.  It can be installed with apt (linux) ; brew (mac) ; or "
-                            f"downloaded directly (windows).")
+            logger.warning(f"warning: could not successfully convert file @ {path_to_file_to_convert} to .wav - "
+                           f"one common issue is the need to install ffmpeg which is a core audio/video "
+                           f"processing library.  It can be installed with apt (linux) ; brew (mac) ; or "
+                           f"downloaded directly (windows).")
             return None
 
         return outfile_path
@@ -947,7 +947,7 @@ class Utilities:
             try:
                 value = int(value)
             except:
-                logging.warning(f"warning: could not convert value into integer as expected - {key} - {value}")
+                logger.warning(f"warning: could not convert value into integer as expected - {key} - {value}")
 
             output_dict.update({key: value})
 
