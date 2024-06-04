@@ -23,6 +23,8 @@ All wheels are built and tested on:
 
 **Release Notes**  
 
+--**0.3.0** released in the week of June 4, 2024 - continued pruning of required dependencies with split of python dependencies into a small minimal set of requirements (~10 in requirements.txt) that are included in the pip install, with an additional set of optional dependencies provided as 'extras', reflected in both the requirements_extras.txt file, and available over pip with the added instruction - `pip3 install 'llmware[full]'`.  Notably, commonly used libraries such as transformers, torch and openai are now in the 'extras' as most llmware use cases do not require them, and this greatly simplifies the ability to install llmware.  The `welcome_to_llmware.sh` and `welcome_to_llmware_windows.sh` have also been updated to install both the 'core' and 'extra' set of requirements.  Other subtle, but significant, architectural changes include offering more extensibility for adding new model classes, configurable global base model methods for post_init and register, a new InferenceHistory state manager, and enhanced logging options.  
+
 --**0.2.15** released in the week of May 20, 2024 - removed pytorch dependency as a global import, and shifted to dynamically loading of torch in the event that it is called in a specific model class.   This enables running most of llmware code and examples without pytorch or transformers loaded.   The main areas of torch (and transformers) dependency is in using HFGenerativeModels and HFEmbeddingModels.   
 
   - note: we have seen some new errors caused with Pytorch 2.3 - which are resolved by down-leveling to `pip3 install torch==2.1`  
