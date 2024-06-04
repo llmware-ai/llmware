@@ -1,18 +1,13 @@
-boto3>=1.24.53  
+#   core requirements for main llmware operations and use cases
+#   please see also requirements_extras.txt
+boto3>=1.24.53
 numpy>=1.23.2
-openai>=1.0
 pymongo>=4.7.0
-torch>=1.13.1
-transformers>=4.36.0
-Wikipedia-API==0.6.0
 psycopg-binary==3.1.17
 psycopg==3.1.17
 pgvector==0.2.4  
 colorama==0.4.6
-einops==0.7.0
 librosa>=0.10.0
-
 tokenizers>=0.15.0
 huggingface-hub>=0.19.4  
-requests>=2.31.0
 
