@@ -629,7 +629,7 @@ if __name__ == "__main__":
 
 **Step 1 - Install llmware** -  `pip3 install llmware` or `pip3 install 'llmware[full]'`  
 
-- note: starting with v0.3.0, we provide options for a [core install](https://github.com/llmware-ai/llmware/requirements.txt) (minimal set of dependencies) or [full install](https://github.com/llmware-ai/llmware/requirements_extras.txt) (adds to the core with wider set of related python libraries).  
+- note: starting with v0.3.0, we provide options for a [core install](https://github.com/llmware-ai/llmware/blob/main/llmware/requirements.txt) (minimal set of dependencies) or [full install](https://github.com/llmware-ai/llmware/blob/main/llmware/requirements_extras.txt) (adds to the core with wider set of related python libraries).  
 
 <details>
 <summary><b>Step 2- Go to Examples</b> - Get Started Fast with 100+ 'Cut-and-Paste' Recipes </summary>
@@ -819,7 +819,7 @@ See also [additional deployment/install release notes in wheel_archives](https:/
 - Enhanced Model class base with new configurable post_init and register methods  
 - Created InferenceHistory to track global state of all inferences completed  
 - Multiple improvements and updates to logging at module level  
-- Note: starting with v0.3.0, pip install provides two options - a base minimal install `pip3 install llmware` which will support most use cases, and a larger install `pip3 install llmware[full]` with other commonly-used libraries.  
+- Note: starting with v0.3.0, pip install provides two options - a base minimal install `pip3 install llmware` which will support most use cases, and a larger install `pip3 install 'llmware[full]'` with other commonly-used libraries.  
   
 **Wednesday, May 22 - v0.2.15**  
 - Improvements in Model class handling of Pytorch and Transformers dependencies (just-in-time loading, if needed)  
