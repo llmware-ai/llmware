@@ -1,4 +1,4 @@
-# Copyright 2023 llmware
+# Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -38,6 +38,8 @@ from llmware.retrieval import Query
 from llmware.library import Library
 from llmware.exceptions import LibraryObjectNotFoundException, PromptNotInCatalogException
 from llmware.configs import LLMWareConfig
+
+logger = logging.getLogger(__name__)
 
 
 class Prompt:
@@ -130,7 +132,7 @@ class Prompt:
                                                                      prompt_wrapper=prompt_wrapper,
                                                                      instruction_following=instruction_following)
                                                                      
-            # print("update: loading HF Generative model - ", self.llm_model)
+            logger.debug(f"update: loading HF Generative model - {self.llm_model}")
 
         # default batch size, assuming all LLMs have min 2048 full context (50% in / 50% out)
         self.context_window_size = 1000
@@ -165,7 +167,7 @@ class Prompt:
             new_prompt_id = PromptState(self).issue_new_prompt_id()
             self.prompt_id = PromptState(self).initiate_new_state_session(new_prompt_id)
 
-            logging.info(f"update: creating new prompt id - {new_prompt_id}")
+            logger.info(f"update: creating new prompt id - {new_prompt_id}")
       
         self.save_prompt_state = save_state
 
@@ -193,8 +195,6 @@ class Prompt:
         # prompt catalog options
         if prompt_catalog:
             self.pc = prompt_catalog
-            # print("update: loading custom prompt catalog")
-
         else:
             self.pc = PromptCatalog()
 
@@ -322,7 +322,7 @@ class Prompt:
                 ai_dict.update({key:value})
 
         # captures new interaction into the interaction history
-        logging.info("update: ai_dict getting registered - %s", ai_dict["event_type"])
+        logger.info(f"update: ai_dict getting registered - {ai_dict['event_type']}")
 
         PromptState(self).register_interaction(ai_dict)
         new_dialog = {"user": ai_dict["prompt"], "bot": ai_dict["llm_response"]}
@@ -382,7 +382,7 @@ class Prompt:
 
         # enables use of 'prompt_with_sources'
         if not sources["text_batch"]:
-            logging.warning("No source added in .add_source_new_query.")
+            logger.warning("No source added in .add_source_new_query.")
 
         return sources
 
@@ -399,7 +399,7 @@ class Prompt:
 
         # enables use of 'prompt_with_sources'
         if not sources["text_batch"]:
-            logging.warning("No source added in .add_source_query_results.")
+            logger.warning("No source added in .add_source_query_results.")
 
         return sources
 
@@ -419,7 +419,7 @@ class Prompt:
 
         # enables use of 'prompt_with_sources'
         if not sources["text_batch"]:
-            logging.warning("No source added in .add_source_library.")
+            logger.warning("No source added in .add_source_library.")
 
         return sources
 
@@ -435,14 +435,14 @@ class Prompt:
                 output = Utilities().fast_search_dicts(query, output, remove_stop_words=True)
 
         for i, entries in enumerate(output):
-            logging.info("update: source entries - %s - %s", i, entries)
+            logger.info(f"update: source entries - {i} - {entries}")
 
         # step 2 - package wiki article results as source, loaded to prompt, and packaged as 'llm context'
         sources = Sources(self).package_source(output,aggregate_source=True)
 
         # enables use of 'prompt_with_sources'
         if not sources["text_batch"]:
-            logging.warning("No source added in .add_source_wikipedia.")
+            logger.warning("No source added in .add_source_wikipedia.")
 
         return sources
 
@@ -455,7 +455,7 @@ class Prompt:
 
         fin_info = YFinance().ticker(ticker).info
 
-        logging.info("update: fin_info - %s ", fin_info)
+        logger.info(f"update: fin_info - {fin_info}")
 
         output = ""
         if key_list:
@@ -468,14 +468,14 @@ class Prompt:
 
         results = {"file_source": "yfinance-" + str(ticker), "page_num": "na", "text": output}
 
-        logging.info("update: yfinance results - %s ", results)
+        logger.info(f"update: yfinance results - {results}")
 
         # step 2 - package as source
         sources = Sources(self).package_source([results], aggregate_source=True)
 
         # enables use of 'prompt_with_sources'
         if not sources["text_batch"]:
-            logging.warning("No source added in .add_source_yahoo_finance.")
+            logger.warning("No source added in .add_source_yahoo_finance.")
 
         return sources
 
@@ -502,7 +502,6 @@ class Prompt:
                     for entries in values:
                         text_string_out += entries + " "
 
-            # print("update: kg_output - ", kg_output, text_string_out)
             source_output = [{"text": text_string_out, "page_num":0, "file_source": "knowledge_graph"}]
 
             sources = Sources(self).package_source(source_output, aggregate_source=True)
@@ -511,7 +510,7 @@ class Prompt:
 
         # enables use of 'prompt_with_sources'
         if not sources["text_batch"]:
-            logging.warning("No source added in .add_source_knowledge_graph.")
+            logger.warning("No source added in .add_source_knowledge_graph.")
 
         return sources
 
@@ -532,7 +531,7 @@ class Prompt:
 
         # enables use of 'prompt_with_sources'
         if not sources["text_batch"]:
-            logging.warning("No source added in .add_source_website.")
+            logger.warning("No source added in .add_source_website.")
 
         return sources
 
@@ -552,17 +551,10 @@ class Prompt:
 
         if not output: output = []
 
-        # START TESTING HERE
-        """
-        for i, entries in enumerate(output):
-            print("source entries: ", query, i, entries)
-        """
-        # END TESTING HERE
-
         sources = Sources(self).package_source(output, aggregate_source=True)
 
         if not sources["text_batch"]:
-            logging.warning("No source added in .add_source_document.")
+            logger.warning("No source added in .add_source_document.")
 
         return sources
 
@@ -576,13 +568,11 @@ class Prompt:
 
         interaction_source = [{"text": interaction, "page_num":0, "file_source":"dialog_tracker"}]
 
-        # print("interaction_source - ", interaction_source)
-
         sources = Sources(self).package_source(interaction_source, aggregate_source=True)
 
         # enables use of 'prompt_with_sources'
         if not sources["text_batch"]:
-            logging.warning("No source added in .add_source_last_interaction_step.")
+            logger.warning("No source added in .add_source_last_interaction_step.")
 
         return sources
 
@@ -651,16 +641,14 @@ class Prompt:
         # if len(self.source_materials) == 0:
         if not self.verify_source_materials_attached():
 
-            logging.warning("No source materials attached to the Prompt. "
-                            "Running prompt_with_source inference without source may lead to unexpected results.")
+            logger.warning("No source materials attached to the Prompt. "
+                           "Running prompt_with_source inference without source may lead to unexpected results.")
 
             response_dict = self.prompt_main(prompt,prompt_name=self.prompt_type,context="",
                                              register_trx=False,temperature=temperature)
 
             # by default - prompt_with_source returns a list of response dictionaries
             return [response_dict]
-            # logging.error("error:  to use prompt_with_source, there must be a loaded source - try '.add_sources' first")
-            # return [{}]
 
         #   this is the 'default' and will use the first batch of source material only
         if first_source_only:
@@ -715,18 +703,18 @@ class Prompt:
                 # log progress of iterations at info level
                 if not verbose:
 
-                    logging.info("update: prompt_with_sources - iterating through batch - %s of total %s - %s",
-                             i, len(self.source_materials), response_dict)
+                    logger.info(f"update: prompt_with_sources - iterating through batch - {i} of total "
+                                f"{len(self.source_materials)} - {response_dict}")
 
-                    logging.info("update: usage stats - %s ", response_dict["usage"])
+                    logger.info(f"update: usage stats - {response_dict['usage']}")
 
                 else:
-                    print(f"update: iterating through source batches - {i} - {response_dict['llm_response']}")
+                    logger.info(f"update: iterating through source batches - {i} - {response_dict['llm_response']}")
 
         # register inferences in state history, linked to prompt_id
         for l, llm_inference in enumerate(response_list):
 
-            logging.info ("update: llm inference - %s - %s - %s", l, len(response_list),llm_inference)
+            logger.info (f"update: llm inference - {l} - {len(response_list)} - {llm_inference}")
 
             self.register_llm_inference(llm_inference)
 
@@ -985,10 +973,10 @@ class Prompt:
         if max_batch_cap:
             if big_batches > max_batch_cap:
 
-                logging.warning("warning: Prompt document summarization - you have requested a "
-                                "maximum cap of %s batches - so truncating the batches from %s to"
-                                "the cap requested - note that content will be missing as a result.",
-                                max_batch_cap, big_batches)
+                logger.warning(f"warning: Prompt document summarization - you have requested a "
+                               f"maximum cap of {max_batch_cap} batches - so truncating the batches "
+                               f"from {big_batches} to "
+                               f"the cap requested - note that content will be missing as a result.")
 
                 big_batches = max_batch_cap
 
@@ -1016,15 +1004,13 @@ class Prompt:
 
         source = self.add_source_query_results(query_results)
 
-        # print("update - len source materials - ", len(self.source_materials))
-
         if max_batch_cap:
             if len(self.source_materials) > max_batch_cap:
 
-                logging.warning("warning: Prompt document summarization - you have requested a "
-                                "maximum cap of %s batches - so truncating the batches from %s to"
-                                "the cap requested - note that content will be missing as a result.",
-                                max_batch_cap, len(self.source_materials))
+                logger.warning(f"warning: Prompt document summarization - you have requested a "
+                               f"maximum cap of {max_batch_cap} batches - so truncating the batches from "
+                               f"{len(self.source_materials)} to"
+                               f"the cap requested - note that content will be missing as a result.")
 
                 self.source_materials = self.source_materials[0:max_batch_cap]
 
@@ -1058,7 +1044,6 @@ class Prompt:
             output_text = ""
 
             for i, entries in enumerate(response):
-                # print("update: summaries - ", i, entries)
                 if "llm_response" in entries:
                     output_text += entries["llm_response"] + "\n"
 
@@ -1073,7 +1058,7 @@ class Prompt:
         """ New document summarization method built on slim-summary-tool. """
 
         if real_time_update:
-            print(f"update: Prompt - summarize_document_fc - document - {fn}")
+            logger.info(f"update: Prompt - summarize_document_fc - document - {fn}")
 
         # note: when loading model, context window is automatically set based on model
         self.load_model(summary_model, temperature=0.0, sample=False)
@@ -1089,15 +1074,14 @@ class Prompt:
             self.source_materials = self.source_materials[0:max_batch_cap]
 
         if real_time_update:
-            print("update: Prompt - summarize_document_fc - number of source batches - ", len(self.source_materials))
+            logger.info(f"update: Prompt - summarize_document_fc - number of source batches - "
+                        f"{len(self.source_materials)}")
 
         key_points = []
 
         responses = self.prompt_with_source(topic, first_source_only=False, verbose=True)
 
         for i, resp in enumerate(responses):
-
-            # print("llm response: ", i, resp)
 
             for point in resp["llm_response"]:
                 if point not in key_points:
@@ -1144,7 +1128,6 @@ class Prompt:
             output_text = ""
 
             for i, entries in enumerate(response):
-                # print("update: summaries - ", i, entries)
                 if "llm_response" in entries:
                     output_text += entries["llm_response"] + "\n"
 
@@ -1212,8 +1195,6 @@ class Prompt:
         for i, response_dict in enumerate(response):
             qc = QualityCheck(self).fact_checker_numbers(response_dict)
 
-            # print("FACT CHECK - ", qc)
-
             response_dict.update({"fact_check": qc})
             response_out.append(response_dict)
 
@@ -1232,8 +1213,6 @@ class Prompt:
         response_out = []
         for i, response_dict in enumerate(response):
             qc = QualityCheck(self).source_reviewer(response_dict)
-
-            # print("SOURCE REVIEW - ", qc)
 
             response_dict.update({"source_review": qc})
             response_out.append(response_dict)
@@ -1254,8 +1233,6 @@ class Prompt:
         response_out = []
         for i, response_dict in enumerate(response):
             qc = QualityCheck(self).token_comparison(response_dict)
-
-            # print("COMPARISON STATS - ", qc)
 
             response_dict.update({"comparison_stats": qc})
             response_out.append(response_dict)
@@ -1306,8 +1283,8 @@ class Prompt:
                 nf.append(nf3)
 
         if len(nf) == 0:
-            logging.warning("error: Prompt().classify_not_response() expects at least one of the tests to be marked"
-                            "as True - none of the tests were executed - please try again with one test as 'True'")
+            logger.warning("error: Prompt().classify_not_response() expects at least one of the tests to be marked"
+                           "as True - none of the tests were executed - please try again with one test as 'True'")
 
             return output_response
 
@@ -1471,8 +1448,6 @@ class Sources:
 
         samples_chunked = []
 
-        # print("update: input samples len - ", len(samples))
-
         for x in range(0,len(samples)):
 
             t = self.token_counter(samples[x]["text"])
@@ -1485,11 +1460,7 @@ class Sources:
 
         samples = samples_chunked
 
-        # print("update: chunked samples len - ", len(samples))
-
         for x in range(0, len(samples)):
-
-            # print("update: doc_sources_per_batch - ", x, doc_sources_per_batch)
 
             t = self.token_counter(samples[x]["text"])
 
@@ -1675,8 +1646,6 @@ class Sources:
             new_dict = base_dict
             new_dict.update({"text":self.tokenizer.decode(new_chunk_tokens)})
             chunks.append(new_dict)
-
-        # print("update: created sample chunks - ", chunk_count, max_size, sample_len, len(chunks))
 
         return chunks
 
@@ -2312,8 +2281,6 @@ class QualityCheck:
         new_prompt = Prompt().load_model(selected_model_name,api_key=model_api_key)
         new_response = new_prompt.prompt_from_catalog(prompt="", context=response_dict["llm_response"],
                                                       prompt_name="not_found_classifier")
-
-        # print("new response - ", new_response)
 
         llm_response = new_response["llm_response"]
         llm_response_cleaned = re.sub("[;!?•(),.\n\r\t\u2022]", "", llm_response).strip().lower()
