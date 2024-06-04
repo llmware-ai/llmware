@@ -1,4 +1,4 @@
-# Copyright 2023 llmware
+# Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -34,6 +34,8 @@ from llmware.util import Utilities, CorpTokenizer
 from llmware.models import ModelCatalog
 from llmware.exceptions import LibraryObjectNotFoundException,UnsupportedEmbeddingDatabaseException,\
     ImportingSentenceTransformerRequiresModelNameException, EmbeddingModelNotFoundException
+
+logger = logging.getLogger(__name__)
 
 
 class Query:
@@ -175,7 +177,7 @@ class Query:
         if embedding_model_name:
             for emb in embedding_record:
 
-                logging.info("update: Query - embedding record lookup - %s - %s", embedding_model_name, emb)
+                logger.info(f"update: Query - embedding record lookup - {embedding_model_name} - {emb}")
 
                 if emb["embedding_model"] == embedding_model_name:
 
@@ -219,8 +221,8 @@ class Query:
 
         if matched_lib_model:
 
-            logging.info("update: Query - found matches in embedding record - %s - %s",
-                         self.embedding_db, self.embedding_model_name)
+            logger.info(f"update: Query - found matches in embedding record - "
+                        f"{self.embedding_db} - {self.embedding_model_name}")
 
             if not self.embedding_model:
                 self.load_embedding_model()
@@ -279,8 +281,8 @@ class Query:
                     self.embedding_model = ModelCatalog().load_model(selected_model=self.embedding_model_name,
                                                                      api_key=self.model_api_key)
                 else:
-                    logging.info("update: Query - selected embedding model could not be found- %s ",
-                                    self.embedding_model_name)
+                    logger.info(f"update: Query - selected embedding model could not be found - "
+                                f"{self.embedding_model_name}")
 
         return self
 
@@ -304,7 +306,7 @@ class Query:
         for rk in self.query_result_min_required_keys:
             if rk not in validated_list:
                 validated_list.append(rk)
-                logging.warning("warning: Query - adding required keys useful in downstream processing - %s ", rk)
+                logger.info(f"warning: Query - adding required keys useful in downstream processing - {rk}")
 
         # setting updated query_return_keys that is used in packaging query results
         self.query_result_return_keys = validated_list
@@ -393,7 +395,7 @@ class Query:
         output_result = {"results": [], "doc_ID": [], "file_source": []}
 
         if query_type not in ["text", "semantic"]:
-            logging.error("error: Query().query expects a query type of either 'text' or 'semantic'")
+            logger.error("error: Query().query expects a query type of either 'text' or 'semantic'")
             return output_result
 
         if query_type == "text":
@@ -454,8 +456,8 @@ class Query:
             value_range = doc_filter["file_source"]
 
         else:
-            logging.warning("warning: Query - expected to receive document filter with keys of 'doc_ID' or "
-                            "'file_source' - as a safe fall-back - will run the requested query without a filter.")
+            logger.warning("warning: Query - expected to receive document filter with keys of 'doc_ID' or "
+                           "'file_source' - as a safe fall-back - will run the requested query without a filter.")
 
         if key:
             cursor = CollectionRetrieval(self.library_name, account_name=self.account_name). \
@@ -501,7 +503,7 @@ class Query:
                 f = self.export_one_table_to_csv(entry,output_fp=LLMWareConfig.get_query_path(),
                                                  output_fn="table_{}.csv".format(i))
 
-                logging.warning("update: csv created - %s - %s", LLMWareConfig.get_query_path(),f)
+                logger.warning(f"update: csv created - {LLMWareConfig.get_query_path()}- {f}")
 
         return retrieval_dict
 
@@ -552,8 +554,8 @@ class Query:
                 text_search_with_key_value_dict_filter(query,validated_filter_dict)
 
         else:
-            logging.error("error: Query text_query_with_custom_filter - keys in filter_dict are not"
-                          "recognized as part of the library.collection default_keys list.")
+            logger.error("error: Query text_query_with_custom_filter - keys in filter_dict are not"
+                         "recognized as part of the library.collection default_keys list.")
 
             return -1
 
@@ -613,7 +615,7 @@ class Query:
 
                 for key in self.query_result_return_keys:
                     if key not in raw_qr:
-                        logging.warning("warning: Query() - selected output key not found in result - %s ", key)
+                        logger.warning(f"warning: Query() - selected output key not found in result - {key}")
                     else:
                         output_dict.update({key: raw_qr[key]})
 
@@ -672,7 +674,7 @@ class Query:
 
             for key in self.query_result_return_keys:
                 if key not in raw_qr:
-                    logging.warning("warning: Query() - selected output key not found in result - %s ", key)
+                    logger.warning(f"warning: Query() - selected output key not found in result - {key}")
                 else:
                     output_dict.update({key: raw_qr[key]})
 
@@ -721,8 +723,8 @@ class Query:
                                                                   sample_count=result_count)
 
         else:
-            logging.error("error: Query - embedding record does not indicate embedding db - %s "
-                          "and/or embedding model - %s ", self.embedding_db, self.embedding_model)
+            logger.error(f"error: Query - embedding record does not indicate embedding db - "
+                         f"{self.embedding_db} and/or embedding model - {self.embedding_model}")
 
             raise UnsupportedEmbeddingDatabaseException(self.embedding_db)
 
@@ -782,8 +784,8 @@ class Query:
                                                                   sample_count=result_count)
 
         else:
-            logging.error("error: Query - embedding record does not indicate embedding db- %s and/or "
-                          "an embedding_model - %s ", self.embedding_db, self.embedding_model)
+            logger.error(f"error: Query - embedding record does not indicate embedding db- {self.embedding_db} "
+                         f"and/or an embedding_model - {self.embedding_model}")
 
             raise UnsupportedEmbeddingDatabaseException(self.embedding_db)
 
@@ -828,8 +830,8 @@ class Query:
                                                                   sample_count=result_count)
 
         else:
-            logging.error("error: Query - embedding record does not indicate embedding db- %s and/or "
-                          "embedding model - %s ", self.embedding_db, self.embedding_model)
+            logger.error(f"error: Query - embedding record does not indicate embedding db- "
+                         f"{self.embedding_db} and/or embedding model - {self.embedding_model}")
 
             raise UnsupportedEmbeddingDatabaseException(self.embedding_db)
 
@@ -862,10 +864,11 @@ class Query:
 
         # safety check
         if safety_check and result_count > 100:
-            logging.warning("warning: Query().dual_pass_query runs a comparison of output rankings using semantic "
-                            "and text.  This particular implementation is not optimized for sample lists longer "
-                            "than ~100 X 100.  To remove this warning, there are two options - (1) set the "
-                            "safety_check to False in the method declaration, or (2) keep sample count below 100.")
+            logger.info("warning: Query().dual_pass_query runs a comparison of output rankings using semantic "
+                        "and text.  This particular implementation is not optimized for sample lists longer "
+                        "than ~100 X 100.  To remove this warning, there are two options - (1) set the "
+                        "safety_check to False in the method declaration, or (2) keep sample count below 100.")
+
             result_count = 100
 
         # following keys are required for dual pass query to work, add them if user has omitted them
@@ -1007,8 +1010,8 @@ class Query:
 
         if query_mode not in ["text", "semantic", "hybrid"]:
 
-            logging.error("error: Query document_filter supports query types - 'text', "
-                          "'semantic', and 'hybrid' - type selected not recognized - %s ", query_mode)
+            logger.error(f"error: Query document_filter supports query types - 'text', "
+                         f"'semantic', and 'hybrid' - type selected not recognized - {query_mode}")
 
             return result_dict
 
@@ -1024,8 +1027,8 @@ class Query:
 
         if not result_dict:
 
-            logging.error("error: Query file_selector_only could not find a result - unexpected error - %s ",
-                          filter_topic)
+            logger.error(f"error: Query file_selector_only could not find a result - unexpected error - "
+                         f"{filter_topic}")
 
             return result_dict
 
@@ -1044,14 +1047,14 @@ class Query:
                 if "doc_ID" in doc_id_list:
                     doc_id_list = doc_id_list["doc_ID"]
                 else:
-                    logging.warning("warning: could not recognize doc id list requested.  by default, "
-                                    "will set to all documents in the library collection.")
+                    logger.warning("warning: could not recognize doc id list requested.  by default, "
+                                   "will set to all documents in the library collection.")
 
                     doc_id_list = self.list_doc_id()
 
         if not page_list:
-            logging.warning("warning: page lookup requested, but no value range identified.  by default, will set "
-                            "to retrieve the first page only.")
+            logger.warning("warning: page lookup requested, but no value range identified.  by default, will set "
+                           "to retrieve the first page only.")
             page_list = [1]
 
         if text_only:
@@ -1329,7 +1332,7 @@ class Query:
         output = CollectionRetrieval(self.library_name, account_name=self.account_name).filter_by_key_dict(kv_dict)
 
         if len(output) == 0:
-            logging.warning(f"update: Query - document_lookup  - nothing found - {doc_id} - {file_source}")
+            logger.warning(f"update: Query - document_lookup  - nothing found - {doc_id} - {file_source}")
             result = []
 
             return result
@@ -1358,7 +1361,7 @@ class Query:
         output = CollectionRetrieval(self.library_name, account_name=self.account_name).filter_by_key_dict(kv_dict)
 
         if len(output) == 0:
-            logging.info("update: Query - Library - block_lookup - block not found: %s ", block_id)
+            logger.info(f"update: Query - Library - block_lookup - block not found: {block_id}")
             result = None
             
             return result
@@ -1590,7 +1593,7 @@ class Query:
 
             for key, value in validated_filter_dict.items():
                 if key not in entry:
-                    logging.warning("warning: Query - retrieval cursor does not contain filter key - %s ", key)
+                    logger.warning(f"warning: Query - retrieval cursor does not contain filter key - {key}")
                 else:
                     if entry[key] == value:
                         result_output.append(entry)
@@ -1610,7 +1613,7 @@ class Query:
             if key in self.library.default_keys:
                 validated_filter_dict.update({key:values})
             else:
-                logging.warning("warning: Query - filter key not in library collection - %s ", key)
+                logger.warning(f"warning: Query - filter key not in library collection - {key}")
 
         return validated_filter_dict
 

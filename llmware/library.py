@@ -36,6 +36,8 @@ from llmware.exceptions import LibraryNotFoundException, SetUpLLMWareWorkspaceEx
     CollectionDatabaseNotFoundException, ImportingSentenceTransformerRequiresModelNameException, \
     UnsupportedEmbeddingDatabaseException, InvalidNameException
 
+logger = logging.getLogger(__name__)
+
 
 class Library:
 
@@ -151,7 +153,8 @@ class Library:
 
         if library_exists:
             # do not create
-            logging.info("update: library already exists - returning library - %s - %s ", library_name, account_name)
+            logger.info(f"update: library already exists - returning library - {library_name} - {account_name}")
+
             return self.load_library(library_name, account_name)
 
         # assign self.library_name to the 'safe' library_name
@@ -167,8 +170,8 @@ class Library:
 
         if safe_name != library_name:
 
-            logging.warning("warning: selected library name is being changed for "
-                            "safety on selected resource - %s", safe_name)
+            logger.warning(f"warning: selected library name is being changed for safety on selected resource - "
+                           f"{safe_name}")
 
             if isinstance(safe_name,str):
                 library_name = safe_name
@@ -263,7 +266,7 @@ class Library:
         library_exists = self.check_if_library_exists(library_name, account_name=account_name)
 
         if not library_exists:
-            logging.error("error: library/account not found - %s - %s ", library_name, account_name)
+            logger.error(f"error: library/account not found - {library_name} - {account_name}")
             raise LibraryNotFoundException(library_name, account_name)
 
         self.library_name = library_name
@@ -320,8 +323,7 @@ class Library:
             library_card= LibraryCatalog().get_library_card(lib_lookup_name, account_name=acct_lookup_name)
 
         if not library_card:
-            logging.warning("warning:  error retrieving library card - not found - %s - %s ",
-                            library_name, account_name)
+            logger.warning(f"warning:  error retrieving library card - not found - {library_name} - {account_name}")
 
         return library_card
 
@@ -432,16 +434,16 @@ class Library:
 
         if not library_card:
 
-            logging.error("error: library/account not found - %s - %s ", self.library_name, self.account_name)
+            logger.error(f"error: library/account not found - {self.library_name} - {self.account_name}")
             raise LibraryNotFoundException(self.library_name, self.account_name)
 
         # embedding record will be a list of {"embedding_status" | "embedding_model" | "embedding_db"}
-        logging.info("update: library_card - %s ", library_card)
+        logger.info(f"update: library_card - {library_card}")
 
         if "embedding" in library_card:
             embedding_record = library_card["embedding"]
         else:
-            logging.warning("warning: could not identify embedding record in library card - %s ", library_card)
+            logger.warning(f"warning: could not identify embedding record in library card - {library_card}")
             embedding_record = None
 
         return embedding_record
@@ -458,7 +460,7 @@ class Library:
         library_card = LibraryCatalog(self).get_library_card(self.library_name, self.account_name)
 
         if not library_card:
-            logging.error("error: library/account not found - %s - %s ", self.library_name, self.account_name)
+            logger.error(f"error: library/account not found - {self.library_name} - {self.account_name}")
             raise LibraryNotFoundException(self.library_name, self.account_name)
 
         status_message = library_card["knowledge_graph"]
@@ -632,7 +634,7 @@ class Library:
                                  verbose_level=verbose_level,
                                  copy_files_to_library=copy_files_to_library).ingest(input_folder_path,dupe_check=True)
 
-        # print("update: parsing results - ", parsing_results)
+        logger.debug(f"update: parsing results - {parsing_results}")
 
         # post-processing:  get the updated lib_counters
         lib_counters_after = self.get_library_card()
@@ -648,9 +650,9 @@ class Library:
                               "tables_added": lib_counters_after["tables"] - lib_counters_before["tables"],
                               "rejected_files": parsing_results["rejected_files"]}
         else:
-            logging.error("error: unexpected - could not identify the library_card correctly")
+            logger.error("error: unexpected - could not identify the library_card correctly")
 
-        logging.info("update: output_results - %s ", output_results)
+        logger.info(f"update: output_results - {output_results}")
 
         # update collection text index in collection after adding documents
         # LibraryCollection(self).create_index()
@@ -879,12 +881,12 @@ class Library:
         # check if instantiated model and tokenizer -> load as HuggingFace model
         if model:
             if from_hf:
-                logging.info("update: loading hf model")
+                logger.info("update: loading hf model")
                 my_model = ModelCatalog().load_hf_embedding_model(model, tokenizer)
                 batch_size = 50
 
             if from_sentence_transformer:
-                logging.info("update: loading sentence transformer model")
+                logger.info("update: loading sentence transformer model")
                 if not embedding_model_name:
                     raise ImportingSentenceTransformerRequiresModelNameException
 
@@ -895,7 +897,7 @@ class Library:
                 my_model = ModelCatalog().load_model(selected_model=embedding_model_name, api_key=model_api_key)
 
         if not my_model:
-            logging.error("error: install_new_embedding - can not identify a selected model")
+            logger.error("error: install_new_embedding - can not identify a selected model")
             return -1
 
         # new - insert - handle no vector_db passed
@@ -913,10 +915,9 @@ class Library:
         embeddings = EmbeddingHandler(self).create_new_embedding(vector_db, my_model, batch_size=batch_size)
 
         if not embeddings:
-            logging.warning("warning: no embeddings created")
+            logger.warning("warning: no embeddings created")
 
         return embeddings
-
 
     def delete_library(self, library_name=None, confirm_delete=False, account_name="llmware"):
 
@@ -958,10 +959,10 @@ class Library:
                 # 3rd - remove record in LibraryCatalog
                 LibraryCatalog(self).delete_library_card(self.library_name)
 
-                logging.info("update:  deleted all library file artifacts + folders")
+                logger.info("update:  deleted all library file artifacts + folders")
 
         except:
-            logging.exception("Error destroying library")
+            logger.exception("Error destroying library")
             success_code = -1
 
         return success_code
@@ -1195,8 +1196,8 @@ class Library:
                 found_match = True
                 embedding_dims = entries["embedding_dims"]
 
-                logging.info("update: library - delete_installed_embedding request - found matching"
-                             "embedding record - %s", entries)
+                logger.info(f"update: library - delete_installed_embedding request - found matching"
+                            f"embedding record - {entries}")
                 break
 
         if found_match:
@@ -1321,7 +1322,8 @@ class LibraryCatalog:
 
         new_lib_name = new_library_card["library_name"]
 
-        # print("update: LibraryCatalog - create_new_library_card - ", new_lib_name, new_library_card)
+        logger.debug(f"update: LibraryCatalog - create_new_library_card - {new_lib_name} - "
+                     f"{new_library_card}")
 
         CollectionWriter("library", account_name=self.account_name).write_new_record(new_library_card)
 

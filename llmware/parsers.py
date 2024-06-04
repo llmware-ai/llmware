@@ -1,4 +1,4 @@
-# Copyright 2023 llmware
+# Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -55,6 +55,8 @@ from llmware.resources import CollectionRetrieval, CollectionWriter, ParserState
 
 from llmware.exceptions import DependencyNotInstalledException, FilePathDoesNotExistException, \
     OCRDependenciesNotFoundException, LLMWareException
+
+logger = logging.getLogger(__name__)
 
 
 class Parser:
@@ -129,9 +131,9 @@ class Parser:
                 # if not check_db_uri(timeout_secs=3):
                 self.parse_to_db = True
             else:
-                logging.warning("warning: Parser not able to connect to document store collection database"
-                                "at uri - %s - will write parsing output to a parsing file.",
-                                LLMWareConfig.get_db_uri_string())
+                logger.warning(f"warning: Parser not able to connect to document store collection database "
+                               f"at uri - {LLMWareConfig.get_db_uri_string()} - will write parsing output to "
+                               f"a parsing file.")
 
                 self.parse_to_db = False
         else:
@@ -345,8 +347,8 @@ class Parser:
                 shutil.copy(os.path.join(input_folder_path,filename), os.path.join(self.zip_work_folder,filename))
                 zip_found += 1
 
-        logging.info("update:  Duplicate files (skipped): %s ", dup_counter)
-        logging.info("update:  Total uploaded: %s ", len(input_file_names))
+        logger.info(f"update:  Duplicate files (skipped): {dup_counter}")
+        logger.info(f"update:  Total uploaded: {len(input_file_names)}")
 
         if zip_found > 0:
 
@@ -384,10 +386,10 @@ class Parser:
         # first - confirm that library and connection to collection db are in place
         if not self.library or not self.parse_to_db:
 
-            logging.error("error: Parser().ingest() method requires loading a library, e.g., Parser(library=my_library),"
-                          "and a connection to a document data store - please try Parse().parse_one set of methods"
-                          "to parse a document of any type directly into list of dictionaries in memory, and written"
-                          "to /parser_history as a .json file")
+            logger.error("error: Parser().ingest() method requires loading a library, e.g., "
+                         "Parser(library=my_library), and a connection to a document data store - please "
+                         "try Parse().parse_one set of methods to parse a document of any type directly into "
+                         "list of dictionaries in memory, and written to /parser_history as a .json file")
 
             parsing_results = {"processed_files": 0, "rejected_files": 0, "duplicate_files": []}
             return parsing_results
@@ -549,7 +551,7 @@ class Parser:
             except:
                 # may fail
                 success_code = -1
-                logging.info("error: caution - could not open Zip- %s ", my_zip)
+                logger.info(f"error: caution - could not open Zip- {my_zip}")
 
             if success_code == 1:
 
@@ -614,8 +616,7 @@ class Parser:
             output_file = open(os.path.join(file_path, fn), "r", encoding="utf-8-sig",errors="ignore").read()
 
         except Exception as e:
-            print (e)
-            logging.warning("warning: Parser - could not find parsing output - %s - %s ", file_path, fn)
+            logger.warning(f"warning: Parser - could not find parsing output - {file_path} - {fn}")
             return []
 
         # this seems to work with a few library sets, but we can probably enhance the 'splitting'
@@ -656,8 +657,8 @@ class Parser:
                 if len(block_dict) == len(default_keys):
                     output_list.append(block_dict)
                 else:
-                    logging.warning("update: Parser - potential error- parsing-to-dict conversion - "
-                                    "lengths don't match - %s - %s", len(block_dict), len(default_keys))
+                    logger.warning(f"update: Parser - potential error- parsing-to-dict conversion - "
+                                   f"lengths don't match - {len(block_dict)} - {len(default_keys)}")
 
         return output_list
 
@@ -681,15 +682,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logging.warning("warning: Parser().parse_pdf - request to write to database but no library loaded "
-                            "in Parser constructor.   Will write parsing output to file and will place the "
-                            "file in /parser_history path.")
+            logger.warning("warning: Parser().parse_pdf - request to write to database but no library loaded "
+                           "in Parser constructor.   Will write parsing output to file and will place the "
+                           "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logging.error("warning: Parser().parse_pdf - could not connect to database at %s.  Will write "
-                          "parsing output to file and will place the file in /parser_history path.",
-                          self.collection_path)
+            logger.error(f"warning: Parser().parse_pdf - could not connect to database at "
+                         f"{self.collection_path}.  Will write parsing output to file and will place the "
+                         f"file in /parser_history path.")
 
         # deprecation warning for aarch64 linux
         system = platform.system().lower()
@@ -702,9 +703,9 @@ class Parser:
                 machine = "na"
 
             if machine == 'aarch64':
-                logging.warning("Deprecation warning: deprecating support for aarch linux - "
-                            "routing parsing request to handler for <=0.2.6.  Note: some features and options "
-                            "in versions >=0.2.7 may not be available.")
+                logger.warning("Deprecation warning: deprecating support for aarch linux - "
+                               "routing parsing request to handler for <=0.2.6.  Note: some features and options "
+                               "in versions >=0.2.7 may not be available.")
 
                 return self.parse_pdf_deprecated_026(fp, write_to_db=write_to_db,save_history=save_history)
 
@@ -875,7 +876,7 @@ class Parser:
         #                   * main call to pdf library *
         #
 
-        logging.info("update: start parsing of PDF Documents...")
+        logger.info("update: start parsing of PDF Documents...")
 
         #   function declaration for .add_pdf_main_llmware
         # char * input_account_name,
@@ -914,7 +915,7 @@ class Parser:
                                     encoding_style, get_header_text, table_grid
                                     )
 
-        logging.info("update:  completed parsing of pdf documents - time taken: %s ", time.time() - t0)
+        logger.info(f"update:  completed parsing of pdf documents - time taken: {time.time()-t0}")
 
         if write_to_db_on == 0:
             # package up results in Parser State
@@ -925,7 +926,7 @@ class Parser:
 
                 self.file_counter = int(last_doc_id)
 
-                logging.info("update: adding new entries to parser output state - %s", len(parser_output))
+                logger.info(f"update: adding new entries to parser output state - {len(parser_output)}")
 
                 self.parser_output += parser_output
                 output += parser_output
@@ -953,15 +954,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logging.warning("warning: Parser().parse_pdf - request to write to database but no library loaded "
-                            "in Parser constructor.   Will write parsing output to file and will place the "
-                            "file in /parser_history path.")
+            logger.warning("warning: Parser().parse_pdf - request to write to database but no library loaded "
+                           "in Parser constructor.   Will write parsing output to file and will place the "
+                           "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logging.error("warning: Parser().parse_pdf - could not connect to database at %s.  Will write "
-                          "parsing output to file and will place the file in /parser_history path.",
-                          self.collection_path)
+            logger.error(f"warning: Parser().parse_pdf - could not connect to database at "
+                         f"{self.collection_path}.  Will write parsing output to file and will place "
+                         f"the file in /parser_history path.")
 
         #   function declaration for .add_pdf_main_llmware
         # char * input_account_name,
@@ -1067,7 +1068,7 @@ class Parser:
         #                   * main call to pdf library *
         #
 
-        logging.info("update: start parsing of PDF Documents...")
+        logger.info("update: start parsing of PDF Documents...")
 
         #   function declaration for .add_pdf_main_llmware
         # char * input_account_name,
@@ -1096,7 +1097,7 @@ class Parser:
                                     write_to_filename_c, user_block_size, unique_doc_num_c,
                                     status_manager_on, status_manager_increment, status_job_id)
 
-        logging.info("update:  completed parsing of pdf documents - time taken: %s ", time.time() - t0)
+        logger.info(f"update:  completed parsing of pdf documents - time taken: {time.time()-t0}")
 
         if write_to_db_on == 0:
             # package up results in Parser State
@@ -1107,7 +1108,7 @@ class Parser:
 
                 self.file_counter = int(last_doc_id)
 
-                logging.info("update: adding new entries to parser output state - %s", len(parser_output))
+                logger.info(f"update: adding new entries to parser output state - {len(parser_output)}")
 
                 self.parser_output += parser_output
                 output += parser_output
@@ -1136,15 +1137,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logging.warning("warning: Parser().parse_pdf - request to write to database but no library loaded "
-                            "in Parser constructor.   Will write parsing output to file and will place the "
-                            "file in /parser_history path.")
+            logger.warning("warning: Parser().parse_pdf - request to write to database but no library loaded "
+                           "in Parser constructor.   Will write parsing output to file and will place the "
+                           "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logging.error("warning: Parser().parse_pdf - could not connect to database at %s.  Will write "
-                          "parsing output to file and will place the file in /parser_history path.",
-                          LLMWareConfig().get_db_uri_string())
+            logger.error(f"warning: Parser().parse_pdf - could not connect to database at "
+                         f"{LLMWareConfig().get_db_uri_string()}.  Will write "
+                         f"parsing output to file and will place the file in /parser_history path.")
 
         #   function declaration for .add_pdf_main_llmware
         #       char * input_account_name,
@@ -1237,7 +1238,7 @@ class Parser:
         #                   * main call to pdf library *
         #
 
-        logging.info("update: start parsing of PDF Documents...")
+        logger.info("update: start parsing of PDF Documents...")
 
         #   function declaration for .add_pdf_main_llmware
         #       char * input_account_name,
@@ -1259,7 +1260,7 @@ class Parser:
                                     write_to_filename_c, user_block_size, unique_doc_num_c,
                                     db_user_name_c, db_pw_c)
 
-        logging.info("update:  completed parsing of pdf documents - time taken: %s ", time.time() - t0)
+        logger.info(f"update:  completed parsing of pdf documents - time taken: {time.time()-t0}")
 
         if write_to_db_on == 0:
             # package up results in Parser State
@@ -1270,7 +1271,7 @@ class Parser:
 
                 self.file_counter = int(last_doc_id)
 
-                logging.info("update: adding new entries to parser output state - %s", len(parser_output))
+                logger.info(f"update: adding new entries to parser output state - {len(parser_output)}")
 
                 self.parser_output += parser_output
                 output += parser_output
@@ -1300,15 +1301,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logging.warning("error: Parser().parse_office - request to write to database but no library loaded "
-                            "in Parser constructor.   Will write parsing output to file and will place the "
-                            "file in Parser /parser_history path.")
+            logger.warning("error: Parser().parse_office - request to write to database but no library loaded "
+                           "in Parser constructor.   Will write parsing output to file and will place the "
+                           "file in Parser /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logging.error("error: Parser().parse_office - could not connect to database at %s.  Will write "
-                          "parsing output to file and will place the file in Library /images path.",
-                          self.collection_path)
+            logger.error(f"error: Parser().parse_office - could not connect to database at "
+                         f"{self.collection_path}.  Will write parsing output to file and will place the "
+                         f"file in Library /images path.")
 
         # designed for bulk upload of office parse into library structure
 
@@ -1433,13 +1434,13 @@ class Parser:
         #       char * db_user_name,
         #       char * db_pw
 
-        logging.info("update: start parsing of office documents...")
+        logger.info("update: start parsing of office documents...")
 
         pages_created = main_handler(account_name, library_name, fp_c, workspace_fp_c, collection_path_c, image_fp_c,
                                      debug_mode_c, write_to_db_on_c, write_to_fn_c, unique_doc_num_c,
                                      db_user_name_c, db_pw_c)
 
-        logging.info("update:  completed parsing of office documents - time taken: %s ", time.time() - t0)
+        logger.info(f"update:  completed parsing of office documents - time taken: {time.time()-t0}")
 
         if write_to_db_on == 0:
             # package up results in Parser State
@@ -1479,15 +1480,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logging.warning("error: Parser().parse_office - request to write to database but no library loaded "
-                            "in Parser constructor.   Will write parsing output to file and will place the "
-                            "file in Parser /parser_history path.")
+            logger.warning("error: Parser().parse_office - request to write to database but no library loaded "
+                           "in Parser constructor.   Will write parsing output to file and will place the "
+                           "file in Parser /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logging.error("error: Parser().parse_office - could not connect to database at %s.  Will write "
-                          "parsing output to file and will place the file in Library /images path.",
-                          self.collection_path)
+            logger.error(f"error: Parser().parse_office - could not connect to database at "
+                         f"{self.collection_path}.  Will write parsing output to file and will place the "
+                         f"file in Library /images path.")
 
         # deprecation warning for aarch64 linux
         system = platform.system().lower()
@@ -1500,9 +1501,9 @@ class Parser:
                 machine = "na"
 
             if machine == 'aarch64':
-                logging.warning("Deprecation warning: deprecating support for aarch linux - "
-                                "routing parsing request to handler for <=0.2.6.  Note: some features and options "
-                                "in versions >=0.2.7 may not be available.")
+                logger.warning("Deprecation warning: deprecating support for aarch linux - "
+                               "routing parsing request to handler for <=0.2.6.  Note: some features and options "
+                               "in versions >=0.2.7 may not be available.")
 
                 return self.parse_office_deprecated_027(input_fp, write_to_db=write_to_db,save_history=save_history)
 
@@ -1629,11 +1630,9 @@ class Parser:
 
         image_fp_c = create_string_buffer(image_fp.encode('ascii', 'ignore'))
 
-        # *** new *** - get db uri string
+        # get db uri string
         input_collection_db_path = LLMWareConfig().get_db_uri_string()
-        # print("update: input collection db path - ", input_collection_db_path)
         collection_db_path_c = create_string_buffer(input_collection_db_path.encode('ascii', 'ignore'))
-        # *** end - new ***
 
         write_to_db_on_c = c_int(write_to_db_on)
 
@@ -1736,7 +1735,7 @@ class Parser:
         else:
             save_images = c_int(0)  # FALSE - no images
 
-        # print("update: start parsing of office documents...")
+        logger.debug("update: start parsing of office documents...")
 
         pages_created = main_handler(account_name, library_name, fp_c, workspace_fp_c,
                                      db, collection_db_path_c, db_name, db_user_name_c, db_pw_c,
@@ -1753,7 +1752,7 @@ class Parser:
                                      table_grid,
                                      save_images)
 
-        logging.info("update:  completed parsing of office documents - time taken: %s ", time.time() - t0)
+        logger.info(f"update:  completed parsing of office documents - time taken: {time.time()-t0}")
 
         if write_to_db_on == 0:
             # package up results in Parser State
@@ -1793,15 +1792,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logging.warning("error: Parser().parse_office - request to write to database but no library loaded "
-                            "in Parser constructor.   Will write parsing output to file and will place the "
-                            "file in Parser /parser_history path.")
+            logger.warning("error: Parser().parse_office - request to write to database but no library loaded "
+                           "in Parser constructor.   Will write parsing output to file and will place the "
+                           "file in Parser /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logging.error("error: Parser().parse_office - could not connect to database at %s.  Will write "
-                          "parsing output to file and will place the file in Library /images path.",
-                          self.collection_path)
+            logger.error(f"error: Parser().parse_office - could not connect to database at "
+                         f"{self.collection_path}.  Will write parsing output to file and will place the "
+                         f"file in Library /images path.")
 
         # designed for bulk upload of office parse into library structure
 
@@ -1903,11 +1902,9 @@ class Parser:
 
         image_fp_c = create_string_buffer(image_fp.encode('ascii', 'ignore'))
 
-        # *** new *** - get db uri string
+        # get db uri string
         input_collection_db_path = LLMWareConfig().get_db_uri_string()
-        # print("update: input collection db path - ", input_collection_db_path)
         collection_db_path_c = create_string_buffer(input_collection_db_path.encode('ascii', 'ignore'))
-        # *** end - new ***
 
         write_to_db_on_c = c_int(write_to_db_on)
 
@@ -1962,7 +1959,7 @@ class Parser:
          char * status_job_id)
         """
 
-        # print("update: start parsing of office documents...")
+        logger.debug("update: start parsing of office documents...")
 
         pages_created = main_handler(account_name, library_name, fp_c, workspace_fp_c,
                                      db, collection_db_path_c, db_name, db_user_name_c, db_pw_c,
@@ -1971,7 +1968,7 @@ class Parser:
                                      user_block_size_c, status_manager_on_c, status_manager_increment_c,
                                      status_job_id_c)
 
-        logging.info("update:  completed parsing of office documents - time taken: %s ", time.time() - t0)
+        logger.info(f"update:  completed parsing of office documents - time taken: {time.time()-t0}")
 
         if write_to_db_on == 0:
             # package up results in Parser State
@@ -2007,15 +2004,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logging.warning("warning: Parser().parse_text - request to write to database but no library loaded "
-                            "in Parser constructor.   Will write parsing output to file and will place the "
-                            "file in /parser_history path.")
+            logger.warning("warning: Parser().parse_text - request to write to database but no library loaded "
+                           "in Parser constructor.   Will write parsing output to file and will place the "
+                           "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logging.error("warning: Parser().parse_text - could not connect to database at %s.  Will write "
-                          "parsing output to file and will place the file in /parser_history path.",
-                          self.collection_path)
+            logger.error(f"warning: Parser().parse_text - could not connect to database at "
+                         f"{self.collection_path}.  Will write parsing output to file and will place the file "
+                         f"in /parser_history path.")
 
         # set counters
         blocks_created = 0
@@ -2130,15 +2127,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logging.warning("warning: Parser().parse_text - request to write to database but no library loaded "
-                            "in Parser constructor.   Will write parsing output to file and will place the "
-                            "file in /parser_history path.")
+            logger.warning("warning: Parser().parse_text - request to write to database but no library loaded "
+                           "in Parser constructor.   Will write parsing output to file and will place the "
+                           "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logging.error("warning: Parser().parse_text - could not connect to database at %s.  Will write "
-                          "parsing output to file and will place the file in /parser_history path.",
-                          self.collection_path)
+            logger.error(f"warning: Parser().parse_text - could not connect to database at "
+                         f"{self.collection_path}.  Will write parsing output to file and will place the "
+                         f"file in /parser_history path.")
 
         # set counters
         blocks_added = 0
@@ -2184,7 +2181,7 @@ class Parser:
                         blocks_added += new_blocks
                         pages_added += 1
 
-                        print("update: writing doc - page - ", file, j, len(blocks))
+                        logger.info(f"update: writing doc - page - {file} - {j} - {len(blocks)}")
 
         # update overall library counter at end of parsing
 
@@ -2400,15 +2397,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logging.warning("warning: Parser().parse_text - request to write to database but no library loaded "
-                            "in Parser constructor.   Will write parsing output to file and will place the "
-                            "file in /parser_history path.")
+            logger.warning("warning: Parser().parse_text - request to write to database but no library loaded "
+                           "in Parser constructor.   Will write parsing output to file and will place the "
+                           "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logging.error("warning: Parser().parse_text - could not connect to database at %s.  Will write "
-                          "parsing output to file and will place the file in /parser_history path.",
-                          self.collection_path)
+            logger.error(f"warning: Parser().parse_text - could not connect to database at "
+                         f"{self.collection_path}.  Will write parsing output to file and will place the "
+                         f"file in /parser_history path.")
 
         # set counters
         blocks_added = 0
@@ -2419,7 +2416,7 @@ class Parser:
 
             fn = "wiki-topic-" + Utilities().secure_filename(topic) + ".txt"
 
-            logging.info("update: parse_wiki - %s - %s", topic, fn)
+            logger.info(f"update: parse_wiki - {topic} - {fn}")
 
             # increment and get new doc_id
             if write_to_db_on == 1:
@@ -2484,15 +2481,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logging.warning("warning: Parser().parse_text - request to write to database but no library loaded "
-                            "in Parser constructor.   Will write parsing output to file and will place the "
-                            "file in /parser_history path.")
+            logger.warning("warning: Parser().parse_text - request to write to database but no library loaded "
+                           "in Parser constructor.   Will write parsing output to file and will place the "
+                           "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logging.error("warning: Parser().parse_text - could not connect to database at %s.  Will write "
-                          "parsing output to file and will place the file in /parser_history path.",
-                          self.collection_path)
+            logger.error(f"warning: Parser().parse_text - could not connect to database at "
+                         f"{self.collection_path}.  Will write parsing output to file and will place the "
+                         f"file in /parser_history path.")
 
         # set counters
         blocks_added = 0
@@ -2558,15 +2555,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logging.warning("warning: Parser().parse_text - request to write to database but no library loaded "
-                            "in Parser constructor.   Will write parsing output to file and will place the "
-                            "file in /parser_history path.")
+            logger.warning("warning: Parser().parse_text - request to write to database but no library loaded "
+                           "in Parser constructor.   Will write parsing output to file and will place the "
+                           "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logging.error("warning: Parser().parse_text - could not connect to database at %s.  Will write "
-                          "parsing output to file and will place the file in /parser_history path.",
-                          self.collection_path)
+            logger.error(f"warning: Parser().parse_text - could not connect to database at "
+                         f"{self.collection_path}.  Will write parsing output to file and will place the "
+                         f"file in /parser_history path.")
 
         # set counters
         blocks_added = 0
@@ -2590,8 +2587,7 @@ class Parser:
                 if write_to_db_on == 1:
                     self.library.doc_ID = self.library.get_and_increment_doc_id()
 
-                #   using 'print' for simplicity of user debugging - will adapt to logging mechanism over time
-                print(f"update: parse_voice file - processing - {file}")
+                logger.info(f"update: parse_voice file - processing - {file}")
 
                 vp_output = VoiceParser(self,
                                         chunk_size=self.chunk_size,
@@ -2685,15 +2681,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logging.warning("warning: Parser().parse_text - request to write to database but no library loaded "
-                            "in Parser constructor.   Will write parsing output to file and will place the "
-                            "file in /parser_history path.")
+            logger.warning("warning: Parser().parse_text - request to write to database but no library loaded "
+                           "in Parser constructor.   Will write parsing output to file and will place the "
+                           "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logging.error("warning: Parser().parse_text - could not connect to database at %s.  Will write "
-                          "parsing output to file and will place the file in /parser_history path.",
-                          self.collection_path)
+            logger.error(f"warning: Parser().parse_text - could not connect to database at "
+                         f"{self.collection_path}.  Will write parsing output to file and will place "
+                         f"the file in /parser_history path.")
 
         # set counters
         conversation_turns = 0
@@ -2719,7 +2715,7 @@ class Parser:
                     if write_to_db_on == 1:
                         self.library.doc_ID = self.library.get_and_increment_doc_id()
 
-                    logging.info(f"update: dialog file - {file}")
+                    logger.info(f"update: dialog file - {file}")
 
                     dp_parse_output = DialogParser(self).parse_aws_json_file_format(input_folder, file)
 
@@ -2727,7 +2723,7 @@ class Parser:
 
                     for i, blocks in enumerate(dp_parse_output):
 
-                        logging.info(f"update: dialog turn - {i} {blocks}")
+                        logger.info(f"update: dialog turn - {i} {blocks}")
 
                         # iterate thru each block -> add to metadata
                         speaker_name = blocks["speaker_name"]
@@ -2795,15 +2791,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logging.warning("warning: Parser().parse_website - request to write to database but no library loaded "
-                            "in Parser constructor.   Will write parsing output to file and will place the "
-                            "file in /parser_history path.")
+            logger.warning("warning: Parser().parse_website - request to write to database but no library loaded "
+                           "in Parser constructor.   Will write parsing output to file and will place the "
+                           "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logging.error("warning: Parser().parse_website - could not connect to database at %s.  Will write "
-                          "parsing output to file and will place the file in /parser_history path.",
-                          self.collection_path)
+            logger.error(f"warning: Parser().parse_website - could not connect to database at "
+                         f"{self.collection_path}.  Will write parsing output to file and will place the "
+                         f"file in /parser_history path.")
 
         local_work_folder = self.parser_tmp_folder
         # local_work_folder = self.library.tmp_path
@@ -2842,8 +2838,8 @@ class Parser:
 
                     for z in range(0, max_links):
 
-                        logging.info("\nupdate: WebSite Parser iterate - "
-                                     "child site link - %s - %s - %s", z, url_base, website.internal_links[z])
+                        logger.info(f"update: WebSite Parser iterate - "
+                                    f"child site link - {z} - {url_base} - {website.internal_links[z]}")
 
                         child_site = WebSiteParser(url_base + website.internal_links[z], reset_img_folder=False,
                                                    local_file_path=self.website_work_folder)
@@ -2985,9 +2981,9 @@ class Parser:
         # designed for upload of input files into library structure
 
         if not self.library:
-            logging.error("error: Parser().uploads is designed for connecting files "
-                          "into library - no library selected - to use, create Parser with library loaded, e.g., "
-                          "Parser(library=my_library)")
+            logger.error("error: Parser().uploads is designed for connecting files into library - "
+                         "no library selected - to use, create Parser with library loaded, e.g., "
+                         "Parser(library=my_library)")
             return -1
 
         upload_fp = self.library.file_copy_path
@@ -3043,9 +3039,9 @@ class Parser:
         #   --if input file found, then added to 'found_list' -> else, added to 'not_found_list'
 
         if not self.library:
-            logging.error("error: Parser().input_ingestion_comparison is designed for bulk parsing of files "
-                          "into library - no library selected - to use, create Parser with library loaded, e.g., "
-                          "Parser(library=my_library)")
+            logger.error("error: Parser().input_ingestion_comparison is designed for bulk parsing of files "
+                         "into library - no library selected - to use, create Parser with library loaded, e.g., "
+                         "Parser(library=my_library)")
             return -1
 
         found_list = []
@@ -3134,7 +3130,7 @@ class Parser:
                 ParserState().save_parser_output(self.parser_job_id, output)
 
         if not output:
-            logging.warning("No content parsed from document - %s ", fn)
+            logger.warning(f"No content parsed from document - {fn}")
 
         return output
 
@@ -3158,7 +3154,7 @@ class Parser:
         # safety check - will need to improve + expand for supporting windows path
         if not workspace_fp.endswith(os.sep):
             workspace_fp += os.sep
-            logging.warning("warning: workspace_fp did not end with trailing '/' as expected by parser")
+            logger.warning("warning: workspace_fp did not end with trailing '/' as expected by parser")
 
         # need to update this
         for z in range(0, 1):
@@ -3214,7 +3210,7 @@ class Parser:
 
         if not image_fp.endswith(os.sep):
             image_fp += os.sep
-            logging.warning("warning: adding '/' to image_fp as expected by c parser")
+            logger.warning("warning: adding '/' to image_fp as expected by c parser")
 
         image_fp_c = create_string_buffer(image_fp.encode('ascii', 'ignore'))
 
@@ -3321,12 +3317,12 @@ class Parser:
         # char * write_to_filename,
         # int user_block_size)
 
-        logging.info("update: starting pdf_parser ...")
+        logger.info("update: starting pdf_parser ...")
 
         pages_created = pdf_handler(account_name, library_name, fp_c, fn_c, image_fp_c,
                                     write_to_filename_c, user_block_size)
 
-        logging.info("update: completed pdf_parser - time taken: %s ", time.time() - t0)
+        logger.info(f"update: completed pdf_parser - time taken: {time.time()-t0}")
 
         output = self.convert_parsing_txt_file_to_json(file_path=self.parser_tmp_folder,fn=write_to_filename)
 
@@ -3889,8 +3885,8 @@ class Parser:
                         self.library.doc_ID = int(doc_id)
                         added_doc_count += 1
                     except:
-                        logging.warning(f"update: doc_ID expected to be integer - can not apply custom doc ID "
-                                        f"- {doc_id} - will use default library document increment")
+                        logger.warning(f"update: doc_ID expected to be integer - can not apply custom doc ID "
+                                       f"- {doc_id} - will use default library document increment")
 
                 if block_id:
                     self.library.block_ID = block_id
@@ -4022,8 +4018,8 @@ class Parser:
                         self.library.doc_ID = int(doc_id)
                         added_doc_count += 1
                     except:
-                        logging.warning(f"update: doc_ID expected to be integer - can not apply custom doc ID"
-                                        f"- {doc_id} - will use default library document increment")
+                        logger.warning(f"update: doc_ID expected to be integer - can not apply custom doc ID"
+                                       f"- {doc_id} - will use default library document increment")
 
                 if block_id:
                     self.library.block_ID = block_id
@@ -4089,7 +4085,7 @@ class Parser:
 
         #   check here to see the images extracted from the original parsing
         if realtime_progress:
-            print("update: image source file path: ", image_path)
+            logger.info(f"update: image source file path: {image_path}")
 
         #   query the collection DB by content_type == "image"
         image_blocks = CollectionRetrieval(library_name).filter_by_key("content_type", "image")
@@ -4116,7 +4112,7 @@ class Parser:
             output = ImageParser(text_chunk_size=chunk_size).process_ocr(image_path, img_name, preserve_spacing=False)
 
             if realtime_progress:
-                print("update: realtime progress- ocr output: ", output)
+                logger.info(f"update: realtime progress- ocr output: {output}")
 
             #   good to do a test run with 'add_to_library' == False before writing to the collection
             if add_to_library:
@@ -4156,8 +4152,8 @@ class Parser:
                                 del new_block["_id"]
 
                             if realtime_progress:
-                                print("update: writing new text block - ", new_text_created,
-                                      doc_id, block_id, text_chunk, new_block)
+                                logger.info(f"update: writing new text block - {new_text_created} - "
+                                            f"{doc_id} - {block_id} - {text_chunk} - {new_block}")
 
                             #   creates the new record
                             CollectionWriter(library_name).write_new_parsing_record(new_block)
@@ -4236,7 +4232,7 @@ class ImageParser:
             except TesseractNotFoundError as e:
                 raise OCRDependenciesNotFoundException("tesseract")
             text_out = text_out.replace("\n", " ")
-            logging.info("update: ocr text_out: %s ", text_out)
+            logger.info(f"update: ocr text_out: {text_out}")
             text_list_out.append(text_out)
 
         return text_list_out
@@ -4380,13 +4376,13 @@ class ImageParser:
                             raise OCRDependenciesNotFoundException("tesseract")
                         all_text += text
                         # all_text += re.sub("[\n\r]"," ", text)
-                        logging.info("update: ocr text out - %s ", text)
+                        logger.info(f"update: ocr text out - {text}")
 
-                    logging.info("update: ocr converted- %s - %s", i, files)
+                    logger.info(f"update: ocr converted- {i} - {files}")
                     all_text += "\n\n"
 
                 except:
-                    logging.error("error - could not convert pdf")
+                    logger.error("error - could not convert pdf")
 
         f = open(input_fp + summary_text_fn, "w", encoding='utf-8')
         f.write(all_text)
@@ -4483,7 +4479,7 @@ class VoiceParser:
         else:
             # aggregate by segment within size parameters
             if "segments" not in response:
-                logging.warning("update: VoiceParser - no 'segments' found in response from WhisperCPP.")
+                logger.warning("update: VoiceParser - no 'segments' found in response from WhisperCPP.")
                 return []
 
             char_counter = 0
@@ -4561,7 +4557,7 @@ class TextParser:
         ft = sample_file.split(".")[-1].lower()
 
         if ft not in ["json", "jsonl"]:
-            logging.warning(f"update: jsonl_file_parser did not find a recognized json/jsonl file type - {sample_file}")
+            logger.warning(f"update: jsonl_file_parser did not find a recognized json/jsonl file type - {sample_file}")
             return output
 
         if ft == "json":
@@ -4768,9 +4764,9 @@ class DialogParser:
 
         # improve validation of format + user message back with link to AWS documents
         if not format_validated:
-            logging.error("error: DialogParser currently only supports AWS Transcribe dialog format - For more "
-                          "information, please see Amazon Web Services Transcription - "
-                          "https://docs.aws.amazon.com/transcribe/latest/dg/how-input.html#how-it-works-output ")
+            logger.error("error: DialogParser currently only supports AWS Transcribe dialog format - For more "
+                         "information, please see Amazon Web Services Transcription - "
+                         "https://docs.aws.amazon.com/transcribe/latest/dg/how-input.html#how-it-works-output")
 
             return block_output
 
@@ -4781,7 +4777,7 @@ class DialogParser:
 
         if len(conversation_snippets) == 0:
             # no results to parse
-            logging.error("error:  unexpected - AWS JSON dialog transcript empty")
+            logger.error("error:  unexpected - AWS JSON dialog transcript empty")
             return block_output
 
         text= ""
