@@ -1,4 +1,18 @@
 
+# Copyright 2023-2024 llmware
+
+# Licensed under the Apache License, Version 2.0 (the "License"); you
+# may not use this file except in compliance with the License.  You
+# may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.  See the License for the specific language governing
+# permissions and limitations under the License.
+
 """ The datasets module implements the Datasets class, which is a set of versatile tools to rapidly develop
 a variety of 'model-ready' datasets from llmware prompt interactions, parsing and libraries. """
 
@@ -12,6 +26,8 @@ from llmware.util import Utilities
 from llmware.configs import LLMWareConfig
 from llmware.resources import CollectionRetrieval, PromptState
 from llmware.exceptions import FilePathDoesNotExistException, LibraryObjectNotFoundException, DatasetTypeNotFoundException
+
+logger = logging.getLogger(__name__)
 
 
 class Datasets:
@@ -926,7 +942,7 @@ class Datasets:
             dialogs = sorted(dialogs, key=lambda x:x["doc_ID"], reverse=False)
 
             if len(dialogs) == 0:
-                logging.error("error:  Datasets builder - not able to identify text as dialog conversation turns")
+                logger.error("error:  Datasets builder - not able to identify text as dialog conversation turns")
                 return - 1
         else:
             dialogs = qr
@@ -945,7 +961,7 @@ class Datasets:
         batch_counter = 0
 
         if len(dialogs) == 0:
-            logging.error("error: Datasets - no dialog transcripts found")
+            logger.error("error: Datasets - no dialog transcripts found")
             return -1
 
         # pull the doc_id for the first document
