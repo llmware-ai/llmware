@@ -56,17 +56,12 @@ setup(
         'boto3>=1.24.53',
         'huggingface-hub>=0.19.4',
         'numpy>=1.23.2',
-        'openai>=1.0.0',
         'pymongo>=4.7.0',
         'tokenizers>=0.15.0',
-        'torch>=1.13.1',
-        'transformers>=4.36.0',
-        'Wikipedia-API==0.6.0',
         'psycopg-binary==3.1.17',
         'psycopg==3.1.17',
         'pgvector==0.2.4',
         'colorama==0.4.6',
-        'einops==0.7.0',
         'librosa>=0.10.0'
     ],
 
@@ -74,9 +69,12 @@ setup(
         'milvus': ['pymilvus>=2.3.0'],
         'chromadb': ['chromadb>=0.4.22'],
         'pinecone': ['pinecone-client==3.0.0'],
-        'lancedb' :['lancedb==0.5.0'],
+        'lancedb': ['lancedb==0.5.0'],
         'qdrant': ['qdrant-client==1.7.0'],
         'redis': ['redis==5.0.1'],
-        'neo4j': ['neo4j==5.16.0']
+        'neo4j': ['neo4j==5.16.0'],
+        'full': ['torch>=1.13.1', 'transformers>=4.36.0', 'einops==0.7.0', 'Wikipedia-API>=0.6.0',
+                 'openai>=1.0', 'datasets>=2.15.0', 'yfinance>=0.2.28', 'pymilvus>=2.3.0',
+                 'chromadb>=0.4.22', 'streamlit', 'Flask']
     },
 )

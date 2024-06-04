@@ -3,12 +3,11 @@
 # Welcome to LLMWare script - handles some basic setup for first-time cloning of the repo
 # Mac / Linux version
 
-# Install dependencies, including several useful libraries used in examples
+# Install core dependencies
 pip3 install -r ./llmware/requirements.txt
-pip3 install chromadb
-pip3 install datasets
-pip3 install yfinance
-pip3 install streamlit
+
+# # Note: this step is optional but adds many commonly-used optional dependencies (including in several examples)
+pip3 install -r ./llmware/requirements_extras.txt
 
 # Move selected examples into root path for easy execution from command line
 scp ./examples/Getting_Started/welcome_example.py .

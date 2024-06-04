@@ -40,6 +40,7 @@ from llmware.exceptions import LibraryObjectNotFoundException, PromptNotInCatalo
 from llmware.configs import LLMWareConfig
 
 logger = logging.getLogger(__name__)
+logger.setLevel(level=LLMWareConfig().get_logging_level_by_module(__name__))
 
 
 class Prompt:
@@ -167,7 +168,7 @@ class Prompt:
             new_prompt_id = PromptState(self).issue_new_prompt_id()
             self.prompt_id = PromptState(self).initiate_new_state_session(new_prompt_id)
 
-            logger.info(f"update: creating new prompt id - {new_prompt_id}")
+            logger.debug(f"update: Prompt - creating new prompt id - {new_prompt_id}")
       
         self.save_prompt_state = save_state
 
@@ -322,7 +323,7 @@ class Prompt:
                 ai_dict.update({key:value})
 
         # captures new interaction into the interaction history
-        logger.info(f"update: ai_dict getting registered - {ai_dict['event_type']}")
+        logger.debug(f"update: ai_dict getting registered - {ai_dict['event_type']}")
 
         PromptState(self).register_interaction(ai_dict)
         new_dialog = {"user": ai_dict["prompt"], "bot": ai_dict["llm_response"]}
@@ -435,7 +436,7 @@ class Prompt:
                 output = Utilities().fast_search_dicts(query, output, remove_stop_words=True)
 
         for i, entries in enumerate(output):
-            logger.info(f"update: source entries - {i} - {entries}")
+            logger.debug(f"update: source entries - {i} - {entries}")
 
         # step 2 - package wiki article results as source, loaded to prompt, and packaged as 'llm context'
         sources = Sources(self).package_source(output,aggregate_source=True)
@@ -455,7 +456,7 @@ class Prompt:
 
         fin_info = YFinance().ticker(ticker).info
 
-        logger.info(f"update: fin_info - {fin_info}")
+        logger.debug(f"update: fin_info - {fin_info}")
 
         output = ""
         if key_list:
@@ -468,7 +469,7 @@ class Prompt:
 
         results = {"file_source": "yfinance-" + str(ticker), "page_num": "na", "text": output}
 
-        logger.info(f"update: yfinance results - {results}")
+        logger.debug(f"update: yfinance results - {results}")
 
         # step 2 - package as source
         sources = Sources(self).package_source([results], aggregate_source=True)
@@ -636,7 +637,7 @@ class Prompt:
         
         if temperature:
             self.temperature = temperature
-            
+
         #   this method assumes a 'closed context' with set of preloaded sources into the prompt
         # if len(self.source_materials) == 0:
         if not self.verify_source_materials_attached():
@@ -701,20 +702,13 @@ class Prompt:
                     response_list.append(response_dict)
 
                 # log progress of iterations at info level
-                if not verbose:
-
-                    logger.info(f"update: prompt_with_sources - iterating through batch - {i} of total "
-                                f"{len(self.source_materials)} - {response_dict}")
-
-                    logger.info(f"update: usage stats - {response_dict['usage']}")
-
-                else:
-                    logger.info(f"update: iterating through source batches - {i} - {response_dict['llm_response']}")
+                if verbose:
+                    logger.info(f"update: prompt_with_sources - iterating through source batches - {i} - {response_dict['llm_response']}")
 
         # register inferences in state history, linked to prompt_id
         for l, llm_inference in enumerate(response_list):
 
-            logger.info (f"update: llm inference - {l} - {len(response_list)} - {llm_inference}")
+            logger.debug (f"update: llm inference - {l} - {len(response_list)} - {llm_inference}")
 
             self.register_llm_inference(llm_inference)
 
@@ -1074,6 +1068,7 @@ class Prompt:
             self.source_materials = self.source_materials[0:max_batch_cap]
 
         if real_time_update:
+
             logger.info(f"update: Prompt - summarize_document_fc - number of source batches - "
                         f"{len(self.source_materials)}")
 
