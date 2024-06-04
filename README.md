@@ -804,13 +804,16 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
-**Wednesday, May 29 - v0.3.0-WIP**  
+**Tuesday, June 4 - v0.3.0-WIP**  
 - Added support for new Milvus Lite embedded 'no-install' database - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Embedding/using_milvus_lite.py).   
 - Added two new SLIM models to catalog and agent processes - ['q-gen'](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/using-slim-q-gen.py) and ['qa-gen'](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/using-slim-qa-gen.py)    
 - Updated model class instantiation to provide more extensibility to add new classes in different modules  
-- Planning to remove torch and transformers from pip install package  
 - If cloning the repo, please see the new welcome_to_llmware.sh and welcome_to_llmware_windows.sh fast install scripts  
-- Changes merged in main branch and will be released in pypi targeting end of week  
+- Enhanced Model class base with new configurable post_init and register methods  
+- Created InferenceHistory to track global state of all inferences completed  
+- Multiple improvements and updates to logging at module level  
+- Note: will be removing torch and transformers from pip install package to simplify install  
+- Changes merged in main branch and will be released in pypi targeting Weds, June 5 EOD   
   
 **Wednesday, May 22 - v0.2.15**  
 - Improvements in Model class handling of Pytorch and Transformers dependencies (just-in-time loading, if needed)  
