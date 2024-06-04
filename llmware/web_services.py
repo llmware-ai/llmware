@@ -26,6 +26,8 @@ import shutil
 from llmware.exceptions import LLMWareException
 from llmware.configs import LLMWareConfig
 
+logger = logging.getLogger(__name__)
+
 
 class WikiKnowledgeBase:
 
@@ -56,16 +58,17 @@ class WikiKnowledgeBase:
 
             if page_py.exists():
 
-                logging.info("update: page_py - %s - %s", page_py.title, page_py.summary)
-                logging.info("update: text - %s ", page_py.text)
+                logger.info(f"update: page_py - {page_py.title} - {page_py.summary}")
+                logger.info(f"update: text - {page_py.text}")
 
                 article_response = {"title": page_py.title, "summary": page_py.summary, "text": page_py.text}
 
             else:
-                logging.info("update: connected with Wikipedia - selected article does not exist - %s ", article_name)
+                logger.info(f"update: connected with Wikipedia - selected article does not exist - "
+                            f"{article_name}")
 
         except:
-            logging.error("error: could not retrieve wikipedia article - please try again")
+            logger.error(f"error: could not retrieve wikipedia article - please try again")
 
         return article_response
 
@@ -88,13 +91,13 @@ class WikiKnowledgeBase:
 
             for i, title in enumerate(r.json()["query"]["search"]):
 
-                logging.info("update:  wiki results - %s - %s", i, title)
+                logger.info(f"update:  wiki results - {i} - {title}")
 
                 new_entry = {"num": i, "title": title["title"], "pageid": title["pageid"]}
                 output.append(new_entry)
 
         except:
-            logging.error("error: could not connect with Wikipedia to retrieve search results")
+            logger.error("error: could not connect with Wikipedia to retrieve search results")
 
         return output
 
@@ -314,7 +317,7 @@ class WebSiteParser:
                 success_code = 1
                 self.text_only = True
             except:
-                logging.error("error: WebSite parser- could not find html file to parse at %s ", url_or_fp)
+                logger.error(f"error: WebSite parser- could not find html file to parse at {url_or_fp}")
                 success_code = -1
                 self.text_only = True
         else:
@@ -376,8 +379,7 @@ class WebSiteParser:
 
         """ Main processing of HTML scraped content and converting into blocks. """
 
-        #   using 'print' in short-term for easy user debugging/visibility - will shift to logging over time
-        print(f"update: WebSite Parser - initiating parse of website: {self.url_main}")
+        logger.info(f"update: WebSite Parser - initiating parse of website: {self.url_main}")
 
         output = []
         counter = 0
@@ -596,12 +598,11 @@ class WebSiteParser:
         self.core_index = output
         self.entries = len(output)
 
-        # using 'print' to screen in short-term for user convenience - will migrate to logging over time
-        print(f"update: WebSite Parser - completed parsing: {self.url_main}")
-        print(f"update: extracted {len(self.core_index)} elements")
+        logger.info(f"update: WebSite Parser - completed parsing: {self.url_main}")
+        logger.info(f"update: extracted {len(self.core_index)} elements")
 
         if self.image_counter > 0:
-            print(f"update: extracted {self.image_counter} images and saved @ path: {self.local_dir}")
+            logger.info(f"update: extracted {self.image_counter} images and saved @ path: {self.local_dir}")
 
         if not output_index:
             return len(output), img_counter
@@ -691,11 +692,11 @@ class WebSiteParser:
                         success = 1
 
                     else:
-                        logging.info("update:  WebSite -  found image OK but could not "
-                                     "figure out img type: %s ", img_extension)
+                        logger.info(f"update:  WebSite -  found image OK but could not "
+                                    f"figure out img type: {img_extension} ")
 
         except:
-            logging.info("warning: WebSite - could not retrieve potential image: %s ", elements.attrs["src"])
+            logger.info(f"warning: WebSite - could not retrieve potential image: {elements.attrs['src']}")
             success = -1
 
         return success, img_raw, full_url, image_name
@@ -867,7 +868,7 @@ class WebSiteParser:
                                 s = self._save_image(img_raw, fp)
                                 counter += 1
                         except:
-                            logging.error("error: failed to find image: %s ", content.attrs["src"])
+                            logger.info(f"update: could not find image: {content.attrs['src']}")
 
         return 0
 

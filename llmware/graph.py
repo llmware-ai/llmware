@@ -1,5 +1,5 @@
 
-# Copyright 2023 llmware
+# Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -14,8 +14,8 @@
 # permissions and limitations under the License.
 
 """ Graph module implements the Graph class, which contains an automated high-speed pipeline to extract
-    NLP statistics from a Library - and use the derived statistical correlations to build a pseudo-
-    knowledge graph consisting of the relationships between words formed from the co-occurence matrix build among
+    NLP statistics from a Library - and use the derived statistical correlations to build a
+    knowledge graph consisting of the relationships between words formed from the co-occurrence matrix build among
     the most frequent words in the Library (excluding stop words). """
 
 
@@ -30,6 +30,9 @@ from ctypes import *
 from llmware.util import Utilities, CorpTokenizer
 from llmware.configs import LLMWareConfig
 from llmware.resources import CollectionRetrieval
+
+logger = logging.getLogger(__name__)
+logger.setLevel(level=20)
 
 
 class Graph:
@@ -96,7 +99,8 @@ class Graph:
             try:
                 bow_index = int(top_bow_file.split(".")[0][3:])
             except:
-                logging.warning("warning - Graph - unexpected - could not identify bow index on bow file - %s ", top_bow_file)
+                logger.warning(f"warning - Graph - unexpected - could not identify bow index on bow file - "
+                               f"{top_bow_file}")
                 bow_index = 0
 
             fp = open(os.path.join(dataset_fp, top_bow_file), "r", encoding='utf-8')
@@ -129,14 +133,14 @@ class Graph:
                                             "bow_token_index": bow_token_index, "bow_files": bow_files,
                                             "no_bow": no_bow}
 
-        logging.info(f"update: Graph().initialization - bow parameters at start: {self.pre_initialization_bow_data}")
+        logger.info(f"update: Graph().initialization - bow parameters at start: {self.pre_initialization_bow_data}")
 
         t0 = time.time()
 
         # no need to capture outputs directly from .bow_builder() method -> will pick indirectly thru .bow_locator()
         _ = self.bow_builder()
 
-        logging.info("update: initialization - Step 1- BOW processing - time - %s ", time.time() - t0)
+        logger.info(f"update: initialization - Step 1- BOW processing - time - {time.time()-t0} ")
 
         bow_index, bow_byte_index, bow_token_index, bow_files, no_bow = self.bow_locator()
 
@@ -146,20 +150,20 @@ class Graph:
                                              "bow_token_index": bow_token_index, "bow_files": bow_files,
                                              "no_bow": no_bow}
 
-        logging.info("update: Graph().initialization - bow parameters post: %s ", self.post_initialization_bow_data)
+        logger.info(f"update: Graph().initialization - bow parameters post: {self.post_initialization_bow_data}")
 
         # second major step -> build the MCW
         t1 = time.time()
         vocab_len, targets_len, context_len, min_len = self.mcw_builder()
 
-        logging.info("update: Graph().initialization - Step 2- MCW processing - time - %s ", time.time() - t1, vocab_len)
+        logger.info(f"update: Graph().initialization - Step 2- MCW processing - time - {time.time()-t1} - {vocab_len}")
 
         # third major step -> build the BG
         t3 = time.time()
 
         graph_output = self.build_graph_raw(vocab_len, targets_len, context_len, min_len)
 
-        logging.info("update: Graph().initialization - Step 3 - Graph building - time - %s ", time.time() - t3)
+        logger.info(f"update: Graph().initialization - Step 3 - Graph building - time - {time.time()-t1}")
 
         # extract key files from /nlp & create new dataset folder
         # shifting from build_dataset to core initialization
@@ -222,8 +226,6 @@ class Graph:
         db = LLMWareConfig().get_active_db()
         db_c = create_string_buffer(db.encode('ascii','ignore'))
 
-        # print("update: graph_builder - python - db, db_uri - ", db_c, input_db_path)
-
         # new signature
         teh = self._mod_utility.text_extract_main_handler
         teh.argtypes = (c_char_p, c_char_p, c_char_p, c_int, c_char_p, c_char_p, c_char_p, c_char_p, c_int, c_int)
@@ -249,8 +251,8 @@ class Graph:
 
         bow_len_current_c = c_int(bow_len_remainder_only)
 
-        logging.info("update: Graph() bow_builder - calling on text_extract handler - bow vars - %s - %s ", bow_index_current,
-                     bow_len_remainder_only)
+        logger.info(f"update: Graph() bow_builder - calling on text_extract handler - bow vars - "
+                    f"{bow_index_current} - {bow_len_remainder_only}")
 
         # int text_extract_main_handler(char * input_account_name, char * input_library_name,
         # char * db, int new_bow, char * db_uri_string,
@@ -268,7 +270,7 @@ class Graph:
                         bow_index_current_c,
                         bow_len_current_c)
 
-        logging.info("update: Graph() - completed BOW function step - utility BOW create - %s -", bow_count)
+        logger.info(f"update: Graph() - completed BOW function step - utility BOW create - {bow_count}")
 
         return 0
 
@@ -346,7 +348,8 @@ class Graph:
                         mc_pruned.append(new_entry)
                         added_new += 1
                     else:
-                        logging.info("update: mcw analysis - stopping at prune_count: %s %s %s ", y, prune_count, mcw_new[y])
+                        logger.info(f"update: mcw analysis - stopping at prune_count: "
+                                    f"{y} - {prune_count} - {mcw_new[y]}")
                         break
 
                 mc_combined = sorted(mc_pruned, key=lambda x: x[0])
@@ -377,7 +380,7 @@ class Graph:
         mcw = open(os.path.join(dataset_fp,"most_common_words.txt"), 'w', encoding='utf-8')
 
         #   for vocab lookup, cap vocab at .vocab_len_max, e.g., 50,000 by default
-        logging.info("update: Graph() mcw_builder - vocab len: %s ", len(mc_final))
+        logger.info(f"update: Graph() mcw_builder - vocab len: {len(mc_final)}")
 
         if len(mc_final) > self.vocab_len_max:
             max_len = self.vocab_len_max
@@ -476,7 +479,7 @@ class Graph:
         bow_count = self.post_initialization_bow_data["bow_index"] + 1
         bow_len_remainder = self.post_initialization_bow_data["bow_token_index"]
 
-        logging.info("update: build_graph_raw: bow len - %s %s: ", bow_count, bow_len_remainder)
+        logger.info(f"update: build_graph_raw: bow len - {bow_count} - {bow_len_remainder}")
 
         graph_handler = self._mod_utility.graph_builder
 
@@ -535,8 +538,8 @@ class Graph:
         # key parameters - account/library = find BOW + target most_common_words list
         # parameters:   min_counts, targets, window_size == 3
 
-        logging.info("update: Graph - initiating call to graph handler - %s - %s - %s - %s ", vocab_len, mcw_target_len,
-                     mcw_context_len, min_len)
+        logger.info(f"update: Graph - initiating call to graph handler - {vocab_len} - {mcw_target_len} - "
+                    f"{mcw_context_len} - {min_len}")
 
         # input to bow_handler:  bow.txt & most_common_words.txt
         # output to bow_handler: bg.txt
@@ -554,7 +557,7 @@ class Graph:
                               graph_max_size_c,
                               min_len_c)
 
-        logging.info("update: Graph() - completed graph build - output value is - %s ", dummy)
+        logger.info(f"update: Graph() - completed graph build - output value is - {dummy}")
 
         return 0
 
@@ -591,7 +594,7 @@ class Graph:
                     text_out.append(entry)
 
         except:
-            logging.error("error: Graph - could not identify correct file in nlp path")
+            logger.error("error: Graph - could not identify correct file in nlp path")
 
         # write to file
         g = open(os.path.join(self.library.nlp_path,"bg_text.txt"), "w", encoding='utf-8')
@@ -745,7 +748,7 @@ class Graph:
         context_search = self.retrieve_knowledge_graph()
 
         if context_search is None or len(context_search) == 0:
-            logging.info("update: Graph - knowledge graph appears to be empty")
+            logger.info("update: Graph - knowledge graph appears to be empty")
 
         # Step 0 - find targeted keyword in context_search
 
@@ -771,8 +774,8 @@ class Graph:
                     else:
                         l = len(context_search[z][1])
 
-                    logging.info("update: Graph - in targeted_build - found match:  %s %s %s %s", len(context_search[z][1]), l,
-                                 tokens, new_node)
+                    logger.debug(f"update: Graph - in targeted_build - found match:  "
+                                 f"{len(context_search[z][1])} - {l} - {tokens} - {new_node}")
 
                     for y in range(0, l):
                         c = context_search[z][1][y][0]
@@ -785,7 +788,7 @@ class Graph:
                         new_c_node = {"id": c, "label": c, "shape": "dot", "size": 10}
 
                         if new_c_node not in node_dataset and c.lower() not in query_tokens:
-                            logging.info("update: Graph - adding node:  %s", new_c_node)
+                            logger.info(f"update: Graph - adding node:  {new_c_node}")
                             node_dataset.append(new_c_node)
 
                         new_edge = {"from": t, "title": "", "to": c, "weight": w}
@@ -906,9 +909,9 @@ class Graph:
 
         if self.library.get_knowledge_graph_status() != "yes":
 
-            logging.info("update: to retrieve_mcw_counts, the knowledge graph must be created for this library. "
-                         "This is a 'one-time' build, and depending upon the size of the library, may take a little "
-                         "bit of time.")
+            logger.warning("update: to retrieve_mcw_counts, the knowledge graph must be created for this library. "
+                           "This is a 'one-time' build, and depending upon the size of the library, may take a little "
+                           "bit of time.")
 
             self.build_graph()
 
@@ -916,7 +919,7 @@ class Graph:
             mcw = open(os.path.join(self.library.nlp_path,"mcw_counts.txt"), "r", encoding='utf-8').read().split(",")
 
         except OSError:
-            logging.exception("error:  Graph - opening mcw_counts file - path not found.")
+            logger.warning("error:  Graph - opening mcw_counts file - path not found.")
             return [], []
 
         mcw_count_list = []
@@ -931,7 +934,8 @@ class Graph:
                     mcw_names_only.append(mcw[z])
 
                 except:
-                    logging.error("error: Graph - unexpected mcw file issue - %s %s %s", z, mcw[z], mcw[z + 1])
+                    logger.error(f"error: Graph - unexpected mcw file issue - "
+                                 f"{z} - {mcw[z]} - {mcw[z+1]}")
 
         return mcw_count_list, mcw_names_only
 
@@ -946,7 +950,7 @@ class Graph:
             bigrams = open(os.path.join(self.library.nlp_path,"bigrams.txt"), "r", encoding='utf-8').read().split(",")
 
         except OSError:
-            logging.exception("error: Graph - unexpected error opening bigrams file.")
+            logger.error("error: Graph - unexpected error opening bigrams file.")
             return []
 
         bigram_pairs_list = []
@@ -960,8 +964,8 @@ class Graph:
                     bigram_pairs_list.append(new_entry)
 
                 except:
-                    logging.error("error: Graph - unexpected problem with bigram file"
-                                  "- %s %s %s ", z, bigrams[z], bigrams[z + 1])
+                    logger.error(f"error: Graph - unexpected problem with bigram file"
+                                 f"- {z} - {bigrams[z]} - {bigrams[z+1]}")
 
         return bigram_pairs_list
 
@@ -1027,7 +1031,7 @@ class Graph:
             data_manifest = json.load(open(os.path.join(self.library.nlp_path,"manifest.json"), "r", encoding='utf-8'))
 
         except OSError:
-            logging.exception("error: Graph - could not open manifest file at path- %s ", self.library.nlp_path)
+            logger.error(f"error: Graph - could not open manifest file at path- {self.library.nlp_path}")
             data_manifest = {}
 
         if "bow_count" in data_manifest:
@@ -1188,7 +1192,7 @@ class Graph:
                             first_block_in_doc = blocks[1].split(",")[0][:-1]
                             last_block_in_doc = blocks[-1].split(",")[0][:-1]
                         except:
-                            logging.error("error: malformed BOW - need to investigate root cause")
+                            logger.error("error: malformed BOW - need to investigate root cause")
                             first_block_in_doc = "block_id=" + str(last_found_block)
                             last_block_in_doc = "block_id=" + str(last_found_block)
                     else:
@@ -1237,9 +1241,9 @@ class Graph:
 
         if self.library.get_knowledge_graph_status() != "yes":
 
-            logging.info("update: use of this method requires a 'one-time' creation of knowledge graph on the "
-                         "library, which is being created now - this may take some time depending upon the size "
-                         "of the library %s", self.library)
+            logger.info(f"update: use of this method requires a 'one-time' creation of knowledge graph on the "
+                        f"library, which is being created now - this may take some time depending upon the size "
+                        f"of the library {self.library}")
 
             self.library.build_graph()
 
@@ -1265,9 +1269,9 @@ class Graph:
 
         if self.library.get_knowledge_graph_status() != "yes":
 
-            logging.info("update: use of this method requires a 'one-time' creation of knowledge graph on the "
-                         "library, which is being created now - this may take some time depending upon the size "
-                         "of the library %s", self.library)
+            logger.info("update: use of this method requires a 'one-time' creation of knowledge graph on the "
+                         f"library, which is being created now - this may take some time depending upon the size "
+                         f"of the library {self.library}")
 
             self.library.build_graph()
 
@@ -1294,7 +1298,7 @@ class Graph:
 
         bigrams_out = {"bigrams": output_dict, "counts": count_dict}
 
-        logging.info("update: Graph - bigrams out - %s ", bigrams_out)
+        logger.info(f"update: Graph - bigrams out - {bigrams_out}")
 
         return bigrams_out
 
@@ -1304,9 +1308,9 @@ class Graph:
 
         if self.library.get_knowledge_graph_status() != "yes":
 
-            logging.info("update: use of this method requires a 'one-time' creation of knowledge graph on the "
-                         "library, which is being created now - this may take some time depending upon the size "
-                         "of the library %s", self.library)
+            logger.info(f"update: use of this method requires a 'one-time' creation of knowledge graph on the "
+                        f"library, which is being created now - this may take some time depending upon the size "
+                        f"of the library {self.library}")
 
             self.library.build_graph()
 
