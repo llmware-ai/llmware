@@ -1,7 +1,25 @@
+# Copyright 2023-2024 llmware
+
+# Licensed under the Apache License, Version 2.0 (the "License"); you
+# may not use this file except in compliance with the License.  You
+# may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.  See the License for the specific language governing
+# permissions and limitations under the License.
+
+
 """Global Default Configs for Models, Finetune Wrappers and Prompt Instructions Catalog.
 
-These configs generally do not need to be accessed directly, but can be viewed and updated through
+These configs generally do not need to be accessed directly, but can be viewed, accessed and modified through
 ModelCatalog and PromptCatalog classes.
+
+For customization, there is also the option in ModelCatalog to load a custom model catalog from json file, which
+would over-write this list.
 """
 
 global_model_repo_catalog_list = [

@@ -1,7 +1,21 @@
-"""The status module implements the Status class, which provides an interface for callers to read and write
-a status.
+# Copyright 2023-2024 llmware
 
-The callers can for example be a UI or a SQL datacase.
+# Licensed under the Apache License, Version 2.0 (the "License"); you
+# may not use this file except in compliance with the License.  You
+# may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.  See the License for the specific language governing
+# permissions and limitations under the License.
+
+
+"""The status module implements the Status class, which provides an interface for callers to read and write
+a status.  For example, the callers can be an application, UI, or SQL database, where there is an intent to
+provide a progress update on a long-running process (e.g., parsing ingestion or embedding).
 """
 
 import time
@@ -14,7 +28,7 @@ from llmware.configs import LLMWareTableSchema
 class Status:
     """Provides callers with an interface on the status of the parsing and embedding process.
 
-    ``Status`` is the central class for accessing (reading and writting) the status of processes.
+    ``Status`` is the central class for accessing (reading and writing) the status of processes.
     The intended use case is to be an interface for non-llmware components (the callers) that need
     information on llmware progress, e.g user interface components may need to change depending on the
     progress of parsing. A status consists of a summary string and metrics that can be used to provide
@@ -31,15 +45,6 @@ class Status:
     status : Status
         A new ``Status`` object.
 
-    Examples
-    ----------
-    >>> import llmware.status
-    >>> llmware_status = llmare.status.Status()
-    >>> llmware_status.account_name 
-    "llmware"
-    >>> llmware_status = llmware.status.Status(account_name="my_account")
-    >>> llmware_status.account_name 
-    "my_account"
     """
     def __init__ (self, account_name="llmware"):
 
