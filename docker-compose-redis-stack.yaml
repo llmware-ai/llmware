@@ -13,4 +13,8 @@ services:
     environment:
       - "REDIS_ARGS=--enable-debug-command yes --enable-module-command yes"
     volumes:
-      - ./data
+      - redis_data:/data
+
+volumes:
+    redis_data:
+        driver: local
