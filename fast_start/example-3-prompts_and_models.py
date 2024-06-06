@@ -7,6 +7,20 @@
     2.  Load Model - how to load a selected model from the catalog
     3.  Prompt - how to create a basic prompt and run an inference with the model
 
+    In llmware, we use the same basic formalism for the importing of all models so once you learn the recipe
+    below, you should be able to import and start inferences on just about any model in the llmware catalog.
+
+        To run GGUF models (generally marked in the catalog as 'GGUFGenerativeModel` model category and
+    with names that include 'gguf' or 'tool'), then there are no additional dependencies required to start
+    running local inferences.
+
+    However, pytorch-based models will require additional dependencies to be installed, specifically:
+
+        `pip3 install torch`
+        `pip3 install transformers`
+
+    To use an OpenAI model, you will need to `pip3 install openai`.
+
 """
 
 
@@ -432,12 +446,17 @@ if __name__ == "__main__":
 
     #   for purposes of demo, try a few selected models from the list
 
-    model_short_list = ["llmware/bling-1b-0.1",
-                        "llmware/bling-tiny-llama-v0",
-                        "llmware/dragon-yi-6b-gguf",
-                        "llmware/bling-falcon-1b-0.1"]
+    #   each of these pytorch models are ~1b parameters and will run reasonably fast and accurate on CPU
+    #   --per note above, may require separate pip3 install of: torch and transformers
+    pytorch_generative_models = ["llmware/bling-1b-0.1", "llmware/bling-tiny-llama-v0", "llmware/bling-falcon-1b-0.1"]
 
-    model_name = "llmware/bling-1b-0.1"
+    #   bling-answer-tool is 1b parameters quantized
+    #   bling-phi-3-gguf is 3.8b parameters quantized
+    #   dragon-yi-6b-gguf is 6b parameters quantized
+    gguf_generative_models = ["bling-answer-tool", "bling-phi-3-gguf","llmware/dragon-yi-6b-gguf"]
+
+    #   by default, we will select a gguf model requiring no additional imports
+    model_name = gguf_generative_models[0]
 
     #   to swap in a gpt-4 openai model - uncomment these two lines
     #   model_name = "gpt-4"
