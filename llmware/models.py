@@ -76,7 +76,8 @@ class _ModelRegistry:
                      "JurassicModel":{"module": "llmware.models", "open_source": False},
                      "OpenAIEmbeddingModel":{"module": "llmware.models", "open_source": False},
                      "CohereEmbeddingModel":{"module": "llmware.models", "open_source": False},
-                     "GoogleEmbeddingModel":{"module": "llmware.models", "open_source": False}
+                     "GoogleEmbeddingModel":{"module": "llmware.models", "open_source": False},
+                     "HFReRankerModel": {"module": "llmware.models", "open_source": True}
                      }
 
     #   model card validation for registering new model - required attributes
@@ -4524,6 +4525,194 @@ class GoogleEmbeddingModel(BaseModel):
         return temp_json_path
 
 
+class HFReRankerModel(BaseModel):
+
+    """HFReRankerModel class implements the interface for HuggingFace ReRanker models. """
+
+    def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None, model_card=None,
+                 embedding_dims=None, trust_remote_code=False, use_gpu_if_available=True, max_len=None, **kwargs):
+
+        super().__init__()
+
+        self.model_class = "HFReRankerModel"
+        self.model_category = "reranker"
+
+        # pull in expected hf input
+        self.model_name = model_name
+        self.model = model
+        self.tokenizer= tokenizer
+        self.embedding_dims = embedding_dims
+        self.model_type = None
+        self.max_total_len = 2048
+        self.model_architecture = None
+        self.model_card = model_card
+        self.safe_buffer = 12
+
+        # default for HF embedding model -> will be over-ridden by model card / configs, if available
+        self.context_window = 512
+
+        if self.model_card:
+            if "embedding_dims" in self.model_card:
+                self.embedding_dims = self.model_card["embedding_dims"]
+
+            if "context_window" in self.model_card:
+                self.context_window = self.model_card["context_window"]
+
+        # insert dynamic pytorch load here
+        global GLOBAL_TORCH_IMPORT
+        if not GLOBAL_TORCH_IMPORT:
+
+            logger.debug("update: ModelCatalog - HFReRankerModel - local dynamic load of torch here")
+            if util.find_spec("torch"):
+
+                try:
+                    global torch
+                    torch = importlib.import_module("torch")
+                    GLOBAL_TORCH_IMPORT = True
+                except:
+                    raise LLMWareException(message="Exception: could not load torch module.")
+
+            else:
+                raise LLMWareException(message="Exception: need to import torch to use this class.")
+
+        # end dynamic import here
+
+        if self.model_name and not model:
+
+            # pull from HF
+            hf_repo_name = self.model_name
+
+            if not self.model_card:
+                self.model_card = ModelCatalog().lookup_model_card(model_name)
+
+            if self.model_card:
+                if "hf_repo" in self.model_card:
+                    hf_repo_name = self.model_card["hf_repo"]
+
+            pt_loader = PyTorchLoader(api_key=api_key,trust_remote_code=trust_remote_code,custom_loader=None)
+
+            self.model=pt_loader.get_reranker_model(hf_repo_name)
+            self.tokenizer=None
+
+        self.use_gpu = torch.cuda.is_available() and use_gpu_if_available
+
+        if self.model:
+
+            self.config = self.model.config.to_dict()
+
+            if "hidden_size" in self.config:
+                self.embedding_dims = self.config["hidden_size"]
+
+            if "model_type" in self.config:
+                self.model_type = self.config["model_type"]
+
+            if "max_position_embeddings" in self.config:
+
+                try:
+                    self.context_window = int(self.config["max_position_embeddings"])
+                except:
+                    pass
+
+            if "_name_or_path" in self.config:
+                self.model_name = self.config["_name_or_path"]
+
+            if "architectures" in self.config:
+                if isinstance(self.config["architectures"],list):
+                    self.model_architectures = self.config["architectures"][0]
+                else:
+                    self.model_architectures = self.config["architectures"]
+
+            self.model.eval()
+
+            if self.use_gpu:
+                self.model.to('cuda')
+
+        else:
+            raise ModelNotFoundException(model_name)
+
+        # no api key expected or required
+        self.api_key = api_key
+
+        # set max len for tokenizer truncation with 'safe_buffer' below context_window size
+        if self.context_window > self.safe_buffer:
+            self.max_len = self.context_window - self.safe_buffer
+        else:
+            self.max_len = self.context_window
+
+        # option to set smaller size than model context window
+        if max_len:
+            if max_len < self.context_window:
+                self.max_len = max_len
+
+        self.post_init()
+
+    def set_api_key(self, api_key, env_var="USER_MANAGED_HF_API_KEY"):
+
+        """ Sets the API key - generally not needed for public HF repositories. """
+
+        os.environ[env_var] = api_key
+        logger.info("update: added and stored HF api_key in environmental variable- %s", env_var)
+
+        return self
+
+    def _get_api_key(self, env_var="USER_MANAGED_HF_API_KEY"):
+
+        """ Gets API key from os.environ variable. """
+
+        self.api_key = os.environ.get(env_var)
+
+        if not self.api_key:
+            logger.error("error: _get_api_key could not successfully retrieve value from: %s ", env_var)
+
+        return self.api_key
+
+    def token_counter(self, text_sample):
+
+        """ Counts tokens in text sample. Not currently implemented. """
+
+        return -1
+
+    def inference (self, query, text_results, api_key=None, top_n=20, relevance_threshold=None, min_return=3):
+
+        """ Executes reranking inference. """
+
+        documents = []
+        for i, chunks in enumerate(text_results):
+            documents.append(chunks['text'])
+
+        sentence_pairs = [[query, doc] for doc in documents]
+
+        scores = self.model.compute_score(sentence_pairs)
+
+        output = []
+        for i, score in enumerate(scores):
+            text_results[i].update({"rerank_score": score})
+            output.append(text_results[i])
+
+        ranked_output = sorted(output, key=lambda x: x["rerank_score"], reverse=True)
+
+        #   will return top_n if no relevance threshold set
+        if not relevance_threshold:
+            if top_n < len(ranked_output):
+                final_output = ranked_output[0:top_n]
+            else:
+                final_output = ranked_output
+        else:
+            final_output = []
+            #   if relevance threshold, will return all results above threshold
+            for entries in ranked_output:
+                if entries["rerank_score"] >= relevance_threshold:
+                    final_output.append(entries)
+
+            #   fallback, if no result above threshold, then will return the min number of results
+            if len(final_output) == 0:
+                final_output = ranked_output[0:min_return]
+
+        self.register()
+
+        return final_output
+
+
 class HFEmbeddingModel(BaseModel):
 
     """HFEmbeddingModel class implements the API for HuggingFace embedding models. """
@@ -6117,6 +6306,9 @@ class GGUFGenerativeModel(BaseModel):
 
         # Try to load the shared library, handling potential errors
         for _lib_path in _lib_paths:
+
+            # _lib_path = os.path.join(os.path.dirname(__file__), "lib/gguf/libllama_mac_metal.dylib")
+            # print("searching _lib_path: ", _lib_path)
 
             if not os.path.exists(_lib_path):
                 if fall_back_option:
@@ -8265,6 +8457,55 @@ class PyTorchLoader:
                                                       torch_dtype="auto")
                 else:
                     model = AutoModel.from_pretrained(model_name, trust_remote_code=self.trust_remote_code)
+
+        return model
+
+    def get_reranker_model(self, model_name, **kwargs):
+
+        """ Retrieves and instantiates a Pytorch Reranker model.  Takes a model_name as input, which is
+        assumed to map to the Huggingface repository name - this name is not necessarily the same as the
+        LLMWare model card, which is used to lookup the model in model_configs -> the model_name used here
+        should be the hf_repo attribute on the model card. """
+
+        model = None
+
+        self.model_name = model_name
+
+        if self.custom_loader:
+            model = self.custom_loader.loader(self.model_name, self.api_key, self.trust_remote_code, self.custom_loader,
+                                              caller="reranker_model", **kwargs)
+
+        else:
+
+            try:
+                # will wrap in Exception if import fails
+                from transformers import AutoModelForSequenceClassification
+            except ImportError:
+                raise DependencyNotInstalledException("transformers")
+
+            if self.api_key:
+
+                if torch.cuda.is_available():
+                    model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=1,
+                                                                               token=self.api_key,
+                                                                               trust_remote_code=self.trust_remote_code,
+                                                                               torch_dtype="auto")
+                else:
+                    model = AutoModelForSequenceClassification.from_pretrained(model_name,
+                                                                               num_labels=1,
+                                                                               token=self.api_key,
+                                                                               trust_remote_code=self.trust_remote_code)
+
+            else:
+                if torch.cuda.is_available():
+                    model = AutoModelForSequenceClassification.from_pretrained(model_name,
+                                                                               num_labels=1,
+                                                                               trust_remote_code=self.trust_remote_code,
+                                                                               torch_dtype="auto")
+                else:
+                    model = AutoModelForSequenceClassification.from_pretrained(model_name,
+                                                                               num_labels=1,
+                                                                               trust_remote_code=self.trust_remote_code)
 
         return model
 
