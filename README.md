@@ -907,10 +907,6 @@ See also [additional deployment/install release notes in wheel_archives](https:/
 - SLIM model keys and output_values now accessible in ModelCatalog.  
 - Updating encodings to 'utf-8-sig' to better handle txt/csv files with bom.  
 
-**Reported notable issues on priority resolution path**  
-- older linux versions with GLIBC < 2.31   
-- 3.12 python support - waiting on one last dependency (coming soon)
-  
 **Supported Operating Systems**: MacOS (Metal and x86), Linux (x86 and aarch64), Windows  
 - note on Linux: we test most extensively on Ubuntu 22 and now Ubuntu 20 and recommend where possible  
 - if you need another Linux version, please raise an issue - we will prioritize testing and ensure support.  
