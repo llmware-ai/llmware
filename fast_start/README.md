@@ -49,10 +49,9 @@ Examples:
 
 7.  **Function Calls** - move beyond 'question-answer' prompting and start prompting with function calls.  
 
-8.  **Agents** - the power of function calls is the ability to integrate model function calls as 'tools' available to an agent orchestrator.  [Video]
-(https://youtu.be/cQfdaTcmBpY?si=pMWQj0qpPBVRmm34)  
+8.  **Agents** - the power of function calls is the ability to integrate model function calls as 'tools' available to an agent orchestrator.  [Video](https://youtu.be/cQfdaTcmBpY?si=pMWQj0qpPBVRmm34)  
 
-10.  **Function Calls with Web Services** - one of the most exciting use cases is the ability to combine function calls with web services.   [Video](https://youtu.be/l0jzsg1_Ik0?si=ifwxVi_Z6I_hNtcf)  
+9.  **Function Calls with Web Services** - one of the most exciting use cases is the ability to combine function calls with web services.   [Video](https://youtu.be/l0jzsg1_Ik0?si=ifwxVi_Z6I_hNtcf)  
 
 After completing these 9 examples, you should have a good foundation and set of recipes to start 
 exploring the other 100+ examples in the /examples folder, and build more sophisticated 
