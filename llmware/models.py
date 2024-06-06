@@ -6307,9 +6307,6 @@ class GGUFGenerativeModel(BaseModel):
         # Try to load the shared library, handling potential errors
         for _lib_path in _lib_paths:
 
-            # _lib_path = os.path.join(os.path.dirname(__file__), "lib/gguf/libllama_mac_metal.dylib")
-            # print("searching _lib_path: ", _lib_path)
-
             if not os.path.exists(_lib_path):
                 if fall_back_option:
                     _lib_path = fall_back_option
