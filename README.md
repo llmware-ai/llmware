@@ -23,6 +23,8 @@ Most of our examples can be run without a GPU server - get started right away on
 New to RAG?  [Check out the Fast Start video series](https://www.youtube.com/playlist?list=PL1-dn33KwsmD7SB9iSO6vx4ZLRAWea1DB)  
 
 🔥🔥🔥 [**Multi-Model Agents with SLIM Models**](examples/SLIM-Agents/) - [**Intro-Video**](https://www.youtube.com/watch?v=cQfdaTcmBpY) 🔥🔥🔥   
+
+[Intro to SLIM Function Call Models](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_function_calls.py)  
 Can't wait?  Get SLIMs right away:  
 
 ```python 
@@ -812,7 +814,7 @@ Questions and discussions are welcome in our [github discussions](https://github
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
 **Thursday, June 6 - v0.3.1-WIP**  
-- Added module 3 to Fast Start example series [examples 7-9 on Agents & Function Calls](https://https://github.com/llmware-ai/llmware/tree/main/fast_start)  
+- Added module 3 to Fast Start example series [examples 7-9 on Agents & Function Calls](https://github.com/llmware-ai/llmware/tree/main/fast_start)  
 - Added reranker Jina model for in-memory semantic similarity RAG - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Embedding/using_semantic_reranker_with_rag.py)  
 - Changes merged into main branch - expected next pypi release at end of week   
 
