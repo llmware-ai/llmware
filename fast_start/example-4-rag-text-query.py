@@ -171,9 +171,12 @@ if __name__ == "__main__":
 
     LLMWareConfig().set_active_db("sqlite")
 
-    example_models = ["llmware/bling-1b-0.1", "llmware/bling-tiny-llama-v0", "llmware/dragon-yi-6b-gguf"]
+    example_models = ["bling-phi-3-gguf",
+                      "llmware/bling-1b-0.1",
+                      "llmware/bling-tiny-llama-v0",
+                      "llmware/dragon-yi-6b-gguf"]
 
-    #   to swap in a gpt-4 openai model - uncomment these two lines
+    #   to swap in a gpt-4 openai model - uncomment these two lines and `pip3 install openai`
     #   model_name = "gpt-4"
     #   os.environ["USER_MANAGED_OPENAI_API_KEY"] = "<insert-your-openai-key>"
 

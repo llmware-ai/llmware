@@ -12,7 +12,19 @@
     3.  Select the most relevant results by document.
     4.  Loop through all of the documents - packaging the context and asking our questions to the LLM.
 
-    NOTE: to use chromadb, you may need to install the python sdk:  pip3 install chromadb.
+    Note: to run this example with the selected embedding pytorch model from the huggingface catalog,
+    you may need to install additional dependencies:
+
+        `pip3 install transformers`
+        `pip3 install torch`
+
+    We would recommend any of the following 'no-install' vector db options:
+
+        -- milvus lite:  `pip3 install pymilvus`      [available starting in llmware>=0.3.0 on Mac/Linux]
+        -- chromadb:     `pip3 install chromadb`
+        -- lancedb:      `pip3 install lancedb`
+        -- faiss:        `pip3 install faiss`
+
 
 """
 
@@ -23,10 +35,16 @@ from llmware.retrieval import Query
 from llmware.setup import Setup
 from llmware.status import Status
 from llmware.prompts import Prompt
-from llmware.configs import LLMWareConfig
+from llmware.configs import LLMWareConfig, MilvusConfig
 from importlib import util
-if not util.find_spec("chromadb"):
-    print("\nto run this example with chromadb, you need to install the chromadb python sdk:  pip3 install chromadb")
+
+if not util.find_spec("torch") or not util.find_spec("transformers"):
+    print("\nto run this example, with the selected embedding model, please install transformers and torch, e.g., "
+          "\n`pip install torch`"
+          "\n`pip install transformers`")
+
+if not (util.find_spec("chromadb") or util.find_spec("pymilvus") or util.find_spec("lancedb") or util.find_spec("faiss")):
+    print("\nto run this example, you will need to pip install the vector db drivers. see comments above.")
 
 
 def semantic_rag (library_name, embedding_model_name, llm_model_name):
@@ -50,28 +68,28 @@ def semantic_rag (library_name, embedding_model_name, llm_model_name):
     #   this method parses all of the documents, text chunks, and captures in MongoDB
     print("update: Step 3 - Parsing and Text Indexing Files")
 
-    library.add_files(input_folder_path=contracts_path, chunk_size=400, max_chunk_size=600,
-                      smart_chunking=1)
+    #   -- note: in testing, we have found that the retrieval success is sensitive to the chunking strategy
+    #   -- please keep in mind as you adapt this example with your own documents
+    library.add_files(input_folder_path=contracts_path, chunk_size=400, max_chunk_size=800, smart_chunking=2)
 
     # Step 4 - Install the embeddings
     print("\nupdate: Step 4 - Generating Embeddings in {} db - with Model- {}".format(vector_db, embedding_model))
 
-    library.install_new_embedding(embedding_model_name=embedding_model_name, vector_db=vector_db)
+    library.install_new_embedding(embedding_model_name=embedding_model_name, vector_db=vector_db, batch_size=200)
 
     # RAG steps start here ...
 
     print("\nupdate: Loading model for LLM inference - ", llm_model_name)
 
-    prompter = Prompt().load_model(llm_model_name)
+    prompter = Prompt().load_model(llm_model_name, temperature=0.0, sample=False)
 
     query = "what is the executive's base annual salary"
 
     #   key step: run semantic query against the library and get all of the top results
-    results = Query(library).semantic_query(query, result_count=50, embedding_distance_threshold=1.0)
+    results = Query(library).semantic_query(query, result_count=80, embedding_distance_threshold=1.0)
 
-    #   if you want to look at 'results', uncomment the two lines below
-    #   for i, res in enumerate(results):
-    #       print("update: ", i, res["file_source"], res["distance"], res["text"])
+    #   if you want to look at 'results', uncomment the line below
+    # for i, res in enumerate(results): print("\nupdate: ", i, res["file_source"], res["distance"], res["text"])
 
     for i, contract in enumerate(os.listdir(contracts_path)):
 
@@ -97,7 +115,7 @@ def semantic_rag (library_name, embedding_model_name, llm_model_name):
             source = prompter.add_source_query_results(query_results=qr)
 
             #   run the prompt
-            response = prompter.prompt_with_source(query, prompt_name="default_with_context", temperature=0.3)
+            response = prompter.prompt_with_source(query, prompt_name="default_with_context")
 
             #   note: prompt_with_resource returns a list of dictionary responses
             #   -- depending upon the size of the source context, it may call the llm several times
@@ -117,23 +135,25 @@ if __name__ == "__main__":
 
     LLMWareConfig().set_active_db("sqlite")
 
-    #   for this example, we will use an embedding model that has been 'fine-tuned' for contracts
-    embedding_model = "industry-bert-contracts"
+    #   we will use one of the most popular open source embedding models by jina-ai
+    #   e.g., jinaai/jina-embeddings-v2-base-en
+    embedding_model = "jina-small-en-v2"
 
-    #   note: as of llmware==0.2.12, we have shifted from faiss to chromadb for the Fast Start examples
-    #   --if you are using a Python version before 3.12, please feel free to substitute for "faiss"
-    #   --for versions of Python >= 3.12, for the Fast Start examples (e.g., no install required), we
-    #   recommend using chromadb or lancedb
+    #   Select a 'no install' vector db
 
-    #   please double-check: `pip3 install chromadb` or pull the latest llmware version to get automatically
-    #   -- if you have installed any other vector db, just change the name, e.g, "milvus" or "pg_vector"
+    #   note: starting with llmware>=0.3.0, we support the new milvus lite - you can ignore or comment out if
+    #   using a different vector db -> note: milvus lite only on mac/linux (not windows)
+    MilvusConfig().set_config("lite", True)
+
+    #   select one of:  'milvus' | 'chromadb' | 'lancedb' | 'faiss'
+    LLMWareConfig().set_vector_db("chromadb")
 
     vector_db = "chromadb"
 
     # pick any name for the library
     lib_name = "example_5_library"
 
-    example_models = ["llmware/bling-1b-0.1", "llmware/bling-tiny-llama-v0", "llmware/dragon-yi-6b-gguf"]
+    example_models = ["bling-phi-3-gguf", "llmware/bling-1b-0.1", "llmware/dragon-yi-6b-gguf"]
 
     # use local cpu model
     llm_model_name = example_models[0]

@@ -1,5 +1,5 @@
 
-""""    Fast Start Example #2 - Embeddings - applying an embedding model to enable natural language queries
+"""    Fast Start Example #2 - Embeddings - applying an embedding model to enable natural language queries
 
     In this example, we will show the basic recipe for creating embeddings on a library:
 
@@ -9,12 +9,20 @@
     4.  Install the embeddings
     5.  Run a semantic test query
 
-    For purpose of this 'fast start', we will use a no-install option of 'chromadb' and 'sqlite'
+    For purpose of this 'fast start', we will use a no-install option of 'sqlite' as our text collection database
 
-    Note: we have updated the no-install vector db option to 'chromadb' from 'faiss' starting in
-    llmware>=0.2.12, due to better support on Python 3.12
+    Note: to run this example with a sentence transformers 'local' open source embedding model,
+    you may need to install additional dependencies:
 
-    Note: you may need to install chromadb's python driver:  `pip3 install chromadb`
+        `pip3 install transformers`
+        `pip3 install torch`
+
+    We would recommend any of the following 'no-install' vector db options:
+
+        -- milvus lite:  `pip3 install pymilvus`      [available starting in llmware>=0.3.0 on Mac/Linux]
+        -- chromadb:     `pip3 install chromadb`
+        -- lancedb:      `pip3 install lancedb`
+        -- faiss:        `pip3 install faiss`
 
     -- This same basic recipe will work with any of the vector db and collection db by simply changing the name
 
@@ -27,11 +35,18 @@ from llmware.retrieval import Query
 from llmware.setup import Setup
 from llmware.status import Status
 from llmware.models import ModelCatalog
-from llmware.configs import LLMWareConfig
+from llmware.configs import LLMWareConfig, MilvusConfig
 
 from importlib import util
-if not util.find_spec("chromadb"):
-    print("\nto run this example with chromadb, you need to install the chromadb python sdk:  pip3 install chromadb")
+
+#   generate warnings if key dependencies not involved
+if not util.find_spec("torch") or not util.find_spec("transformers"):
+    print("\nto run this example, with the selected embedding model, please install transformers and torch, e.g., "
+          "\n`pip install torch`"
+          "\n`pip install transformers`")
+
+if not (util.find_spec("chromadb") or util.find_spec("pymilvus") or util.find_spec("lancedb") or util.find_spec("faiss")):
+    print("\nto run this example, you will need to pip install the vector db drivers. see comments above.")
 
 
 def setup_library(library_name):
@@ -127,14 +142,13 @@ if __name__ == "__main__":
 
     LLMWareConfig().set_active_db("sqlite")
 
-    #   note: as of llmware==0.2.12, we have shifted from faiss to chromadb for the Fast Start examples
-    #   --if you are using a Python version before 3.12, please feel free to substitute for "faiss"
-    #   --for versions of Python >= 3.12, for the Fast Start examples (e.g., no install required), we
-    #   recommend using chromadb or lancedb
-    #   please double-check: `pip3 install chromadb` or pull the latest llmware version to get automatically
+    #   Select a 'no install' vector db
 
-    #   -- if you have installed any other vector db, just change the name, e.g, "milvus" or "pg_vector"
+    #   note: starting with llmware>=0.3.0, we support the new milvus lite - you can ignore or comment out if
+    #   using a different vector db - and note: only available on mac/linux
+    MilvusConfig().set_config("lite", True)
 
+    #   select one of:  'milvus' | 'chromadb' | 'lancedb' | 'faiss'
     LLMWareConfig().set_vector_db("chromadb")
 
     #  Step 1 - this example requires us to have a library created - two options:
@@ -155,9 +169,13 @@ if __name__ == "__main__":
     #       print("embedding models: ", i, models)
 
     #   for this first embedding, we will use a very popular and fast sentence transformer
+    #   -- these models require `pip3 install transformers` and `pip3 install torch`
     embedding_model = "mini-lm-sbert"
 
-    #   note: if you want to swap out "mini-lm-sbert" for Open AI 'text-embedding-ada-002', uncomment these lines:
+    #   note: if you want to swap out "mini-lm-sbert" for Open AI 'text-embedding-ada-002', then:
+    #   1.  you do not need to import transformers or torch
+    #   2.  you should `pip3 install openai`
+    #   3.  you should uncomment these lines:
     #   embedding_model = "text-embedding-ada-002"
     #   os.environ["USER_MANAGED_OPENAI_API_KEY"] = "<insert-your-openai-api-key>"
 

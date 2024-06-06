@@ -3,7 +3,7 @@
 
     In this example, we will illustrate a basic recipe for completing the following steps:
 
-      1. Create a library as a organizing construct for your knowledge-base
+      1. Create a library as an organizing construct for your knowledge-base
       2. Download sample files for a Fast Start - easy to 'swap out' and replace with your own files
       3. Use library.add_files method to automatically parse, text chunk and index the documents
       4. Run a basic text query against your new Library

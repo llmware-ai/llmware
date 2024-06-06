@@ -109,6 +109,8 @@ if __name__ == "__main__":
 
     #   this is part of the DRAGON model series - RAG-fine-tuned fact-based Q&A model
     llm = "llmware/dragon-yi-6b-gguf"
+    
+    #   feel free to also try:  "bling-phi-3-gguf" as a good substitute option
 
     m = msa_processing("example6_library", llm)
 
