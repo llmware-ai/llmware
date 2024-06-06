@@ -9,7 +9,7 @@
     Generally, function-calling is a specialized capability of frontier language models, such as OpenAI GPT4.
 
     We have adapted this concept to small language models through SLIMs (Structured Language Instruction Models),
-    which are 'single function' models fine-tuned to accept three main inputs to construct a prompt:
+    which are 'single function' models fine-tuned to accept three main inputs to construct a prompt and generate a structured output.  
 
     As of June 2024, there are 18 distinct SLIM function calling models with many more on the way, for most common
     extraction, classification, and summarization tasks.
