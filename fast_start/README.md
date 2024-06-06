@@ -21,7 +21,7 @@ Platforms:
 - Pull the latest version of llmware == 0.3.0 (as of early June 2024)  
 - Please note that we have updated the examples from the original versions, to use new features in llmware, so there may be minor differences with the videos, which are annotated in the comments in each example.    
   
-There are 6 examples, designed to be used step-by-step, but each is self-contained,  
+There are 9 examples, designed to be used step-by-step, but each is self-contained,  
 so you can feel free to jump into any of the examples, in any order, that you prefer.  
 
 Each example has been designed to be "copy-paste" and RUN with lots of helpful comments and explanations embedded in the code samples.  
@@ -44,13 +44,22 @@ Examples:
 5.  **RAG with Semantic Query** - use natural language queries on documents and integrate with prompts.  [Video](https://youtu.be/XT4kIXA9H3Q?si=EBCAxVXBt5vgYY8s)
     
 6.  **RAG with more complex retrieval** - start integrating more complex retrieval patterns.  [Video](https://youtu.be/G1Q6Ar8THbo?si=vIVAv35uXAcnaUJy)  
-   
-After completing these 6 examples, you should have a good foundation and set of recipes to start 
+
+**Section III - Function Calls & Agents**  
+
+7.  **Function Calls** - move beyond 'question-answer' prompting and start prompting with function calls.  
+
+8.  **Agents** - the power of function calls is the ability to integrate model function calls as 'tools' available to an agent orchestrator.  [Video]
+(https://youtu.be/cQfdaTcmBpY?si=pMWQj0qpPBVRmm34)  
+
+10.  **Function Calls with Web Services** - one of the most exciting use cases is the ability to combine function calls with web services.   [Video](https://youtu.be/l0jzsg1_Ik0?si=ifwxVi_Z6I_hNtcf)  
+
+After completing these 9 examples, you should have a good foundation and set of recipes to start 
 exploring the other 100+ examples in the /examples folder, and build more sophisticated 
 LLM-based applications.  
 
 **Models**  
-  - All of these examples are optimized for using local CPU-based models, primarily BLING and DRAGON.  
+  - All of these examples are optimized for using local CPU-based models, primarily BLING, DRAGON and SLIM models.   
   - If you want to substitute for any other model in the catalog, it is generally as easy as 
     switching the model_name.  If the model requires API keys, we show in the examples how to pass those keys as an
     environment variable.  
@@ -62,7 +71,7 @@ LLM-based applications.
   - Install instructions for "mongo" and "postgres" are provided in docker-compose files in the repository  
 
 **Vector Databases**  
-   - For Fast Start, we will use a no-install vector db.  
+   - For Fast Start, we will use a no-install vector db (in Examples 2 and 5 specifically).  
    - There are 4 no-install options supported, but depending upon your enviroment, you may need to pip3 install the corresponding vector db python sdk, eg.:  
      
      - chromadb:  `pip3 install chromadb`  
