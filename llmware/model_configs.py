@@ -88,7 +88,23 @@ global_model_repo_catalog_list = [
    "link": "https://huggingface.co/jinaai/jina-embeddings-v2-small-en", "custom_model_files": [], "custom_model_repo": "",
    "hf_repo": "jinaai/jina-embeddings-v2-small-en"},
 
-  {"model_name": 'BAAI/bge-small-en-v1.5', "display_name": "bge-small-en-v1.5", "model_family": "HFEmbeddingModel",
+  # new add - reranker models
+  {"model_name": 'jinaai/jina-reranker-v1-turbo-en', "display_name": "jina-reranker-turbo",
+  "model_family": "HFReRankerModel",
+  "model_category": "reranker", "model_location": "hf_repo", "embedding_dims": 384, "context_window": 8192,
+  "link": "https://huggingface.co/jinaai/jina-reranker-v1-turbo-en", "custom_model_files": [],
+  "custom_model_repo": "",
+  "hf_repo": "jinaai/jina-reranker-v1-turbo-en"},
+
+ {"model_name": 'jinaai/jina-reranker-v1-tiny-en', "display_name": "jina-reranker-tiny",
+  "model_family": "HFReRankerModel",
+  "model_category": "reranker", "model_location": "hf_repo", "embedding_dims": 384, "context_window": 8192,
+  "link": "https://huggingface.co/jinaai/jina-reranker-v1-tiny-en", "custom_model_files": [],
+  "custom_model_repo": "",
+  "hf_repo": "jinaai/jina-reranker-v1-tiny-en"},
+  # end - reranker models
+
+ {"model_name": 'BAAI/bge-small-en-v1.5', "display_name": "bge-small-en-v1.5", "model_family": "HFEmbeddingModel",
    "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 384, "context_window": 512,
    "link": "https://huggingface.co/BAAI/bge-small-en-v1.5", "custom_model_files": [], "custom_model_repo": "",
    "hf_repo": "BAAI/bge-small-en-v1.5"},
