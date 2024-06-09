@@ -5,7 +5,7 @@
 # in the templates via {{ site.myvariable }}.
 title: llmware
 description: llmware is an enterprise-grade LLM-based development framework, including tools and fine-tuned models.
-theme: just-the-docs
+theme: bulma-clean-theme  
 url: https://llmware-ai.github.io/llmware/
 baseurl: "" # the subpath of your site
 favicon_ico: "/assets/images/favicon.ico"
