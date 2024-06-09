@@ -67,6 +67,7 @@ except ImportError:
     pass
 
 logger = logging.getLogger(__name__)
+logger.setLevel(level=LLMWareConfig().get_logging_level_by_module(__name__))
 
 
 class CollectionRetrieval:
@@ -635,7 +636,7 @@ class MongoRetrieval:
             try:
                 value = ObjectId(value)
             except:
-                logger.info(f"update: mongo lookup - could not find _id into ObjectID - {value}")
+                logger.debug(f"update: mongo lookup - could not find _id into ObjectID - {value}")
                 value = value
 
         target = list(self.collection.find({key:value}))
@@ -4362,7 +4363,7 @@ class ParserState:
                 output.append(new_row)
 
         except:
-            logger.info(f"warning: ParserState - could not find previous parse job record - {prompt_id}")
+            logger.warning(f"update: ParserState - could not find previous parse job record - {prompt_id}")
             output = []
 
         return output
@@ -4479,7 +4480,7 @@ class PromptState:
                 output = self.prompt.interaction_history
 
         except:
-            logger.info(f"update: PromptState - could not find previous prompt interaction state- {prompt_id}")
+            logger.warning(f"update: PromptState - could not find previous prompt interaction state- {prompt_id}")
             output = None
 
         return output
@@ -4499,7 +4500,7 @@ class PromptState:
                 new_row = json.loads(lines)
                 output.append(new_row)
         except:
-            logger.info(f"warning: PromptState - could not find previous prompt interaction state- {prompt_id}")
+            logger.warning(f"warning: PromptState - could not find previous prompt interaction state- {prompt_id}")
             output = []
 
         return output
@@ -4881,7 +4882,7 @@ class QueryState:
                         query_history.append(new_row["query"])
 
         except:
-            logger.info(f"warning: QueryState - could not find previous query state- {query_id}")
+            logger.warning(f"update: QueryState - could not find previous query state- {query_id}")
             output = []
 
         self.query.results = output
