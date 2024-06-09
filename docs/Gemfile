@@ -8,8 +8,6 @@ gem "jekyll", "~> 4.3.2" # installed by `gem jekyll`
 gem "just-the-docs", "0.7.0" # pinned to the current release
 gem "rexml", "3.2.8" # pinned to that version to fix security alert
 
-gem "bulma-clean-theme", '1.0.0'  
-
 #
 # Gems that are only loaded if they are configured correctly.
 #
