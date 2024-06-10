@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Agents
-parent: examples
+parent: Examples
 nav_order: 2
 description: overview of the major modules and classes of LLMWare  
 permalink: /examples/agents

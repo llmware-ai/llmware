@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Notebooks
-parent: examples
+parent: Examples
 nav_order: 11
 description: overview of the major modules and classes of LLMWare  
 permalink: /examples/notebooks

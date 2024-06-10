@@ -1,7 +1,7 @@
 ---
 layout: default
 title: UI
-parent: examples
+parent: Examples
 nav_order: 8
 description: overview of the major modules and classes of LLMWare  
 permalink: /examples/ui

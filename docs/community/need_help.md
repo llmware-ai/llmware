@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Need Hep
-parent: community
+parent: Community
 nav_order: 3
 description: overview of the major modules and classes of LLMWare  
 permalink: /community/need_help

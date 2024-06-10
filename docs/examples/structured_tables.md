@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Structured Tables
-parent: examples
+parent: Examples
 nav_order: 9
 description: overview of the major modules and classes of LLMWare  
 permalink: /examples/structured_tables

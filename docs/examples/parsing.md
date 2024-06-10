@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Parsing
-parent: examples
+parent: Examples
 nav_order: 4
 description: overview of the major modules and classes of LLMWare  
 permalink: /examples/parsing

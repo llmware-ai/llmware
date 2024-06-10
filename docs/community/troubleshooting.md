@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Troubleshooting
-parent: community
+parent: Community
 nav_order: 2
 description: overview of the major modules and classes of LLMWare  
 permalink: /community/troubleshooting

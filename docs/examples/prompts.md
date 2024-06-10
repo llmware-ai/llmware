@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Prompts
-parent: examples
+parent: Examples
 nav_order: 6
 description: overview of the major modules and classes of LLMWare  
 permalink: /examples/prompts

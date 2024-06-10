@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Examples
-nav_order: 4
+nav_order: 5
 has_children: true
 description: examples, recipes and use cases
 permalink: /examples

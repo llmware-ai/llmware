@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Components
-nav_order: 2
+nav_order: 3
 has_children: true
 description: llmware key architectural components, modules and classes
 permalink: /components
