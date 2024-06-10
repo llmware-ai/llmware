@@ -1,9 +1,10 @@
 ---
 layout: default
-title: Architecture  
-nav_order: 5
-description: overview of the major modules and classes of LLMWare  
-permalink: /architecture
+title: Components
+nav_order: 2
+has_children: true
+description: llmware key architectural components, modules and classes
+permalink: /components
 ---
 # LLMWare Architecture
 ---

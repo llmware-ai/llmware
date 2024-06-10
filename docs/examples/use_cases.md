@@ -1,9 +1,10 @@
 ---
 layout: default
-title: Use Cases  
-nav_order: 4
-description: llmware is an integrated framework with over 50+ models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
-permalink: /use_cases
+title: Use Cases
+parent: examples
+nav_order: 1
+description: overview of the major modules and classes of LLMWare  
+permalink: /examples/use_cases
 ---
 🚀 Use Cases Examples  🚀  
 ---
@@ -67,7 +68,9 @@ We provide several 'end-to-end' examples that show how to use LLMWare in a compl
     - Shows a variety of advanced parsing techniques with Office document formats packaged in ZIP archives  
     - Extracts tables and images, runs OCR against the embedded images, exports the whole library, and creates dataset  
     
-    
+
+For more examples, see the [use cases example]((https://www.github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/) in the main repo.   
+
 Check back often - we are updating these examples regularly - and many of these examples have companion videos as well.  
 
 

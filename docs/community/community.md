@@ -1,13 +1,16 @@
 ---
 layout: default
-title: Contributing
-nav_order: 6
+title: Community
+nav_order: 5
 has_children: true
-description: llmware contributions.
-permalink: /contributing
+description: community resources, getting help and sharing ideas
+permalink: /community
 ---
 
-# Contributing to llmware
+# Community 
+
+COMING SOON ...
+
 
 {: .note}
 > The contributions to `llmware` are governed by our [Code of Conduct](https://github.com/llmware-ai/llmware/blob/main/CODE_OF_CONDUCT.md).

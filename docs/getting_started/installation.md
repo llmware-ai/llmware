@@ -1,71 +1,27 @@
 ---
 layout: default
-title: Home | llmware
-nav_order: 1
-description: llmware is an integrated framework with over 50+ models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
-permalink: /
+title: Installation
+parent: Getting Started
+nav_order: 2
+permalink: /getting_started/installation
 ---
-## Welcome to  
-<ul class="list-style-none">
-    <li class="d-inline-block mr-1">
-        <a href="https://llmware.ai/"><span><img src="assets/images/llmware_logo_color_cropped.png" alt="llmware" width="360" height="60"/></span></a>
-    </li>
-</ul>  
 
-## 🧰🛠️🔩The Ultimate Toolkit for Enterprise RAG Pipelines with Small, Specialized Models   
+##  Installation
 
-From quickly building POCs to scalable LLM Apps for the enterprise, LLMWare is packed with all the tools you need. 
+Set up  
 
-`llmware` is an integrated framework with over 50+ small, specialized, open source models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.  
+`pip3 install llmware` or, if you prefer clone the github repo locally, e.g., `git clone git@github.com:llmware-ai/llmware.git
+`.   
 
-This project provides a comprehensive set of tools that anyone can use - from a beginner to the most sophisticated AI developer - to rapidly build industrial-grade, knowledge-based enterprise LLM applications. 
+Platforms: 
+- Mac M1/M2/M3, Windows, Linux (Ubuntu 20 or Ubuntu 22 preferred)  
+- RAM: 16 GB minimum  
+- Python 3.9, 3.10, 3.11 (note: not supported on 3.12 - coming soon!)  
+- Pull the latest version of llmware == 0.2.11 (as of end of April 2024)  
+- Please note that we have updated the examples from the original versions, to use new features in llmware, so there may be minor differences with the videos, which are annotated in the comments in each example.    
+  
 
-Our specific focus is on making it easy to integrate open source small specialized models and connecting enterprise knowledge safely and securely. 
-
-
-##  Getting Started 
-
-1.  Install llmware - `pip3 install llmware`  
-
-
-2.  Make sure that you are running on a [supported platform](https://www.github.com/llmware-ai/llmware/tree/main/docs/platforms.md#platform-support).  
-
-
-3.  Learn by example:  
-
-    -- [Fast Start examples](https://www.github.com/llmware-ai/llmware/tree/main/fast_start) - structured set of 6 examples (with no DB installations required) to learn the main concepts of RAG with LLMWare - each example has extensive comments, and a supporting video on Youtube to walk you through it.    
-
-    -- [Getting Started examples](https://www.github.com/llmware-ai/llmware/tree/main/examples/Getting_Started) - heavily-annotated examples that review many getting started elements - selecting a database, loading sample files, working with libraries, and how to use the Model Catalog.  
-
-    -- [Use Case examples](https://www.github.com/llmware-ai/llmware/tree/main/examples/Use_Cases) - longer examples that integrate several components of LLMWare to provide a framework for a solution for common use case patterns.  
-
-    -- Dive into specific area of interest - [Parsing](https://www.github.com/llmware-ai/llmware/tree/main/examples/Parsing) - [Models](https://www.github.com/llmware-ai/llmware/tree/main/examples/Models) - [Prompts](https://www.github.com/llmware-ai/llmware/tree/main/examples/Models) - [Agents](https://www.github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents)  - and many more ...
-
-
-4.  We provide extensive [sample files](https://www.github.com/llmware-ai/tree/main/examples/Getting_Started/loading_sample_files.py) integrated into the examples, so you can copy-paste-run, and quickly validate that the installation is set up correctly, and to start seeing key classes and methods in action.  We would encourage you to start with the 'out of the box' example first, and then use the example as the launching point for inserting your documents, models, queries, and workflows.  
-
-
-5.  Learn by watching: check out the [LLMWare Youtube channel](https://www.youtube.com/@llmware).  
-
-
-6.  Share with the community:  join us on [Discord](https://discord.gg/MhZn5Nc39h).  
-
-
-[Install llmware](#install-llmware){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }  
-[Common Setup & Configuration Items](#platform-support){: .btn .fs-5 .mb-4 .mb-md-0 }  
-[Architecture](architecture.md/#llmware-architecture){: .btn .fs-5 .mb-4 .mb-md-0 }  
-[View llmware on GitHub](https://www.github.com/llmware-ai/llmware/tree/main){: .btn .fs-5 .mb-4 .mb-md-0 }  
-[Open an Issue on GitHub](https://www.github.com/llmware-ai/llmware/issues){: .btn .fs-5 .mb-4 .mb-md-0 }  
-
-
-
-# Install llmware 
-
-___  
-**Using Pip Install**  
-
-- Installing llmware is easy:  `pip3 install llmware` 
-
+##  Wheel Archive  
 
 - If you prefer, we also provide a set of recent wheels in the [wheel archives](https://www.github.com/llmware-ai/llmware/tree/main/wheel_archives) in this repository, which can be downloaded individually and used as follows:  
 

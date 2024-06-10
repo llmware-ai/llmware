@@ -1,9 +1,10 @@
 ---
 layout: default
 title: Release History 
-nav_order: 7
+parent: Components  
+nav_order: 15
 description: llmware is an integrated framework with over 50+ models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
-permalink: /release_history
+permalink: /components/release_history
 ---
 Release History
 ---
@@ -24,10 +25,16 @@ All wheels are built and tested on:
 
 **Release Notes**  
 
---**0.2.14** released in the week of May 19, 2024 - continued clean up and updating of dependencies - changes in download from Huggingface Hub, associated with changes from huggingface_hub API changes - there are some 'future warnings' that are coming from within the HuggingFace code.  If any problems, please raise issue.  
+--**0.3.0** released in the week of June 4, 2024 - continued pruning of required dependencies with split of python dependencies into a small minimal set of requirements (~10 in requirements.txt) that are included in the pip install, with an additional set of optional dependencies provided as 'extras', reflected in both the requirements_extras.txt file, and available over pip with the added instruction - `pip3 install 'llmware[full]'`.  Notably, commonly used libraries such as transformers, torch and openai are now in the 'extras' as most llmware use cases do not require them, and this greatly simplifies the ability to install llmware.  The `welcome_to_llmware.sh` and `welcome_to_llmware_windows.sh` have also been updated to install both the 'core' and 'extra' set of requirements.  Other subtle, but significant, architectural changes include offering more extensibility for adding new model classes, configurable global base model methods for post_init and register, a new InferenceHistory state manager, and enhanced logging options.  
 
---**0.2.13** released in the week of May 12, 2024 - clean up of dependencies in both requirements.txt and Setup (PyPi) - install of vector db python sdk (e.g., pymilvus, chromadb, etc) is now required as a separate step outside of the pip3 install llmware - attempt to keep dependency matrix as simple as possible and avoid potential dependency conflicts on install, especially for packages which in turn have a large number of dependencies.  If you run into any issues with install dependencies, please raise an issue.   
+--**0.2.15** released in the week of May 20, 2024 - removed pytorch dependency as a global import, and shifted to dynamically loading of torch in the event that it is called in a specific model class.   This enables running most of llmware code and examples without pytorch or transformers loaded.   The main areas of torch (and transformers) dependency is in using HFGenerativeModels and HFEmbeddingModels.   
 
+  - note: we have seen some new errors caused with Pytorch 2.3 - which are resolved by down-leveling to `pip3 install torch==2.1`  
+  - note: there are a couple of new warnings from within transformers and huggingface_hub libraries - these can be safely ignored.  We have seen that keeping `local_dir_use_symlinks = False` when pulling model artifacts from Huggingface is still the safer option in some environments.   
+
+--**0.2.13** released in the week of May 12, 2024 - clean up of dependencies in both requirements.txt and Setup (PyPi) - install of vector db python sdk (e.g., pymilvus, chromadb, etc) is now required as a separate step outside of the pip3 install llmware - attempt to keep dependency matrix as simple as possible and avoid potential dependency conflicts on install, especially for packages which in turn have a large number of dependencies.  If you run into any issues with install dependencies, please raise an issue. 
+
+    
 --**0.2.12** released in the week of May 5, 2024 - added Python 3.12 support, and deprecated the use of faiss for v3.12+.   We have changed the "Fast Start" no-install option to use chromadb or lancedb rather than faiss.   Refactoring of code especially with Datasets, Graph and Web Services as separate modules.  
 
 --**0.2.11** released in the week of April 29, 2024 - updated GGUF libs for Phi-3 and Llama-3 support, and added new prebuilt shared libraries to support WhisperCPP.  We are also deprecating support for Mac x86 going forward - will continue to support on most major components but not all new features going forward will be built specifically for Mac x86 (which Apple stopped shipping in 2022).  Our intent is to keep narrowing our testing matrix to provide better support on key platforms.  We have also added better safety checks for older versions of Mac OS running on M1/M2/M3 (no_acc option in GGUF and Whisper libs), as well as a custom check to find CUDA drivers on Windows (independent of Pytorch).  

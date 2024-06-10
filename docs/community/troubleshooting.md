@@ -1,9 +1,10 @@
 ---
 layout: default
 title: Troubleshooting
-nav_order: 8
-description: llmware is an integrated framework with over 50+ models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
-permalink: /troubleshooting
+parent: community
+nav_order: 2
+description: overview of the major modules and classes of LLMWare  
+permalink: /community/troubleshooting
 ---
 # Common Troubleshooting Issues
 ___
