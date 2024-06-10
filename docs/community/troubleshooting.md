@@ -87,6 +87,15 @@ If you have any trouble, feel free to raise an Issue and we can provide you with
     -- usually the issue will be related to the retrieval step and formation of the Prompt, and as always, good pipelines and a little experimentation usually help !  
 
 
+8. **Newly added examples not working as intended**
+
+    -- If you run a recently added example and it does not run as intended, it is possible that the feature being used in the example has not yet been added to the latest pip install.
+
+    -- To fix this, move the example file to the outer-most directory of the repository, so that the example file you are trying to run is in the same directory as the `llmware` source code directory.
+
+    -- This will let you run the example using the latest source code!
+
+
 # More information about the project - [see main repository](https://www.github.com/llmware-ai/llmware.git)
 
 
