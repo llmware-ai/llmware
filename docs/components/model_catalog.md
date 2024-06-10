@@ -9,10 +9,10 @@ permalink: /components/model_catalog
 # Model Catalog:  
 Access all models the same way with easy lookup, regardless of underlying implementation. 
 
-#   150+ Models in Catalog with 50+ RAG-optimized BLING, DRAGON and Industry BERT models
-#   18 SLIM function-calling small language models for Agent use cases  
-#   Full support for GGUF, HuggingFace, Sentence Transformers and major API-based models
-#   Easy to extend to add custom models - see examples
+- 150+ Models in Catalog with 50+ RAG-optimized BLING, DRAGON and Industry BERT models
+- 18 SLIM function-calling small language models for Agent use cases  
+- Full support for GGUF, HuggingFace, Sentence Transformers and major API-based models
+- Easy to extend to add custom models - see examples
 
 Generally, all models can be identified using either the `model_name` or `display_name`, which provides some flexibility 
 to expose a more "UI friendly" name or an informal short-name for a commonly-used model.  

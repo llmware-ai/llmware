@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Embedding
-parent: examples
+parent: Examples
 nav_order: 5
 description: overview of the major modules and classes of LLMWare  
 permalink: /examples/embedding

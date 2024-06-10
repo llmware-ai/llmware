@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Contributing
-nav_order: 6
+nav_order: 7
 has_children: true
 description: llmware contributions.
 permalink: /contributing

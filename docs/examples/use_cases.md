@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Use Cases
-parent: examples
+parent: Examples
 nav_order: 1
 description: overview of the major modules and classes of LLMWare  
 permalink: /examples/use_cases

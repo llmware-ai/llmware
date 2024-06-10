@@ -6,7 +6,7 @@ nav_order: 7
 description: overview of the major modules and classes of LLMWare  
 permalink: /components/library
 ---
-# Library:  ingest, organize and index a collection of knowledge at scale - Parse, Text Chunk and Embed. </summary>  
+# Library:  ingest, organize and index a collection of knowledge at scale - Parse, Text Chunk and Embed.  
 ---
 
 Library is the main organizing construct for unstructured information in LLMWare.   Users can create one large library with all types of different content, or

@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Datasets
-parent: examples
+parent: Examples
 nav_order: 10
 description: overview of the major modules and classes of LLMWare  
 permalink: /examples/datasets

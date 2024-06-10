@@ -1,8 +1,9 @@
 ---
 layout: default
 title: Introduction by Examples 
+parent: Examples
 nav_order: 9
-permalink: /examples
+permalink: /examples/getting_started
 ---
 # Introduction by Examples
 We introduce ``llmware`` through self-contained examples.

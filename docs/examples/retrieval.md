@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Retrieval
-parent: examples
+parent: Examples
 nav_order: 7
 description: overview of the major modules and classes of LLMWare  
 permalink: /examples/retrieval

@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Getting Started
-nav_order: 1
+nav_order: 2
 has_children: true
 description: getting started with llmware
 permalink: /getting_started

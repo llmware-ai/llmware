@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Models
-parent: Learn
+parent: Examples
 nav_order: 3
 description: overview of the major modules and classes of LLMWare  
 permalink: /examples/models

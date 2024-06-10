@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Join Our Community
-parent: community
+parent: Community
 nav_order: 4
 description: overview of the major modules and classes of LLMWare  
 permalink: /community/join_our_community

@@ -1,7 +1,7 @@
 ---
 layout: default
 title: FAQ
-parent: community
+parent: Community
 nav_order: 1
 description: overview of the major modules and classes of LLMWare  
 permalink: /community/faq

@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Community
-nav_order: 5
+nav_order: 6
 has_children: true
 description: community resources, getting help and sharing ideas
 permalink: /community
@@ -9,7 +9,15 @@ permalink: /community
 
 # Community 
 
-COMING SOON ...
+Welcome to the llmware community!   We are on a mission to pioneer the use of small language models as transformational tools 
+in the enterprise to automate workflows and knowledge-based processes cost-effectively, securely and with high quality.  We believe that the 
+secret is increasing out that small models can be extremely effective, but require a lot of attention to detail in building scalable data pipelines 
+and fine-tuning both models and end-to-end workflows.  
+
+We are open to both the most advanced machine learning researchers and the beginning developer just learning python.  
+
+We publish a wide range of examples, use cases and tutorial videos, and are always looking for feedback, new ideas and contributors.  
+
 
 
 {: .note}
