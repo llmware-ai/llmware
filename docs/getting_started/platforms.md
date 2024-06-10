@@ -1,9 +1,9 @@
 ---
 layout: default
-title: Platform Support
-nav_order: 2
-description: llmware is an integrated framework with over 50+ models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
-permalink: /platform_support
+title: Platforms Supported
+parent: Getting Started
+nav_order: 5
+permalink: /getting_started/platforms
 ---
 ___  
 # Platform Support

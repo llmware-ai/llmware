@@ -1,58 +1,24 @@
 ---
 layout: default
-title: Videos
-nav_order: 6
-description: llmware is an integrated framework with over 50+ models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
-permalink: /videos
+title: Parsing Embedding and Data Extraction
+parent: Learn
+nav_order: 5
+description: overview of the major modules and classes of LLMWare  
+permalink: /learn/parsing_embedding_data_extraction
 ---
-llmware Youtube Video Channel
+Parsing, Embedding, and Data Extraction
 ---
 
 **Tutorial Videos** - check out our Youtube channel for high-impact 5-10 minute tutorials on the latest examples.  
 
 Check back often as this list is always growing ...  
 
-🎬 **Some of our most recent videos**  
-- [Best Small RAG Model - Bling-Phi-3](https://youtu.be/cViMonCAeSc?si=L6jX0sRdZAmKtRcz)  
-- [Agent Automation with Web Services for Financial Research](https://youtu.be/l0jzsg1_Ik0?si=oBGtALHLplouY9x2)  
-- [Voice Transcription and Automated Analysis of Greatest Speeches Dataset](https://youtu.be/5y0ez5ZBpPE?si=PAaCIqYou8nCGxYG)  
-- [Are you prompting wrong for RAG - Stochastic Sampling-Part I](https://youtu.be/7oMTGhSKuNY?si=_KSjuBnqArvWzYbx)  
-- [Are you prompting wrong for RAG - Stochastic Sampling-Part II- Code Experiments](https://youtu.be/iXp1tj-pPjM?si=3ZeMgipY0vJDHIMY)  
-
-🎬 **Using Agents, Function Calls and SLIM models**  
-- [SLIMS Playlist](https://youtube.com/playlist?list=PL1-dn33KwsmAHWCWK6YjZrzicQ2yR6W8T&si=TSFGqQ3ObOO5vDde)  
-- [Agent-based Complex Research Analysis](https://youtu.be/y4WvwHqRR60?si=jX3KCrKcYkM95boe)  
-- [Getting Started with SLIMs (with code)](https://youtu.be/aWZFrTDmMPc?si=lmo98_quo_2Hrq0C)  
-- [SLIM Models Intro](https://www.youtube.com/watch?v=cQfdaTcmBpY)  
-- [Text2SQL Intro](https://youtu.be/BKZ6kO2XxNo?si=tXGt63pvrp_rOlIP)  
-- [Pop up LLMWare Inference Server](https://www.youtube.com/watch?v=qiEmLnSRDUA&t=20s)   
-- [Hardest Problem in RAG - handling 'Not Found'](https://youtu.be/slDeF7bYuv0?si=j1nkdwdGr5sgvUtK)  
-- [Extract Information from Earnings Releases](https://youtu.be/d6HFfyDk4YE?si=VmnIiWFmgBtR4DxS)   
-- [Summary Function Calls](https://youtu.be/yNg_KH5cPSk?si=Yl94tp_vKA8e7eT7)  
-- [Boolean Yes-No Function Calls](https://youtu.be/jZQZMMqAJXs?si=lU4YVI0H0tfc9k6e)  
-- [Autogenerate Topics, Tags and NER](https://youtu.be/N6oOxuyDsC4?si=vo2Fd8VG5xTbH4SD)  
-
-🎬 **Using GGUF Models**  
-- [Using LM Studio Models](https://www.youtube.com/watch?v=h2FDjUyvsKE)  
-- [Using Ollama Models](https://www.youtube.com/watch?v=qITahpVDuV0)  
-- [Use any GGUF Model](https://www.youtube.com/watch?v=9wXJgld7Yow)  
-- [Background on GGUF Quantization & DRAGON Model Example](https://www.youtube.com/watch?v=ZJyQIZNJ45E)  
-- [Getting Started with Whisper.CPP](https://youtu.be/YG5u5AOU9MQ?si=5xQYZCILPSiR8n4s)  
-
-🎬 **Core RAG Scenarios Running Locally**  
-- [RAG with BLING on your laptop](https://www.youtube.com/watch?v=JjgqOZ2v5oU)     
-- [DRAGON-7B-Models](https://www.youtube.com/watch?v=d_u7VaKu6Qk&t=37s)   
-- [Use small LLMs for RAG for Contract Analysis (feat. LLMWare)](https://www.youtube.com/watch?v=8aV5p3tErP0)   
-- [Invoice Processing with LLMware](https://www.youtube.com/watch?v=VHZSaBBG-Bo&t=10s)   
-- [Evaluate LLMs for RAG with LLMWare](https://www.youtube.com/watch?v=s0KWqYg5Buk&t=105s)  
-- [Fast Start to RAG with LLMWare Open Source Library](https://www.youtube.com/watch?v=0naqpH93eEU)  
-- [Use Retrieval Augmented Generation (RAG) without a Database](https://www.youtube.com/watch?v=tAGz6yR14lw)  
-
-
 🎬 **Parsing, Embedding, Data Pipelines and Extraction**  
+- [Advanced Parsing Techniques](https://youtu.be/dEsw8V_YBYY?si=B0GTVNhwfBYWkXyf)  
 - [Ingest PDFs at Scale](https://www.youtube.com/watch?v=O0adUfrrxi8&t=10s)  
 - [Install and Compare Multiple Embeddings with Postgres and PGVector](https://www.youtube.com/watch?v=Bncvggy6m5Q)   
 - [Intro to Parsing and Text Chunking](https://youtu.be/2xDefZ4oBOM?si=YZzBUjDfQ0839EVF)  
+- [Voice Transcription and Automated Analysis of Greatest Speeches Dataset](https://youtu.be/5y0ez5ZBpPE?si=PAaCIqYou8nCGxYG)  
 
 
 # More information about the project - [see main repository](https://www.github.com/llmware-ai/llmware.git)

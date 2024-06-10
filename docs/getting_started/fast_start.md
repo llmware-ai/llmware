@@ -1,10 +1,11 @@
 ---
 layout: default
-title: Fast Start Series
-nav_order: 3
-description: llmware is an integrated framework with over 50+ models for quickly developing LLM-based applications including Retrieval Augmented Generation (RAG) and Multi-Step Orchestration of Agent Workflows.
-permalink: /fast_start
+title: Fast Start
+parent: Getting Started
+nav_order: 4
+permalink: /getting_started/fast_start
 ---
+
 Fast Start: Learning RAG with llmware through 6 examples 
 ---
 
