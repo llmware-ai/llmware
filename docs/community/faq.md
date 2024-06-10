@@ -10,7 +10,7 @@ permalink: /community/faq
 
 
 ### How can I set the chunk size?
-#### "I wnat to parse my documents into smaller chunks"
+#### "I want to parse my documents into smaller chunks"
 You can set the chunk size with the ``chunk_size`` parameter of the ``add_files`` method.
 
 The ``add_files`` method from the ``Library`` class has a ``chunk_size`` parameter that controls the chunk size.
