@@ -57,7 +57,7 @@ class Prompt:
         The name of the llm to be used.
 
     tokenizer : object, default=None
-        The tokenzier to use. The default is to use the tokenizer specified by the ``Utilities`` class.
+        The tokenizer to use. The default is to use the tokenizer specified by the ``Utilities`` class.
 
     model_card : dict, default=None
         A dictionary describing the model to be used. If the dictionary contains the key ``model_name``,
@@ -68,7 +68,7 @@ class Prompt:
         A ``Library`` object.
 
     account_name : str, default="llmware"
-        The name of the account to be used. This is one of the states a the prompt.
+        The name of the account to be used. This is one of the attributes of the prompt.
 
     prompt_id : int, default=None
         The ID of the prompt. If a prompt ID is given, then the state of this prompt is loaded. Otherwise, a
@@ -100,17 +100,8 @@ class Prompt:
         Sets whether the large language model should follow instructions. Note that this has an effect
         if and only if the model specified has a version that is trained to follow instructions.
 
-    Examples
-    ----------
-    >>> import os
-    >>> from llmware.prompts import Prompt
-    >>> openai_api_key = os.environ.get("OPENAI_API_KEY", "")
-    >>> prompter = Prompt(llm_name='gpt-4', llm_api_key=openai_api_key)
-    >>> prompt = 'How old is my brother?'
-    >>> context = 'My brother is 20 years old and my sister is 1.5 times older'
-    >>> response = prompter.prompt_main(prompt=prompt, context=context)
-    >>> response['llm_response']
     """
+
     def __init__(self, llm_name=None, tokenizer=None, model_card=None, library=None, account_name="llmware",
                  prompt_id=None, save_state=True, llm_api_key=None, llm_model=None, from_hf=False,
                  prompt_catalog=None, temperature=0.3, prompt_wrapper="human_bot", instruction_following=False):
@@ -1667,9 +1658,9 @@ class QualityCheck:
     >>> library = Library().create_new_library('prompt_with_sources')
     >>> sample_files_path = Setup().load_sample_files(over_write=False)
     >>> parsing_output = library.add_files(os.path.join(sample_files_path, "Agreements"))
-    >>> prompt = Prompt().load_model('llmware/bling-1b-0.1')
-    >>> prompt.add_source_document(os.path.join(sample_files_path, "Agreements"), 'Apollo EXECUTIVE EMPLOYMENT AGREEMENT.pdf')
-    >>> result = prompt.prompt_with_source(prompt='What is the base salery amount?', prompt_name='default_with_context')
+    >>> prompter = Prompt().load_model('llmware/bling-1b-0.1')
+    >>> prompter.add_source_document(os.path.join(sample_files_path, "Agreements"), 'Apollo EXECUTIVE EMPLOYMENT AGREEMENT.pdf')
+    >>> result = prompter.prompt_with_source(prompt='What is the base salery amount?', prompt_name='default_with_context')
     >>> result[0]['llm_response']
     ' $1,000,000.00'
     >>> ev_numbers = prompter.evidence_check_numbers(result)
@@ -1752,7 +1743,6 @@ class QualityCheck:
         ai_gen_output = response_dict["llm_response"]
         evidence = response_dict["evidence"]
         evidence_metadata = response_dict["evidence_metadata"]
-        add_markup= False
 
         # looks for numbers only right now
         llm_response_markup = ""
@@ -1768,6 +1758,7 @@ class QualityCheck:
         tokens = ai_gen_output.split(" ")
         percent_on = -1
         char_counter = 0
+
         for i, tok in enumerate(tokens):
 
             tok_len = len(tok)
@@ -1832,7 +1823,7 @@ class QualityCheck:
                 if tok.endswith("\n"):
                     tok = tok[:-1]
 
-                current_str_token = tok
+                # current_str_token = tok
 
                 if tok.endswith(",") or tok.endswith(".") or tok.endswith("-") or tok.endswith(";") or \
                         tok.endswith(")") or tok.endswith("]"):
@@ -1847,6 +1838,9 @@ class QualityCheck:
 
                 tok = re.sub("[,-]","",tok)
 
+                # current_str_token set to the 'cleaned' tok
+                current_str_token = tok
+
                 if Utilities().isfloat(tok):
                     tok = float(tok)
                     if percent_on == 1:
@@ -1855,6 +1849,7 @@ class QualityCheck:
                         percent_on = -1
 
                     if tok == ai_numbers[x]:
+
                         match_token = i
 
                         if i > 10:
@@ -1911,7 +1906,9 @@ class QualityCheck:
                 evidence_char_counter += tok_len + 1
 
             if match_tmp == -1:
-                new_fact_check_entry = {"fact": current_str_token,
+
+                # change here - replace 'current_str_token'
+                new_fact_check_entry = {"fact": str(ai_numbers[x]),
                                         "status": "Not Confirmed",
                                         "text": "",
                                         "page_num": "",
@@ -1922,6 +1919,11 @@ class QualityCheck:
 
         # provide markup highlighting confirmations and non-confirmations
         confirm_updates = []
+
+        # add_markup feature turned to OFF by default
+        # -- may be reworked or deleted in future releases
+        add_markup = False
+
         if add_markup:
             for i,f in enumerate(fact_check):
 
@@ -1972,10 +1974,6 @@ class QualityCheck:
         evidence_batch = response_dict["evidence"]
         evidence_metadata = response_dict["evidence_metadata"]
         add_markup = False
-
-        # insert test starts here
-        # text_snippet_dict = self._evidence_token_matcher(ai_tmp_output, evidence_batch)
-        # end - insert test here
 
         min_th = 0.25
         conclusive_th = 0.75
