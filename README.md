@@ -694,6 +694,31 @@ Check out:  [llmware examples](https://github.com/llmware-ai/llmware/blob/main/e
 
 </details>  
 
+## ✍️ Working with the llmware Github repository  
+
+The llmware repo can be pulled locally to get access to all the examples, or to work directly with the latest version of the llmware code.  
+
+```bash
+git clone git@github.com:llmware-ai/llmware.git
+```  
+
+We have provided a **welcome_to_llmware** automation script in the root of the repository folder.  After cloning:  
+- On Windows command line:  `.\welcome_to_llmware_windows.sh`  
+- On Mac / Linux command line:  `sh ./welcome_to_llmware.sh`  
+
+Alternatively, if you prefer to complete setup without the welcome automation script, then the next steps include:  
+
+1.  **install requirements.txt** - inside the /llmware path - e.g., ```pip3 install -r llmware/requirements.txt```  
+
+2.  **install requirements_extras.txt** - inside the /llmware path - e.g., ```pip3 install -r llmware/requirements_extras.txt```  (Depending upon your use case, you may not need all or any of these installs, but some of these will be used in the examples.)  
+
+3.  **run examples** - copy one or more of the example .py files into the root project path.   (We have seen several IDEs that will attempt to run interactively from the nested /example path, and then not have access to the /llmware module - the easy fix is to just copy the example you want to run into the root path).  
+
+4.  **install vector db** - no-install vector db options include milvus lite, chromadb, faiss and lancedb - which do not require a server install, but do require that you install the python sdk library for that vector db, e.g., `pip3 install pymilvus`, or `pip3 install chromadb`.  If you look in [examples/Embedding](https://github.com/llmware-ai/llmware/tree/main/examples/Embedding), you will see examples for getting started with various vector DB, and in the root of the repo, you will see easy-to-get-started docker compose scripts for installing milvus, postgres/pgvector, mongo, qdrant, neo4j, and redis.  
+
+5.  Note:  we have seen recently issues with Pytorch==2.3 on some platforms - if you run into any issues, we have seen that uninstalling Pytorch and downleveling to Pytorch==2.1 usually solves the problem.  
+
+
 ## Data Store Options
 
 <details>
@@ -761,32 +786,7 @@ curl -o docker-compose.yaml https://raw.githubusercontent.com/llmware-ai/llmware
 
 LLMWare is an open platform and supports a wide range of open source and proprietary models.  To use LLMWare, you do not need to use any proprietary LLM - we would encourage you to experiment with [SLIM](https://www.huggingface.co/llmware/), [BLING](https://huggingface.co/llmware), [DRAGON](https://huggingface.co/llmware), [Industry-BERT](https://huggingface.co/llmware), the GGUF examples, along with bringing in your favorite models from HuggingFace and Sentence Transformers. 
 
-If you would like to use a proprietary model, you will need to provide your own API Keys.   API keys and secrets for models, aws, and pinecone can be set-up for use in environment variables or passed directly to method calls. 
-
-
-## ✍️ Working with the llmware Github repository
-
-The llmware repo can be pulled locally to get access to all the examples, or to work directly with the latest version of the llmware code.  
-
-```bash
-git clone git@github.com:llmware-ai/llmware.git
-```  
-
-We have provided a **welcome_to_llmware** automation script in the root of the repository folder.  After cloning:  
-- On Windows command line:  `.\welcome_to_llmware_windows.sh`  
-- On Mac / Linux command line:  `sh ./welcome_to_llmware.sh`  
-
-Alternatively, if you prefer to complete setup without the welcome automation script, then the next steps include:  
-
-1.  **install requirements.txt** - inside the /llmware path - e.g., ```pip3 install -r llmware/requirements.txt```  
-
-2.  **install requirements_extras.txt** - inside the /llmware path - e.g., ```pip3 install -r llmware/requirements_extras.txt```  (Depending upon your use case, you may not need all or any of these installs, but some of these will be used in the examples.)  
-
-3.  **run examples** - copy one or more of the example .py files into the root project path.   (We have seen several IDEs that will attempt to run interactively from the nested /example path, and then not have access to the /llmware module - the easy fix is to just copy the example you want to run into the root path).  
-
-4.  **install vector db** - no-install vector db options include milvus lite, chromadb, faiss and lancedb - which do not require a server install, but do require that you install the python sdk library for that vector db, e.g., `pip3 install pymilvus`, or `pip3 install chromadb`.  If you look in [examples/Embedding](https://github.com/llmware-ai/llmware/tree/main/examples/Embedding), you will see examples for getting started with various vector DB, and in the root of the repo, you will see easy-to-get-started docker compose scripts for installing milvus, postgres/pgvector, mongo, qdrant, neo4j, and redis.  
-
-5.  Note:  we have seen recently issues with Pytorch==2.3 on some platforms - if you run into any issues, we have seen that uninstalling Pytorch and downleveling to Pytorch==2.1 usually solves the problem.  
+If you would like to use a proprietary model, you will need to provide your own API Keys.   API keys and secrets for models, aws, and pinecone can be set-up for use in environment variables or passed directly to method calls.  
 
 <details>  
     
