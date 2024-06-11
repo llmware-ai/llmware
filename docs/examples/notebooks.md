@@ -27,6 +27,17 @@ Google Colab (or Colaboratory) is a free Jupyter notebook environment that requi
 - **Language Support:** Primarily, both are used for executing Python code. However, Jupyter Notebooks support other languages such as R and Julia.
 - **Use Cases:** They are widely used for data analysis, machine learning, and education, allowing for easy sharing of results and methodologies.
 
+## Increase Google Colab Computational Power with T4 GPU
+
+Our models are designed to run on at least 16GB of RAM. By default Google Colab provides ~13GB of RAM, which significantly slows computational speed. To ensure the best performance when using our models, we highly recommend enabling the T4 GPU in Colab. This will provide the notebook with additional resources, including 16GB of RAM, allowing our models to run smoothly and efficiently.
+
+Steps to enabling T4 GPU in Colab:
+1. In your Colab notebook, click on the "Runtime" tab
+2. Select "Change runtime type"
+3. Under "Hardware Accelerator", select T4 GPU
+
+NOTE: There is a weekly usage limit on using T4 for free.
+
 ## Key Differences
 
 - **Execution Environment:** Jupyter Notebooks can be run locally on your machine or on a server, but Google Colab is hosted in the cloud.

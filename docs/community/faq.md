@@ -177,3 +177,15 @@ library.add_files(input_foler_path=Path('~/llmware_data/sample_files/Agreements'
 library.install_new_embedding(embedding_model_name='mini-lm-sber')
 library.install_new_embedding(embedding_model_name='industry-bert-contracts')
 ```
+
+### Why is the model running slowly in Google Colab? 
+#### "I want to improve the performance of my model on Google Colab"
+
+Our models are designed to run on at least 16GB of RAM. By default Google Colab provides ~13GB of RAM, which significantly slows computational speed. To ensure the best performance when using our models, we highly recommend enabling the T4 GPU in Colab. This will provide the notebook with additional resources, including 16GB of RAM, allowing our models to run smoothly and efficiently.
+
+Steps to enabling T4 GPU in Colab:
+1. In your Colab notebook, click on the "Runtime" tab
+2. Select "Change runtime type"
+3. Under "Hardware Accelerator", select T4 GPU
+
+NOTE: There is a weekly usage limit on using T4 for free.
