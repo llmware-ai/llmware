@@ -96,7 +96,7 @@ If you have any trouble, feel free to raise an Issue and we can provide you with
     -- This will let you run the example using the latest source code!
 
 
-9. **Git permissed denied error**
+9. **Git permission denied error**
 
     -- If you are using SSH to clone the repository and you get an error that looks similar to `git@github.com: Permission denied (publickey)`, then you might not have configured your SSH key correctly.
 
