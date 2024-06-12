@@ -96,6 +96,15 @@ If you have any trouble, feel free to raise an Issue and we can provide you with
     -- This will let you run the example using the latest source code!
 
 
+9. **Git permission denied error**
+
+    -- If you are using SSH to clone the repository and you get an error that looks similar to `git@github.com: Permission denied (publickey)`, then you might not have configured your SSH key correctly.
+
+    -- If you don't already have one, you will need to create a new SSH key on your local machine. For instructions on how to do this, check out this page: https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent.
+
+    -- You then need to add the SSH key to your GitHub account. For instructions on how to do this, check out this page: https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account.
+
+
 # More information about the project - [see main repository](https://www.github.com/llmware-ai/llmware.git)
 
 
