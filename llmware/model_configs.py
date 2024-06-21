@@ -283,14 +283,6 @@ global_model_repo_catalog_list = [
     {"model_name": "gpt-4o-2024-05-13", "display_name": "gpt-4o-2024-05-13", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 128000},
 
-    # base supporting models and components
-    {"model_name": "bert", "display_name": "Bert", "model_family": "BaseModel", "model_category": "base",
-     "model_location": "llmware_repo"},
-    {"model_name": "roberta", "display_name": "Roberta", "model_family": "BaseModel", "model_category": "base",
-     "model_location": "llmware_repo"},
-    {"model_name": "gpt2", "display_name": "GPT-2", "model_family": "BaseModel", "model_category": "base",
-     "model_location": "llmware_repo"},
-
     # add api-based llmware custom model
     {"model_name": "llmware-inference-server", "display_name": "LLMWare-GPT", "model_family": "LLMWareModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 2048},
@@ -433,7 +425,8 @@ global_model_repo_catalog_list = [
     "temperature": 0.0, "trailing_space": "",
     "gguf_file": "bling-phi-3.gguf",
     "gguf_repo": "llmware/bling-phi-3-gguf",
-    "snapshot": True,
+    "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+    "validation_files": ["bling-phi-3.gguf"],
     "tokenizer_local": "tokenizer_phi3.json",
     "link": "https://huggingface.co/llmware/bling-phi-3-gguf",
     "custom_model_files": [], "custom_model_repo": ""},
@@ -442,6 +435,8 @@ global_model_repo_catalog_list = [
     {"model_name": "llmware/dragon-mistral-7b-gguf", "display_name": "dragon-mistral-7b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+     "validation_files": ["dragon-mistral-7b-q4_k_m.gguf"],
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "dragon-mistral-7b-q4_k_m.gguf",
      "gguf_repo": "llmware/dragon-mistral-7b-v0",
@@ -455,16 +450,20 @@ global_model_repo_catalog_list = [
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "dragon-llama-7b-q4_k_m.gguf",
      "gguf_repo": "llmware/dragon-llama-7b-v0",
+     "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+     "validation_files": ["dragon-llama-7b-q4_k_m.gguf"],
      "link": "https://huggingface.co/llmware/dragon-llama-7b-v0",
      "custom_model_files": [], "custom_model_repo": ""},
 
     # deprecated access to dragon-yi-6b-gguf -> replaced by dragon-yi-answer-tool
     {"model_name": "llmware/dragon-yi-6b-gguf", "display_name": "dragon-yi-6b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-    "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "\n",
      "gguf_file": "dragon-yi-6b-q4_k_m.gguf",
      "gguf_repo": "llmware/dragon-yi-6b-v0",
+     "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+     "validation_files": ["dragon-yi-6b-q4_k_m.gguf"],
      "link": "https://huggingface.co/llmware/dragon-yi-6b-v0",
      "custom_model_files": [], "custom_model_repo": ""},
 
@@ -474,7 +473,8 @@ global_model_repo_catalog_list = [
     "temperature": 0.3, "trailing_space": "\n",
     "gguf_file": "dragon-yi.gguf",
     "gguf_repo": "llmware/dragon-yi-answer-tool",
-    "snapshot": True,
+    "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+    "validation_files": ["dragon-yi.gguf"],
     "link": "https://huggingface.co/llmware/dragon-yi-answer-tool",
     "custom_model_files": [], "custom_model_repo": ""},
 
@@ -484,7 +484,8 @@ global_model_repo_catalog_list = [
     "temperature": 0.3, "trailing_space": "",
     "gguf_file": "dragon-llama.gguf",
     "gguf_repo": "llmware/dragon-llama-answer-tool",
-    "snapshot": True,
+    "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+    "validation_files": ["dragon-llama.gguf"],
     "link": "https://huggingface.co/llmware/dragon-llama-answer-tool",
     "custom_model_files": [], "custom_model_repo": ""},
 
@@ -494,7 +495,8 @@ global_model_repo_catalog_list = [
     "temperature": 0.3, "trailing_space": "",
     "gguf_file": "dragon-mistral.gguf",
     "gguf_repo": "llmware/dragon-mistral-answer-tool",
-    "snapshot": True,
+    "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+    "validation_files": ["dragon-mistral.gguf"],
     "link": "https://huggingface.co/llmware/dragon-mistral-answer-tool",
     "custom_model_files": [], "custom_model_repo": ""},
 
@@ -505,6 +507,8 @@ global_model_repo_catalog_list = [
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "llama-2-7b-chat.Q4_K_M.gguf",
      "gguf_repo": "llmware/bonchon",
+     "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+     "validation_files": ["llama-2-7b-chat.Q4_K_M.gguf"],
      "link": "https://huggingface.co/llmware/bonchon",
      "custom_model_files": [], "custom_model_repo": ""},
 
@@ -514,6 +518,8 @@ global_model_repo_catalog_list = [
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "openhermes-2.5-mistral-7b.Q4_K_M.gguf",
      "gguf_repo": "llmware/bonchon",
+     "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+     "validation_files": ["openhermes-2.5-mistral-7b.Q4_K_M.gguf"],
      "link": "https://huggingface.co/llmware/bonchon",
      "custom_model_files": [], "custom_model_repo": ""},
 
@@ -523,6 +529,8 @@ global_model_repo_catalog_list = [
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "zephyr-7b-beta.Q4_K_M.gguf",
      "gguf_repo": "llmware/bonchon",
+     "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+     "validation_files": ["zephyr-7b-beta.Q4_K_M.gguf"],
      "link": "https://huggingface.co/llmware/bonchon",
      "custom_model_files": [], "custom_model_repo": ""},
 
@@ -532,6 +540,8 @@ global_model_repo_catalog_list = [
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "starling-lm-7b-alpha.Q4_K_M.gguf",
      "gguf_repo": "llmware/bonchon",
+     "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+     "validation_files": ["starling-lm-7b-alpha.Q4_K_M.gguf"],
      "link": "https://huggingface.co/llmware/bonchon",
      "custom_model_files": [], "custom_model_repo": ""},
 
@@ -542,6 +552,8 @@ global_model_repo_catalog_list = [
      "gguf_repo": "microsoft/Phi-3-mini-4k-instruct-gguf",
      "link": "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf",
      "tokenizer_local": "tokenizer_phi3.json",
+     "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+     "validation_files": ["Phi-3-mini-4k-instruct-q4.gguf"],
      "custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": "microsoft/Phi-3-mini-4k-instruct", "display_name": "phi-3",
@@ -572,13 +584,14 @@ global_model_repo_catalog_list = [
      "custom_model_files": [], "custom_model_repo": "",
      "hf_repo": "meta-llama/Meta-Llama-3-8B"},
 
-    # new llama-3 quantized models
     {"model_name": "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF", "display_name": "llama-3-instruct-qf-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
      "context_window": 8192, "instruction_following": False, "prompt_wrapper": "llama_3_chat",
      "temperature": 0.0, "sample_default": False, "trailing_space": "",
      "gguf_file": "Meta-Llama-3-8B-Instruct.Q4_K_M.gguf",
      "gguf_repo": "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF",
+     "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+     "validation_files": ["Meta-Llama-3-8B-Instruct.Q4_K_M.gguf"],
      "link": "https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF",
      "custom_model_files": [], "custom_model_repo": ""},
 
@@ -588,6 +601,8 @@ global_model_repo_catalog_list = [
      "temperature": 0.0, "sample_default": False, "trailing_space": "",
      "gguf_file": "Meta-Llama-3-8B.Q4_K_M.gguf",
      "gguf_repo": "QuantFactory/Meta-Llama-3-8B-GGUF",
+     "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+     "validation_files": ["Meta-Llama-3-8B.Q4_K_M.gguf"],
      "link": "https://huggingface.co/QuantFactory/Meta-Llama-3-GGUF",
      "custom_model_files": [], "custom_model_repo": ""},
 
@@ -597,6 +612,8 @@ global_model_repo_catalog_list = [
     "temperature": 0.0, "sample_default": False, "trailing_space": "",
     "gguf_file": "Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
     "gguf_repo": "bartowski/Meta-Llama-3-8B-Instruct-GGUF",
+    "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+    "validation_files": ["Meta-Llama-3-8B-Instruct-Q4_K_M.gguf"],
     "link": "https://huggingface.co/bartowski/Meta-Llama-3-8B-Instruct-GGUF",
     "custom_model_files": [], "custom_model_repo": ""},
 
@@ -606,11 +623,11 @@ global_model_repo_catalog_list = [
   "temperature": 0.3, "sample_default": True, "trailing_space": "",
   "gguf_file": "tiny-llama-chat.gguf",
   "gguf_repo": "llmware/bonchon",
+  "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+  "validation_files": ["tiny-llama-chat.gguf"],
   "link": "https://huggingface.co/llmware/bonchon",
   "tokenizer_local": "tokenizer_tl.json",
   "custom_model_files": [], "custom_model_repo": ""},
-
- # end - new llama-3 quantized models
 
   # whisper-cpp models
  {"model_name": "whisper-cpp-base-english", "display_name": "whisper-en-base",
@@ -619,6 +636,8 @@ global_model_repo_catalog_list = [
   "temperature": 0.0, "trailing_space": "",
   "gguf_file": "ggml-base.en.bin",
   "gguf_repo": "llmware/bonchon",
+  "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+  "validation_files": ["ggml-base.en.bin"],
   "link": "https://huggingface.co/llmware/bonchon",
   "custom_model_files": [], "custom_model_repo": ""},
 
@@ -628,6 +647,8 @@ global_model_repo_catalog_list = [
   "temperature": 0.0, "trailing_space": "",
   "gguf_file": "ggml-base.bin",
   "gguf_repo": "llmware/bonchon",
+  "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+  "validation_files": ["ggml-base.bin"],
   "link": "https://huggingface.co/llmware/bonchon",
   "custom_model_files": [], "custom_model_repo": ""},
 
@@ -637,12 +658,11 @@ global_model_repo_catalog_list = [
   "temperature": 0.0, "trailing_space": "",
   "gguf_file": "ggml-small.en-tdrz.bin",
   "gguf_repo": "llmware/bonchon",
+  "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+  "validation_files": ["ggml-small.en-trdz.bin"],
   "link": "https://huggingface.co/llmware/bonchon",
   "custom_model_files": [], "custom_model_repo": ""},
 
- # end - whisper-cpp models
-
- # new slim models
     {"model_name": "slim-ner-tool", "display_name": "slim-ner-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -650,6 +670,8 @@ global_model_repo_catalog_list = [
      "gguf_file": "slim-ner.gguf",
      "gguf_repo": "llmware/slim-ner-tool",
      "link": "https://huggingface.co/llmware/slim-ner-tool",
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["slim-ner.gguf"],
      "custom_model_files": [], "custom_model_repo": "",
      "output_type": "dict",
      "function_call": True,
@@ -658,8 +680,7 @@ global_model_repo_catalog_list = [
      "tokenizer": "llmware/slim-sentiment",
      "tokenizer_local": "tokenizer_tl.json",
      "marker_tokens": [], "marker_token_lookup": {},
-     "function": ["classify"],
-     "snapshot": True},
+     "function": ["classify"]},
 
     {"model_name": "slim-sentiment-tool", "display_name": "slim-sentiment-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
@@ -678,7 +699,8 @@ global_model_repo_catalog_list = [
      "marker_tokens": [1066, 22198, 17821],
      "marker_token_lookup": {1066: "positive", 22198: "negative", 17821: "neutral"},
      "function": ["classify"],
-     "snapshot": True},
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["slim-sentiment.gguf"]},
 
     {"model_name": "slim-emotions-tool", "display_name": "slim-emotions-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
@@ -702,7 +724,8 @@ global_model_repo_catalog_list = [
      "marker_tokens": [],
      "marker_token_lookup": {},
      "function": ["classify"],
-     "snapshot": True},
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["slim-emotions.gguf"]},
 
     {"model_name": "slim-ratings-tool", "display_name": "slim-ratings-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
@@ -721,7 +744,8 @@ global_model_repo_catalog_list = [
      "marker_tokens": [],
      "marker_token_lookup": {},
      "function": ["classify"],
-     "snapshot": True},
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["slim-ratings.gguf"]},
 
    {"model_name": "slim-intent-tool", "display_name": "slim-intent-tool",
     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
@@ -742,7 +766,8 @@ global_model_repo_catalog_list = [
     "marker_tokens": [],
     "marker_token_lookup": {},
     "function": ["classify"],
-    "snapshot": True},
+    "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+    "validation_files": ["slim-intent.gguf"]},
 
     {"model_name": "slim-nli-tool", "display_name": "slim-nli-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
@@ -761,7 +786,8 @@ global_model_repo_catalog_list = [
      "marker_tokens": [9996,5924,17821],
      "marker_token_lookup": {9996: "contradicts", 5924: "supports", 17821: "neutral"},
      "function": ["classify"],
-     "snapshot": True},
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["slim-nli.gguf"]},
 
     {"model_name": "slim-topics-tool", "display_name": "slim-topics-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
@@ -780,7 +806,8 @@ global_model_repo_catalog_list = [
      "marker_tokens": [],
      "marker_token_lookup": {},
      "function": ["classify"],
-     "snapshot": True},
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["slim-topics.gguf"]},
 
     {"model_name": "slim-tags-tool", "display_name": "slim-tags-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
@@ -798,7 +825,8 @@ global_model_repo_catalog_list = [
      "marker_tokens": [],
      "marker_token_lookup": {},
      "function": ["classify"],
-     "snapshot": True},
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["slim-tags.gguf"]},
 
     {"model_name": "slim-sql-tool", "display_name": "slim-sql-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
@@ -811,7 +839,8 @@ global_model_repo_catalog_list = [
      "custom_model_files": [], "custom_model_repo": "",
      "tokenizer": "llmware/slim-sql-1b-v0",
      "tokenizer_local": "tokenizer_tl.json",
-     "snapshot": True},
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["slim-sql.gguf"]},
 
     {"model_name": "bling-answer-tool", "display_name": "bling-answer-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
@@ -823,7 +852,8 @@ global_model_repo_catalog_list = [
      "custom_model_files": [], "custom_model_repo": "",
      "tokenizer": "llmware/bling-tiny-llama-1b-v0",
      "tokenizer_local": "tokenizer_tl.json",
-     "snapshot": True},
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["bling-answer.gguf"]},
 
    {"model_name": "slim-category-tool", "display_name": "slim-category-tool",
     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
@@ -846,7 +876,8 @@ global_model_repo_catalog_list = [
     "marker_tokens": [],
     "marker_token_lookup": {},
     "function": ["classify"],
-    "snapshot": True},
+    "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+    "validation_files": ["slim-category.gguf"]},
 
     # pytorch slim models start here
 
@@ -1014,7 +1045,9 @@ global_model_repo_catalog_list = [
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.0, "sample_default": False, "trailing_space": "", "gguf_file": "bling-stablelm.gguf",
-     "gguf_repo": "llmware/bling-stablelm-3b-gguf", "snapshot": True,
+     "gguf_repo": "llmware/bling-stablelm-3b-gguf",
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["bling-stablelm.gguf"],
      "link": "https://huggingface.co/llmware/bling-stablelm-3b-gguf",
      "tokenizer_local": "tokenizer_stablelm.json",
      "custom_model_files": [], "custom_model_repo": ""},
@@ -1038,7 +1071,10 @@ global_model_repo_catalog_list = [
      "output_type": "dict", "function_call": True, "primary_keys": ["xsum"], "fc_output_values": [],
      "tokenizer": "llmware/slim-extract",
      "tokenizer_local": "tokenizer_stablelm.json",
-     "marker_tokens": [], "marker_token_lookup": {}, "function": ["classify"], "snapshot": True},
+     "marker_tokens": [], "marker_token_lookup": {}, "function": ["classify"],
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["slim-xsum.gguf"],
+     },
 
     {"model_name": "slim-extract", "display_name": "llmware/slim-extract",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
@@ -1060,7 +1096,10 @@ global_model_repo_catalog_list = [
      "tokenizer": "llmware/slim-extract",
      "tokenizer_local": "tokenizer_stablelm.json",
      "marker_tokens": [],
-     "marker_token_lookup": {}, "function": ["extract"], "snapshot": True},
+     "marker_token_lookup": {}, "function": ["extract"],
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["slim-extract.gguf"],
+     },
 
     {"model_name": "slim-boolean", "display_name": "llmware/slim-boolean",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
@@ -1083,7 +1122,10 @@ global_model_repo_catalog_list = [
      "tokenizer": "llmware/slim-extract",
      "tokenizer_local": "tokenizer_stablelm.json",
      "marker_tokens": [2369,9820], "marker_token_lookup": {2369: "no", 9820: "yes"},
-     "function": ["boolean"], "snapshot": True},
+     "function": ["boolean"],
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["slim-boolean.gguf"],
+     },
 
     {"model_name": "slim-sa-ner", "display_name": "llmware/slim-sa-ner",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
@@ -1106,7 +1148,10 @@ global_model_repo_catalog_list = [
      "tokenizer": "llmware/slim-extract",
      "tokenizer_local": "tokenizer_stablelm.json",
      "marker_tokens": [],
-     "marker_token_lookup": {}, "function": ["classify"], "snapshot": True},
+     "marker_token_lookup": {}, "function": ["classify"],
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["sa-ner.gguf"],
+     },
 
     {"model_name": "slim-tags-3b", "display_name": "llmware/slim-tags-3b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
@@ -1129,7 +1174,10 @@ global_model_repo_catalog_list = [
      "tokenizer": "llmware/slim-extract",
      "tokenizer_local": "tokenizer_stablelm.json",
      "marker_tokens": [],
-     "marker_token_lookup": {}, "function": ["classify"], "snapshot": True},
+     "marker_token_lookup": {}, "function": ["classify"],
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["slim-tags-3b.gguf"],
+     },
 
     {"model_name": "slim-summary", "display_name": "llmware/slim-summary",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
@@ -1150,7 +1198,10 @@ global_model_repo_catalog_list = [
      "function_call": True, "primary_keys": ["key points (3)"], "fc_output_values": [],
      "tokenizer": "llmware/slim-extract",
      "tokenizer_local": "tokenizer_stablelm.json",
-     "marker_tokens": [], "marker_token_lookup": {}, "function": ["summarize"], "snapshot": True},
+     "marker_tokens": [], "marker_token_lookup": {}, "function": ["summarize"],
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["slim-summarize.gguf"],
+     },
 
     # adding new slim q-gen models
     {"model_name": "slim-q-gen-phi-3-tool", "display_name": "slim-q-gen-tool",
@@ -1169,7 +1220,8 @@ global_model_repo_catalog_list = [
      "tokenizer_local": "tokenizer_phi3.json",
      "marker_tokens": [], "marker_token_lookup": {},
      "function": ["generate"],
-     "snapshot": True},
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["q_gen.gguf"]},
 
     {"model_name": "slim-q-gen-tiny-tool", "display_name": "llmware/slim-q-gen-tiny-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
@@ -1187,7 +1239,9 @@ global_model_repo_catalog_list = [
      "tokenizer_local": "tokenizer_tl.json",
      "marker_tokens": [], "marker_token_lookup": {},
      "function": ["generate"],
-     "snapshot": True},
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["q_gen.gguf"],
+     },
 
     {"model_name": "llmware/slim-q-gen-tiny", "display_name": "slim-q-gen-tiny",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
@@ -1233,7 +1287,9 @@ global_model_repo_catalog_list = [
       "tokenizer_local": "tokenizer_tl.json",
       "marker_tokens": [], "marker_token_lookup": {},
       "function": ["generate"],
-      "snapshot": True},
+      "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+      "validation_files": ["qa_gen_v3.gguf"],
+      },
 
     {"model_name": "slim-qa-gen-phi-3-tool", "display_name": "slim-qa-gen-phi-3-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
@@ -1251,7 +1307,8 @@ global_model_repo_catalog_list = [
      "tokenizer_local": "tokenizer_phi3.json",
      "marker_tokens": [], "marker_token_lookup": {},
      "function": ["generate"],
-     "snapshot": True},
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["qa_gen_v3.gguf"]},
 
      {"model_name": "llmware/slim-qa-gen-tiny", "display_name": "slim-qa-gen-tiny",
       "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
