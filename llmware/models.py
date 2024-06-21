@@ -854,7 +854,12 @@ class ModelCatalog:
             custom_repo = None
 
         if custom_repo and os.path.exists(custom_repo):
-            return self.check_custom_local_repo(model_card, api_key=api_key)
+
+            # if path exists ...  (if null result, then will continue down main resolve path)
+
+            custom_local_path = self.check_custom_local_repo(model_card, api_key=api_key)
+            if custom_local_path:
+                return custom_local_path
 
         #   Main resolve path
 
@@ -974,6 +979,10 @@ class ModelCatalog:
                                     return model_card["custom_model_repo"]
                 else:
                     raise ModelNotFoundException(f"Custom model repo path - {model_card['custom_model_repo']}")
+
+        #   fallback - if can not validate the path, then will return None and handle in caller
+
+        return None
 
     def add_api_key (self, selected_model_name, api_key):
 
