@@ -220,8 +220,9 @@ class Utilities:
 
             #   if not found locally, then pull from global repo
 
-            logger.info("update: gpt2 tokenizer used as default - not in local model repository, so pulling "
-                        "from global repo - this may take a few seconds the first time to download.")
+            logger.info("Utilities - get_default_tokenizer - if no tokenizer found, then as a backup, "
+                        "the gpt2 tokenizer will be used - not in local model repository, "
+                        "so pulling from global repo - this may take a few seconds the first time to download.")
 
             files = CloudBucketManager().pull_single_model_from_llmware_public_repo(model_name="gpt2")
 
@@ -952,6 +953,66 @@ class Utilities:
             output_dict.update({key: value})
 
         return output_dict
+
+    @staticmethod
+    def md5checksum(fp, fn):
+
+        """ Creates MD5 Checksum against a selected file. """
+        md5_output = None
+
+        try:
+            import hashlib
+
+            md5 = hashlib.md5()
+
+            # handle content in binary form
+            f = open(os.path.join(fp, fn), "rb")
+
+            while chunk := f.read(4096):
+                md5.update(chunk)
+
+            md5_output = md5.hexdigest()
+
+        except:
+            logger.debug("Utilities - md5checksum - could not create md5 hex")
+
+        return md5_output
+
+    @staticmethod
+    def create_md5_stamp (fp, save=True, md5_fn="md5_record.json"):
+
+        """ Creates MD5 Stamp for all files in a folder. """
+
+        import random
+        md5_record = {}
+
+        fp_files = os.listdir(fp)
+
+        for file in fp_files:
+            if file == md5_fn:
+                logging.warning(f"Utilities - create_md5_stamp - found existing md5_record")
+                r = random.randint(0,10000000)
+                rec_core = str(md5_fn).split(".")[0]
+                md5_record = rec_core + "_" + str(r) + ".json"
+
+            md5 = Utilities().md5checksum(fp, file)
+            md5_record.update({file: md5})
+
+        time_stamp = Utilities().get_current_time_now()
+
+        md5_record.update({"time_stamp": time_stamp})
+
+        if save:
+
+            logger.debug(f"Utilities - create_md5_stamp - config output: {md5_record}")
+
+            import json
+            f = open(os.path.join(fp, md5_fn), "w")
+            j = json.dumps(md5_record, indent=1)
+            f.write(j)
+            f.close()
+
+        return md5_record
 
 
 class CorpTokenizer:
