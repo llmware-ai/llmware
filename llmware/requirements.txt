@@ -1,7 +1,7 @@
 #   core requirements for main llmware operations and use cases
 #   please see also requirements_extras.txt
 boto3>=1.24.53
-numpy>=1.23.2
+numpy>=1.23.2,<2.0
 pymongo>=4.7.0
 psycopg-binary==3.1.17
 psycopg==3.1.17
