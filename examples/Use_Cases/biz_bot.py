@@ -59,8 +59,6 @@ def build_table(db=None, table_name=None,load_fp=None,load_file=None):
     if not table_name:
         return 0
 
-    st.write(f"in build table - {st.session_state['loaded_tables']}")
-
     # build the table only once - if name already found, do not add to table
     if table_name in st.session_state["loaded_tables"]:
         return 0
