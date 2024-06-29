@@ -99,7 +99,7 @@ class LLMWareConfig:
              "logging_format": COLOR_WHITE + '%(levelname)-4s: %(message)s' + COLOR_RESET,
              "logging_level_by_module": {"llmware.embeddings": 20, "llmware.models": 30, "llmware.agents":20,
                                          "llmware.prompts": 20, "llmware.resources": 20,
-                                         "llmware.setup": 20},
+                                         "llmware.setup": 20, "llmware.parsers": 20},
              "agent_writer_mode": "screen",
              "agent_log_file": "agent_log.txt",
              "model_register": {"module": "llmware.models", "class": "register"},

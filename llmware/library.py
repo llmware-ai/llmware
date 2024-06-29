@@ -562,7 +562,9 @@ class Library:
     def add_files (self, input_folder_path=None, encoding="utf-8",chunk_size=400,
                    get_images=True,get_tables=True, smart_chunking=1, max_chunk_size=600,
                    table_grid=True, get_header_text=True, table_strategy=1, strip_header=False,
-                   verbose_level=2, copy_files_to_library=True):
+                   verbose_level=2, copy_files_to_library=True, set_custom_logging=-1,
+                   use_logging_file=False):
+
         """Main method to integrate documents into a Library - pass a local filepath folder and all files will be
         routed to appropriate parser by file type extension.
         
@@ -607,6 +609,12 @@ class Library:
             copy_files_to_library : bool, default=True
                 Whether to copy the files to the library.
 
+            set_custom_logging : int, default=-1, will apply a custom logging level between 0-50 for the
+                parsing job.
+
+            use_logging_file : bool, default=False
+                Whether parse should log to stdout (default) or to file (set to True)
+
             Returns
             -------
             output_results : dict or None
@@ -632,7 +640,9 @@ class Library:
                                  strip_header=strip_header,
                                  table_grid=table_grid,
                                  verbose_level=verbose_level,
-                                 copy_files_to_library=copy_files_to_library).ingest(input_folder_path,dupe_check=True)
+                                 copy_files_to_library=copy_files_to_library,
+                                 set_custom_logging=set_custom_logging,
+                                 use_logging_file=use_logging_file).ingest(input_folder_path,dupe_check=True)
 
         logger.debug(f"update: parsing results - {parsing_results}")
 
