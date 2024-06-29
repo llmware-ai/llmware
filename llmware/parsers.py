@@ -57,6 +57,7 @@ from llmware.exceptions import DependencyNotInstalledException, FilePathDoesNotE
     OCRDependenciesNotFoundException, LLMWareException
 
 logger = logging.getLogger(__name__)
+logger.setLevel(level=LLMWareConfig().get_logging_level_by_module(__name__))
 
 
 class Parser:
@@ -64,7 +65,8 @@ class Parser:
     def __init__(self, library=None, account_name="llmware", parse_to_db=False, file_counter=1,
                  encoding="utf-8", chunk_size=400, max_chunk_size=600, smart_chunking=1,
                  get_images=True, get_tables=True, strip_header=False, table_grid=True,
-                 get_header_text=True, table_strategy=1, verbose_level=2, copy_files_to_library=True):
+                 get_header_text=True, table_strategy=1, verbose_level=2, copy_files_to_library=True,
+                 set_custom_logging=-1, use_logging_file=False):
 
         """ Main class for handling parsing, e.g., conversion of documents and other unstructured files
         into indexed text collection of 'blocks' in database.   For most use cases, Parser does not need
@@ -199,6 +201,16 @@ class Parser:
         self.get_header_text = get_header_text
         self.verbose_level = verbose_level
         self.copy_files_to_library = copy_files_to_library
+
+        # new logging
+        if set_custom_logging > -1:
+            self.logger_level = set_custom_logging
+            logger.info(f"Parser constructor - setting custom logging level - {self.logger_level}")
+        else:
+            self.logger_level = LLMWareConfig().get_logging_level_by_module(__name__)
+
+        self.parser_log_name = "parser_log.txt"
+        self.use_logging_file = use_logging_file
 
     def clear_state(self):
 
@@ -657,16 +669,20 @@ class Parser:
                 if len(block_dict) == len(default_keys):
                     output_list.append(block_dict)
                 else:
-                    logger.warning(f"update: Parser - potential error- parsing-to-dict conversion - "
-                                   f"lengths don't match - {len(block_dict)} - {len(default_keys)}")
+                    logger.debug(f"Parser - convert_parsing_txt_file_to_json - potential error - "
+                                 f"parsing-to-dict conversion - lengths don't match - "
+                                 f"{len(block_dict)} - {len(default_keys)}")
 
         return output_list
 
     def parse_pdf (self, fp, write_to_db=True, save_history=True):
 
-        """ Main PDF parser method - as of 0.2.7 - wraps ctypes interface to call PDF parser - provides
-        new ctypes entrypoint into PDF parser with expanded configuration objects, and leveraging
-        new configurations exposed in Parser construction and Library().add_files. """
+        """ Main PDF parser method (as of 0.2.7) - and updated further starting in version 0.3.2 -
+        wraps ctypes interface to call PDF parser - provides new ctypes entrypoint into PDF parser with
+        expanded configuration objects, and leveraging new configurations exposed in Parser construction
+        and Library().add_files. """
+
+        #   adding changes for v0.3.2 - logger_level and debug_log_file
 
         output = []
 
@@ -682,15 +698,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logger.warning("warning: Parser().parse_pdf - request to write to database but no library loaded "
-                           "in Parser constructor.   Will write parsing output to file and will place the "
+            logger.warning("Parser - parse_pdf - request to write to database but no library loaded "
+                           "in Parser constructor.  Will write parsing output to file and will place the "
                            "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logger.error(f"warning: Parser().parse_pdf - could not connect to database at "
-                         f"{self.collection_path}.  Will write parsing output to file and will place the "
-                         f"file in /parser_history path.")
+            logger.warning(f"Parser - parse_pdf - could not connect to database at "
+                           f"{self.collection_path}.  Will write parsing output to file and will place the "
+                           f"file in /parser_history path.")
 
         # deprecation warning for aarch64 linux
         system = platform.system().lower()
@@ -709,36 +725,52 @@ class Parser:
 
                 return self.parse_pdf_deprecated_026(fp, write_to_db=write_to_db,save_history=save_history)
 
+        if system == "darwin":
+
+            try:
+                machine = os.uname().machine.lower()
+            except:
+                machine = "na"
+
+            if machine == "x86_64":
+
+                logger.warning("Deprecation warning: deprecating support for Mac x86 - routing parsing request "
+                               "to handler for <=0.2.6.  Note: some features and options in versions >=0.2.7 "
+                               "may not be available.")
+
+                return self.parse_pdf_deprecated_026(fp, write_to_db=write_to_db, save_history=save_history)
+
         # end - deprecation routing
 
-        #   function declaration for .add_pdf_main_llmware
-        # char * input_account_name,
-        # char * input_library_name,
-        # char * input_fp,
-        # char * db,
-        # char * db_uri_string,
-        # char * db_name,
-        # char * db_user_name,
-        # char * db_pw,
-        # char * input_images_fp,
-        # int input_debug_mode,
-        # int input_image_save_mode,
-        # int write_to_db_on,
-        # char * write_to_filename,
-        # int user_blok_size,
-        # int unique_doc_num,
-        # int status_manager_on,
-        # int status_manager_increment,
-        # char * status_job_id
+        #   * function declaration for .add_pdf_main_llmware_config_new *
 
-        # new params
-        # int strip_header,
-        # int table_extract,
-        # int smart_chunking,
-        # int max_chunk_size,
-        # int encoding_style,
-        # int get_header_text,
-        # int table_grid
+        #   char * input_account_name
+        #   char * input_library_name
+        #   char * input_fp
+        #   char * db
+        #   char * db_uri_string
+        #   char * db_name
+        #   char * db_user_name
+        #   char * db_pw
+        #   char * input_images_fp
+        #   int input_debug_mode
+        #   int input_image_save_mode
+        #   int write_to_db_on
+        #   char * write_to_filename
+        #   int user_blok_size
+        #   int unique_doc_num
+        #   int status_manager_on
+        #   int status_manager_increment
+        #   char * status_job_id
+        #   int strip_header
+        #   int table_extract
+        #   int smart_chunking
+        #   int max_chunk_size
+        #   int encoding_style
+        #   int get_header_text
+        #   int table_grid
+        #   int logger_level
+        #   char *debug_log_file
 
         #   if any issue loading module, will be captured at .get_module_pdf_parser()
         _mod_pdf = Utilities().get_module_pdf_parser()
@@ -748,7 +780,9 @@ class Parser:
 
         pdf_handler.argtypes = (c_char_p, c_char_p, c_char_p, c_char_p, c_char_p, c_char_p, c_char_p, c_char_p,
                                 c_char_p, c_int, c_int, c_int, c_char_p, c_int,c_int,c_int,c_int,c_char_p,
-                                c_int, c_int, c_int, c_int, c_int, c_int, c_int)
+                                c_int, c_int, c_int, c_int, c_int, c_int, c_int,
+                                # new configs - june 14
+                                c_int, c_char_p)
 
         pdf_handler.restypes = c_int
 
@@ -778,14 +812,7 @@ class Parser:
 
         fp_c = create_string_buffer(fp.encode('ascii', 'ignore'))
 
-        # debug_mode global parameter
-        #   "on" = 1
-        #   "file name only" = 2
-        #   "deep debug" = 3
-        #   "off" = 0 & all other values
-
-        # pull debug mode 'verbosity' levels from LLMWareConfig
-        # debug_mode = LLMWareConfig.get_config("debug_mode")
+        # debug_mode deprecated as of 0.3.1 ++
         debug_mode = self.verbose_level
 
         supported_options = [0, 1, 2, 3]
@@ -793,7 +820,7 @@ class Parser:
         if debug_mode not in supported_options:
             debug_mode = 0
 
-        input_debug_mode = c_int(debug_mode)  # default - 0 = "off"
+        # input_debug_mode = c_int(debug_mode)  # default - 0 = "off"
 
         if self.get_images:
             image_save = 1  # TRUE - get images
@@ -804,9 +831,6 @@ class Parser:
 
         write_to_db_on_c = c_int(write_to_db_on)
         write_to_filename_c = create_string_buffer(write_to_filename.encode('ascii', 'ignore'))
-
-        # pull target block size from library parameters
-        # self.block_size_target_characters= 400
 
         user_block_size = c_int(self.chunk_size)  # standard 400-600
 
@@ -854,13 +878,6 @@ class Parser:
         else:
             table_grid = c_int(0)
 
-        """
-        if self.smart_chunking:
-            smart_chunking = c_int(2)
-        else:
-            smart_chunking = c_int(0)
-        """
-
         max_chunk_size = c_int(self.max_chunk_size)
 
         if self.encoding == "ascii":
@@ -872,38 +889,22 @@ class Parser:
         else:
             encoding_style = c_int(0)
 
+        if self.use_logging_file:
+
+            # parsers use code of 60 to indicate log_to_file stream rather than stdout
+            input_debug_mode = c_int(60)
+        else:
+            input_debug_mode = c_int(0)
+
         #
         #                   * main call to pdf library *
         #
 
-        logger.info("update: start parsing of PDF Documents...")
+        logger.info("Parser - parse_pdf - start parsing of PDF Documents...")
 
-        #   function declaration for .add_pdf_main_llmware
-        # char * input_account_name,
-        # char * input_library_name,
-        # char * input_fp,
-        # char * db,
-        # char * db_uri_string,
-        # char * db_name,
-        # char * db_user_name,
-        # char * db_pw,
-        # char * input_images_fp,
-        # int input_debug_mode,
-        # int input_image_save_mode,
-        # int write_to_db_on,
-        # char * write_to_filename,
-        # int user_blok_size,
-        # int unique_doc_num,
-        # int status_manager_on,
-        # int status_manager_increment,
-        # char * status_job_id
-        # strip_header = c_int(0)
-        # table_extract = c_int(1)
-        # smart_chunking = c_int(1)
-        # max_chunk_size = c_int(600)
-        # encoding_style = c_int(2)
-        # get_header_text = c_int(1),
-        # table_grid = c_int(1)
+        logger_level = c_int(self.logger_level)
+        dlf_fp = os.path.join(self.parser_folder, self.parser_log_name)
+        debug_log_file = create_string_buffer(dlf_fp.encode('ascii', 'ignore'))
 
         pages_created = pdf_handler(account_name, library_name, fp_c, db, collection_db_path_c, db_name,
                                     db_user_name_c, db_pw_c,
@@ -912,10 +913,12 @@ class Parser:
                                     write_to_filename_c, user_block_size, unique_doc_num_c,
                                     status_manager_on, status_manager_increment, status_job_id,
                                     strip_header, table_extract, smart_chunking, max_chunk_size,
-                                    encoding_style, get_header_text, table_grid
+                                    encoding_style, get_header_text, table_grid,
+                                    # new params added in 0.3.2
+                                    logger_level, debug_log_file
                                     )
 
-        logger.info(f"update:  completed parsing of pdf documents - time taken: {time.time()-t0}")
+        logger.info(f"Parser - parse_pdf - completed parsing of pdf documents - time taken: {time.time()-t0}")
 
         if write_to_db_on == 0:
             # package up results in Parser State
@@ -926,7 +929,7 @@ class Parser:
 
                 self.file_counter = int(last_doc_id)
 
-                logger.info(f"update: adding new entries to parser output state - {len(parser_output)}")
+                logger.info(f"Parser - parse_pdf - adding new entries to parser output state - {len(parser_output)}")
 
                 self.parser_output += parser_output
                 output += parser_output
@@ -964,25 +967,25 @@ class Parser:
                          f"{self.collection_path}.  Will write parsing output to file and will place "
                          f"the file in /parser_history path.")
 
-        #   function declaration for .add_pdf_main_llmware
-        # char * input_account_name,
-        # char * input_library_name,
-        # char * input_fp,
-        # char * db,
-        # char * db_uri_string,
-        # char * db_name,
-        # char * db_user_name,
-        # char * db_pw,
-        # char * input_images_fp,
-        # int input_debug_mode,
-        # int input_image_save_mode,
-        # int write_to_db_on,
-        # char * write_to_filename,
-        # int user_blok_size,
-        # int unique_doc_num,
-        # int status_manager_on,
-        # int status_manager_increment,
-        # char * status_job_id
+        #   * function declaration for .add_pdf_main_llmware *
+        #   char * input_account_name
+        #   char * input_library_name
+        #   char * input_fp
+        #   char * db
+        #   char * db_uri_string
+        #   char * db_name
+        #   char * db_user_name
+        #   char * db_pw
+        #   char * input_images_fp
+        #   int input_debug_mode
+        #   int input_image_save_mode
+        #   int write_to_db_on
+        #   char * write_to_filename
+        #   int user_blok_size
+        #   int unique_doc_num
+        #   int status_manager_on
+        #   int status_manager_increment
+        #   char * status_job_id
 
         #   if any issue loading module, will be captured at .get_module_pdf_parser()
         _mod_pdf = Utilities().get_module_pdf_parser()
@@ -1068,27 +1071,7 @@ class Parser:
         #                   * main call to pdf library *
         #
 
-        logger.info("update: start parsing of PDF Documents...")
-
-        #   function declaration for .add_pdf_main_llmware
-        # char * input_account_name,
-        # char * input_library_name,
-        # char * input_fp,
-        # char * db,
-        # char * db_uri_string,
-        # char * db_name,
-        # char * db_user_name,
-        # char * db_pw,
-        # char * input_images_fp,
-        # int input_debug_mode,
-        # int input_image_save_mode,
-        # int write_to_db_on,
-        # char * write_to_filename,
-        # int user_blok_size,
-        # int unique_doc_num,
-        # int status_manager_on,
-        # int status_manager_increment,
-        # char * status_job_id
+        logger.info("Parser - start parsing of PDF Documents...")
 
         pages_created = pdf_handler(account_name, library_name, fp_c, db, collection_db_path_c, db_name,
                                     db_user_name_c, db_pw_c,
@@ -1097,7 +1080,7 @@ class Parser:
                                     write_to_filename_c, user_block_size, unique_doc_num_c,
                                     status_manager_on, status_manager_increment, status_job_id)
 
-        logger.info(f"update:  completed parsing of pdf documents - time taken: {time.time()-t0}")
+        logger.info(f"Parser - completed parsing of pdf documents - time taken: {time.time()-t0}")
 
         if write_to_db_on == 0:
             # package up results in Parser State
@@ -1108,7 +1091,7 @@ class Parser:
 
                 self.file_counter = int(last_doc_id)
 
-                logger.info(f"update: adding new entries to parser output state - {len(parser_output)}")
+                logger.info(f"Parser - adding new entries to parser output state - {len(parser_output)}")
 
                 self.parser_output += parser_output
                 output += parser_output
@@ -1127,7 +1110,7 @@ class Parser:
 
         write_to_filename = "pdf_parse_output_0.txt"
 
-        #   must have three conditions in place - (a) user selects, (b) ping successfully, and (c) library loadedd
+        #   must have three conditions in place - (a) user selects, (b) ping successfully, and (c) library loaded
         if write_to_db and self.parse_to_db and self.library:
             write_to_db_on = 1
             unique_doc_num = -1
@@ -1137,29 +1120,29 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logger.warning("warning: Parser().parse_pdf - request to write to database but no library loaded "
-                           "in Parser constructor.   Will write parsing output to file and will place the "
+            logger.warning("Parser - parse_pdf - request to write to database but no library loaded "
+                           "in Parser constructor.  Will write parsing output to file and will place the "
                            "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logger.error(f"warning: Parser().parse_pdf - could not connect to database at "
+            logger.warning(f"Parser - parse_pdf - could not connect to database at "
                          f"{LLMWareConfig().get_db_uri_string()}.  Will write "
                          f"parsing output to file and will place the file in /parser_history path.")
 
         #   function declaration for .add_pdf_main_llmware
-        #       char * input_account_name,
-        #       char * input_library_name,
-        #       char * input_fp,
-        #       char * input_mongo_db_path,
-        #       char * input_images_fp,
-        #       int input_debug_mode,
-        #       int input_image_save_mode,
-        #       int write_to_db_on,
-        #       char * write_to_filename,
-        #       int user_block_size,
-        #       int unique_doc_num,
-        #       char * db_user_name,
+        #       char * input_account_name
+        #       char * input_library_name
+        #       char * input_fp
+        #       char * input_mongo_db_path
+        #       char * input_images_fp
+        #       int input_debug_mode
+        #       int input_image_save_mode
+        #       int write_to_db_on
+        #       char * write_to_filename
+        #       int user_block_size
+        #       int unique_doc_num
+        #       char * db_user_name
         #       char * db_pw
 
         #   if any issue loading module, will be captured at .get_module_pdf_parser()
@@ -1238,29 +1221,14 @@ class Parser:
         #                   * main call to pdf library *
         #
 
-        logger.info("update: start parsing of PDF Documents...")
-
-        #   function declaration for .add_pdf_main_llmware
-        #       char * input_account_name,
-        #       char * input_library_name,
-        #       char * input_fp,
-        #       char * input_mongodb_path,
-        #       char * input_images_fp,
-        #       int input_debug_mode,
-        #       int input_image_save_mode,
-        #       int write_to_db_on,
-        #       char * write_to_filename,
-        #       int user_block_size,
-        #       int unique_doc_num,
-        #       char * db_user_name,
-        #       char * db_pw
+        logger.info("Parser - start parsing of PDF Documents...")
 
         pages_created = pdf_handler(account_name, library_name, fp_c, collection_db_path_c, image_fp_c,
                                     input_debug_mode, input_image_save_mode, write_to_db_on_c,
                                     write_to_filename_c, user_block_size, unique_doc_num_c,
                                     db_user_name_c, db_pw_c)
 
-        logger.info(f"update:  completed parsing of pdf documents - time taken: {time.time()-t0}")
+        logger.info(f"Parser - completed parsing of pdf documents - time taken: {time.time()-t0}")
 
         if write_to_db_on == 0:
             # package up results in Parser State
@@ -1271,7 +1239,7 @@ class Parser:
 
                 self.file_counter = int(last_doc_id)
 
-                logger.info(f"update: adding new entries to parser output state - {len(parser_output)}")
+                logger.info(f"Parser - adding new entries to parser output state - {len(parser_output)}")
 
                 self.parser_output += parser_output
                 output += parser_output
@@ -1301,15 +1269,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logger.warning("error: Parser().parse_office - request to write to database but no library loaded "
-                           "in Parser constructor.   Will write parsing output to file and will place the "
+            logger.warning("Parser - parse_office - request to write to database but no library loaded "
+                           "in Parser constructor.  Will write parsing output to file and will place the "
                            "file in Parser /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logger.error(f"error: Parser().parse_office - could not connect to database at "
-                         f"{self.collection_path}.  Will write parsing output to file and will place the "
-                         f"file in Library /images path.")
+            logger.warning(f"Parser - parse_office - could not connect to database at "
+                           f"{self.collection_path}.  Will write parsing output to file and will place the "
+                           f"file in Library /images path.")
 
         # designed for bulk upload of office parse into library structure
 
@@ -1323,8 +1291,6 @@ class Parser:
         if not os.path.exists(workspace_fp):
             os.mkdir(workspace_fp)
             os.chmod(workspace_fp, 0o777)
-
-        # need to synchronize as config parameter
 
         # start timing track for parsing job
         t0 = time.time()
@@ -1347,18 +1313,19 @@ class Parser:
         # new endpoint for llmware
         main_handler = _mod.add_files_main_llmware
 
-        #   int add_files_main_llmware:
-        #       char * input_account_name,
-        #       char * input_library_name,
-        #       char * input_fp,
-        #       char * workspace_fp,
-        #       char * input_mongodb_path,
-        #       char * image_fp,
-        #       int input_debug_mode,
-        #       int write_to_db_on,
-        #       char * write_to_filename,
-        #       int unique_doc_num,
-        #       char *db_user_name,
+        #   * add_files_main_llmware function declaration *
+
+        #       char * input_account_name
+        #       char * input_library_name
+        #       char * input_fp
+        #       char * workspace_fp
+        #       char * input_mongodb_path
+        #       char * image_fp
+        #       int input_debug_mode
+        #       int write_to_db_on
+        #       char * write_to_filename
+        #       int unique_doc_num
+        #       char *db_user_name
         #       char *db_pw
 
         # main_handler = _mod.add_files_main_customize_parallel
@@ -1420,27 +1387,13 @@ class Parser:
         db_pw = "test-123"
         db_pw_c = create_string_buffer(db_pw.encode('ascii', 'ignore'))
 
-        #   int add_files_main_llmware:
-        #       char * input_account_name,
-        #       char * input_library_name,
-        #       char * input_fp,
-        #       char * workspace_fp,
-        #       char * input_mongodb_path,
-        #       char * image_fp,
-        #       int input_debug_mode,
-        #       int write_to_db_on,
-        #       char * write_to_filename,
-        #       int unique_doc_num,
-        #       char * db_user_name,
-        #       char * db_pw
-
-        logger.info("update: start parsing of office documents...")
+        logger.info("Parser - parse_office - start parsing of office documents...")
 
         pages_created = main_handler(account_name, library_name, fp_c, workspace_fp_c, collection_path_c, image_fp_c,
                                      debug_mode_c, write_to_db_on_c, write_to_fn_c, unique_doc_num_c,
                                      db_user_name_c, db_pw_c)
 
-        logger.info(f"update:  completed parsing of office documents - time taken: {time.time()-t0}")
+        logger.info(f"Parser - completed parsing of office documents - time taken: {time.time()-t0}")
 
         if write_to_db_on == 0:
             # package up results in Parser State
@@ -1462,8 +1415,8 @@ class Parser:
 
     def parse_office(self, input_fp, write_to_db=True, save_history=True):
 
-        """ Primary method interface into Office parser with more db configuration options - implemented starting
-        with llmware-0.2.8 """
+        """ Primary method interface into Office parser with more configuration options - expanded most
+        recently in version 0.3.2 """
 
         output = []
 
@@ -1480,15 +1433,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logger.warning("error: Parser().parse_office - request to write to database but no library loaded "
-                           "in Parser constructor.   Will write parsing output to file and will place the "
+            logger.warning("Parser - parse_office - request to write to database but no library loaded "
+                           "in Parser constructor.  Will write parsing output to file and will place the "
                            "file in Parser /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logger.error(f"error: Parser().parse_office - could not connect to database at "
-                         f"{self.collection_path}.  Will write parsing output to file and will place the "
-                         f"file in Library /images path.")
+            logger.warning(f"Parser - parse_office - could not connect to database at "
+                           f"{self.collection_path}.  Will write parsing output to file and will place the "
+                           f"file in Library /images path.")
 
         # deprecation warning for aarch64 linux
         system = platform.system().lower()
@@ -1506,6 +1459,276 @@ class Parser:
                                "in versions >=0.2.7 may not be available.")
 
                 return self.parse_office_deprecated_027(input_fp, write_to_db=write_to_db,save_history=save_history)
+
+        if system == "darwin":
+
+            try:
+                machine = os.uname().machine.lower()
+            except:
+                machine = "na"
+
+            if machine == "x86_64":
+                logger.warning("Deprecation warning: deprecating support for Mac x86 - routing parsing request "
+                               "to handler for <=0.2.6.  Note: some features and options in versions >=0.2.7 "
+                               "may not be available.")
+
+                return self.parse_office_deprecated_027(input_fp, write_to_db=write_to_db, save_history=save_history)
+
+        # end - deprecation routing
+
+        # designed for bulk upload of office parse into library structure
+
+        if not input_fp.endswith(os.sep):
+            input_fp += os.sep
+
+        office_fp = input_fp
+
+        workspace_fp = os.path.join(self.parser_tmp_folder, "office_tmp" + os.sep)
+
+        if not os.path.exists(workspace_fp):
+            os.mkdir(workspace_fp)
+            os.chmod(workspace_fp, 0o777)
+
+        # need to synchronize as config parameter
+
+        # start timing track for parsing job
+        t0 = time.time()
+
+        # only one tmp work folder used currently - can consolidate over time
+        for z in range(0, 5):
+
+            if os.path.exists(os.path.join(workspace_fp, str(z))):
+                shutil.rmtree(os.path.join(workspace_fp, str(z)), ignore_errors=True)
+
+            if not os.path.exists(os.path.join(workspace_fp, str(z))):
+                os.mkdir(os.path.join(workspace_fp, str(z)))
+                os.chmod(os.path.join(workspace_fp, str(z)), 0o777)
+
+        # end -initialize workspace
+
+        #   if any issue loading module, will be captured at .get_module_office_parser()
+        _mod = Utilities().get_module_office_parser()
+
+        main_handler = _mod.add_files_main_llmware_opt_full
+
+        #   * function declaration for add_files_main_llmware_opt_full *
+
+        #   char * input_account_name
+        #   char * input_library_name
+        #   char * input_fp
+        #   char * workspace_fp
+        #   char * db
+        #   char * db_uri_string
+        #   char * db_name
+        #   char * db_user_name
+        #   char * db_pw
+        #   char * image_fp
+        #   int input_debug_mode
+        #   int write_to_db_on
+        #   char * write_to_filename
+        #   int unique_doc_num
+        #   int user_blok_size
+        #   int status_manager_on
+        #   int status_manager_increment
+        #   char * status_job_id
+        #   int strip_header
+        #   int table_extract
+        #   int smart_chunking
+        #   int max_chunk_size
+        #   int encoding_style
+        #   int get_header_text
+        #   int table_grid
+        #   int save_images
+        #   int logger_level
+        #   char* debug_file
+
+        main_handler.argtypes = (c_char_p, c_char_p, c_char_p, c_char_p, c_char_p,
+                                 c_char_p, c_char_p, c_char_p, c_char_p, c_char_p,
+                                 c_int, c_int, c_char_p, c_int, c_int, c_int, c_int,
+                                 c_char_p, c_int, c_int, c_int, c_int, c_int, c_int,
+                                 c_int, c_int, c_int, c_char_p)
+
+        main_handler.restype = c_int
+
+        account_name = create_string_buffer(self.account_name.encode('ascii', 'ignore'))
+        library_name = create_string_buffer(self.library_name.encode('ascii', 'ignore'))
+
+        fp_c = create_string_buffer(office_fp.encode('ascii', 'ignore'))
+        workspace_fp_c = create_string_buffer(workspace_fp.encode('ascii', 'ignore'))
+
+        # debug_mode deprecated as of 0.3.1++
+        debug_mode = self.verbose_level
+
+        supported_options = [0, 1, 2, 3]
+
+        if debug_mode not in supported_options:
+            debug_mode = 0
+
+        debug_mode_c = c_int(debug_mode)
+
+        image_fp = self.parser_image_folder
+        if not image_fp.endswith(os.sep):
+            image_fp += os.sep
+
+        image_fp_c = create_string_buffer(image_fp.encode('ascii', 'ignore'))
+
+        # get db uri string
+        input_collection_db_path = LLMWareConfig().get_db_uri_string()
+        collection_db_path_c = create_string_buffer(input_collection_db_path.encode('ascii', 'ignore'))
+
+        write_to_db_on_c = c_int(write_to_db_on)
+
+        write_to_fn_c = create_string_buffer(write_to_filename.encode('ascii', 'ignore'))
+
+        # unique_doc_num is key parameter - if <0: will pull from incremental db, if >=0, then will start at this value
+        # unique_doc_num = -1
+        unique_doc_num_c = c_int(unique_doc_num)
+
+        # pull target block size from library parameters
+        user_block_size_c = c_int(self.chunk_size)
+
+        # db credentials
+        db_user_name = self.collection_db_username
+        db_user_name_c = create_string_buffer(db_user_name.encode('ascii', 'ignore'))
+
+        db_pw = self.collection_db_password
+        db_pw_c = create_string_buffer(db_pw.encode('ascii', 'ignore'))
+
+        db = LLMWareConfig.get_config("collection_db")
+
+        db = create_string_buffer(db.encode('ascii', 'ignore'))
+        db_name = account_name
+
+        status_manager_on_c = c_int(1)
+        status_manager_increment_c = c_int(10)
+        status_job_id_c = create_string_buffer("1".encode('ascii', 'ignore'))
+
+        # defaults to 0
+        if self.strip_header:
+            strip_header = c_int(1)
+        else:
+            strip_header = c_int(0)
+
+        if self.get_tables:
+            table_extract = c_int(1)
+        else:
+            table_extract = c_int(0)
+
+        smart_chunking = c_int(self.smart_chunking)
+
+        # by default - 1 = get header text || turn off = 0
+        if self.get_header_text:
+            get_header_text = c_int(1)
+        else:
+            get_header_text = c_int(0)
+
+        if self.table_grid:
+            table_grid = c_int(1)
+        else:
+            table_grid = c_int(0)
+
+        if self.encoding == "ascii":
+            encoding_style = c_int(0)
+        elif self.encoding == "utf-8":
+            encoding_style = c_int(2)
+        else:
+            encoding_style = c_int(2)
+
+        max_chunk_size = c_int(self.max_chunk_size)
+
+        if self.get_images:
+            save_images = c_int(1)  # TRUE - get images
+        else:
+            save_images = c_int(0)  # FALSE - no images
+
+        logger.info("Parser - parse_office - start parsing of office documents...")
+
+        if self.use_logging_file:
+            input_debug_mode = c_int(60)
+        else:
+            input_debug_mode = c_int(0)
+
+        logger_level = c_int(self.logger_level)
+
+        dlf_fp = os.path.join(self.parser_folder, self.parser_log_name)
+
+        debug_log_file = create_string_buffer(dlf_fp.encode('ascii', 'ignore'))
+
+        pages_created = main_handler(account_name, library_name, fp_c, workspace_fp_c,
+                                     db, collection_db_path_c, db_name, db_user_name_c, db_pw_c,
+                                     image_fp_c,
+                                     input_debug_mode, write_to_db_on_c, write_to_fn_c, unique_doc_num_c,
+                                     user_block_size_c, status_manager_on_c, status_manager_increment_c,
+                                     status_job_id_c, strip_header, table_extract, smart_chunking,
+                                     max_chunk_size, encoding_style, get_header_text, table_grid,
+                                     save_images, logger_level, debug_log_file)
+
+        logger.info(f"Parser - parse_office - completed parsing of office documents - time taken: {time.time()-t0}")
+
+        if write_to_db_on == 0:
+            # package up results in Parser State
+            parser_output = self.convert_parsing_txt_file_to_json(self.parser_image_folder, write_to_filename)
+            if len(parser_output) > 0:
+                last_entry = parser_output[-1]
+                last_doc_id = last_entry["doc_ID"]
+
+                self.file_counter = int(last_doc_id)
+
+                self.parser_output += parser_output
+                output += parser_output
+
+            if save_history:
+                # save parser state
+                ParserState().save_parser_output(self.parser_job_id, parser_output)
+
+        return output
+
+    def parse_office_deprecated_031(self, input_fp, write_to_db=True, save_history=True):
+
+        """ Primary method interface into Office parser with more db configuration options - implemented starting
+        with llmware-0.2.8 and deprecated as of v0.3.2 - will be removed in future releases. """
+
+        output = []
+
+        # used internally by parser to capture text
+        write_to_filename = "office_parser_output_0.txt"
+
+        #   must have three conditions in place - (a) user selects, (b) ping successfully, and (c) library loaded
+        if write_to_db and self.parse_to_db and self.library:
+            write_to_db_on = 1
+            unique_doc_num = -1
+        else:
+            write_to_db_on = 0
+            unique_doc_num = int(self.file_counter)
+
+        #   warning to user that no library loaded in Parser constructor
+        if write_to_db and not self.library:
+            logger.warning("Parser - parse_office - request to write to database but no library loaded "
+                           "in Parser constructor.  Will write parsing output to file and will place the "
+                           "file in Parser /parser_history path.")
+
+        #   warning to user that database connection not found
+        if write_to_db and not self.parse_to_db:
+            logger.warning(f"Parser - parse_office - could not connect to database at "
+                           f"{self.collection_path}.  Will write parsing output to file and will place the "
+                           f"file in Library /images path.")
+
+        # deprecation warning for aarch64 linux
+        system = platform.system().lower()
+
+        if system == "linux":
+
+            try:
+                machine = os.uname().machine.lower()
+            except:
+                machine = "na"
+
+            if machine == 'aarch64':
+                logger.warning("Deprecation warning: deprecating support for aarch linux - "
+                               "routing parsing request to handler for <=0.2.6.  Note: some features and options "
+                               "in versions >=0.2.7 may not be available.")
+
+                return self.parse_office_deprecated_027(input_fp, write_to_db=write_to_db, save_history=save_history)
 
         # end - deprecation routing
 
@@ -1544,56 +1767,41 @@ class Parser:
 
         # new endpoint for llmware
         main_handler = _mod.add_files_main_llmware_opt_full
-        # add_files_main_llmware_opt_full
 
-        """
-         char * input_account_name,
-         char * input_library_name,
-         char * input_fp,
-         char * workspace_fp,
+        #   * function declaration for add_files_main_llmware_opt_full *
 
-         char * db,
-         char * db_uri_string,
-         char * db_name,
-         char * db_user_name,
-         char * db_pw,
+        #   char * input_account_name
+        #   char * input_library_name
+        #   char * input_fp
+        #   char * workspace_fp
+        #   char * db
+        #   char * db_uri_string
+        #   char * db_name
+        #   char * db_user_name
+        #   char * db_pw
+        #   char * image_fp
+        #   int input_debug_mode
+        #   int write_to_db_on
+        #   char * write_to_filename
+        #   int unique_doc_num
+        #   int user_blok_size
+        #   int status_manager_on
+        #   int status_manager_increment
+        #   char * status_job_id
+        #   int strip_header
+        #   int table_extract
+        #   int smart_chunking
+        #   int max_chunk_size
+        #   int encoding_style
+        #   int get_header_text
+        #   int table_grid
+        #   int save_images
 
-         char * image_fp,
-
-         int input_debug_mode,
-         int write_to_db_on,
-         char * write_to_filename,
-         int unique_doc_num,
-         int user_blok_size,
-         int status_manager_on,
-         int status_manager_increment,
-         char * status_job_id,
-         
-         int strip_header,
-         int table_extract,
-         int smart_chunking,
-         int max_chunk_size,
-         int encoding_style,
-         int get_header_text,
-         int table_grid,
-         int save_images
-        """
-
-        # add_files_main_llmware_opt_full
-
-        # main_handler = _mod.add_files_main_customize_parallel
         main_handler.argtypes = (c_char_p, c_char_p, c_char_p, c_char_p, c_char_p,
                                  c_char_p, c_char_p, c_char_p, c_char_p, c_char_p,
                                  c_int, c_int, c_char_p, c_int, c_int, c_int, c_int,
-                                 c_char_p,
-                                 c_int,
-                                 c_int,
-                                 c_int,
-                                 c_int,
-                                 c_int,
-                                 c_int,
-                                 c_int,
-                                 c_int)
+                                 c_char_p, c_int, c_int, c_int, c_int, c_int, c_int,
+                                 c_int, c_int)
 
         main_handler.restype = c_int
 
@@ -1664,39 +1872,6 @@ class Parser:
         status_manager_increment_c = c_int(10)
         status_job_id_c = create_string_buffer("1".encode('ascii', 'ignore'))
 
-        # end - new
-        """
-         char * input_account_name,
-         char * input_library_name,
-         char * input_fp,
-         char * workspace_fp,
-
-         char * db,
-         char * db_uri_string,
-         char * db_name,
-         char * db_user_name,
-         char * db_pw,
-
-         char * image_fp,
-         int input_debug_mode,
-         int write_to_db_on,
-         char * write_to_filename,
-         int unique_doc_num,
-         int user_blok_size,
-         int status_manager_on,
-         int status_manager_increment,
-         char * status_job_id,
-        
-         int strip_header,
-         int table_extract,
-         int smart_chunking,
-         int max_chunk_size,
-         int encoding_style,
-         int get_header_text,
-         int table_grid,
-         int save_images
-        """
-
         # defaults to 0
         if self.strip_header:
             strip_header = c_int(1)
@@ -1735,24 +1910,17 @@ class Parser:
         else:
             save_images = c_int(0)  # FALSE - no images
 
-        logger.debug("update: start parsing of office documents...")
+        logger.info("Parser - start parsing of office documents...")
 
         pages_created = main_handler(account_name, library_name, fp_c, workspace_fp_c,
                                      db, collection_db_path_c, db_name, db_user_name_c, db_pw_c,
-                                     image_fp_c,
-                                     debug_mode_c, write_to_db_on_c, write_to_fn_c, unique_doc_num_c,
+                                     image_fp_c, debug_mode_c, write_to_db_on_c, write_to_fn_c, unique_doc_num_c,
                                      user_block_size_c, status_manager_on_c, status_manager_increment_c,
-                                     status_job_id_c,
-                                     strip_header,
-                                     table_extract,
-                                     smart_chunking,
-                                     max_chunk_size,
-                                     encoding_style,
-                                     get_header_text,
-                                     table_grid,
+                                     status_job_id_c, strip_header, table_extract, smart_chunking,
+                                     max_chunk_size, encoding_style, get_header_text, table_grid,
                                      save_images)
 
-        logger.info(f"update:  completed parsing of office documents - time taken: {time.time()-t0}")
+        logger.info(f"Parser - completed parsing of office documents - time taken: {time.time() - t0}")
 
         if write_to_db_on == 0:
             # package up results in Parser State
@@ -1774,8 +1942,9 @@ class Parser:
 
     def parse_office_deprecated_027(self, input_fp, write_to_db=True, save_history=True):
 
-        """ Primary method interface into Office parser with more db configuration options - implemented starting
-        with llmware-0.2.0 """
+        """ Deprecated - primary method interface into Office parser with more db configuration options -
+        implemented starting with llmware-0.2.0 and deprecated as of 0.2.7 - will be removed in future
+        releases. """
 
         output = []
 
@@ -1792,15 +1961,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logger.warning("error: Parser().parse_office - request to write to database but no library loaded "
-                           "in Parser constructor.   Will write parsing output to file and will place the "
+            logger.warning("Parser - parse_office - request to write to database but no library loaded "
+                           "in Parser constructor.  Will write parsing output to file and will place the "
                            "file in Parser /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logger.error(f"error: Parser().parse_office - could not connect to database at "
-                         f"{self.collection_path}.  Will write parsing output to file and will place the "
-                         f"file in Library /images path.")
+            logger.warning(f"Parser - parse_office - could not connect to database at "
+                           f"{self.collection_path}.  Will write parsing output to file and will place the "
+                           f"file in Library /images path.")
 
         # designed for bulk upload of office parse into library structure
 
@@ -1814,8 +1983,6 @@ class Parser:
         if not os.path.exists(workspace_fp):
             os.mkdir(workspace_fp)
             os.chmod(workspace_fp, 0o777)
-
-        # need to synchronize as config parameter
 
         # start timing track for parsing job
         t0 = time.time()
@@ -1838,31 +2005,27 @@ class Parser:
         # new endpoint for llmware
         main_handler = _mod.add_files_main_llmware_opt
 
-        """
-        (char * input_account_name,
-         char * input_library_name,
-         char * input_fp,
-         char * workspace_fp,
+        #   * function declaration for add_files_main_llmware_opt *
 
-         char * db,
-         char * db_uri_string,
-         char * db_name,
-         char * db_user_name,
-         char * db_pw,
+        #   char * input_account_name
+        #   char * input_library_name
+        #   char * input_fp
+        #   char * workspace_fp
+        #   char * db
+        #   char * db_uri_string
+        #   char * db_name
+        #   char * db_user_name
+        #   char * db_pw
+        #   char * image_fp
+        #   int input_debug_mode
+        #   int write_to_db_on
+        #   char * write_to_filename
+        #   int unique_doc_num
+        #   int user_blok_size
+        #   int status_manager_on
+        #   int status_manager_increment
+        #   char * status_job_id)
 
-         char * image_fp,
-         
-         int input_debug_mode,
-         int write_to_db_on,
-         char * write_to_filename,
-         int unique_doc_num,
-         int user_blok_size,
-         int status_manager_on,
-         int status_manager_increment,
-         char * status_job_id)
-        """
-
-        # main_handler = _mod.add_files_main_customize_parallel
         main_handler.argtypes = (c_char_p, c_char_p, c_char_p, c_char_p, c_char_p,
                                  c_char_p, c_char_p, c_char_p, c_char_p, c_char_p,
                                  c_int, c_int, c_char_p, c_int, c_int, c_int, c_int,
@@ -1914,8 +2077,6 @@ class Parser:
         # unique_doc_num = -1
         unique_doc_num_c = c_int(unique_doc_num)
 
-        # start new
-
         # pull target block size from library parameters
         user_block_size_c = c_int(self.block_size_target_characters)  # standard 400-600
 
@@ -1935,40 +2096,15 @@ class Parser:
         status_manager_increment_c = c_int(10)
         status_job_id_c = create_string_buffer("1".encode('ascii','ignore'))
 
-        # end - new
-        """
-        (char * input_account_name,
-         char * input_library_name,
-         char * input_fp,
-         char * workspace_fp,
-
-         char * db,
-         char * db_uri_string,
-         char * db_name,
-         char * db_user_name,
-         char * db_pw,
-
-         char * image_fp,
-         int input_debug_mode,
-         int write_to_db_on,
-         char * write_to_filename,
-         int unique_doc_num,
-         int user_blok_size,
-         int status_manager_on,
-         int status_manager_increment,
-         char * status_job_id)
-        """
-
-        logger.debug("update: start parsing of office documents...")
+        logger.info("Parser - parse_office - start parsing of office documents...")
 
         pages_created = main_handler(account_name, library_name, fp_c, workspace_fp_c,
                                      db, collection_db_path_c, db_name, db_user_name_c, db_pw_c,
-                                     image_fp_c,
-                                     debug_mode_c, write_to_db_on_c, write_to_fn_c, unique_doc_num_c,
+                                     image_fp_c, debug_mode_c, write_to_db_on_c, write_to_fn_c, unique_doc_num_c,
                                      user_block_size_c, status_manager_on_c, status_manager_increment_c,
                                      status_job_id_c)
 
-        logger.info(f"update:  completed parsing of office documents - time taken: {time.time()-t0}")
+        logger.info(f"Parser - completed parsing of office documents - time taken: {time.time()-t0}")
 
         if write_to_db_on == 0:
             # package up results in Parser State
@@ -2004,15 +2140,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logger.warning("warning: Parser().parse_text - request to write to database but no library loaded "
-                           "in Parser constructor.   Will write parsing output to file and will place the "
+            logger.warning("Parser - parse_text - request to write to database but no library loaded "
+                           "in Parser constructor.  Will write parsing output to file and will place the "
                            "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logger.error(f"warning: Parser().parse_text - could not connect to database at "
-                         f"{self.collection_path}.  Will write parsing output to file and will place the file "
-                         f"in /parser_history path.")
+            logger.warning(f"Parser - parse_text - could not connect to database at "
+                           f"{self.collection_path}.  Will write parsing output to file and will place the file "
+                           f"in /parser_history path.")
 
         # set counters
         blocks_created = 0
@@ -2037,6 +2173,8 @@ class Parser:
                 # increment and get new doc_id
                 if write_to_db_on == 1:
                     self.library.doc_ID = self.library.get_and_increment_doc_id()
+
+                logger.info(f"Parser - parse_text file - processing - {file}")
 
                 file_type = file.split(".")[-1]
 
@@ -2118,7 +2256,7 @@ class Parser:
 
         output = []
 
-        #   must have three conditions in place - (a) user selects, (b) ping successfully, and (c) library loadedd
+        #   must have three conditions in place - (a) user selects, (b) ping successfully, and (c) library loaded
 
         if write_to_db and self.parse_to_db and self.library:
             write_to_db_on = 1
@@ -2127,15 +2265,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logger.warning("warning: Parser().parse_text - request to write to database but no library loaded "
-                           "in Parser constructor.   Will write parsing output to file and will place the "
+            logger.warning("Parser - parse_text - request to write to database but no library loaded "
+                           "in Parser constructor.  Will write parsing output to file and will place the "
                            "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logger.error(f"warning: Parser().parse_text - could not connect to database at "
-                         f"{self.collection_path}.  Will write parsing output to file and will place the "
-                         f"file in /parser_history path.")
+            logger.warning(f"Parser - parse_text - could not connect to database at "
+                           f"{self.collection_path}.  Will write parsing output to file and will place the "
+                           f"file in /parser_history path.")
 
         # set counters
         blocks_added = 0
@@ -2181,7 +2319,8 @@ class Parser:
                         blocks_added += new_blocks
                         pages_added += 1
 
-                        logger.info(f"update: writing doc - page - {file} - {j} - {len(blocks)}")
+                        logger.info(f"Parser - parse_pdf_by_ocr_images - writing doc - page - "
+                                    f"{file} - {j} - {len(blocks)}")
 
         # update overall library counter at end of parsing
 
@@ -2389,7 +2528,7 @@ class Parser:
 
         output = []
 
-        #   must have three conditions in place - (a) user selects, (b) ping successfully, and (c) library loadedd
+        #   must have three conditions in place - (a) user selects, (b) ping successfully, and (c) library loaded
         if write_to_db and self.parse_to_db and self.library:
             write_to_db_on = 1
         else:
@@ -2397,15 +2536,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logger.warning("warning: Parser().parse_text - request to write to database but no library loaded "
-                           "in Parser constructor.   Will write parsing output to file and will place the "
+            logger.warning("Parser - parse_text - request to write to database but no library loaded "
+                           "in Parser constructor.  Will write parsing output to file and will place the "
                            "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logger.error(f"warning: Parser().parse_text - could not connect to database at "
-                         f"{self.collection_path}.  Will write parsing output to file and will place the "
-                         f"file in /parser_history path.")
+            logger.warning(f"Parser - parse_text - could not connect to database at "
+                           f"{self.collection_path}.  Will write parsing output to file and will place the "
+                           f"file in /parser_history path.")
 
         # set counters
         blocks_added = 0
@@ -2416,7 +2555,7 @@ class Parser:
 
             fn = "wiki-topic-" + Utilities().secure_filename(topic) + ".txt"
 
-            logger.info(f"update: parse_wiki - {topic} - {fn}")
+            logger.info(f"Parser - parse_wiki - {topic} - {fn}")
 
             # increment and get new doc_id
             if write_to_db_on == 1:
@@ -2473,7 +2612,7 @@ class Parser:
 
         output = []
 
-        #   must have three conditions in place - (a) user selects, (b) ping successfully, and (c) library loadedd
+        #   must have three conditions in place - (a) user selects, (b) ping successfully, and (c) library loaded
         if write_to_db and self.parse_to_db and self.library:
             write_to_db_on = 1
         else:
@@ -2481,15 +2620,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logger.warning("warning: Parser().parse_text - request to write to database but no library loaded "
-                           "in Parser constructor.   Will write parsing output to file and will place the "
+            logger.warning("Parser - parse_text - request to write to database but no library loaded "
+                           "in Parser constructor.  Will write parsing output to file and will place the "
                            "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logger.error(f"warning: Parser().parse_text - could not connect to database at "
-                         f"{self.collection_path}.  Will write parsing output to file and will place the "
-                         f"file in /parser_history path.")
+            logger.warning(f"Parser - parse_text - could not connect to database at "
+                           f"{self.collection_path}.  Will write parsing output to file and will place the "
+                           f"file in /parser_history path.")
 
         # set counters
         blocks_added = 0
@@ -2555,15 +2694,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logger.warning("warning: Parser().parse_text - request to write to database but no library loaded "
-                           "in Parser constructor.   Will write parsing output to file and will place the "
+            logger.warning("Parser - parse_voice - request to write to database but no library loaded "
+                           "in Parser constructor.  Will write parsing output to file and will place the "
                            "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logger.error(f"warning: Parser().parse_text - could not connect to database at "
-                         f"{self.collection_path}.  Will write parsing output to file and will place the "
-                         f"file in /parser_history path.")
+            logger.warning(f"Parser - parse_voice - could not connect to database at "
+                           f"{self.collection_path}.  Will write parsing output to file and will place the "
+                           f"file in /parser_history path.")
 
         # set counters
         blocks_added = 0
@@ -2587,7 +2726,7 @@ class Parser:
                 if write_to_db_on == 1:
                     self.library.doc_ID = self.library.get_and_increment_doc_id()
 
-                logger.info(f"update: parse_voice file - processing - {file}")
+                logger.info(f"Parser - parse_voice file - processing - {file}")
 
                 vp_output = VoiceParser(self,
                                         chunk_size=self.chunk_size,
@@ -2673,7 +2812,7 @@ class Parser:
 
         output = []
 
-        #   must have three conditions in place - (a) user selects, (b) ping successfully, and (c) library loadedd
+        #   must have three conditions in place - (a) user selects, (b) ping successfully, and (c) library loaded
         if write_to_db and self.parse_to_db and self.library:
             write_to_db_on = 1
         else:
@@ -2681,15 +2820,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logger.warning("warning: Parser().parse_text - request to write to database but no library loaded "
-                           "in Parser constructor.   Will write parsing output to file and will place the "
+            logger.warning("Parser - parse_dialog - request to write to database but no library loaded "
+                           "in Parser constructor.  Will write parsing output to file and will place the "
                            "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logger.error(f"warning: Parser().parse_text - could not connect to database at "
-                         f"{self.collection_path}.  Will write parsing output to file and will place "
-                         f"the file in /parser_history path.")
+            logger.warning(f"Parser - parse_dialog - could not connect to database at "
+                           f"{self.collection_path}.  Will write parsing output to file and will place "
+                           f"the file in /parser_history path.")
 
         # set counters
         conversation_turns = 0
@@ -2715,7 +2854,7 @@ class Parser:
                     if write_to_db_on == 1:
                         self.library.doc_ID = self.library.get_and_increment_doc_id()
 
-                    logger.info(f"update: dialog file - {file}")
+                    logger.info(f"Parser - parse_dialog - dialog file - {file}")
 
                     dp_parse_output = DialogParser(self).parse_aws_json_file_format(input_folder, file)
 
@@ -2723,7 +2862,7 @@ class Parser:
 
                     for i, blocks in enumerate(dp_parse_output):
 
-                        logger.info(f"update: dialog turn - {i} {blocks}")
+                        logger.debug(f"Parser - parse_dialog - dialog turn - {i} {blocks}")
 
                         # iterate thru each block -> add to metadata
                         speaker_name = blocks["speaker_name"]
@@ -2783,7 +2922,7 @@ class Parser:
 
         output = []
 
-        #   must have three conditions in place - (a) user selects, (b) ping successfully, and (c) library loadedd
+        #   must have three conditions in place - (a) user selects, (b) ping successfully, and (c) library loaded
         if write_to_db and self.parse_to_db and self.library:
             write_to_db_on = 1
         else:
@@ -2791,15 +2930,15 @@ class Parser:
 
         #   warning to user that no library loaded in Parser constructor
         if write_to_db and not self.library:
-            logger.warning("warning: Parser().parse_website - request to write to database but no library loaded "
-                           "in Parser constructor.   Will write parsing output to file and will place the "
+            logger.warning("Parser - parse_website - request to write to database but no library loaded "
+                           "in Parser constructor.  Will write parsing output to file and will place the "
                            "file in /parser_history path.")
 
         #   warning to user that database connection not found
         if write_to_db and not self.parse_to_db:
-            logger.error(f"warning: Parser().parse_website - could not connect to database at "
-                         f"{self.collection_path}.  Will write parsing output to file and will place the "
-                         f"file in /parser_history path.")
+            logger.warning(f"Parser - parse_website - could not connect to database at "
+                           f"{self.collection_path}.  Will write parsing output to file and will place the "
+                           f"file in /parser_history path.")
 
         local_work_folder = self.parser_tmp_folder
         # local_work_folder = self.library.tmp_path
@@ -2838,8 +2977,8 @@ class Parser:
 
                     for z in range(0, max_links):
 
-                        logger.info(f"update: WebSite Parser iterate - "
-                                    f"child site link - {z} - {url_base} - {website.internal_links[z]}")
+                        logger.debug(f"Parser - parse_website - iterate - "
+                                     f"child site link - {z} - {url_base} - {website.internal_links[z]}")
 
                         child_site = WebSiteParser(url_base + website.internal_links[z], reset_img_folder=False,
                                                    local_file_path=self.website_work_folder)
@@ -2981,7 +3120,7 @@ class Parser:
         # designed for upload of input files into library structure
 
         if not self.library:
-            logger.error("error: Parser().uploads is designed for connecting files into library - "
+            logger.error("Parser - uploads is designed for connecting files into library - "
                          "no library selected - to use, create Parser with library loaded, e.g., "
                          "Parser(library=my_library)")
             return -1
@@ -3029,17 +3168,17 @@ class Parser:
 
     def input_ingestion_comparison (self, file_list):
 
+        """ Compares input with parsed output to identify any rejected files. """
+
         # shortcut if file_list is just empty
         if len(file_list) < 1:
             return [],[]
-
-        """ Compares input with parsed output to identify any rejected files. """
 
         # simple approach - compares input file_list from ingestion 'work_order' with state of library collection
         #   --if input file found, then added to 'found_list' -> else, added to 'not_found_list'
 
         if not self.library:
-            logger.error("error: Parser().input_ingestion_comparison is designed for bulk parsing of files "
+            logger.error("Parser - input_ingestion_comparison is designed for bulk parsing of files "
                          "into library - no library selected - to use, create Parser with library loaded, e.g., "
                          "Parser(library=my_library)")
             return -1
@@ -3130,13 +3269,214 @@ class Parser:
                 ParserState().save_parser_output(self.parser_job_id, output)
 
         if not output:
-            logger.warning(f"No content parsed from document - {fn}")
+            logger.warning(f"Parser - parse_one - no content parsed from document - {fn}")
 
         return output
 
     def parse_one_office (self, fp, fn, save_history=True):
 
         """ Parse one office document at selected file path and file name. """
+
+        #   Designed for 'ad hoc' and 'unbound' quick parse of a single office document with no storage
+        #   --  output provided as list of Dicts in memory with same structure as parsing output
+        #   --  updated with expanded configuration options for logging (0.3.2+)
+
+        # check that path exists
+        if not os.path.exists(os.path.join(fp, fn)):
+            raise FilePathDoesNotExistException(os.path.join(fp,fn))
+
+        # deprecation warning for aarch64 linux and mac x86
+
+        system = platform.system().lower()
+
+        if system == "linux":
+
+            try:
+                machine = os.uname().machine.lower()
+            except:
+                machine = "na"
+
+            if machine == 'aarch64':
+                logger.warning("Deprecation warning: deprecating support for aarch linux - "
+                               "routing parsing request to handler for <=0.2.6.  Note: some features and options "
+                               "in versions >=0.2.7 may not be available.")
+
+                return self.parse_one_office_deprecated_031_no_opts(fp, fn, save_history=save_history)
+
+        if system == "darwin":
+
+            try:
+                machine = os.uname().machine.lower()
+            except:
+                machine = "na"
+
+            if machine == "x86_64":
+                logger.warning("Deprecation warning: deprecating support for Mac x86 - routing parsing request "
+                               "to handler for <=0.2.6.  Note: some features and options in versions >=0.2.7 "
+                               "may not be available.")
+
+                return self.parse_one_office_deprecated_031_no_opts(fp, fn,save_history=save_history)
+
+        # end - deprecation routing
+
+        workspace_fp = self.parser_tmp_folder
+
+        if not os.path.exists(workspace_fp):
+            os.mkdir(workspace_fp)
+            os.chmod(workspace_fp, 0o777)
+
+        #   safety check - will need to improve + expand for supporting windows path
+        if not workspace_fp.endswith(os.sep):
+            workspace_fp += os.sep
+            logger.warning("Parser - parse_one_office - workspace_fp did not end with "
+                           "trailing '/' as expected by parser")
+
+        #   set up workspace for parser
+        for z in range(0, 1):
+
+            if os.path.exists(os.path.join(workspace_fp,str(z))):
+                shutil.rmtree(os.path.join(workspace_fp,str(z)), ignore_errors=True)
+
+            if not os.path.exists(os.path.join(workspace_fp,str(z))):
+                os.mkdir(os.path.join(workspace_fp,str(z)))
+                os.chmod(os.path.join(workspace_fp, str(z)), 0o777)
+
+        #   * function declaration - add_one_office_opt_full *
+
+        #   char * input_account_name
+        #   char * input_library_name
+        #   char * input_fp
+        #   char * input_fn
+        #   char * workspace_fp
+        #   char * image_fp
+        #   char * write_to_filename
+        #   int * unique_doc_num
+        #   int * user_blok_size
+        #   int strip_header
+        #   int table_extract
+        #   int smart_chunking
+        #   int max_chunk_size
+        #   int encoding_style
+        #   int get_header_text
+        #   int table_grid
+        #   int save_images
+        #   int logger_level
+        #   char * debug_log_file
+        #   int input_debug_mode
+
+        #   if any issue loading module, will be captured at .get_module_office_parser()
+        _mod = Utilities().get_module_office_parser()
+
+        main_handler = _mod.add_one_office_opt_full
+
+        main_handler.argtypes = (c_char_p, c_char_p, c_char_p, c_char_p, c_char_p,
+                                 c_char_p, c_char_p, c_int, c_int, c_int, c_int, c_int,
+                                 c_int, c_int, c_int, c_int, c_int, c_int, c_char_p, c_int)
+
+        main_handler.restype = c_int
+
+        # pull target block size from library parameters
+        user_block_size_c = c_int(self.chunk_size)
+
+        if not self.account_name:
+            self.account_name = "llmware"
+
+        account_name = create_string_buffer(self.account_name.encode('ascii', 'ignore'))
+        library_name = create_string_buffer(self.library_name.encode('ascii', 'ignore'))
+
+        if not fp.endswith(os.sep):
+            fp += os.sep
+
+        fp_c = create_string_buffer(fp.encode('ascii', 'ignore'))
+        fn_c = create_string_buffer(fn.encode('ascii', 'ignore'))
+
+        workspace_fp_c = create_string_buffer(workspace_fp.encode('ascii', 'ignore'))
+
+        image_fp = self.parser_image_folder
+
+        if not image_fp.endswith(os.sep):
+            image_fp += os.sep
+            logger.warning("Parser - parse_one_office - adding '/' to image_fp as expected by c parser")
+
+        image_fp_c = create_string_buffer(image_fp.encode('ascii', 'ignore'))
+
+        write_to_filename = "office_internal_test0.txt"
+        write_to_fn_c = create_string_buffer(write_to_filename.encode('ascii', 'ignore'))
+
+        # defaults to 0
+        if self.strip_header:
+            strip_header = c_int(1)
+        else:
+            strip_header = c_int(0)
+
+        if self.get_tables:
+            table_extract = c_int(1)
+        else:
+            table_extract = c_int(0)
+
+        smart_chunking = c_int(self.smart_chunking)
+
+        # by default - 1 = get header text || turn off = 0
+        if self.get_header_text:
+            get_header_text = c_int(1)
+        else:
+            get_header_text = c_int(0)
+
+        if self.table_grid:
+            table_grid = c_int(1)
+        else:
+            table_grid = c_int(0)
+
+        if self.encoding == "ascii":
+            encoding_style = c_int(0)
+        elif self.encoding == "utf-8":
+            encoding_style = c_int(2)
+        else:
+            encoding_style = c_int(2)
+
+        max_chunk_size = c_int(self.max_chunk_size)
+
+        if self.get_images:
+            save_images = c_int(1)  # TRUE - get images
+        else:
+            save_images = c_int(0)  # FALSE - no images
+
+        logger.info("Parser - parse_one_office - start parsing of office document...")
+
+        #   placeholder for now - not used
+        unique_doc_num_c = c_int(34)
+
+        if self.use_logging_file:
+            input_debug_mode = c_int(60)
+        else:
+            input_debug_mode = c_int(0)
+
+        logger_level = c_int(self.logger_level)
+        dlf_fp = os.path.join(self.parser_folder, self.parser_log_name)
+        debug_log_file = create_string_buffer(dlf_fp.encode('ascii', 'ignore'))
+
+        pages_created = main_handler(account_name, library_name, fp_c, fn_c, workspace_fp_c, image_fp_c,
+                                     write_to_fn_c, unique_doc_num_c, user_block_size_c,
+                                     strip_header, table_extract, smart_chunking, max_chunk_size,
+                                     encoding_style, get_header_text, table_grid, save_images,
+                                     logger_level, debug_log_file, input_debug_mode)
+
+        # self.library.image_path
+        output = self.convert_parsing_txt_file_to_json(file_path=self.parser_tmp_folder,fn=write_to_filename)
+
+        if len(output) > 0:
+            self.parser_output += output
+
+        if save_history:
+            ParserState().save_parser_output(self.parser_job_id, self.parser_output)
+
+        return output
+
+    def parse_one_office_deprecated_031_no_opts (self, fp, fn, save_history=True):
+
+        """ Deprecated starting with llmware v 0.3.2 - entry point to parse one office document at
+        the selected file path and file name - fewer config options available.  Will be removed in future
+        releases. """
 
         #   Designed for 'ad hoc' and 'unbound' quick parse of a single office document with no storage
         #   --output provided as list of Dicts in memory with same structure as parsing output
@@ -3154,9 +3494,10 @@ class Parser:
         # safety check - will need to improve + expand for supporting windows path
         if not workspace_fp.endswith(os.sep):
             workspace_fp += os.sep
-            logger.warning("warning: workspace_fp did not end with trailing '/' as expected by parser")
+            logger.warning("Parser - parse_one_office - workspace_fp did not end with trailing '/' "
+                           "as expected by parser")
 
-        # need to update this
+        # setup parser workspace
         for z in range(0, 1):
 
             if os.path.exists(os.path.join(workspace_fp,str(z))):
@@ -3166,16 +3507,15 @@ class Parser:
                 os.mkdir(os.path.join(workspace_fp,str(z)))
                 os.chmod(os.path.join(workspace_fp, str(z)), 0o777)
 
-        # end -initialize workspace
+        #   * function declaration - add_one_office *
 
-        # int add_one_office
-        # char * input_account_name,
-        # char * input_library_name,
-        # char * input_fp,
-        # char * input_fn,
-        # char * workspace_fp,
-        # char * image_fp,
-        # char * write_to_filename
+        #   char * input_account_name
+        #   char * input_library_name
+        #   char * input_fp
+        #   char * input_fn
+        #   char * workspace_fp
+        #   char * image_fp
+        #   char * write_to_filename
 
         #   if any issue loading module, will be captured at .get_module_office_parser()
         _mod = Utilities().get_module_office_parser()
@@ -3217,15 +3557,7 @@ class Parser:
         write_to_filename = "office_internal_test0.txt"
         write_to_fn_c = create_string_buffer(write_to_filename.encode('ascii', 'ignore'))
 
-        # int add_one_office
-        # char * input_account_name,
-        # char * input_library_name,
-        # char * input_fp,
-        # char * input_fn,
-        # char * workspace_fp,
-        # char * image_fp,
-        # char * write_to_filename
-
+        #   main call into office parser
         pages_created = main_handler(account_name, library_name, fp_c, fn_c, workspace_fp_c,
                                      image_fp_c, write_to_fn_c)
 
@@ -3244,26 +3576,76 @@ class Parser:
 
         """ Parse one pdf document at selected file path and file name. """
 
+        #   0.3.2 - adding expanded configs with text chunking and logging options
+
         # check that path exists
         if not os.path.exists(os.path.join(fp,fn)):
             raise FilePathDoesNotExistException(os.path.join(fp,fn))
 
-        # c function header - add_one_pdf(
-        # char * account_name,
-        # char * library_name,
-        # char * input_fp,
-        # char * input_filename,
-        # char * input_images_fp,
-        # char * write_to_filename,
-        # int user_block_size)
+        # deprecation warning for aarch64 linux and mac x86
+
+        system = platform.system().lower()
+
+        if system == "linux":
+
+            try:
+                machine = os.uname().machine.lower()
+            except:
+                machine = "na"
+
+            if machine == 'aarch64':
+                logger.warning("Deprecation warning: deprecating support for aarch linux - "
+                               "routing parsing request to handler for <=0.2.6.  Note: some features and options "
+                               "in versions >=0.2.7 may not be available.")
+
+                return self.parse_one_pdf_deprecated_031(fp, fn, save_history=save_history)
+
+        if system == "darwin":
+
+            try:
+                machine = os.uname().machine.lower()
+            except:
+                machine = "na"
+
+            if machine == "x86_64":
+                logger.warning("Deprecation warning: deprecating support for Mac x86 - routing parsing request "
+                               "to handler for <=0.2.6.  Note: some features and options in versions >=0.2.7 "
+                               "may not be available.")
+
+                return self.parse_one_pdf_deprecated_031(fp, fn, save_history=save_history)
+
+        # end - deprecation routing
 
         #   if any issue loading module, will be captured at .get_module_pdf_parser()
         _mod_pdf = Utilities().get_module_pdf_parser()
 
-        pdf_handler = _mod_pdf.add_one_pdf
+        pdf_handler = _mod_pdf.add_one_pdf_opts
 
-        # c function header-
-        pdf_handler.argtypes = (c_char_p, c_char_p, c_char_p, c_char_p, c_char_p, c_char_p, c_int)
+        #   * function declaration - add_one_pdf_opts *
+
+        #   char * account_name
+        #   char * library_name
+        #   char * input_fp
+        #   char * input_filename
+        #   char * input_images_fp
+        #   char * write_to_filename
+        #   int user_blok_size
+        #   int unique_doc_num
+        #   int strip_header
+        #   int table_extract
+        #   int smart_chunking
+        #   int max_chunk_size
+        #   int encoding_style
+        #   int get_header_text
+        #   int table_grid
+        #   int save_images
+        #   int logger_level
+        #   char * debug_log_file
+        #   int input_debug_mode
+
+        pdf_handler.argtypes = (c_char_p, c_char_p, c_char_p, c_char_p, c_char_p, c_char_p, c_int,
+                                c_int, c_int, c_int, c_int, c_int, c_int, c_int, c_int, c_int, c_int,
+                                c_char_p, c_int)
 
         pdf_handler.restypes = c_int
 
@@ -3301,28 +3683,152 @@ class Parser:
         write_to_filename_c = create_string_buffer(write_to_filename.encode('ascii','ignore'))
 
         # pull target block size from library parameters
+        user_block_size = c_int(self.chunk_size)
+
+        # defaults to 0
+        if self.strip_header:
+            strip_header = c_int(1)
+        else:
+            strip_header = c_int(0)
+
+        if self.get_tables:
+            table_extract = c_int(1)
+        else:
+            table_extract = c_int(0)
+
+        smart_chunking = c_int(self.smart_chunking)
+
+        # by default - 1 = get header text || turn off = 0
+        if self.get_header_text:
+            get_header_text = c_int(1)
+        else:
+            get_header_text = c_int(0)
+
+        if self.table_grid:
+            table_grid = c_int(1)
+        else:
+            table_grid = c_int(0)
+
+        if self.encoding == "ascii":
+            encoding_style = c_int(0)
+        elif self.encoding == "utf-8":
+            encoding_style = c_int(2)
+        else:
+            encoding_style = c_int(2)
+
+        max_chunk_size = c_int(self.max_chunk_size)
+
+        if self.get_images:
+            save_images = c_int(1)  # TRUE - get images
+        else:
+            save_images = c_int(0)  # FALSE - no images
+
+        unique_doc_num_c = c_int(34)
+
+        if self.use_logging_file:
+            input_debug_mode = c_int(60)
+        else:
+            input_debug_mode = c_int(0)
+
+        logger_level = c_int(self.logger_level)
+
+        dlf_fp = os.path.join(self.parser_folder, self.parser_log_name)
+        debug_log_file = create_string_buffer(dlf_fp.encode('ascii', 'ignore'))
+
+        logger.info("Parser - parse_one_pdf - starting pdf_parser ...")
+
+        #   main call into pdf parser
+
+        pages_created = pdf_handler(account_name, library_name, fp_c, fn_c, image_fp_c,
+                                    write_to_filename_c, user_block_size,
+                                    unique_doc_num_c, strip_header, table_extract, smart_chunking,
+                                    max_chunk_size, encoding_style, get_header_text, table_grid,
+                                    save_images, logger_level, debug_log_file, input_debug_mode)
+
+        logger.info(f"Parser - parse_one_pdf - completed pdf_parser - time taken: {time.time()-t0}")
+
+        output = self.convert_parsing_txt_file_to_json(file_path=self.parser_tmp_folder,fn=write_to_filename)
+
+        if len(output) > 0:
+            self.parser_output += output
+
+        if save_history:
+            ParserState().save_parser_output(self.parser_job_id, self.parser_output)
+
+        return output
+
+    def parse_one_pdf_deprecated_031 (self, fp, fn,  save_history=True):
+
+        """ Deprecated as of 0.3.2 - parse one pdf document at selected file path and file name - provides
+        fewer configuration options for text chunking and logging. """
+
+        # check that path exists
+        if not os.path.exists(os.path.join(fp,fn)):
+            raise FilePathDoesNotExistException(os.path.join(fp,fn))
+
+        #   * function declaration - add_one_pdf *
+
+        #   char * account_name
+        #   char * library_name
+        #   char * input_fp
+        #   char * input_filename
+        #   char * input_images_fp
+        #   char * write_to_filename
+        #   int user_block_size
+
+        #   if any issue loading module, will be captured at .get_module_pdf_parser()
+        _mod_pdf = Utilities().get_module_pdf_parser()
+
+        pdf_handler = _mod_pdf.add_one_pdf
+
+        pdf_handler.argtypes = (c_char_p, c_char_p, c_char_p, c_char_p, c_char_p, c_char_p, c_int)
+        pdf_handler.restypes = c_int
+
+        #   prepare input variables
+
+        t0 = time.time()
+
+        # config options pulled from the Library object
+        if not self.account_name:
+            acct_name = "llmware"
+
+        account_name = create_string_buffer(self.account_name.encode('ascii', 'ignore'))
+
+        library_name = create_string_buffer(self.library_name.encode('ascii', 'ignore'))
+
+        #   fp = passed as parameter -> this is the input file path folder containing the .PDF docs to be parsed
+
+        if not fp.endswith(os.sep):
+            fp += os.sep
+
+        fp_c = create_string_buffer(fp.encode('ascii', 'ignore'))
+
+        fn_c = create_string_buffer(fn.encode('ascii', 'ignore'))
+
+        # shift output fp to
+        # image_fp = self.library.image_path
+        image_fp = self.parser_tmp_folder
+        if not image_fp.endswith(os.sep):
+            image_fp += os.sep
+
+        image_fp_c = create_string_buffer(image_fp.encode('ascii', 'ignore'))
+
+        #   prep parameters passed in the method invocation above
+        write_to_filename = "pdf_internal_test0.txt"
+        write_to_filename_c = create_string_buffer(write_to_filename.encode('ascii','ignore'))
+
+        # pull target block size from library parameters
 
         user_block_size = c_int(self.block_size_target_characters)   # standard 400-600
 
-        #
-        #                   * main call to pdf library *
-        #
+        logger.info("Parser - parse_one_pdf - starting pdf_parser ...")
 
-        # c function header - add_one_pdf(
-        # char * account_name,
-        # char * library_name,
-        # char * input_fp,
-        # char * input_filename,
-        # char * input_images_fp,
-        # char * write_to_filename,
-        # int user_block_size)
-
-        logger.info("update: starting pdf_parser ...")
+        #   main call into the pdf parser
 
         pages_created = pdf_handler(account_name, library_name, fp_c, fn_c, image_fp_c,
                                     write_to_filename_c, user_block_size)
 
-        logger.info(f"update: completed pdf_parser - time taken: {time.time()-t0}")
+        logger.info(f"Parser - parse_one_pdf - completed pdf_parser - time taken: {time.time()-t0}")
 
         output = self.convert_parsing_txt_file_to_json(file_path=self.parser_tmp_folder,fn=write_to_filename)
 
@@ -3885,8 +4391,9 @@ class Parser:
                         self.library.doc_ID = int(doc_id)
                         added_doc_count += 1
                     except:
-                        logger.warning(f"update: doc_ID expected to be integer - can not apply custom doc ID "
-                                       f"- {doc_id} - will use default library document increment")
+                        logger.debug(f"Parser - parse_csv_config - doc_ID expected to be integer - "
+                                     f"can not apply custom doc ID - {doc_id} - will use default "
+                                     f"library document increment")
 
                 if block_id:
                     self.library.block_ID = block_id
@@ -4018,8 +4525,9 @@ class Parser:
                         self.library.doc_ID = int(doc_id)
                         added_doc_count += 1
                     except:
-                        logger.warning(f"update: doc_ID expected to be integer - can not apply custom doc ID"
-                                       f"- {doc_id} - will use default library document increment")
+                        logger.debug(f"Parser - parse_json_config - doc_ID expected to be integer - "
+                                     f"can not apply custom doc ID - {doc_id} - will use default library "
+                                     f"document increment")
 
                 if block_id:
                     self.library.block_ID = block_id
@@ -4112,7 +4620,7 @@ class Parser:
             output = ImageParser(text_chunk_size=chunk_size).process_ocr(image_path, img_name, preserve_spacing=False)
 
             if realtime_progress:
-                logger.info(f"update: realtime progress- ocr output: {output}")
+                logger.info(f"Parser - ocr_images_in_library - realtime progress- ocr output: {output}")
 
             #   good to do a test run with 'add_to_library' == False before writing to the collection
             if add_to_library:
@@ -4152,7 +4660,7 @@ class Parser:
                                 del new_block["_id"]
 
                             if realtime_progress:
-                                logger.info(f"update: writing new text block - {new_text_created} - "
+                                logger.info(f"Parser - ocr_images_in_library - new text block - {new_text_created} - "
                                             f"{doc_id} - {block_id} - {text_chunk} - {new_block}")
 
                             #   creates the new record
@@ -4232,7 +4740,7 @@ class ImageParser:
             except TesseractNotFoundError as e:
                 raise OCRDependenciesNotFoundException("tesseract")
             text_out = text_out.replace("\n", " ")
-            logger.info(f"update: ocr text_out: {text_out}")
+            logger.info(f"ImageParser - ocr_to_single_file - ocr text_out: {text_out}")
             text_list_out.append(text_out)
 
         return text_list_out
@@ -4479,7 +4987,7 @@ class VoiceParser:
         else:
             # aggregate by segment within size parameters
             if "segments" not in response:
-                logger.warning("update: VoiceParser - no 'segments' found in response from WhisperCPP.")
+                logger.warning("VoiceParser - no 'segments' found in response from WhisperCPP.")
                 return []
 
             char_counter = 0
@@ -4557,7 +5065,8 @@ class TextParser:
         ft = sample_file.split(".")[-1].lower()
 
         if ft not in ["json", "jsonl"]:
-            logger.warning(f"update: jsonl_file_parser did not find a recognized json/jsonl file type - {sample_file}")
+            logger.warning(f"TextParser - jsonl_file_parser did not find a recognized json/jsonl file type - "
+                           f"{sample_file}")
             return output
 
         if ft == "json":
@@ -4764,7 +5273,7 @@ class DialogParser:
 
         # improve validation of format + user message back with link to AWS documents
         if not format_validated:
-            logger.error("error: DialogParser currently only supports AWS Transcribe dialog format - For more "
+            logger.error("DialogParser currently only supports AWS Transcribe dialog format - For more "
                          "information, please see Amazon Web Services Transcription - "
                          "https://docs.aws.amazon.com/transcribe/latest/dg/how-input.html#how-it-works-output")
 
@@ -4777,7 +5286,7 @@ class DialogParser:
 
         if len(conversation_snippets) == 0:
             # no results to parse
-            logger.error("error:  unexpected - AWS JSON dialog transcript empty")
+            logger.error("DialogParser - unexpected parsing error - AWS JSON dialog transcript empty")
             return block_output
 
         text= ""
