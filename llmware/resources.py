@@ -3073,6 +3073,11 @@ class _SQLiteConnect:
     def __init__(self):
         self.conn = None
 
+        #   check for llmware path & create if not already set up, e.g., "first time use"
+        if not os.path.exists(LLMWareConfig.get_llmware_path()):
+            LLMWareConfig.setup_llmware_workspace()
+            logger.info("_SQliteConnect - Setting up LLMWare Workspace.")
+
     def connect(self, db_name=None, collection_name=None):
 
         """Connect to SQLite DB - using configuration parameters in SQLiteConfig"""
@@ -3198,6 +3203,11 @@ class CustomTable:
 
     def __init__(self, db=None, table_name=None, schema=None, library_name=None, account_name="llmware",
                  auto_correct_schema_errors=True,auto_correct_postpend="_d"):
+
+        #   check for llmware path & create if not already set up, e.g., "first time use"
+        if not os.path.exists(LLMWareConfig.get_llmware_path()):
+            LLMWareConfig.setup_llmware_workspace()
+            logger.info("CustomTable - Setting up LLMWare Workspace.")
 
         if not db:
             self.db = LLMWareConfig().get_active_db()
