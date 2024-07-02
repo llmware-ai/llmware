@@ -73,8 +73,8 @@ setup(
         'qdrant': ['qdrant-client==1.7.0'],
         'redis': ['redis==5.0.1'],
         'neo4j': ['neo4j==5.16.0'],
-        'full': ['torch>=1.13.1', 'transformers>=4.36.0', 'einops==0.7.0', 'Wikipedia-API>=0.6.0',
-                 'openai>=1.0', 'datasets>=2.15.0', 'yfinance>=0.2.28', 'pymilvus>=2.3.0',
+        'full': ['torch>=1.13.1', 'transformers>=4.36.0', 'einops>=0.7.0', 'Wikipedia-API>=0.6.0',
+                 'openai>=1.0', 'datasets>=2.15.0', 'yfinance>=0.2.38', 'pymilvus>=2.3.0',
                  'chromadb>=0.4.22', 'streamlit', 'Flask']
     },
 )

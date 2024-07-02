@@ -98,11 +98,14 @@ class LLMWareConfig:
              "logging_level": logging.WARNING,
              "logging_format": COLOR_WHITE + '%(levelname)-4s: %(message)s' + COLOR_RESET,
              "logging_level_by_module": {"llmware.embeddings": 20, "llmware.models": 30, "llmware.agents":20,
-                                         "llmware.prompts": 20, "llmware.resources": 20},
+                                         "llmware.prompts": 20, "llmware.resources": 20,
+                                         "llmware.setup": 20, "llmware.parsers": 20},
              "agent_writer_mode": "screen",
              "agent_log_file": "agent_log.txt",
              "model_register": {"module": "llmware.models", "class": "register"},
-             "model_post_init": {"module": "llmware.models", "class": "post_init"}
+             "model_post_init": {"module": "llmware.models", "class": "post_init"},
+             "model_validate": {"module": "llmware.models", "class": "validate"},
+             "model_fetch": {"module": "llmware.models", "class": "pull_snapshot_from_hf"}
              }
 
     @classmethod

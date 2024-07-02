@@ -601,6 +601,8 @@ if __name__ == "__main__":
 
 ## 🔥 What's New? 🔥  
 
+-**BizBot - RAG + SQL Local Chatbot** - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/biz_bot.py) and [video](https://youtu.be/4nBYDEjxxTE?si=o6PDPbu0PVcT-tYd)  
+
 -**Best New Small RAG Model** - BLING finetune of Phi-3 - "bling-phi-3-gguf" - see the [video](https://youtu.be/cViMonCAeSc?si=L6jX0sRdZAmKtRcz)  
 
 -**Web Services with Agent Calls for Financial Research** - end-to-end scenario - [video](https://youtu.be/l0jzsg1_Ik0?si=hmLhpT1iv_rxpkHo) and [example](examples/Use_Cases/web_services_slim_fx.py)  
@@ -716,7 +718,9 @@ Alternatively, if you prefer to complete setup without the welcome automation sc
 
 4.  **install vector db** - no-install vector db options include milvus lite, chromadb, faiss and lancedb - which do not require a server install, but do require that you install the python sdk library for that vector db, e.g., `pip3 install pymilvus`, or `pip3 install chromadb`.  If you look in [examples/Embedding](https://github.com/llmware-ai/llmware/tree/main/examples/Embedding), you will see examples for getting started with various vector DB, and in the root of the repo, you will see easy-to-get-started docker compose scripts for installing milvus, postgres/pgvector, mongo, qdrant, neo4j, and redis.  
 
-5.  Note:  we have seen recently issues with Pytorch==2.3 on some platforms - if you run into any issues, we have seen that uninstalling Pytorch and downleveling to Pytorch==2.1 usually solves the problem.  
+5.  Pytorch 2.3 note:  we have seen recently issues with Pytorch==2.3 on some platforms - if you run into any issues, we have seen that uninstalling Pytorch and downleveling to Pytorch==2.1 usually solves the problem.  
+
+6.  Numpy 2.0 note: we have seen issues with numpy 2.0 with many libraries not yet supporting.  Our pip install setup will accept numpy 2.0 (to avoid pip conflicts), but if you pull from repo, we restrict to <2.   If you run into issues with numpy, we have found that they can be fixed by downgrading numpy to <2, e.g., 1.26.4.  To use WhisperCPP, you should downlevel to numpy <2.  
 
 
 ## Data Store Options
@@ -813,10 +817,17 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
-**Thursday, June 6 - v0.3.1-WIP**  
+**Saturday, June 29 - v0.3.2-WIP**  
+- Update to PDF and Office parsers - improvements to configurations in logging and text chunking options  
+- Changes merged into main branch - will be released in pypi in the next 48 hours  
+  
+**Saturday, June 22 - v0.3.1**  
 - Added module 3 to Fast Start example series [examples 7-9 on Agents & Function Calls](https://github.com/llmware-ai/llmware/tree/main/fast_start)  
 - Added reranker Jina model for in-memory semantic similarity RAG - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Embedding/using_semantic_reranker_with_rag.py)  
-- Changes merged into main branch - expected next pypi release at end of week   
+- Enhanced model fetching parameterization in model loading process  
+- Added new 'tiny' versions of slim-extract and slim-summary in both Pytorch and GGUF versions - check out 'slim-extract-tiny-tool' and 'slim-summary-tiny-tool'  
+- [Biz Bot] use case - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/biz_bot.py) and [video](https://youtu.be/4nBYDEjxxTE?si=o6PDPbu0PVcT-tYd)  
+- Updated numpy reqs <2 and updated yfinance version minimum (>=0.2.38)     
 
 **Tuesday, June 4 - v0.3.0**  
 - Added support for new Milvus Lite embedded 'no-install' database - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Embedding/using_milvus_lite.py).   
