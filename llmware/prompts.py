@@ -226,7 +226,7 @@ class Prompt:
     def load_model(self, gen_model,api_key=None, from_hf=False, trust_remote_code=False,
                    # new options added
                    use_gpu=True, sample=False, get_logits=False,
-                   max_output=200, temperature=0.0, api_endpoint=None):
+                   max_output=200, temperature=0.0, api_endpoint=None, **kwargs):
 
         """Load model into prompt object by selecting model name """
 
@@ -237,7 +237,7 @@ class Prompt:
             self.llm_model = self.model_catalog.load_model(gen_model, api_key=self.llm_model_api_key,
                                                            use_gpu=use_gpu, sample=sample, get_logits=get_logits,
                                                            max_output=max_output, temperature=temperature,
-                                                           api_endpoint=api_endpoint)
+                                                           api_endpoint=api_endpoint, **kwargs)
         else:
 
             pt_loader = PyTorchLoader(api_key=api_key,trust_remote_code=trust_remote_code, custom_loader=None)

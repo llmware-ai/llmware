@@ -93,7 +93,7 @@ class _ModelRegistry:
 
     llm_fx_tools = ["ner", "sentiment", "topics", "ratings", "emotions", "nli",
                     "intent", "sql", "answer", "category", "tags", "summary", "xsum", "extract",
-                    "boolean", "sa-ner","tags-3b", "q_gen", "qa_gen"]
+                    "boolean", "sa-ner","tags-3b", "q_gen", "qa_gen", "ranker"]
 
     llm_fx_tools_map = {"ner": "slim-ner-tool",
                         "sentiment": "slim-sentiment-tool",
@@ -113,7 +113,8 @@ class _ModelRegistry:
                         "sa-ner": "slim-sa-ner-tool",
                         "tags-3b": "slim-tags-3b-tool",
                         "q_gen": "slim-q-gen-tiny-tool",
-                        "qa_gen": "slim-qa-gen-tiny-tool"
+                        "qa_gen": "slim-qa-gen-tiny-tool",
+                        "ranker": "jina-reranker-turbo"
                         }
 
     @classmethod
@@ -269,7 +270,7 @@ class _ModelRegistry:
         return True
 
 
-def pull_model_from_hf(model_card, local_model_repo_path, api_key=None):
+def pull_model_from_hf(model_card, local_model_repo_path, api_key=None, **kwargs):
 
     """ Fetches a specific model file from Huggingface repository into local model repo path, generally used for
     GGUF models in a repository that contains multiple files - and this method will pull a single designated file.
@@ -325,7 +326,7 @@ def pull_model_from_hf(model_card, local_model_repo_path, api_key=None):
     return local_model_repo_path
 
 
-def pull_snapshot_from_hf(model_card, local_model_repo_path, api_key=None):
+def pull_snapshot_from_hf(model_card, local_model_repo_path, api_key=None, **kwargs):
 
     """ Fetches snapshot of HF model repository and saves into local folder path - two required
     inputs:
@@ -729,7 +730,7 @@ class ModelCatalog:
         return model_card
 
     def _instantiate_model_class_from_string(self, model_class, model_name, model_card, api_key=None,
-                                             api_endpoint=None):
+                                             api_endpoint=None, **kwargs):
 
         """ Internal utility method to instantiate model classes from strings. """
 
@@ -761,7 +762,8 @@ class ModelCatalog:
                                        max_output=self.max_output,
                                        sample=self.sample,
                                        embedding_dims=embedding_dims,
-                                       api_endpoint=api_endpoint)
+                                       api_endpoint=api_endpoint,
+                                       **kwargs)
         else:
             raise LLMWareException(message=f"Exception: {model_class} not found.")
 
@@ -769,7 +771,7 @@ class ModelCatalog:
 
     def load_model (self, selected_model, api_key=None, use_gpu=True, sample=True,get_logits=False,
                     max_output=100, temperature=-99, force_reload=False, api_endpoint=None,
-                    custom_loader=None):
+                    custom_loader=None, **kwargs):
 
         """ Main method for loading and fully instantiating a model with lookup based on the model_name in
          the ModelCatalog. """
@@ -797,7 +799,7 @@ class ModelCatalog:
             raise ModelNotFoundException(selected_model)
 
         # step 2- instantiate the right model class
-        my_model = self.get_model_by_name(model_card["model_name"], api_key=api_key,api_endpoint=api_endpoint)
+        my_model = self.get_model_by_name(model_card["model_name"], api_key=api_key,api_endpoint=api_endpoint, **kwargs)
 
         if not my_model:
             logger.error(f"error: ModelCatalog - unexpected - could not identify the model - "
@@ -809,9 +811,12 @@ class ModelCatalog:
 
         if model_card["model_location"] == "llmware_repo" and not api_endpoint:
 
-            loading_directions = self.prepare_local_model(model_card, custom_loader=custom_loader,api_key=api_key)
+            loading_directions = self.prepare_local_model(model_card,
+                                                          custom_loader=custom_loader,
+                                                          api_key=api_key,
+                                                          **kwargs)
 
-            my_model = my_model.load_model_for_inference(loading_directions, model_card=model_card)
+            my_model = my_model.load_model_for_inference(loading_directions, model_card=model_card, **kwargs)
 
         else:
             # if api_key passed, save as environ variable
@@ -825,7 +830,7 @@ class ModelCatalog:
 
         return my_model
 
-    def prepare_local_model(self, model_card, custom_loader=None, api_key=None):
+    def prepare_local_model(self, model_card, custom_loader=None, api_key=None, **kwargs):
 
         """ Resolves obtaining a valid local path to the required model components.
 
@@ -915,7 +920,7 @@ class ModelCatalog:
 
                 #   fetch method input:  model_card, save_to_path, api_key (optional)
                 #   fetch method must be able to resolve the repo using info in the model card
-                success = fetch(model_card, model_location, api_key=api_key)
+                success = fetch(model_card, model_location, api_key=api_key, **kwargs)
 
                 return model_location
 
@@ -1149,7 +1154,7 @@ class ModelCatalog:
 
         return my_model
 
-    def get_model_by_name(self, model_name, api_key=None, api_endpoint=None):
+    def get_model_by_name(self, model_name, api_key=None, api_endpoint=None, **kwargs):
 
         """ Gets and instantiates model by name. """
 
@@ -1162,7 +1167,7 @@ class ModelCatalog:
                 selected_model = models
                 my_model = self._instantiate_model_class_from_string(selected_model["model_family"],
                                                                      model_name, models,api_key=api_key,
-                                                                     api_endpoint=api_endpoint)
+                                                                     api_endpoint=api_endpoint, **kwargs)
                 break
 
         return my_model
@@ -2345,6 +2350,14 @@ def validate(kv_dict):
     return True
 
 
+def preview(kv_dict):
+
+    """ Not implemented by default. """
+    logger.debug(f"Model Load - preview - not implemented - returning True - no action taken")
+
+    return True
+
+
 class BaseModel:
 
     """ BaseModel class subclassed by all models. Should not be instantiated directly.   Provides several
@@ -2361,7 +2374,10 @@ class BaseModel:
 
         # output inference parameters
         for keys in self.base_model_keys:
-            setattr(self, keys, None)
+            if keys in kwargs:
+                setattr(self,keys,kwargs[keys])
+            else:
+                setattr(self, keys, None)
 
     def to_state_dict(self):
 
@@ -2429,6 +2445,24 @@ class BaseModel:
 
         return True
 
+    def preview(self):
+
+        """ Enables a set of 'pre-view' checks upon receipt of proposed inference to confirm compliance
+        with corporate policy, safety, PII checks or custom security rules. Not implemented by
+        default, but can be configured to enable custom steps upon instantiation of any model in LLMWare. """
+
+        state_dict = self.to_state_dict()
+        model_validate = LLMWareConfig().get_config("model_preview")
+        validation_module = model_validate["module"]
+        validation_class = model_validate["class"]
+
+        module = importlib.import_module(validation_module)
+        if hasattr(module, validation_class):
+            validation_exec = getattr(module, validation_class)
+            success = validation_exec(state_dict)
+
+        return True
+
 
 class OpenChatModel(BaseModel):
 
@@ -2438,7 +2472,7 @@ class OpenChatModel(BaseModel):
     def __init__(self, model_name=None,  model_card=None, context_window=4000,prompt_wrapper=None, api_key="not_used",
                  **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         #   expected to take config parameters from model card
         self.api_key = api_key
@@ -2487,6 +2521,7 @@ class OpenChatModel(BaseModel):
         self.target_requested_output_tokens = 100
         self.add_prompt_engineering = False
         self.add_context = ""
+        self.prompt = ""
 
         # new post_init check
         self.post_init()
@@ -2592,6 +2627,8 @@ class OpenChatModel(BaseModel):
         parameters such as temperature and max_tokens. If an API key is required, it can be passed here, or
         will be picked up through the appropriate os.environ variable """
 
+        self.prompt = prompt
+
         if add_context:
             self.add_context = add_context
 
@@ -2612,6 +2649,9 @@ class OpenChatModel(BaseModel):
 
         if not self.api_key:
             self.api_key = self._get_api_key()
+
+        #   call to preview (not implemented by default)
+        self.preview()
 
         # expect that .api_base will route to local open chat inference server
         #   -- assumed that *** api_key likely not used ***
@@ -2748,7 +2788,7 @@ class OllamaModel(BaseModel):
     def __init__(self, model_name=None,  model_card=None, context_window=4000,prompt_wrapper=None, api_key="not_used",
                  **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "OllamaModel"
         self.model_category = "generative"
@@ -2813,6 +2853,7 @@ class OllamaModel(BaseModel):
         self.target_requested_output_tokens = 100
         self.add_prompt_engineering = False
         self.add_context = ""
+        self.prompt = ""
 
         # self.uri = "http://localhost:11434/api/"
         self.uri = f"http://{self.host}:{self.port}/api/"
@@ -2897,6 +2938,8 @@ class OllamaModel(BaseModel):
         """ In typical case with raw_mode = False, then no prompt engineering, just apply a basic
         assembly of the prompt and context. """
 
+        self.prompt = prompt
+
         if add_context:
             self.add_context = add_context
 
@@ -2910,6 +2953,9 @@ class OllamaModel(BaseModel):
 
             if "max_tokens" in inference_dict:
                 self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        #   call to preview hook (not implemented by default)
+        self.preview()
 
         # default case - pass the prompt received without change
         prompt_enriched = prompt
@@ -3025,7 +3071,7 @@ class OpenAIGenModel(BaseModel):
 
     def __init__(self, model_name=None, api_key=None, context_window=4000, max_output=100,temperature=0.7, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "OpenAIGenModel"
         self.model_category = "generative"
@@ -3056,6 +3102,7 @@ class OpenAIGenModel(BaseModel):
         self.target_requested_output_tokens = max_output
         self.add_prompt_engineering = False
         self.add_context = ""
+        self.prompt = ""
 
         self.post_init()
 
@@ -3149,6 +3196,8 @@ class OpenAIGenModel(BaseModel):
         "add_prompt_engineering" parameter.  Optional inference_dict for temperature and max_tokens configuration,
         and optional passing of api_key at time of inference. """
 
+        self.prompt = prompt
+
         if add_context:
             self.add_context = add_context
 
@@ -3175,6 +3224,9 @@ class OpenAIGenModel(BaseModel):
 
         if not self.api_key:
             logger.error("error: invoking OpenAI Generative model with no api_key")
+
+        #   call to preview hook (not implemented by default)
+        self.preview()
 
         # default case - pass the prompt received without change
         prompt_enriched = prompt
@@ -3281,7 +3333,7 @@ class ClaudeModel(BaseModel):
 
     def __init__(self, model_name=None, api_key=None, context_window=8000, max_output=100, temperature=0.7, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "ClaudeModel"
         self.model_category = "generative"
@@ -3312,6 +3364,7 @@ class ClaudeModel(BaseModel):
         self.target_requested_output_tokens = max_output
         self.add_prompt_engineering = False
         self.add_context = ""
+        self.prompt = ""
 
         self.post_init()
 
@@ -3384,6 +3437,8 @@ class ClaudeModel(BaseModel):
         "add_prompt_engineering" parameter.  Optional inference_dict for temperature and max_tokens configuration,
         and optional passing of api_key at time of inference. """
 
+        self.prompt = prompt
+
         if add_context:
             self.add_context = add_context
 
@@ -3406,6 +3461,9 @@ class ClaudeModel(BaseModel):
 
         if not self.api_key:
             logger.error("error: invoking Anthropic Claude Generative model with no api_key")
+
+        #   call to preview hook (not implemented by default)
+        self.preview()
 
         try:
             import anthropic
@@ -3490,7 +3548,7 @@ class GoogleGenModel(BaseModel):
 
     def __init__(self, model_name=None, api_key=None, context_window=8192, max_output=100, temperature=0.7, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "GoogleGenModel"
         self.model_category = "generative"
@@ -3523,6 +3581,7 @@ class GoogleGenModel(BaseModel):
         self.target_requested_output_tokens = max_output
         self.add_prompt_engineering = False
         self.add_context = ""
+        self.prompt = ""
 
         self.post_init()
 
@@ -3587,6 +3646,8 @@ class GoogleGenModel(BaseModel):
         "add_prompt_engineering" parameter.  Optional inference_dict for temperature and max_tokens configuration,
         and optional passing of api_key at time of inference. """
 
+        self.prompt = prompt
+
         if add_context:
             self.add_context = add_context
 
@@ -3600,6 +3661,9 @@ class GoogleGenModel(BaseModel):
 
             if "max_tokens" in inference_dict:
                 self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        #   call to preview hook (not implemented by default)
+        self.preview()
 
         try:
             from vertexai.preview.language_models import TextGenerationModel, TextEmbeddingModel
@@ -3697,7 +3761,7 @@ class JurassicModel(BaseModel):
 
     def __init__(self, model_name=None, api_key=None, context_window=2048, max_output=100,temperature=0.7, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "JurassicModel"
         self.model_category = "generative"
@@ -3729,6 +3793,7 @@ class JurassicModel(BaseModel):
         self.target_requested_output_tokens = max_output
         self.add_prompt_engineering = False
         self.add_context = ""
+        self.prompt = ""
 
         # 'j2-jumbo-instruct', 'j2-grande-instruct','j2-jumbo','j2-grande', 'j2-large'
 
@@ -3798,6 +3863,8 @@ class JurassicModel(BaseModel):
         "add_prompt_engineering" parameter.  Optional inference_dict for temperature and max_tokens configuration,
         and optional passing of api_key at time of inference. """
 
+        self.prompt = prompt
+
         if add_context:
             self.add_context = add_context
 
@@ -3820,6 +3887,9 @@ class JurassicModel(BaseModel):
 
         if not self.api_key:
             logger.error("error: invoking AI21 Jurassic model with no api_key")
+
+        #   call to preview hook (not implemented by default)
+        self.preview()
 
         try:
             import ai21
@@ -3893,7 +3963,7 @@ class CohereGenModel(BaseModel):
 
     def __init__(self, model_name=None, api_key=None, context_window=2048, max_output=100,temperature=0.7, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "CohereGenModel"
         self.model_category = "generative"
@@ -3926,6 +3996,7 @@ class CohereGenModel(BaseModel):
         self.target_requested_output_tokens = max_output
         self.add_prompt_engineering = False
         self.add_context = ""
+        self.prompt = ""
 
         # cohere generative models - 'command-medium-nightly',
         # 'command-xlarge-nightly','xlarge','medium', "summarize-xlarge", "summarize-medium"
@@ -3998,6 +4069,8 @@ class CohereGenModel(BaseModel):
         "add_prompt_engineering" parameter.  Optional inference_dict for temperature and max_tokens configuration,
         and optional passing of api_key at time of inference. """
 
+        self.prompt = prompt
+
         if add_context:
             self.add_context = add_context
 
@@ -4011,6 +4084,9 @@ class CohereGenModel(BaseModel):
 
             if "max_tokens" in inference_dict:
                 self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        #   call to preview hook (not implemented by default)
+        self.preview()
 
         #tokens_in_prompt = self.token_counter(prompt)
         #tokens_in_context = self.token_counter(self.add_context)
@@ -4097,7 +4173,7 @@ class LLMWareModel(BaseModel):
 
     def __init__(self, model_name=None, api_key=None, context_window=2048, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "LLMWareModel"
         self.model_category = "generative"
@@ -4127,6 +4203,7 @@ class LLMWareModel(BaseModel):
         self.target_requested_output_tokens = 200
         self.add_prompt_engineering = True
         self.add_context = ""
+        self.prompt = ""
 
         self.post_init()
 
@@ -4176,7 +4253,7 @@ class LLMWareModel(BaseModel):
 
         return prompt_engineered
 
-    def load_model_for_inference(self, model_name=None, model_card=None,fp=None):
+    def load_model_for_inference(self, model_name=None, model_card=None,fp=None, **kwargs):
 
         #   validate before loading
         self.validate()
@@ -4200,6 +4277,8 @@ class LLMWareModel(BaseModel):
         "add_prompt_engineering" parameter.  Optional inference_dict for temperature and max_tokens configuration,
         and optional passing of api_key at time of inference. """
 
+        self.prompt = prompt
+
         if add_context:
             self.add_context = add_context
 
@@ -4213,6 +4292,9 @@ class LLMWareModel(BaseModel):
 
             if "max_tokens" in inference_dict:
                 self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        #   call to preview hook (not implemented by default)
+        self.preview()
 
         prompt_enriched = self.prompt_engineer(prompt, self.add_context, inference_dict=inference_dict)
 
@@ -4279,7 +4361,7 @@ class OpenAIEmbeddingModel(BaseModel):
 
     def __init__(self, model_name=None, api_key=None, embedding_dims=None, model_card=None, max_len=None, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "OpenAIEmbeddingModel"
         self.model_category = "embedding"
@@ -4312,6 +4394,8 @@ class OpenAIEmbeddingModel(BaseModel):
             if max_len < self.max_total_len:
                 self.max_len = max_len
 
+        self.text_sample = None
+
         self.post_init()
 
     def set_api_key(self, api_key,env_var="USER_MANAGED_OPENAI_API_KEY"):
@@ -4341,6 +4425,11 @@ class OpenAIEmbeddingModel(BaseModel):
         return len(self.tokenizer.encode(text_sample).ids)
 
     def embedding(self, text_sample, api_key=None):
+
+        self.text_sample = text_sample
+
+        #   call to preview (not implemented by default)
+        self.preview()
 
         if api_key:
             self.api_key = api_key
@@ -4433,7 +4522,7 @@ class CohereEmbeddingModel(BaseModel):
 
     def __init__(self, model_name = None, api_key=None, embedding_dims=None, model_card=None,max_len=None, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "CohereEmbeddingModel"
         self.model_category = "embedding"
@@ -4454,6 +4543,8 @@ class CohereEmbeddingModel(BaseModel):
         if max_len:
             if max_len < self.max_total_len:
                 self.max_len = max_len
+
+        self.text_sample = None
 
         self.post_init()
 
@@ -4483,6 +4574,11 @@ class CohereEmbeddingModel(BaseModel):
         return len(toks)
 
     def embedding(self,text_sample):
+
+        self.text_sample = text_sample
+
+        #   call to preview (not implemented by default)
+        self.preview()
 
         if not self.api_key:
             self.api_key = self._get_api_key()
@@ -4532,7 +4628,7 @@ class GoogleEmbeddingModel(BaseModel):
 
     def __init__(self, model_name=None, api_key=None, embedding_dims=None, model_card=None, max_len=None, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "GoogleEmbeddingModel"
         self.model_category = "embedding"
@@ -4556,6 +4652,8 @@ class GoogleEmbeddingModel(BaseModel):
         if max_len:
             if max_len < self.max_total_len:
                 self.max_len = max_len
+
+        self.text_sample = None
 
         self.post_init()
 
@@ -4586,6 +4684,11 @@ class GoogleEmbeddingModel(BaseModel):
     def embedding(self,text_sample, api_key= None):
 
         """ Executes Embedding inference on Model. """
+
+        self.text_sample = text_sample
+
+        #   call to preview (not implemented by default)
+        self.preview()
 
         if api_key:
             self.api_key = api_key
@@ -4671,7 +4774,7 @@ class HFReRankerModel(BaseModel):
     def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None, model_card=None,
                  embedding_dims=None, trust_remote_code=False, use_gpu_if_available=True, max_len=None, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "HFReRankerModel"
         self.model_category = "reranker"
@@ -4783,6 +4886,9 @@ class HFReRankerModel(BaseModel):
             if max_len < self.context_window:
                 self.max_len = max_len
 
+        self.query = ""
+        self.text_results = None
+
         self.post_init()
 
     def set_api_key(self, api_key, env_var="USER_MANAGED_HF_API_KEY"):
@@ -4814,6 +4920,12 @@ class HFReRankerModel(BaseModel):
     def inference (self, query, text_results, api_key=None, top_n=20, relevance_threshold=None, min_return=3):
 
         """ Executes reranking inference. """
+
+        self.query = query
+        self.text_results = text_results
+
+        #   call to preview (not implemented by default)
+        self.preview()
 
         documents = []
         for i, chunks in enumerate(text_results):
@@ -4859,7 +4971,7 @@ class HFEmbeddingModel(BaseModel):
     def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None, model_card=None,
                  embedding_dims=None, trust_remote_code=False, use_gpu_if_available=True, max_len=None, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "HFEmbeddingModel"
         self.model_category = "embedding"
@@ -4971,6 +5083,8 @@ class HFEmbeddingModel(BaseModel):
             if max_len < self.context_window:
                 self.max_len = max_len
 
+        self.text_sample = None
+
         self.post_init()
 
     def set_api_key(self, api_key, env_var="USER_MANAGED_HF_API_KEY"):
@@ -5004,6 +5118,11 @@ class HFEmbeddingModel(BaseModel):
     def embedding (self, text_sample, api_key=None):
 
         """ Executes embedding inference. """
+
+        self.text_sample = text_sample
+
+        #   call to preview (not implemented by default)
+        self.preview()
 
         # return embeddings only
         if isinstance(text_sample,list):
@@ -5054,7 +5173,7 @@ class HFGenerativeModel(BaseModel):
                  use_gpu_if_available=True, trust_remote_code=True, sample=True,max_output=100, temperature=0.3,
                  get_logits=False, api_endpoint=None, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "HFGenerativeModel"
         self.model_category = "generative"
@@ -5249,6 +5368,9 @@ class HFGenerativeModel(BaseModel):
 
         self.add_prompt_engineering = False
         self.add_context = ""
+        self.prompt = ""
+        self.context = ""
+        self.tool_type = None
 
         self.api_endpoint = api_endpoint
 
@@ -5343,6 +5465,8 @@ class HFGenerativeModel(BaseModel):
 
         """ Executes generation inference on model. """
 
+        self.prompt = prompt
+
         # first prepare the prompt
 
         if add_context:
@@ -5374,6 +5498,9 @@ class HFGenerativeModel(BaseModel):
 
             if "max_tokens" in inference_dict:
                 self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        #   call to preview (not implemented by default)
+        self.preview()
 
         #   START - route to api endpoint
         if self.api_endpoint:
@@ -5669,6 +5796,9 @@ class HFGenerativeModel(BaseModel):
         """ This is the key inference method for SLIM models - takes a context passage and a key list
         which is packaged in the prompt as the keys for the dictionary output"""
 
+        self.context = context
+        self.function = function
+
         if not self.fc_supported:
             logger.warning("warning: HFGenerativeModel - loaded model does not support function calls.  "
                             "Please either use the standard .inference method with this model, or use a  "
@@ -5690,6 +5820,9 @@ class HFGenerativeModel(BaseModel):
 
         if params:
             self.primary_keys = params
+
+        #   call to preview (not implemented by default)
+        self.preview()
 
         if not self.primary_keys:
             logger.warning("warning: function call - no keys provided - function call may yield unpredictable results")
@@ -5950,6 +6083,12 @@ class HFGenerativeModel(BaseModel):
         """ Called by .inference method when there is an api_endpoint passed in the model constructor. Rather
         than execute the inference locally, it will be sent over API to inference server. """
 
+        self.prompt=prompt
+        self.context=context
+
+        #   preview call before invoking inference over rest api
+        self.preview()
+
         import ast
         import requests
 
@@ -6007,6 +6146,10 @@ class HFGenerativeModel(BaseModel):
         """ Called by .function_call method when there is an api_endpoint passed in the model constructor. Rather
         than execute the inference locally, it will be sent over API to inference server. """
 
+        self.context = context
+        self.tool_type = tool_type
+        self.model_name = model_name
+
         #   send to api agent server
 
         import ast
@@ -6024,6 +6167,9 @@ class HFGenerativeModel(BaseModel):
             mc = ModelCatalog().lookup_model_card(model_name)
             if "primary_keys" in mc:
                 params = mc["primary_keys"]
+
+        #   preview before invoking rest api
+        self.preview()
 
         url = self.api_endpoint + "{}".format("/agent")
         output_raw = requests.post(url, data={"model_name": model_name, "api_key": self.api_key, "tool_type": tool_type,
@@ -6085,7 +6231,7 @@ class GGUFGenerativeModel(BaseModel):
                  context_window=2048, use_gpu_if_available=True, get_logits=False,
                  sample=True,max_output=100, temperature=0.3, api_endpoint=None, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "GGUFGenerativeModel"
         self.model_category = "generative"
@@ -6269,9 +6415,13 @@ class GGUFGenerativeModel(BaseModel):
 
         self.error_message = "\nUnable to identify and load GGUF Generative model."
 
+        self.prompt = ""
+        self.context = ""
+        self.tool_type = None
+
         self.post_init()
 
-    def load_model_for_inference(self, model_repo_path, model_card = None):
+    def load_model_for_inference(self, model_repo_path, model_card = None, **kwargs):
 
         """ Loads and instantiates model along with other required objects. """
 
@@ -6975,6 +7125,8 @@ class GGUFGenerativeModel(BaseModel):
 
         """ Main method for inference generation. """
 
+        self.prompt = prompt
+
         # first prepare the prompt
 
         if add_context:
@@ -7013,6 +7165,9 @@ class GGUFGenerativeModel(BaseModel):
 
             if "max_tokens" in inference_dict:
                 self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        #   preview before initiating inference over api
+        self.preview()
 
         #   START - route to api endpoint
         if self.api_endpoint:
@@ -7064,6 +7219,8 @@ class GGUFGenerativeModel(BaseModel):
                             "model that has 'function_calls' key set to True in its model card.")
             return []
 
+        self.context=context
+
         # start with clean logits_record and output_tokens for each function call
         self.logits_record = []
         self.output_tokens = []
@@ -7083,6 +7240,9 @@ class GGUFGenerativeModel(BaseModel):
 
         if not function:
             function = self.function[0]
+
+        #   preview before initiating api call
+        self.preview()
 
         #   START - route to api endpoint
 
@@ -7171,6 +7331,8 @@ class GGUFGenerativeModel(BaseModel):
 
         # first prepare the prompt
 
+        self.prompt = prompt
+
         if add_context:
             self.add_context = add_context
 
@@ -7207,6 +7369,9 @@ class GGUFGenerativeModel(BaseModel):
 
             if "max_tokens" in inference_dict:
                 self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        #   preview before generation
+        self.preview()
 
         # prompt = prompt
 
@@ -7272,15 +7437,21 @@ class GGUFGenerativeModel(BaseModel):
 
         text_str = text.decode("utf-8", errors="ignore")
 
+        #   turned off
+        #   self.register()
+
         return text_str
 
     def function_call_over_api_endpoint(self, context="", tool_type="", model_name="", params="", prompt="",
-                             function=None, endpoint_base=None, api_key=None, get_logits=False):
+                                        function=None, endpoint_base=None, api_key=None, get_logits=False):
 
         """ Called by .function_call method when there is an api_endpoint passed in the model constructor. Rather
         than execute the inference locally, it will be sent over API to inference server. """
 
         #   send to api agent server
+
+        self.context=context
+        self.tool_type=tool_type
 
         import ast
         import requests
@@ -7297,6 +7468,9 @@ class GGUFGenerativeModel(BaseModel):
             mc = ModelCatalog().lookup_model_card(model_name)
             if "primary_keys" in mc:
                 params = mc["primary_keys"]
+
+        #   preview before invoking api
+        self.preview()
 
         url = self.api_endpoint + "{}".format("/agent")
         output_raw = requests.post(url, data={"model_name": model_name, "api_key": self.api_key, "tool_type": tool_type,
@@ -7361,6 +7535,12 @@ class GGUFGenerativeModel(BaseModel):
         """ Called by .inference method when there is an api_endpoint passed in the model constructor. Rather
         than execute the inference locally, it will be sent over API to inference server. """
 
+        self.prompt = prompt
+        self.context = context
+
+        #   preview before invoking inference over rest api
+        self.preview()
+
         import ast
         import requests
 
@@ -7419,7 +7599,7 @@ class WhisperCPPModel(BaseModel):
 
     def __init__(self, model_name=None, model_card=None, use_gpu_if_available=True, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_class = "WhisperCPPModel"
         self.model_category = "generative"
@@ -7480,7 +7660,7 @@ class WhisperCPPModel(BaseModel):
 
         self.post_init()
 
-    def load_model_for_inference(self, model_repo_path, model_card = None):
+    def load_model_for_inference(self, model_repo_path, model_card = None, **kwargs):
 
         """ Loads and instantiates model along with other required objects. """
 
@@ -7658,12 +7838,17 @@ class WhisperCPPModel(BaseModel):
 
         """
 
+        self.prompt=prompt
+
         if inference_dict:
             if "translate" in inference_dict:
                 self.translate=inference_dict["translate"]
 
             if "remove_segment_markers" in inference_dict:
                 self.remove_segment_markers = inference_dict["remove_segment_markers"]
+
+        #   preview before starting inference
+        self.preview()
 
         #   note: inference on wav file requires librosa library
         try:
@@ -7908,7 +8093,7 @@ class LLMWareSemanticModel(BaseModel):
     def __init__(self, model_name=None, model=None, embedding_dims=None, max_len=150,
                  model_card=None, api_key=None, **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self.model_name = model_name
         self.error_message = "\nUnable to process LLMWare Semantic Model. Please try again later"
@@ -7935,6 +8120,7 @@ class LLMWareSemanticModel(BaseModel):
         if model_name == 'mini-lm-sbert':
             self.model_size = "mini"
         self.transformer_base_model = None
+        self.sentence = None
 
         if model:
             logger.info("update: SemanticEmbedding model received model - will attempt to load as "
@@ -7989,7 +8175,7 @@ class LLMWareSemanticModel(BaseModel):
                     else:
                         self.embedding_dims = self.model[1].word_embedding_dimension
 
-    def load_model_for_inference(self,fp=None, model_card=None):
+    def load_model_for_inference(self,fp=None, model_card=None, **kwargs):
 
         """ This path has been deprecated starting with llmware 0.2.12. """
 
@@ -7999,6 +8185,11 @@ class LLMWareSemanticModel(BaseModel):
                                        "should be pulled from a sentence transformer standard repository.")
 
     def embedding(self, sentence):
+
+        self.sentence = sentence
+
+        #   preview before creating embedding
+        self.preview()
 
         # embedding = self.model.encode(sentence, convert_to_tensor=True)
         embedding = self.model.encode(sentence)
