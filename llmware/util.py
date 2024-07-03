@@ -982,64 +982,179 @@ class Utilities:
         return output_dict
 
     @staticmethod
-    def md5checksum(fp, fn):
+    def file_checksum(fp, fn, hash_type="sha256"):
 
-        """ Creates MD5 Checksum against a selected file. """
-        md5_output = None
+        """ Creates File Checksum against a selected file with options to configure the hash_type, which must be
+        a hash supported by hashlib.  If valid type not found, then automatic triage to 'sha256'.  """
+
+        hash_output = None
 
         try:
             import hashlib
 
-            md5 = hashlib.md5()
+            if hasattr(hashlib, hash_type):
+                hash_builder = getattr(hashlib, hash_type)()
+            else:
+                logging.warning(f"Utilities - file_checksum - selected hash type - {hash_type} - not supported -"
+                                f"defaulting to sha256")
+                hash_builder = hashlib.sha256()
 
             # handle content in binary form
             f = open(os.path.join(fp, fn), "rb")
 
             while chunk := f.read(4096):
-                md5.update(chunk)
+                hash_builder.update(chunk)
 
-            md5_output = md5.hexdigest()
+            hash_output = hash_builder.hexdigest()
 
         except:
-            logger.debug("Utilities - md5checksum - could not create md5 hex")
+            logger.warning(f"Utilities - file_checksum - could not create file hash hex for: \n"
+                           f"-- file: {fn}\n"
+                           f"-- folder: {fp}\n"
+                           f"-- hash type: {hash_type}")
 
-        return md5_output
+        return hash_output
 
     @staticmethod
-    def create_md5_stamp (fp, save=True, md5_fn="md5_record.json"):
+    def create_hash_stamp (fp, save=True, hash_fn="hash_record", hash_type="sha256", **kwargs):
 
-        """ Creates MD5 Stamp for all files in a folder. """
+        """ Creates Hash Stamp for all files in a folder.
+
+        -- "hash_type" is 'sha256' by default, but can be configured to any hash type supported by hashlib
+
+        -- If save is set to True (default), then writes as a JSON file into the folder using a filename that is a
+        concatenation of hash_fn and hash_type
+
+        -- Will attempt to not over-write an existing hash record.  If a matching filename is found,
+        then a fast triage will be applied to append a long random number to the file name -
+        note: it is unlikely but possible for a name space collision.  Will enhance config and safety
+        options in future releases.
+
+        """
 
         import random
-        md5_record = {}
+        hash_record = {}
+
+        #   save as .json file and add hash_type by default at the end of the name
+        hash_full_name = hash_fn + "_" + hash_type + ".json"
 
         fp_files = os.listdir(fp)
 
         for file in fp_files:
-            if file == md5_fn:
-                logging.warning(f"Utilities - create_md5_stamp - found existing md5_record")
-                r = random.randint(0,10000000)
-                rec_core = str(md5_fn).split(".")[0]
-                md5_record = rec_core + "_" + str(r) + ".json"
+            if file == hash_full_name:
 
-            md5 = Utilities().md5checksum(fp, file)
-            md5_record.update({file: md5})
+                if save:
+                    r = random.randint(0,10000000)
+                    rec_core = str(hash_full_name).split(".")[0]
+                    hash_full_name = rec_core + "_" + str(r) + ".json"
+                    logging.warning(f"Utilities - create_hash_stamp - found existing hash_record with same name - "
+                                    f"attempting to create new hash record file with name - {hash_full_name}.")
+
+            hash_value = Utilities().file_checksum(fp, file, hash_type=hash_type)
+            hash_record.update({file: hash_value})
 
         time_stamp = Utilities().get_current_time_now()
 
-        md5_record.update({"time_stamp": time_stamp})
+        hash_record.update({"time_stamp": time_stamp})
+
+        #   option to add **kwargs to the stamp, e.g., user and related info
+        full_record = {**hash_record, **kwargs}
 
         if save:
 
-            logger.debug(f"Utilities - create_md5_stamp - config output: {md5_record}")
+            logger.debug(f"Utilities - create_hash_stamp - config output: {full_record}")
 
             import json
-            f = open(os.path.join(fp, md5_fn), "w")
-            j = json.dumps(md5_record, indent=1)
+            f = open(os.path.join(fp, hash_full_name), "w")
+            j = json.dumps(full_record, indent=1)
             f.write(j)
             f.close()
 
-        return md5_record
+        return full_record
+
+    @staticmethod
+    def compare_hash (fp, hash_fn="hash_record", hash_type="sha256", selected_files=None, ignore_pattern="hash"):
+
+        """ Compares two hashes from a folder path (fp)  -
+
+            1.  An existing hash saved in the hash_fn file passed to the method.
+            2.  A new hash dynamically created against each file in the folder path.
+
+        By default, the method will ignore files that start with "hash" but this can be disabled by setting
+        ignore_pattern to None or ""
+
+        If only interested in hashes against a subset of the files, then an optional list of selected files
+        can be passed in the selected_files parameter - and only files matching those names will be
+        compared for hash consistency.
+
+        """
+
+        import json
+        import os
+
+        hash_full_name = hash_fn + "_" + hash_type + ".json"
+
+        hash_file = json.load(open(os.path.join(fp, hash_full_name), "r"))
+        new_hash_record = Utilities().create_hash_stamp(fp, hash_fn=hash_fn, hash_type=hash_type, save=False)
+
+        #   apply any pruning of certain files
+
+        if selected_files:
+
+            #   only compare files in the selected_files list
+            keys = list(new_hash_record.keys())
+
+            for key in keys:
+                if key not in selected_files:
+                    del(new_hash_record[key])
+
+        else:
+
+            #   generally review all files with a few exclusions by default
+            keys = list(new_hash_record.keys())
+
+            #   don't compare the hash of the time_stamp entry, which will be different
+            if "time_stamp" in new_hash_record:
+                del(new_hash_record["time_stamp"])
+
+            #   ignore files starting with 'hash' by default
+            if ignore_pattern:
+
+                for k in keys:
+                    if k.startswith(ignore_pattern):
+                        logger.debug(f"Utilities - compare_hash - ignoring - {k}")
+                        del(new_hash_record[k])
+
+        hashed_item_count = len(new_hash_record.items())
+
+        matched_count = 0
+        confirmed = {}
+        extra_keys = []
+        values_changed = []
+        confirmed_files = []
+
+        for key, value in new_hash_record.items():
+            matched = False
+            if key in hash_file:
+                if value == hash_file[key]:
+                    matched = True
+                    matched_count += 1
+                    confirmed.update({key:value})
+                    confirmed_files.append(key)
+                else:
+                    logger.warning(f"Utilities - compare_hash - value not matching for key - {key}")
+                    values_changed.append(key)
+            else:
+                logger.warning(f"Utilities - compare_hash - extra key - {key} - in hash_file not found in original hash")
+                extra_keys.append(key)
+
+        output_dict = {"hashed_file_count": hashed_item_count,
+                       "validated_file_count": matched_count,
+                       "extra_keys": extra_keys,
+                       "changed_files": values_changed,
+                       "validated_files": confirmed_files}
+
+        return output_dict
 
 
 class CorpTokenizer:
