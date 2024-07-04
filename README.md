@@ -817,9 +817,13 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
-**Saturday, June 29 - v0.3.2-WIP**  
+**Thursday, July 4 - v03.3-WIP**  
+- Improvements in model configuration options  
+- Various small fixes  
+- Changes being merged into main branch and will be released in pypi by the weekend  
+  
+**Saturday, June 29 - v0.3.2**  
 - Update to PDF and Office parsers - improvements to configurations in logging and text chunking options  
-- Changes merged into main branch - will be released in pypi in the next 48 hours  
   
 **Saturday, June 22 - v0.3.1**  
 - Added module 3 to Fast Start example series [examples 7-9 on Agents & Function Calls](https://github.com/llmware-ai/llmware/tree/main/fast_start)  
