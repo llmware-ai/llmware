@@ -8732,6 +8732,23 @@ class PyTorchLoader:
             except ImportError:
                 raise DependencyNotInstalledException("transformers")
 
+            # insert dynamic pytorch load here
+            global GLOBAL_TORCH_IMPORT
+            if not GLOBAL_TORCH_IMPORT:
+
+                logger.debug("Pytorch loader - local dynamic load of torch here")
+                if util.find_spec("torch"):
+
+                    try:
+                        global torch
+                        torch = importlib.import_module("torch")
+                        GLOBAL_TORCH_IMPORT = True
+                    except:
+                        raise LLMWareException(message="Exception: could not load torch module.")
+
+                else:
+                    raise LLMWareException(message="Exception: need to import torch to use this class.")
+
             if self.api_key:
 
                 if torch.cuda.is_available():
@@ -8774,6 +8791,23 @@ class PyTorchLoader:
             except ImportError:
                 raise DependencyNotInstalledException("transformers")
 
+            # insert dynamic pytorch load here
+            global GLOBAL_TORCH_IMPORT
+            if not GLOBAL_TORCH_IMPORT:
+
+                logger.debug("Pytorch loader - local dynamic load of torch here")
+                if util.find_spec("torch"):
+
+                    try:
+                        global torch
+                        torch = importlib.import_module("torch")
+                        GLOBAL_TORCH_IMPORT = True
+                    except:
+                        raise LLMWareException(message="Exception: could not load torch module.")
+
+                else:
+                    raise LLMWareException(message="Exception: need to import torch to use this class.")
+
             if self.api_key:
 
                 if torch.cuda.is_available():
@@ -8815,6 +8849,23 @@ class PyTorchLoader:
                 from transformers import AutoModelForSequenceClassification
             except ImportError:
                 raise DependencyNotInstalledException("transformers")
+
+            # insert dynamic pytorch load here
+            global GLOBAL_TORCH_IMPORT
+            if not GLOBAL_TORCH_IMPORT:
+
+                logger.debug("Pytorch loader - local dynamic load of torch here")
+                if util.find_spec("torch"):
+
+                    try:
+                        global torch
+                        torch = importlib.import_module("torch")
+                        GLOBAL_TORCH_IMPORT = True
+                    except:
+                        raise LLMWareException(message="Exception: could not load torch module.")
+
+                else:
+                    raise LLMWareException(message="Exception: need to import torch to use this class.")
 
             if self.api_key:
 
