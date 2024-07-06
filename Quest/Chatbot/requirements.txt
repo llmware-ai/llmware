@@ -1,4 +1,0 @@
-python
-llmware
-tkinter
-customtkinter
