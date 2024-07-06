@@ -1,4 +1,0 @@
-llmware
-azure-cognitiveservices-speech
-streamlit
-python-dotenv
