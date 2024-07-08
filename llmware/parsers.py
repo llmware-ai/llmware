@@ -3189,9 +3189,11 @@ class Parser:
                                               account_name=self.account_name).get_distinct_list("file_source")
 
         for i, file in enumerate(doc_fn_raw_list):
+
             if file.split(os.sep)[-1] in file_list:
                 # excludes zip files that have been unzipped into core files in the parsing proces
                 found_list.append(file.split(os.sep)[-1])
+
             # if found_list is equal length of file_list we don't need to look any further
             if len(found_list) == len(file_list):
                 break
@@ -3441,7 +3443,7 @@ class Parser:
         else:
             save_images = c_int(0)  # FALSE - no images
 
-        logger.info("Parser - parse_one_office - start parsing of office document...")
+        logger.debug("Parser - parse_one_office - start parsing of office document...")
 
         #   placeholder for now - not used
         unique_doc_num_c = c_int(34)
@@ -3451,7 +3453,12 @@ class Parser:
         else:
             input_debug_mode = c_int(0)
 
-        logger_level = c_int(self.logger_level)
+        if self.logger_level <= 10:
+            logger_level = c_int(self.logger_level)
+        else:
+            #   unless in debug mode, suppress informational updates from parsers
+            logger_level = c_int(40)
+
         dlf_fp = os.path.join(self.parser_folder, self.parser_log_name)
         debug_log_file = create_string_buffer(dlf_fp.encode('ascii', 'ignore'))
 
@@ -3730,12 +3737,16 @@ class Parser:
         else:
             input_debug_mode = c_int(0)
 
-        logger_level = c_int(self.logger_level)
+        if self.logger_level <= 10:
+            logger_level = c_int(self.logger_level)
+        else:
+            #   unless in debug mode, then suppress information updates from parsers
+            logger_level = c_int(40)
 
         dlf_fp = os.path.join(self.parser_folder, self.parser_log_name)
         debug_log_file = create_string_buffer(dlf_fp.encode('ascii', 'ignore'))
 
-        logger.info("Parser - parse_one_pdf - starting pdf_parser ...")
+        logger.debug("Parser - parse_one_pdf - starting pdf_parser ...")
 
         #   main call into pdf parser
 
@@ -3745,7 +3756,7 @@ class Parser:
                                     max_chunk_size, encoding_style, get_header_text, table_grid,
                                     save_images, logger_level, debug_log_file, input_debug_mode)
 
-        logger.info(f"Parser - parse_one_pdf - completed pdf_parser - time taken: {time.time()-t0}")
+        logger.debug(f"Parser - parse_one_pdf - completed pdf_parser - time taken: {time.time()-t0}")
 
         output = self.convert_parsing_txt_file_to_json(file_path=self.parser_tmp_folder,fn=write_to_filename)
 
