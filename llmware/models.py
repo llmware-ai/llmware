@@ -5738,8 +5738,18 @@ class HFGenerativeModel(BaseModel):
         if not params:
             params = self.primary_keys
 
+        #   add safety check in looking for default self.function pulled from model card
         if not function:
-            function = self.function[0]
+            if self.function:
+                if isinstance(self.function,list):
+                    if len(self.function) > 0:
+                        function = self.function[0]
+                else:
+                    function = self.function
+
+        #   if not successful identifying a function, then choose 'classify' by default
+        if not function:
+            function = "classify"
 
         # prepare SLIM prompt
         class_str = ""
@@ -5796,7 +5806,10 @@ class HFGenerativeModel(BaseModel):
         which is packaged in the prompt as the keys for the dictionary output"""
 
         self.context = context
-        self.function = function
+
+        #   only assign self.function if a function has been passed in the call
+        if function:
+            self.function = function
 
         if not self.fc_supported:
             logger.warning("warning: HFGenerativeModel - loaded model does not support function calls.  "
@@ -7238,7 +7251,16 @@ class GGUFGenerativeModel(BaseModel):
             params = self.primary_keys
 
         if not function:
-            function = self.function[0]
+            #   pull from model card
+            if self.function:
+                if isinstance(self.function,list):
+                    if len(self.function) > 0:
+                        function = self.function[0]
+                else:
+                    function = self.function
+
+            if not function:
+                function = "classify"
 
         #   preview before initiating api call
         self.preview()
