@@ -171,64 +171,164 @@ class YFinance:
             raise LLMWareException(message="Exception: YFinance library not installed - "
                                            "fix with `pip3 install yfinance`")
 
+        self.ticker = None
+
         if ticker:
-            self.company_info = yfinance.Ticker(ticker)
+
+            self.ticker = self._prep_ticker(ticker)
+
+            try:
+                self.company_info = yfinance.Ticker(self.ticker)
+            except:
+                logger.warning(f"YFinance - attempted to retrieve company info based on ticker lookup with "
+                               f"ticker - {self.ticker} - and did not succeed.  Please check the ticker.")
+
         else:
             self.company_info = None
 
-    def ticker(self, company_ticker):
+    def _prep_ticker(self, ticker):
+
+        """ Yfinance API is particular about the ticker format, so a little prep handling to
+        maximize likelihood of positive response. """
+
+        #   if ticker includes exchange (often used in formal formats of exchange), then strip
+        ticker_core = ticker.split(":")[-1]
+
+        #   check that all characters are alpha
+        ticker_remediated = ""
+        for letters in ticker_core:
+            if 97 <= ord(letters) <= 122:
+                cap_letter = chr(ord(letters)-32)
+                ticker_remediated += cap_letter
+            elif 65 <= ord(letters) <= 90:
+                ticker_remediated += letters
+            elif 48 <= ord(letters) <= 57:
+                ticker_remediated += letters
+            else:
+                #   skip and do not include
+                logging.warning(f"YFinance - prep ticker - found unexpected letter in ticker - removing - {letters}")
+
+        #   TODO: add more remediation steps
+
+        return ticker_core
+
+    def ticker(self, company_ticker, **kwargs):
+
+        """ Retrieves company information based on the company_ticker. """
+
+        self.ticker = self._prep_ticker(company_ticker)
 
         try:
             import yfinance
         except ImportError:
             raise LLMWareException(message="Exception: need to `pip install yfinance` library.")
 
-        company_info = yfinance.Ticker(company_ticker)
+        try:
+            company_info = yfinance.Ticker(self.ticker)
+        except:
+            company_info = {}
+            logger.warning(f"YFinance - ticker - not successful looking up company information using the "
+                           f"company ticker - {self.ticker}")
+
         return company_info
 
-    def get_company_summary(self, ticker=None):
+    def get_company_summary(self, ticker=None, **kwargs):
+
+        """ Retrieves company summary based on the ticker. """
 
         try:
             import yfinance
         except ImportError:
             raise LLMWareException(message="Exception: need to `pip install yfinance` library.")
 
+        self.ticker = self._prep_ticker(ticker)
+
         output_info = {}
-        company_info = yfinance.Ticker(ticker).info
+
+        try:
+            company_info = yfinance.Ticker(self.ticker).info
+        except:
+            company_info = {}
+            logger.warning(f"YFinance - ticker - not successful looking up company summary using the "
+                           f"ticker - {ticker}")
+
         for targets in self.company_summary_keys:
+            found_key = False
             for keys, values in company_info.items():
                 if targets == keys:
                     output_info.update({targets: values})
+                    found_key = True
+            if not found_key:
+                output_info.update({targets: "NA"})
+                logger.warning(f"YFinance - get_company_summary - could not find {targets} in web service response.")
+
         return output_info
 
-    def get_financial_summary(self, ticker=None):
+    def get_financial_summary(self, ticker=None, **kwargs):
+
+        """ Retrieves financial summary based on the ticker. """
 
         try:
             import yfinance
         except ImportError:
             raise LLMWareException(message="Exception: need to `pip install yfinance` library.")
 
+        if ticker:
+            self.ticker = self._prep_ticker(ticker)
+
+        try:
+            company_info = yfinance.Ticker(self.ticker).info
+        except:
+            company_info = {}
+            logger.warning(f"YFinance - ticker - not successful looking up company summary using the "
+                           f"ticker - {self.ticker}")
+
         output_info = {}
-        company_info = yfinance.Ticker(ticker).info
         for targets in self.financial_summary_keys:
+            found_key = False
             for keys, values in company_info.items():
                 if targets == keys:
                     output_info.update({targets: values})
+                    found_key = True
+            if not found_key:
+                output_info.update({targets:"NA"})
+                logger.warning(f"YFinance - get_financial_summary - could not find {targets} in web service response.")
+
         return output_info
 
-    def get_stock_summary(self, ticker=None):
+    def get_stock_summary(self, ticker=None, **kwargs):
+
+        """ Retrieves the stock summary based on ticker. """
 
         try:
             import yfinance
         except ImportError:
             raise LLMWareException(message="Exception: need to `pip install yfinance` library.")
 
+        if ticker:
+            if isinstance(ticker, dict):
+                ticker = ticker["ticker"]
+
+            self.ticker = self._prep_ticker(ticker)
+
         output_info = {}
-        company_info = yfinance.Ticker(ticker).info
+        try:
+            company_info = yfinance.Ticker(self.ticker).info
+        except:
+            company_info = {}
+            logger.warning(f"YFinance - ticker - not successful looking up company summary using the "
+                           f"ticker - {self.ticker}")
+
         for targets in self.stock_summary_keys:
+            key_found = False
             for keys,values in company_info.items():
                 if targets == keys:
                     output_info.update({targets: values})
+                    key_found = True
+            if not key_found:
+                output_info.update({targets:"NA"})
+                logger.warning(f"YFinance - get_stock_summary - could not find {targets} in web service response.")
+
         return output_info
 
 
