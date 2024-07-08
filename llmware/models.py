@@ -93,7 +93,7 @@ class _ModelRegistry:
 
     llm_fx_tools = ["ner", "sentiment", "topics", "ratings", "emotions", "nli",
                     "intent", "sql", "answer", "category", "tags", "summary", "xsum", "extract",
-                    "boolean", "sa-ner","tags-3b", "q_gen", "qa_gen", "ranker"]
+                    "boolean", "sa-ner","tags-3b", "q_gen", "qa_gen"]
 
     llm_fx_tools_map = {"ner": "slim-ner-tool",
                         "sentiment": "slim-sentiment-tool",
@@ -113,8 +113,7 @@ class _ModelRegistry:
                         "sa-ner": "slim-sa-ner-tool",
                         "tags-3b": "slim-tags-3b-tool",
                         "q_gen": "slim-q-gen-tiny-tool",
-                        "qa_gen": "slim-qa-gen-tiny-tool",
-                        "ranker": "jina-reranker-turbo"
+                        "qa_gen": "slim-qa-gen-tiny-tool"
                         }
 
     @classmethod

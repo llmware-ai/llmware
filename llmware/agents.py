@@ -121,6 +121,11 @@ class LLMfx:
         self.api_key = api_key
         self.api_exec = False
 
+        #   check for llmware path & create if not already set up, e.g., "first time use"
+        if not os.path.exists(LLMWareConfig.get_llmware_path()):
+            LLMWareConfig.setup_llmware_workspace()
+            logger.info("Agent - Setting up LLMWare Workspace.")
+
     def register_api_endpoint(self, api_endpoint = None, api_key=None, endpoint_on=True):
 
         self.api_endpoint = api_endpoint
@@ -1332,6 +1337,11 @@ class SQLTables:
     def __init__(self, db=None, db_name=None, experimental=True):
 
         self.db = "sqlite"
+
+        #   check for llmware path & create if not already set up, e.g., "first time use"
+        if not os.path.exists(LLMWareConfig.get_llmware_path()):
+            LLMWareConfig.setup_llmware_workspace()
+            logger.info("SQLTables - Setting up LLMWare Workspace.")
 
         # default config for "db_experimental" = "sqlite_experimental.db"
         self.db_name = SQLiteConfig().get_config("db_experimental")
