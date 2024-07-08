@@ -30,6 +30,7 @@ from llmware.configs import LLMWareConfig
 import logging
 
 logger = logging.getLogger(__name__)
+logger.setLevel(level=LLMWareConfig().get_logging_level_by_module(__name__))
 
 
 class Setup:
@@ -85,10 +86,12 @@ class Setup:
             os.makedirs(sample_files_path,exist_ok=True)
         else:
             if not over_write:
-                logger.info(f"update: sample_files path already exists - {sample_files_path}")
+                logger.info(f"Setup - sample_files path already exists - {sample_files_path}")
                 return sample_files_path
 
         # pull from sample files bucket
+        logger.info(f"Setup - sample_files - downloading requested sample files from AWS S3 bucket - may take a minute.")
+
         bucket_name = LLMWareConfig().get_config("llmware_sample_files_bucket")
         remote_zip = bucket_name + ".zip"
         local_zip = os.path.join(sample_files_path, bucket_name + ".zip")
@@ -117,7 +120,7 @@ class Setup:
             os.makedirs(sample_files_path, exist_ok=True)
         else:
             if not over_write:
-                logger.info(f"update: voice_sample_files path already exists - {sample_files_path}")
+                logger.info(f"Setup - voice_sample_files path already exists - {sample_files_path}")
                 return sample_files_path
 
         # pull from sample files bucket
@@ -128,7 +131,8 @@ class Setup:
         else:
             folder_name = "voice_all"
 
-        logger.info("update: downloading requested sample files from AW3 S3 bucket")
+        logger.info("Setup - sample_voice_files - downloading requested sample files from AW3 S3 bucket - "
+                    "may take a minute.")
 
         remote_zip = folder_name + ".zip"
         local_zip = os.path.join(sample_files_path, bucket_name + ".zip")
@@ -154,7 +158,7 @@ class Setup:
             os.makedirs(sample_files_path, exist_ok=True)
         else:
             if not over_write:
-                logger.info(f"update: sample_files selected path already exists - {sample_files_path}")
+                logger.info(f"Setup - sample_files selected path already exists - {sample_files_path}")
                 return sample_files_path
 
         # pull from sample files bucket
@@ -162,7 +166,8 @@ class Setup:
 
         folder_name = sample_folder
 
-        logger.info("update: downloading requested sample files from AW3 S3 bucket")
+        logger.info("Setup - selected sample files - downloading requested sample files from AW3 S3 bucket - "
+                    "may take a minute.")
 
         remote_zip = folder_name + ".zip"
         local_zip = os.path.join(sample_files_path, bucket_name + ".zip")
