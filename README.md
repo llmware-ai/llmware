@@ -817,10 +817,10 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
-**Thursday, July 4 - v03.3-WIP**  
-- Improvements in model configuration options  
-- Various small fixes  
-- Changes being merged into main branch and will be released in pypi by the weekend  
+**Monday, July 8 - v03.3-WIP**  
+- Improvements in model configuration options, logging, and various small fixes  
+- Improved Azure OpenAI configs - see [example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using-azure-openai.py)  
+- Changes being merged into main branch and will be released in pypi by EOD    
   
 **Saturday, June 29 - v0.3.2**  
 - Update to PDF and Office parsers - improvements to configurations in logging and text chunking options  
