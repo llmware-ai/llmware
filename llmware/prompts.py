@@ -395,7 +395,7 @@ class Prompt:
 
         return sources
 
-    def add_source_library(self, library_name):
+    def add_source_library(self, library_name, account_name="llmware"):
 
         """ Attach a new source to a prompt object by passing an entire library - note: only recommended if the library
         consists of a very small number of documents. """
@@ -404,10 +404,10 @@ class Prompt:
         #       my_lib.add_documents(fp)
         #       sources = prompter.add_source_library("my_lib")
 
-        lib = Library().load_library(library_name)
+        lib = Library().load_library(library_name, account_name=account_name)
         query_results = Query(lib).get_whole_library()
 
-        sources = Sources(self).package_source(query_results,aggregate_source=True)
+        sources = Sources(self).package_source(query_results, aggregate_source=True)
 
         # enables use of 'prompt_with_sources'
         if not sources["text_batch"]:
