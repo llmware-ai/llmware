@@ -1094,7 +1094,14 @@ class Utilities:
 
         hash_full_name = hash_fn + "_" + hash_type + ".json"
 
-        hash_file = json.load(open(os.path.join(fp, hash_full_name), "r"))
+        try:
+            hash_file = json.load(open(os.path.join(fp, hash_full_name), "r"))
+        except:
+            logger.warning(f"Utilities - compare_hash_record - could not find an existing hash file at: "
+                           f"{os.path.join(fp, hash_full_name)}.  Will create new hash record, but will not "
+                           f"be able to provide a meaningful comparison.")
+            hash_file = {}
+
         new_hash_record = Utilities().create_hash_stamp(fp, hash_fn=hash_fn, hash_type=hash_type, save=False)
 
         #   apply any pruning of certain files
