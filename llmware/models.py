@@ -8463,17 +8463,25 @@ class LocalTokenizer:
         if ".huggingface" in files_created:
             try:
                 shutil.rmtree(os.path.join(local_path,".huggingface"))
-                logger.debug("removed: .huggingface")
+                logger.debug("LocalTokenizers cache: removed .huggingface")
             except:
-                logger.info(f"update: .huggingface folder created in repo and not auto-removed.")
+                logger.info(f"LocalTokenizers cache: .huggingface folder created in repo and not auto-removed.")
                 pass
 
         if ".gitattributes" in files_created:
             try:
                 os.remove(os.path.join(local_path, ".gitattributes"))
-                logger.debug("removed: .gitattributes")
+                logger.debug("LocalTokenizers cache - removed: .gitattributes")
             except:
-                logger.info(f"update: .gitattributes created in repo and not auto-removed.")
+                logger.info(f"LocalTokenizers cache - .gitattributes created in repo and not auto-removed.")
+                pass
+
+        if ".cache" in files_created:
+            try:
+                shutil.rmtree(os.path.join(local_path, ".cache"))
+                logger.debug("LocalTokenizers cache - removed: .cache")
+            except:
+                logger.info(f"LocalTokenizers cache - .cache folder created in repo and not auto-removed.")
                 pass
 
         return True
