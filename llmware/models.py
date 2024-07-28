@@ -79,6 +79,10 @@ class _ModelRegistry:
                      "HFReRankerModel": {"module": "llmware.models", "open_source": True}
                      }
 
+    model_catalog_state_attributes = ["selected_model", "loaded_model_name", "loaded_model_class", "temperature",
+                                      "api_endpoint", "get_logits", "max_output", "sample",
+                                      "force_reload", "account_name", "library_name", "api_key"]
+
     #   model card validation for registering new model - required attributes
     min_required_fields = ["model_name", "model_family", "model_category"]
 
@@ -237,6 +241,7 @@ class _ModelRegistry:
 
         return updated
 
+    @classmethod
     def delete_model(cls, model_name):
 
         """ Removes model from Model Registry list """
@@ -255,6 +260,7 @@ class _ModelRegistry:
 
         return model_found
 
+    @classmethod
     def new_model_registry(cls, model_registry):
 
         #   remove current models
@@ -266,6 +272,15 @@ class _ModelRegistry:
             if cls.validate(model):
                 cls.registered_models.append(model)
 
+        return True
+
+    @classmethod
+    def get_model_catalog_vars(cls):
+        return cls.model_catalog_state_attributes
+
+    @classmethod
+    def add_model_catalog_vars(cls, new_attr):
+        cls.model_catalog_state_attributes.append(new_attr)
         return True
 
 
@@ -313,13 +328,22 @@ def pull_model_from_hf(model_card, local_model_repo_path, api_key=None, **kwargs
                          f".huggingface folder created in repo and not auto-removed.")
             pass
 
+    if ".cache" in files_created:
+        try:
+            shutil.rmtree(os.path.join(local_model_repo_path,".cache"))
+            logger.debug("Models - load_model - pull_snapshot_from_hf - removed: .cache")
+        except:
+            logger.info(f"Models - load_model - pull_snapshot_from_hf - "
+                         f".cache folder created in repo and not auto-removed.")
+            pass
+
     if ".gitattributes" in files_created:
         try:
             os.remove(os.path.join(local_model_repo_path, ".gitattributes"))
             logger.debug("Models - load_model - pull_snapshot_from_hf - removed: .gitattributes")
         except:
             logger.info(f"Models - load_model - pull_snapshot_from_hf - "
-                         f".gitattributes created in repo and not auto-removed.")
+                        f".gitattributes created in repo and not auto-removed.")
             pass
 
     return local_model_repo_path
@@ -366,6 +390,15 @@ def pull_snapshot_from_hf(model_card, local_model_repo_path, api_key=None, **kwa
                         f"repo and not auto-removed.")
             pass
 
+    if ".cache" in files_created:
+        try:
+            shutil.rmtree(os.path.join(local_model_repo_path,".cache"))
+            logger.debug("Models - load_model - pull_snapshot_from_hf - removed: .cache")
+        except:
+            logger.info(f"Models - load_model - pull_snapshot_from_hf - "
+                         f".cache folder created in repo and not auto-removed.")
+            pass
+
     if ".gitattributes" in files_created:
         try:
             os.remove(os.path.join(local_model_repo_path, ".gitattributes"))
@@ -393,6 +426,8 @@ class ModelCatalog:
         self.model_classes = _ModelRegistry().get_model_classes()
         self.global_model_list = _ModelRegistry().get_model_list()
 
+        self.base_attributes = _ModelRegistry().get_model_catalog_vars()
+
         self.account_name = None
         self.library_name= None
 
@@ -405,6 +440,22 @@ class ModelCatalog:
         self.max_output = 100
         self.get_logits = False
         self.force_reload = False
+        self.api_endpoint = None
+
+        self.selected_model = None
+        self.api_key= None
+        self.custom_loader = None
+
+    def to_state_dict(self):
+
+        """ Writes selected model state parameters to dictionary. """
+
+        state_dict = {}
+        for keys in self.base_attributes:
+            if hasattr(self, keys):
+                state_dict.update({keys: getattr(self, keys)})
+
+        return state_dict
 
     def pull_latest_manifest(self):
         """ Not implemented currently """
@@ -768,6 +819,49 @@ class ModelCatalog:
 
         return my_model
 
+    def model_load_optimizer(self):
+
+        """ Enables the ability to intercept the standard model loading process for inserting 'auto optimization'
+        steps, such as the availability of an API instance of the model or a better performing package, e.g., GGUF
+        given the intended deployment environment, or even a preferred implementation/version of the model -
+        without having to change any code.
+
+        Currently, not implemented by default, but can be configured to enable custom steps to enable
+        advanced model routing optimization. """
+
+        router_method = ""
+        router_class = ""
+        exec_method = None
+
+        model_router = LLMWareConfig().get_config("model_router")
+        router_module = model_router["module"]
+        if "class" in model_router:
+            router_class = model_router["class"]
+        if "method" in model_router:
+            router_method = model_router["method"]
+
+        module = importlib.import_module(router_module)
+
+        if router_class:
+            if hasattr(module, router_class):
+                exec_class = getattr(module, router_class)()
+                if hasattr(exec_class, router_method):
+                    exec_method = getattr(exec_class, router_method)
+        else:
+            if hasattr(module, router_method):
+                exec_method = getattr(module, router_method)
+
+        if exec_method:
+            success_dict = exec_method(self.to_state_dict())
+            if success_dict:
+                #   write attributes, if any, to the ModelCatalog state, which will be picked up
+                #   to "re-direct" the model loading parameters
+                if isinstance(success_dict, dict):
+                    for k, v in success_dict.items():
+                        setattr(self,k,v)
+
+        return True
+
     def load_model (self, selected_model, api_key=None, use_gpu=True, sample=True,get_logits=False,
                     max_output=100, temperature=-99, force_reload=False, api_endpoint=None,
                     custom_loader=None, **kwargs):
@@ -781,38 +875,52 @@ class ModelCatalog:
         self.max_output=max_output
         self.get_logits=get_logits
         self.force_reload = force_reload
+        self.api_endpoint = api_endpoint
+
+        self.selected_model = selected_model
+        self.api_key=api_key
+        self.use_gpu = use_gpu
+        self.custom_loader = custom_loader
 
         # note: temperature set by default at -99, which is a dummy value that is over-ridden by the temperature
         # in the model card.   This temperature will only be used if explicitly set by the user at value != -99
 
         self.temperature=temperature
 
+        # assumed to be set to FALSE in default configs - should not be changed until model route optimizer implemented
+        if LLMWareConfig().get_config("apply_model_load_router"):
+            self.model_load_optimizer()
+
         # completes all preparatory steps, and returns 'ready-for-inference' model
+        selected_model = self.selected_model
+
+        logger.debug(f"ModelCatalog - load_model - loading model - {selected_model}")
 
         # step 1- lookup model card from the catalog
-        model_card = self.lookup_model_card(selected_model)
+        model_card = self.lookup_model_card(self.selected_model)
         if not model_card:
             logger.error(f"error: ModelCatalog - unexpected - could not identify model card for "
-                         f"selected model - {selected_model}")
+                         f"selected model - {self.selected_model}")
 
-            raise ModelNotFoundException(selected_model)
+            raise ModelNotFoundException(self.selected_model)
 
         # step 2- instantiate the right model class
-        my_model = self.get_model_by_name(model_card["model_name"], api_key=api_key,api_endpoint=api_endpoint, **kwargs)
+        my_model = self.get_model_by_name(model_card["model_name"], api_key=self.api_key,
+                                          api_endpoint=self.api_endpoint, **kwargs)
 
         if not my_model:
             logger.error(f"error: ModelCatalog - unexpected - could not identify the model - "
-                         f"{selected_model}")
+                         f"{self.selected_model}")
 
-            raise ModelNotFoundException(selected_model)
+            raise ModelNotFoundException(self.selected_model)
 
         # step 3- if physical model, then need to locate, validate, potentially fetch and then load
 
-        if model_card["model_location"] == "llmware_repo" and not api_endpoint:
+        if model_card["model_location"] == "llmware_repo" and not self.api_endpoint:
 
             loading_directions = self.prepare_local_model(model_card,
-                                                          custom_loader=custom_loader,
-                                                          api_key=api_key,
+                                                          custom_loader=self.custom_loader,
+                                                          api_key=self.api_key,
                                                           **kwargs)
 
             my_model = my_model.load_model_for_inference(loading_directions, model_card=model_card, **kwargs)
@@ -904,22 +1012,22 @@ class ModelCatalog:
 
             #   need to fetch the model files
 
-            fetch = self.fetch_resolve(model_card)
+            fetch, fetch_method_name = self.fetch_resolve(model_card)
 
-            if fetch:
-
-                if "fetch" in model_card:
-                    fetch_method = model_card["fetch"]["method"]
-                else:
-                    fetch_method = LLMWareConfig().get_config("model_fetch")["class"]
+            if fetch and fetch_method_name:
 
                 logger.warning(f"ModelCatalog - load_model - fetching model - {model_card['model_name']} - "
-                               f"from remote repository using {fetch_method} - "
+                               f"from remote repository using {fetch_method_name} - "
                                f"this may take a couple of minutes the first time.")
 
                 #   fetch method input:  model_card, save_to_path, api_key (optional)
                 #   fetch method must be able to resolve the repo using info in the model card
                 success = fetch(model_card, model_location, api_key=api_key, **kwargs)
+
+                if isinstance(success, dict):
+                    #   write attributes, if any, to the Model instance state
+                    for k, v in success.items():
+                        setattr(self, k, v)
 
                 return model_location
 
@@ -932,32 +1040,59 @@ class ModelCatalog:
 
         """ Returns the fetch method from model card - if not found, then loads default. """
 
-        # need to fetch the model -> will use fetch method provided in model card
+        #   need to fetch the model -> will use fetch method provided in model card
         fetch_module = None
         fetch_method = None
+        fetch_class = None
         fetch_exec = None
-
-        if "fetch" in model_card:
-            if "module" in model_card["fetch"]:
-                fetch_module = model_card["fetch"]["module"]
-            if "method" in model_card["fetch"]:
-                fetch_method = model_card["fetch"]["method"]
 
         default_fetch = LLMWareConfig().get_config("model_fetch")
 
+        if LLMWareConfig().get_config("apply_default_fetch_override"):
+
+            #   if set to True, will over-ride the model card and use the default fetch mechanism
+
+            fetch_module = default_fetch["module"]
+            if "class" in default_fetch:
+                fetch_class = default_fetch["class"]
+            if "method" in default_fetch:
+                fetch_method = default_fetch["method"]
+
+        else:
+
+            #   primary (default) case - each model card provides configs for how to fetch the model
+
+            if "fetch" in model_card:
+                if "module" in model_card["fetch"]:
+                    fetch_module = model_card["fetch"]["module"]
+                if "method" in model_card["fetch"]:
+                    fetch_method = model_card["fetch"]["method"]
+                if "class" in model_card["fetch"]:
+                    fetch_class = model_card["fetch"]["class"]
+
         if not fetch_module:
-            # default will pull from this module, e.g., "llmware.models"
+
+            #   fallback case - if not provided in model card, then fallback to the default fetch mechanism
+
             fetch_module = default_fetch["module"]
 
-        if not fetch_method:
-            # default fetch = "pull_snapshot_from_hf"
-            fetch_method = default_fetch["class"]
+            if "class" in default_fetch:
+                fetch_class = default_fetch["class"]
+            if "method" in default_fetch:
+                fetch_method = default_fetch["method"]
 
         module = importlib.import_module(fetch_module)
-        if hasattr(module, fetch_method):
-            fetch_exec = getattr(module, fetch_method)
 
-        return fetch_exec
+        if fetch_class:
+            if hasattr(module, fetch_class):
+                class_exec = getattr(module, fetch_class)()
+                if hasattr(class_exec, fetch_method):
+                    fetch_exec = getattr(class_exec,fetch_method)
+        else:
+            if hasattr(module, fetch_method):
+                fetch_exec = getattr(module, fetch_method)
+
+        return fetch_exec, fetch_method
 
     def check_custom_local_repo(self, model_card, api_key=None):
 
@@ -2357,6 +2492,14 @@ def preview(kv_dict):
     return True
 
 
+def route_optimizer(kv_dict):
+
+    """ Not implemented by default. """
+    logger.debug(f"Model Route Optimizer - not implemented - returning True - no action taken")
+
+    return True
+
+
 class BaseModel:
 
     """ BaseModel class subclassed by all models. Should not be instantiated directly.   Provides several
@@ -2389,78 +2532,60 @@ class BaseModel:
 
         return state_dict
 
-    def post_init(self):
+    def method_resolver(self, config_name):
 
-        """ Enables a post_init set of checks upon creation of the model. Currently, not implemented by
-        default, but can be configured to enable custom steps upon instantiation of any model in LLMWare. """
+        """ Resolves method to invoke selected function. """
+
+        process_class = ""
+        process_method = ""
+
+        method_exec = None
 
         state_dict = self.to_state_dict()
-        model_post_init = LLMWareConfig().get_config("model_post_init")
-        post_init_module = model_post_init["module"]
-        post_init_class = model_post_init["class"]
+        process = LLMWareConfig().get_config(config_name)
+        process_module = process["module"]
 
-        module = importlib.import_module(post_init_module)
-        if hasattr(module, post_init_class):
-            post_init_exec = getattr(module, post_init_class)
-            success = post_init_exec(state_dict)
+        if "class" in process:
+            process_class = process["class"]
+
+        if "method" in process:
+            process_method = process["method"]
+
+        module_exec = importlib.import_module(process_module)
+
+        if process_class:
+            if hasattr(module_exec, process_class):
+                class_exec = getattr(module_exec, process_class)()
+
+                if process_method:
+                    if hasattr(class_exec, process_method):
+                        method_exec = getattr(class_exec, process_method)
+        else:
+            if hasattr(module_exec, process_method):
+                method_exec = getattr(module_exec, process_method)
+
+        if method_exec:
+
+            success = method_exec(state_dict)
+
+            if isinstance(success, dict):
+                #   write attributes, if any, to the Model instance state
+                for k, v in success.items():
+                    setattr(self,k,v)
 
         return True
+
+    def post_init(self):
+        return self.method_resolver("model_post_init")
 
     def register(self):
-
-        """ Enables registration at completion of any model invocation - inference, function call, or embedding. """
-
-        self.time_stamp = Utilities().get_current_time_now()
-
-        state_dict = self.to_state_dict()
-        model_register = LLMWareConfig().get_config("model_register")
-        register_module = model_register["module"]
-        register_class = model_register["class"]
-
-        logger.debug(f"register module {register_module} - register class - {register_class}")
-
-        module = importlib.import_module(register_module)
-
-        if hasattr(module, register_class):
-            registration_exec = getattr(module, register_class)
-            success = registration_exec(state_dict)
-
-        return True
+        return self.method_resolver("model_register")
 
     def validate(self):
-
-        """ Enables a validation set of checks upon loading of the model. Currently, not implemented by
-        default, but can be configured to enable custom steps upon instantiation of any model in LLMWare. """
-
-        state_dict = self.to_state_dict()
-        model_validate = LLMWareConfig().get_config("model_validate")
-        validation_module = model_validate["module"]
-        validation_class = model_validate["class"]
-
-        module = importlib.import_module(validation_module)
-        if hasattr(module, validation_class):
-            validation_exec = getattr(module, validation_class)
-            success = validation_exec(state_dict)
-
-        return True
+        return self.method_resolver("model_validate")
 
     def preview(self):
-
-        """ Enables a set of 'pre-view' checks upon receipt of proposed inference to confirm compliance
-        with corporate policy, safety, PII checks or custom security rules. Not implemented by
-        default, but can be configured to enable custom steps upon instantiation of any model in LLMWare. """
-
-        state_dict = self.to_state_dict()
-        model_validate = LLMWareConfig().get_config("model_preview")
-        validation_module = model_validate["module"]
-        validation_class = model_validate["class"]
-
-        module = importlib.import_module(validation_module)
-        if hasattr(module, validation_class):
-            validation_exec = getattr(module, validation_class)
-            success = validation_exec(state_dict)
-
-        return True
+        return self.method_resolver("model_preview")
 
 
 class OpenChatModel(BaseModel):
@@ -2667,7 +2792,7 @@ class OpenChatModel(BaseModel):
             client = OpenAI(api_key=self.api_key,base_url=self.api_base)
 
         # default case - pass the prompt received without change
-        prompt_enriched = prompt
+        prompt_enriched = self.prompt
 
         usage = {}
         time_start = time.time()
@@ -2957,7 +3082,7 @@ class OllamaModel(BaseModel):
         self.preview()
 
         # default case - pass the prompt received without change
-        prompt_enriched = prompt
+        prompt_enriched = self.prompt
 
         usage = {}
 
@@ -3228,7 +3353,7 @@ class OpenAIGenModel(BaseModel):
         self.preview()
 
         # default case - pass the prompt received without change
-        prompt_enriched = prompt
+        prompt_enriched = self.prompt
 
         # new - change with openai v1 api
         try:
@@ -3474,7 +3599,7 @@ class ClaudeModel(BaseModel):
         # prototype prompt sample:   prompt_enriched = "\n\nHuman:" + " please read the following- " +
         # self.add_context + " Based on these materials, " + prompt["prompt"] + "\n\nAssistant:"
 
-        prompt_enriched = self.prompt_engineer(prompt,self.add_context, inference_dict=inference_dict)
+        prompt_enriched = self.prompt_engineer(self.prompt,self.add_context, inference_dict=inference_dict)
 
         # preferred model = "claude-instant-v1"
 
@@ -3681,7 +3806,7 @@ class GoogleGenModel(BaseModel):
         if not self.api_key:
             logger.error("error: invoking Google Generative model with no api_key")
 
-        prompt_enriched = self.prompt_engineer(prompt,self.add_context, inference_dict=inference_dict)
+        prompt_enriched = self.prompt_engineer(self.prompt,self.add_context, inference_dict=inference_dict)
 
         self.target_requested_output_tokens= 2000
         # note: google api is not well-documented
@@ -3895,7 +4020,7 @@ class JurassicModel(BaseModel):
         except ImportError:
             raise DependencyNotInstalledException("ai21")
 
-        prompt_enriched = prompt
+        prompt_enriched = self.prompt
 
         prompt_enriched = self.prompt_engineer(prompt_enriched,self.add_context, inference_dict=inference_dict)
 
@@ -4090,9 +4215,9 @@ class CohereGenModel(BaseModel):
         #tokens_in_prompt = self.token_counter(prompt)
         #tokens_in_context = self.token_counter(self.add_context)
 
-        prompt_enriched = prompt
+        prompt_enriched = self.prompt
 
-        logger.debug("update: in cohere model inference: %s - %s", prompt_enriched, self.add_prompt_engineering)
+        logger.debug(f"Cohere Model - inference - {prompt_enriched} - {self.add_prompt_engineering}")
 
         prompt_enriched = self.prompt_engineer(prompt_enriched,self.add_context, inference_dict=inference_dict)
 
@@ -4103,7 +4228,7 @@ class CohereGenModel(BaseModel):
             self.api_key = self._get_api_key()
 
         if not self.api_key:
-            logger.error("error: invoking Cohere Generative model with no api_key")
+            logger.error(f"Cohere Model - invoking Cohere Generative model with no api_key")
 
         try:
             import cohere
@@ -4119,7 +4244,7 @@ class CohereGenModel(BaseModel):
             if self.model_name in ["summarize-xlarge", "summarize-medium"]:
                 # alternate - summarize api
                 response = co.summarize(text=self.add_context, model=self.model_name, length='short', temperature=0.7,
-                                        format="bullets", extractiveness='medium', additional_command=prompt)
+                                        format="bullets", extractiveness='medium', additional_command=self.prompt)
 
                 text_out = response.summary
 
@@ -4254,8 +4379,8 @@ class LLMWareModel(BaseModel):
 
     def load_model_for_inference(self, model_name=None, model_card=None,fp=None, **kwargs):
 
-        #   validate before loading
-        self.validate()
+        #   validate before loading - turned off
+        # self.validate()
 
         # look up model_name in configs
         if model_name:
@@ -4295,7 +4420,7 @@ class LLMWareModel(BaseModel):
         #   call to preview hook (not implemented by default)
         self.preview()
 
-        prompt_enriched = self.prompt_engineer(prompt, self.add_context, inference_dict=inference_dict)
+        prompt_enriched = self.prompt_engineer(self.prompt, self.add_context, inference_dict=inference_dict)
 
         # safety check on length - set cap with small 'buffer'
         input_tokens = self.token_counter(prompt_enriched)
@@ -4315,7 +4440,7 @@ class LLMWareModel(BaseModel):
             self.api_key = self._get_api_key()
 
         params = {"context": self.add_context,
-                  "question": prompt,
+                  "question": self.prompt,
                   "max_output_tokens": target_len,
                   "api_key": self.api_key}
 
@@ -4440,11 +4565,11 @@ class OpenAIEmbeddingModel(BaseModel):
             logger.error("error: invoking OpenAI Embedding model with no api_key")
 
         # need to prepare for batches
-        if isinstance(text_sample, list):
-            text_prompt = text_sample
+        if isinstance(self.text_sample, list):
+            text_prompt = self.text_sample
             input_len = len(text_sample)
         else:
-            text_prompt = [text_sample]
+            text_prompt = [self.text_sample]
             input_len = 1
 
         try:
@@ -4595,11 +4720,11 @@ class CohereEmbeddingModel(BaseModel):
         # need safety check on length of text_sample
 
         # need to prepare for batches
-        if isinstance(text_sample, list):
-            text_prompt = text_sample
-            input_len = len(text_sample)
+        if isinstance(self.text_sample, list):
+            text_prompt = self.text_sample
+            input_len = len(self.text_sample)
         else:
-            text_prompt = [text_sample]
+            text_prompt = [self.text_sample]
             input_len = 1
 
         # adding model name as parameter passed to the Cohere embedding API
@@ -4608,7 +4733,7 @@ class CohereEmbeddingModel(BaseModel):
         output = []
         for i, emb in enumerate(response.embeddings):
 
-            logger.debug("update: embedding - %s - %s ", i, emb)
+            logger.debug(f"Cohere embedding - {i} - {emb}")
 
             # normalization of the Cohere embedding vector improves performance
             emb_vec = np.array(emb) / np.linalg.norm(emb)
@@ -4718,10 +4843,10 @@ class GoogleEmbeddingModel(BaseModel):
 
             model = TextEmbeddingModel.from_pretrained("textembedding-gecko@001")
 
-            if isinstance(text_sample,list):
-                text_list = text_sample
+            if isinstance(self.text_sample,list):
+                text_list = self.text_sample
             else:
-                text_list = [text_sample]
+                text_list = [self.text_sample]
 
             # need to batch the text list
             # Google appears to set a cap of 5 text samples per embedding inference call
@@ -4930,7 +5055,7 @@ class HFReRankerModel(BaseModel):
         for i, chunks in enumerate(text_results):
             documents.append(chunks['text'])
 
-        sentence_pairs = [[query, doc] for doc in documents]
+        sentence_pairs = [[self.query, doc] for doc in documents]
 
         scores = self.model.compute_score(sentence_pairs)
 
@@ -5124,11 +5249,11 @@ class HFEmbeddingModel(BaseModel):
         self.preview()
 
         # return embeddings only
-        if isinstance(text_sample,list):
-            sequence = text_sample
+        if isinstance(self.text_sample,list):
+            sequence = self.text_sample
 
         else:
-            sequence = [text_sample]
+            sequence = [self.text_sample]
 
         model_inputs = self.tokenizer(sequence, truncation=True, max_length=self.max_len, return_tensors="pt",padding=True)
 
@@ -5503,14 +5628,14 @@ class HFGenerativeModel(BaseModel):
 
         #   START - route to api endpoint
         if self.api_endpoint:
-            return self.inference_over_api_endpoint(prompt, context=self.add_context,
+            return self.inference_over_api_endpoint(self.prompt, context=self.add_context,
                                                     inference_dict=inference_dict)
         #   END - route to api endpoint
 
-        text_prompt = prompt
+        text_prompt = self.prompt
 
         if self.add_prompt_engineering:
-            prompt_enriched = self.prompt_engineer(prompt, self.add_context, inference_dict=inference_dict)
+            prompt_enriched = self.prompt_engineer(self.prompt, self.add_context, inference_dict=inference_dict)
             prompt_final = prompt_enriched
 
             # text_prompt = prompt_final + "\n"
@@ -5812,7 +5937,7 @@ class HFGenerativeModel(BaseModel):
             self.function = function
 
         if not self.fc_supported:
-            logger.warning("warning: HFGenerativeModel - loaded model does not support function calls.  "
+            logger.warning("HFGenerativeModel - loaded model does not support function calls.  "
                             "Please either use the standard .inference method with this model, or use a  "
                             "model that has 'function_calls' key set to True in its model card.")
             return []
@@ -5843,12 +5968,13 @@ class HFGenerativeModel(BaseModel):
 
         if self.api_endpoint:
             return self.function_call_over_api_endpoint(model_name=self.model_name,
-                                                        context=context,params=params, function=function,
-                                                        api_key=self.api_key,get_logits=get_logits)
+                                                        context=self.context,params=self.primary_keys,
+                                                        function=self.function,
+                                                        api_key=self.api_key,get_logits=self.get_logits)
 
         #   END - route to api endpoint
 
-        prompt = self.fc_prompt_engineer(context, params=self.primary_keys, function=function)
+        prompt = self.fc_prompt_engineer(self.context, params=self.primary_keys, function=self.function)
 
         # second - tokenize to get the input_ids
 
@@ -6106,8 +6232,8 @@ class HFGenerativeModel(BaseModel):
 
         url = self.api_endpoint + "{}".format("/")
         output_raw = requests.post(url, data={"model_name": self.model_name,
-                                              "question": prompt,
-                                              "context": context,
+                                              "question": self.prompt,
+                                              "context": self.context,
                                               "api_key": self.api_key,
                                               "max_output": self.max_output,
                                               "temperature": self.temperature})
@@ -6175,19 +6301,27 @@ class HFGenerativeModel(BaseModel):
             self.api_key = api_key
 
         if not params:
-            model_name = _ModelRegistry().get_llm_fx_mapping()[tool_type]
-            mc = ModelCatalog().lookup_model_card(model_name)
+            self.model_name = _ModelRegistry().get_llm_fx_mapping()[tool_type]
+            mc = ModelCatalog().lookup_model_card(self.model_name)
             if "primary_keys" in mc:
                 params = mc["primary_keys"]
+                self.primary_keys = params
+
+        if function:
+            self.function = function
+
+        self.prompt = prompt
 
         #   preview before invoking rest api
         self.preview()
 
         url = self.api_endpoint + "{}".format("/agent")
-        output_raw = requests.post(url, data={"model_name": model_name, "api_key": self.api_key, "tool_type": tool_type,
-                                              "function": function, "params": params, "max_output": 50,
-                                              "temperature": 0.0, "sample": False, "prompt": prompt,
-                                              "context": context, "get_logits": True})
+        output_raw = requests.post(url, data={"model_name": self.model_name, "api_key": self.api_key,
+                                              "tool_type": self.tool_type,
+                                              "function": self.function,
+                                              "params": self.primary_keys, "max_output": 50,
+                                              "temperature": 0.0, "sample": False, "prompt": self.prompt,
+                                              "context": self.context, "get_logits": True})
 
         try:
             # output = ast.literal_eval(output_raw.text)
@@ -6431,11 +6565,18 @@ class GGUFGenerativeModel(BaseModel):
         self.context = ""
         self.tool_type = None
 
+        self.model_repo_path = None
+
         self.post_init()
 
     def load_model_for_inference(self, model_repo_path, model_card = None, **kwargs):
 
         """ Loads and instantiates model along with other required objects. """
+
+        self.model_repo_path = model_repo_path
+
+        if model_card:
+            self.model_card = model_card
 
         #   validate before loading
         self.validate()
@@ -7183,14 +7324,14 @@ class GGUFGenerativeModel(BaseModel):
 
         #   START - route to api endpoint
         if self.api_endpoint:
-            return self.inference_over_api_endpoint(prompt, context=self.add_context,
+            return self.inference_over_api_endpoint(self.prompt, context=self.add_context,
                                                     inference_dict=inference_dict)
         #   END - route to api endpoint
 
-        text_prompt = prompt
+        text_prompt = self.prompt
 
         if self.add_prompt_engineering:
-            prompt_enriched = self.prompt_engineer(prompt, self.add_context, inference_dict=inference_dict)
+            prompt_enriched = self.prompt_engineer(self.prompt, self.add_context, inference_dict=inference_dict)
             prompt_final = prompt_enriched
 
             # text_prompt = prompt_final + "\n"
@@ -7262,6 +7403,9 @@ class GGUFGenerativeModel(BaseModel):
             if not function:
                 function = "classify"
 
+        self.primary_keys = params
+        self.function = function
+
         #   preview before initiating api call
         self.preview()
 
@@ -7269,8 +7413,9 @@ class GGUFGenerativeModel(BaseModel):
 
         if self.api_endpoint:
             return self.function_call_over_api_endpoint(model_name=self.model_name,
-                                                        context=context,params=params, function=function,
-                                                        api_key=self.api_key,get_logits=get_logits)
+                                                        context=self.context,params=self.primary_keys,
+                                                        function=self.function,
+                                                        api_key=self.api_key,get_logits=self.get_logits)
 
         #   END - route to api endpoint
 
@@ -7281,9 +7426,9 @@ class GGUFGenerativeModel(BaseModel):
         if class_str.endswith(", "):
             class_str = class_str[:-2]
 
-        f = str(function)
+        f = str(self.function)
 
-        full_prompt = "<human>: " + context + "\n" + "<{}> {} </{}>".format(f, class_str, f) + "\n<bot>:"
+        full_prompt = "<human>: " + self.context + "\n" + "<{}> {} </{}>".format(f, class_str, f) + "\n<bot>:"
         full_prompt = full_prompt + self.trailing_space
 
         text_prompt = full_prompt
@@ -7397,7 +7542,7 @@ class GGUFGenerativeModel(BaseModel):
         # prompt = prompt
 
         if self.add_prompt_engineering:
-            prompt_enriched = self.prompt_engineer(prompt, self.add_context, inference_dict=inference_dict)
+            prompt_enriched = self.prompt_engineer(self.prompt, self.add_context, inference_dict=inference_dict)
             prompt_final = prompt_enriched
 
             # most models perform better with no trailing space or line-break at the end of prompt
@@ -7485,19 +7630,28 @@ class GGUFGenerativeModel(BaseModel):
             self.api_key = api_key
 
         if not params:
-            model_name = _ModelRegistry().get_llm_fx_mapping()[tool_type]
-            mc = ModelCatalog().lookup_model_card(model_name)
+            self.model_name = _ModelRegistry().get_llm_fx_mapping()[tool_type]
+            mc = ModelCatalog().lookup_model_card(self.model_name)
             if "primary_keys" in mc:
                 params = mc["primary_keys"]
+
+        if function:
+            self.function = function
+
+        self.prompt = prompt
+
+        self.primary_keys = params
 
         #   preview before invoking api
         self.preview()
 
         url = self.api_endpoint + "{}".format("/agent")
-        output_raw = requests.post(url, data={"model_name": model_name, "api_key": self.api_key, "tool_type": tool_type,
-                                              "function": function, "params": params, "max_output": 50,
-                                              "temperature": 0.0, "sample": False, "prompt": prompt,
-                                              "context": context, "get_logits": True})
+        output_raw = requests.post(url, data={"model_name": self.model_name, "api_key": self.api_key,
+                                              "tool_type": self.tool_type,
+                                              "function": self.function, "params": self.primary_keys,
+                                              "max_output": 50,
+                                              "temperature": 0.0, "sample": False, "prompt": self.prompt,
+                                              "context": self.context, "get_logits": True})
 
         try:
 
@@ -7567,8 +7721,8 @@ class GGUFGenerativeModel(BaseModel):
 
         url = self.api_endpoint + "{}".format("/")
         output_raw = requests.post(url, data={"model_name": self.model_name,
-                                              "question": prompt,
-                                              "context": context,
+                                              "question": self.prompt,
+                                              "context": self.context,
                                               "api_key": self.api_key,
                                               "max_output": self.max_output_len,
                                               "temperature": self.temperature})
@@ -7679,11 +7833,17 @@ class WhisperCPPModel(BaseModel):
                             and gpu_available["drivers_current"] and gpu_available["gpu_found"]
                             and use_gpu_if_available)
 
+        self.model_repo_path = None
+
         self.post_init()
 
     def load_model_for_inference(self, model_repo_path, model_card = None, **kwargs):
 
         """ Loads and instantiates model along with other required objects. """
+
+        self.model_repo_path = model_repo_path
+        if model_card:
+            self.model_card = model_card
 
         #   validate before loading
         self.validate()
@@ -7884,7 +8044,7 @@ class WhisperCPPModel(BaseModel):
             logger.info("update: WhisperCPPModel - inference - input file needs to be converted to .wav - "
                          "will try to do right now.")
 
-            new_file_path = Utilities().convert_media_file_to_wav(prompt,
+            new_file_path = Utilities().convert_media_file_to_wav(self.prompt,
                                                                   save_path=LLMWareConfig().get_tmp_path(),
                                                                   file_out="converted_file_tmp.wav")
 
@@ -8213,7 +8373,7 @@ class LLMWareSemanticModel(BaseModel):
         self.preview()
 
         # embedding = self.model.encode(sentence, convert_to_tensor=True)
-        embedding = self.model.encode(sentence)
+        embedding = self.model.encode(self.sentence)
 
         # add normalization for imported sentence transformer models
         """
