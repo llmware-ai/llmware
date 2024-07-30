@@ -121,6 +121,8 @@ class LLMfx:
         self.api_key = api_key
         self.api_exec = False
 
+        self.sql_query = None
+
         #   check for llmware path & create if not already set up, e.g., "first time use"
         if not os.path.exists(LLMWareConfig.get_llmware_path()):
             LLMWareConfig.setup_llmware_workspace()
@@ -1104,7 +1106,57 @@ class LLMfx:
 
         return output_response
 
-    def query_custom_table(self, query, db=None,table=None,table_schema=None,db_name="llmware"):
+    def sql_checker(self, sql_query, custom_sql_checker=None):
+
+        """ Implements a basic post processing check on text-2-sql generation to confirm that
+        the query is a SELECT statement and not a form of DB WRITE command.
+
+        By passing a custom_sql_checker function, you can enhance this basic check.
+
+        The custom_sql_checker function should accept a string sql_query as input,
+        and return two outputs:
+
+            1- confirmation: a boolean truth value of True/False to indicate whether to move ahead
+            2- sql_query_updated: a return string that may be identical/modification of original sql query
+
+        """
+
+        #   if no red-flags identified, then will return True and original sql_query
+        confirmation = True
+        sql_query_updated = sql_query
+
+        logger.debug(f"LLMfx - sql_checker - {sql_query} - being reviewed.")
+
+        if custom_sql_checker:
+            confirmation, sql_query_updated = custom_sql_checker(sql_query)
+
+        else:
+
+            #   reviews any SQL statement that does not start with SELECT
+
+            if not sql_query.startswith("SELECT"):
+
+                sql_tokens = sql_query.split(" ")
+
+                logger.warning(f"LLMfx - sql_checker - sql query statement does not start "
+                               f"with SELECT statement - {sql_query}")
+
+                #   this list can be enhanced
+                basic_write_commands = ["DROP", "INSERT", "CREATE", "DELETE", "ALTER"]
+
+                for toks in sql_tokens:
+
+                    if toks.upper() in basic_write_commands:
+                        logger.warning(f"LLMfx - sql_checker - sql query statement appears to create "
+                                       f"WRITE elements - {toks} - stopping.")
+
+                        confirmation = False
+                        break
+
+        return confirmation, sql_query_updated
+
+    def query_custom_table(self, query, db=None,table=None,table_schema=None,db_name="llmware",
+                           custom_sql_checker=None):
 
         """ Executes a text-to-sql query on a CustomTable database table. """
 
@@ -1117,7 +1169,7 @@ class LLMfx:
         # step 1 - convert question into sql
 
         if not table_schema:
-            logging.warning("update: LLMfx - query_db - could not identify table schema - can not proceed")
+            logging.warning("LLMfx - query_db - could not identify table schema - can not proceed")
             return -1
 
         # run inference with query and table schema to get SQL query response
@@ -1125,14 +1177,30 @@ class LLMfx:
 
         # step 2 - run query
         sql_query = response["llm_response"]
+        self.sql_query = sql_query
+
+        #  basic sql verification checker
+        confirmation, self.sql_query = self.sql_checker(self.sql_query, custom_sql_checker=custom_sql_checker)
+
+        if not confirmation:
+            logger.warning(f"LLMfx - query_custom_db - sql query generated appears to be potentially unsafe - "
+                           f"{self.sql_query} so not moving ahead with query.")
+
+            empty_result = {"step": self.step, "tool": "sql", "db_response": [],
+                            "sql_query": self.sql_query + "-NOT_EXECUTED",
+                            "query": query, "db": db, "work_item": table_schema}
+
+            self.research_list.append(empty_result)
+
+            return empty_result
 
         # initial journal update
         journal_update = f"executing research call - executing query on db\n"
         journal_update += f"\t\t\t\t -- db - {db}\n"
-        journal_update += f"\t\t\t\t -- sql_query - {sql_query}"
+        journal_update += f"\t\t\t\t -- sql_query - {self.sql_query}"
         self.write_to_journal(journal_update)
 
-        db_output = custom_table.custom_lookup(response["llm_response"])
+        db_output = custom_table.custom_lookup(self.sql_query)
 
         output = []
         db_response = list(db_output)
@@ -1140,7 +1208,7 @@ class LLMfx:
         for rows in db_response:
             output.append(rows)
 
-        result = {"step": self.step, "tool": "sql", "db_response": output, "sql_query": response["llm_response"],
+        result = {"step": self.step, "tool": "sql", "db_response": output, "sql_query": self.sql_query,
                   "query": query,"db": db, "work_item": table_schema}
 
         self.research_list.append(result)
@@ -1155,7 +1223,8 @@ class LLMfx:
 
         return result
 
-    def query_db(self, query, table=None, table_schema=None, db=None, db_name=None):
+    def query_db(self, query, table=None, table_schema=None, db=None, db_name=None,
+                 custom_sql_checker=None):
 
         """ Executes two steps - converts input query into SQL, and then executes the SQL query on the DB. """
 
@@ -1168,7 +1237,7 @@ class LLMfx:
         # step 1 - convert question into sql
 
         if not table_schema:
-            logging.warning("update: LLMfx - query_db - could not identify table schema - can not proceed")
+            logging.warning("LLMfx - query_db - could not identify table schema - can not proceed")
             return -1
 
         # run inference with query and table schema to get SQL query response
@@ -1176,15 +1245,31 @@ class LLMfx:
 
         # step 2 - run query
         sql_query = response["llm_response"]
+        self.sql_query = sql_query
         sql_db_name = sql_db.db_file
+
+        # basic sql safety check
+        confirmation, self.sql_query = self.sql_checker(self.sql_query, custom_sql_checker=custom_sql_checker)
+
+        if not confirmation:
+            logger.warning(f"LLMfx - query_db - sql query generated appears to be potentially unsafe - "
+                           f"{self.sql_query} so not moving ahead with query.")
+
+            empty_result = {"step": self.step, "tool": "sql", "db_response": [],
+                            "sql_query": self.sql_query + "-NOT_EXECUTED",
+                            "query": query, "db": db, "work_item": table_schema}
+
+            self.research_list.append(empty_result)
+
+            return empty_result
 
         # initial journal update
         journal_update = f"executing research call - executing query on db\n"
         journal_update += f"\t\t\t\t -- db - {sql_db_name}\n"
-        journal_update += f"\t\t\t\t -- sql_query - {sql_query}"
+        journal_update += f"\t\t\t\t -- sql_query - {self.sql_query}"
         self.write_to_journal(journal_update)
 
-        db_output = sql_db.query_db(response["llm_response"])
+        db_output = sql_db.query_db(self.sql_query)
 
         output = []
         db_response = list(db_output)
@@ -1192,7 +1277,7 @@ class LLMfx:
         for rows in db_response:
             output.append(rows)
 
-        result = {"step": self.step, "tool": "sql", "db_response": output, "sql_query": response["llm_response"],
+        result = {"step": self.step, "tool": "sql", "db_response": output, "sql_query": self.sql_query,
                   "query": query,"db": sql_db_name, "work_item": table_schema}
 
         self.research_list.append(result)

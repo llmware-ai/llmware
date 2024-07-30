@@ -4282,6 +4282,75 @@ class CloudBucketManager:
 
         return files_copied
 
+    def upload_file(self,file_name, bucket, object_name=None, aws_secret_key=None, aws_access_key=None):
+
+        """Upload a file to an S3 bucket
+
+        :param file_name: File to upload
+        :param bucket: Bucket to upload to
+        :param object_name: S3 object name. If not specified then file_name is used
+        :return: True if file was uploaded, else False
+        """
+
+        # If S3 object_name was not specified, use file_name
+        if object_name is None:
+            object_name = os.path.basename(file_name)
+
+        # Upload the file
+        s3_client = boto3.client('s3',aws_access_key_id=aws_access_key,aws_secret_access_key=aws_secret_key)
+        try:
+            response = s3_client.upload_file(file_name, bucket, object_name)
+        except ClientError as e:
+            logging.error(e)
+            return False
+        return True
+
+    def fetch_model_from_bucket(self, model_name=None, bucket_name=None, save_path=None):
+
+        """Pulls selected model from llmware public S3 repo to local model repo"""
+
+        # if no model name selected, then get all
+        if not bucket_name:
+            bucket_name = LLMWareConfig().get_config("llmware_public_models_bucket")
+
+        # check for llmware path & create if not already set up
+        if not os.path.exists(LLMWareConfig.get_llmware_path()):
+            # if not explicitly set up by user, then create folder directory structure
+            LLMWareConfig().setup_llmware_workspace()
+
+        if not save_path:
+            save_path = LLMWareConfig.get_model_repo_path()
+
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
+        #   assumes that files in model folder are something like:
+        #   "pytorch_model.bin" | "config.json" | "tokenizer.json"
+
+        bucket = boto3.resource('s3', config=Config(signature_version=UNSIGNED)).Bucket(bucket_name)
+
+        files = bucket.objects.all()
+
+        for file in files:
+
+            if file.key.startswith(model_name):
+
+                #   found component of model in repo, so go ahead and create local model folder, if needed
+                local_model_folder = os.path.join(save_path, model_name)
+                if not os.path.exists(local_model_folder):
+                    os.mkdir(local_model_folder)
+
+                #   simple model_repo structure - each model is a separate folder
+                #   each model is a 'flat list' of files, so safe to split on ("/") to get key name
+                if not file.key.endswith('/'):
+                    local_file_path = os.path.join(local_model_folder, file.key.split('/')[-1])
+                    bucket.download_file(file.key, local_file_path)
+
+        logger.info(f"update: successfully downloaded model - {model_name} - "
+                    f"from aws s3 bucket for future access")
+
+        return files
+
 
 class ParserState:
 
