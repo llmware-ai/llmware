@@ -6610,7 +6610,10 @@ class GGUFGenerativeModel(BaseModel):
 
         # update context parameters
         self.context_params = self._lib.llama_context_default_params()
-        self.context_params.n_ctx = 2048
+
+        #   sets minimum of 2048, but will extend if context_window is larger (e.g., 4096/8192+)
+        self.context_params.n_ctx = max(2048, self.max_total_len)
+
         self.context_params.n_batch = self.n_batch
 
         if model_card:
@@ -6767,7 +6770,8 @@ class GGUFGenerativeModel(BaseModel):
                     if fall_back_option:
                         try:
 
-                            logger.warning("update: Not successful loading CUDA lib, so reverting to CPU driver.")
+                            logger.warning("update: Not successful loading GPU-accelerated lib, "
+                                           "so reverting to CPU driver.")
 
                             return ctypes.CDLL(str(fall_back_option), **cdll_args)
                         except:
