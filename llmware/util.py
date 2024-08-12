@@ -1016,7 +1016,8 @@ class Utilities:
         return hash_output
 
     @staticmethod
-    def create_hash_stamp (fp, save=True, hash_fn="hash_record", hash_type="sha256", **kwargs):
+    def create_hash_stamp (fp, save=True, hash_fn="hash_record", hash_type="sha256",
+                           ignore_file_extensions=None,**kwargs):
 
         """ Creates Hash Stamp for all files in a folder.
 
@@ -1041,6 +1042,7 @@ class Utilities:
         fp_files = os.listdir(fp)
 
         for file in fp_files:
+
             if file == hash_full_name:
 
                 if save:
@@ -1050,8 +1052,15 @@ class Utilities:
                     logging.warning(f"Utilities - create_hash_stamp - found existing hash_record with same name - "
                                     f"attempting to create new hash record file with name - {hash_full_name}.")
 
-            hash_value = Utilities().file_checksum(fp, file, hash_type=hash_type)
-            hash_record.update({file: hash_value})
+            ignore = False
+            if ignore_file_extensions:
+                ft = file.split(".")[-1]
+                if ft.lower() in ignore_file_extensions or ft.upper() in ignore_file_extensions:
+                    ignore = True
+
+            if not ignore:
+                hash_value = Utilities().file_checksum(fp, file, hash_type=hash_type)
+                hash_record.update({file: hash_value})
 
         time_stamp = Utilities().get_current_time_now()
 
@@ -1073,7 +1082,8 @@ class Utilities:
         return full_record
 
     @staticmethod
-    def compare_hash (fp, hash_fn="hash_record", hash_type="sha256", selected_files=None, ignore_pattern="hash"):
+    def compare_hash (fp, hash_fn="hash_record", hash_type="sha256", selected_files=None, ignore_pattern="hash",
+                      ignore_file_extensions=None):
 
         """ Compares two hashes from a folder path (fp)  -
 
@@ -1097,12 +1107,13 @@ class Utilities:
         try:
             hash_file = json.load(open(os.path.join(fp, hash_full_name), "r"))
         except:
-            logger.warning(f"Utilities - compare_hash_record - could not find an existing hash file at: "
+            logger.debug(f"Utilities - compare_hash_record - could not find an existing hash file at: "
                            f"{os.path.join(fp, hash_full_name)}.  Will create new hash record, but will not "
                            f"be able to provide a meaningful comparison.")
             hash_file = {}
 
-        new_hash_record = Utilities().create_hash_stamp(fp, hash_fn=hash_fn, hash_type=hash_type, save=False)
+        new_hash_record = Utilities().create_hash_stamp(fp, hash_fn=hash_fn, hash_type=hash_type, save=False,
+                                                        ignore_file_extensions=ignore_file_extensions)
 
         #   apply any pruning of certain files
 
@@ -1149,10 +1160,10 @@ class Utilities:
                     confirmed.update({key:value})
                     confirmed_files.append(key)
                 else:
-                    logger.warning(f"Utilities - compare_hash - value not matching for key - {key}")
+                    logger.debug(f"Utilities - compare_hash - value not matching for key - {key}")
                     values_changed.append(key)
             else:
-                logger.warning(f"Utilities - compare_hash - extra key - {key} - in hash_file not found in original hash")
+                logger.debug(f"Utilities - compare_hash - extra key - {key} - in hash_file not found in original hash")
                 extra_keys.append(key)
 
         output_dict = {"hashed_file_count": hashed_item_count,
