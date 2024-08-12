@@ -8,7 +8,7 @@ Wheel Archives: `llmware` pip install from pypy
 1.  Download a selected wheel, unzip, and then deploy the code directly into a project.   (Only selected wheels kept in the archive - raise an issue if there is a particular wheel you are looking for - and we can post by request.)  
 2.  Place the wheel archive in a folder, and in that folder path, run:  
 
-```pip3 install llmware-0.2.15-py3-none-any.whl```  
+```pip3 install llmware-0.3.4-py3-none-any.whl```  
 
 New wheels are built generally on PyPy on a weekly basis and updated on PyPy versioning.   The development repo is updated  
 and current at all times, but may have updates that are not yet in the PyPy wheel.  
@@ -22,6 +22,10 @@ All wheels are built and tested on:
 5.  Linux aarch64* (see 0.2.7 note below)  
 
 **Release Notes**  
+
+--**0.3.3 and 0.3.4** - released in July 2024 - continued improvements in the model lifecycle architecture and configurations, providing more options around the BaseModel class as the foundation with the ability to manage key steps in the loading, instantiation and inferencing lifecycle across different model classes and types.  
+
+--**0.3.2** released in the week of June 29, 2024 - enhanced entry points into both pdf and office parser for providing more text chunking configuration options for a 'one file' in memory parse - extends to provide the same options as multi-document, db-based parse.   
 
 --**0.3.1** released in the week of June 17, 2024 - added semantic reranker, biz_bot, new 'tiny' versions of slim-extract and slim-summary, and improvements in the extensibility of the model fetching configurations.   Updated requirements related to numpy (<2) and yfinance (>=0.2.38).  Numpy is a foundational python math library that recently released officially v2.0 (mid-June) with breaking changes.   In our pip install, we allow v2.0 to avoid any blocks in the pip process, but in our requirements.txt we restrict to <2.   The functionality that is clearly impacted by v2.0 is WhisperCPP, and specifically the python librosa library, which will not operate with numpy==2.0, and does require a downlevel to numpy<2.   If you run into any issues with numpy, it can be solved by downleveling, e.g., `pip3 install numpy==1.26.4`.  
 
