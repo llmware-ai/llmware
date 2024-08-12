@@ -817,6 +817,16 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
+**Monday, August 12 - v0.3.5-WIP**  
+- Improved GGUF Configs to expand context window    
+- Enhanced Utilities hashing functions  
+- Changes merged in main branch and will be posted on pypi later this week   
+  
+**Monday, July 29 - v03.4**  
+- Enhanced safety protections for text2sql db reads for LLMfx agents   
+- New examples - see [example](https://github.com/llmware-ai/llmware/blob/main/examples/UI/dueling_chatbot.py)    
+- More Notebook examples - see [notebook examples](https://github.com/llmware-ai/llmware/blob/main/examples/Notebooks)      
+  
 **Monday, July 8 - v03.3**  
 - Improvements in model configuration options, logging, and various small fixes  
 - Improved Azure OpenAI configs - see [example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using-azure-openai.py)  
