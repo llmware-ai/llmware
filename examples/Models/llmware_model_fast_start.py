@@ -18,7 +18,7 @@ import re
 import sys
 import time
 import torch
-from huggingface_hub import hf_api, ModelFilter, ModelCard
+from huggingface_hub import hf_api, ModelCard
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # The datasets package is not installed automatically by llmware
