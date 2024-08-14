@@ -356,7 +356,7 @@ global_model_repo_catalog_list = [
     # create dragon models
     {"model_name": "llmware/dragon-yi-6b-v0", "display_name": "dragon-yi-6b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "\n", "link": "https://huggingface.co/llmware/dragon-yi-6b-v0",
      "custom_model_files": [], "custom_model_repo": "",
      "hf_repo": "llmware/dragon-yi-6b-v0"},
@@ -370,7 +370,7 @@ global_model_repo_catalog_list = [
 
     {"model_name": "llmware/dragon-mistral-7b-v0", "display_name": "dragon-mistral-7b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-mistral-7b-v0",
      "custom_model_files": [], "custom_model_repo": "",
      "hf_repo": "llmware/dragon-mistral-7b-v0"},
@@ -434,7 +434,7 @@ global_model_repo_catalog_list = [
     # deprecated access to dragon-mistral-7b-gguf -> replaced by dragon-mistral-answer-tool
     {"model_name": "llmware/dragon-mistral-7b-gguf", "display_name": "dragon-mistral-7b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
      "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
      "validation_files": ["dragon-mistral-7b-q4_k_m.gguf"],
      "temperature": 0.3, "trailing_space": "",
@@ -458,7 +458,7 @@ global_model_repo_catalog_list = [
     # deprecated access to dragon-yi-6b-gguf -> replaced by dragon-yi-answer-tool
     {"model_name": "llmware/dragon-yi-6b-gguf", "display_name": "dragon-yi-6b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+     "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "\n",
      "gguf_file": "dragon-yi-6b-q4_k_m.gguf",
      "gguf_repo": "llmware/dragon-yi-6b-v0",
@@ -469,7 +469,7 @@ global_model_repo_catalog_list = [
 
    {"model_name": "dragon-yi-answer-tool", "display_name": "dragon-yi-6b-answer-tool",
     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-    "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+    "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
     "temperature": 0.3, "trailing_space": "\n",
     "gguf_file": "dragon-yi.gguf",
     "gguf_repo": "llmware/dragon-yi-answer-tool",
@@ -491,7 +491,7 @@ global_model_repo_catalog_list = [
 
    {"model_name": "dragon-mistral-answer-tool", "display_name": "dragon-mistral-answer-tool",
     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-    "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+    "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
     "temperature": 0.3, "trailing_space": "",
     "gguf_file": "dragon-mistral.gguf",
     "gguf_repo": "llmware/dragon-mistral-answer-tool",
@@ -514,7 +514,7 @@ global_model_repo_catalog_list = [
 
     {"model_name": "TheBloke/OpenHermes-2.5-Mistral-7B-GGUF", "display_name": "openhermes-mistral-7b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": True, "prompt_wrapper": "chat_ml",
+     "context_window": 4096, "instruction_following": True, "prompt_wrapper": "chat_ml",
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "openhermes-2.5-mistral-7b.Q4_K_M.gguf",
      "gguf_repo": "llmware/bonchon",
@@ -525,7 +525,7 @@ global_model_repo_catalog_list = [
 
     {"model_name": "TheBloke/zephyr-7B-beta-GGUF", "display_name": "zephyr-7b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": True, "prompt_wrapper": "hf_chat",
+     "context_window": 4096, "instruction_following": True, "prompt_wrapper": "hf_chat",
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "zephyr-7b-beta.Q4_K_M.gguf",
      "gguf_repo": "llmware/bonchon",
@@ -536,7 +536,7 @@ global_model_repo_catalog_list = [
 
     {"model_name": "TheBloke/Starling-LM-7B-alpha-GGUF", "display_name": "starling-7b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-     "context_window": 2048, "instruction_following": True, "prompt_wrapper": "open_chat",
+     "context_window": 8192, "instruction_following": True, "prompt_wrapper": "open_chat",
      "temperature": 0.3, "trailing_space": "",
      "gguf_file": "starling-lm-7b-alpha.Q4_K_M.gguf",
      "gguf_repo": "llmware/bonchon",
@@ -546,7 +546,7 @@ global_model_repo_catalog_list = [
      "custom_model_files": [], "custom_model_repo": ""},
 
     {"model_name": "microsoft/Phi-3-mini-4k-instruct-gguf", "display_name": "phi-3-gguf", "model_family": "GGUFGenerativeModel",
-     "model_category": "generative_local", "model_location": "llmware_repo", "context_windows": 4096,
+     "model_category": "generative_local", "model_location": "llmware_repo", "context_window": 4096,
      "instruction_following": False, "prompt_wrapper": "phi_3", "temperature": 0.3, "trailing_space": "",
      "gguf_file": "Phi-3-mini-4k-instruct-q4.gguf",
      "gguf_repo": "microsoft/Phi-3-mini-4k-instruct-gguf",
