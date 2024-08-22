@@ -817,7 +817,9 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
-**Monday, August 12 - v0.3.5-WIP**  
+**Thursday, August 22 - v0.3.5-WIP**  
+- Added 12 new DRAGON+BLING+SLIM models to Model Catalog - featuring Qwen2, Phi3 and Yi-9B - examples coming soon  
+- New use case example - [lecture_tool](https://github.com/llmware-ai/llmware/blob/main/examples/Use_Cases/lecture_tool/)   
 - Improved GGUF Configs to expand context window    
 - Enhanced Utilities hashing functions  
 - Changes merged in main branch and will be posted on pypi later this week   
