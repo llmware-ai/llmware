@@ -30,11 +30,14 @@ import re
 from tokenizers import Tokenizer
 from datetime import datetime
 from ctypes import *
+import shutil
+
 import logging
 
 from llmware.resources import CloudBucketManager
 from llmware.configs import LLMWareConfig
-from llmware.exceptions import ModelNotFoundException, DependencyNotInstalledException, ModuleNotFoundException
+from llmware.exceptions import (ModelNotFoundException, LLMWareException,
+                                DependencyNotInstalledException, ModuleNotFoundException)
 
 logger = logging.getLogger(__name__)
 
@@ -1416,3 +1419,593 @@ class AgentWriter:
             self.writer.close()
 
 
+class LocalTokenizer:
+
+    """ LocalTokenizer class manages and caches tokenizer.json files for common base models used in
+    LLMWare.   Enables re-instantiating the Tokenizer directly using the standalone tokenizers library,
+    regardless of the model class, e.g., very useful for GGUF and post-processing prompt analysis. """
+
+    def __init__(self, tokenizer_fn=None, tokenizer_name=None):
+
+        #   tokenizer files kept in llmware repo @ llmware/bonchon for easy access
+        self.hf_repo_tokenizers = "llmware/bonchon"
+
+        #   map of "tokenizer_name" to "tokenizer_fn"
+        self.tokenizer_mapping = {"phi3": "tokenizer_phi3.json",
+                                  "tiny_llama": "tokenizer_tl.json",
+                                  "stablelm": "tokenizer_stablelm.json",
+                                  "yi": "tokenizer_yi.json",
+                                  "qwen": "tokenizer_qw.json",
+                                  "mistral": "tokenizer_mistral.json",
+                                  "llama2": "tokenizer_ll2.json",
+                                  "llama3": "tokenizer_ll3.json",
+                                  "bert": "tokenizer_bert.json",
+                                  "roberta": "tokenizer_roberta.json",
+                                  "xlm_roberta": "tokenizer_roberta_xlm.json",
+                                  "phi2": "tokenizer_phi2.json",
+                                  "gpt2": "tokenizer_gpt2.json"
+                                  }
+
+        #   keeping a few key parameters hard-coded for easy access and assignment
+        self.supported_model = {
+
+            #   phi-3 tokenizer
+            "tokenizer_phi3.json": {"bos_id": [1], "bos_token": "<s>",
+                                    "eos_id": [32000,32001,32007], "eos_token": "<|endoftext|>"},
+
+            #   phi-2 tokenizer
+            "tokenizer_phi2.json": {"bos_id": [50256], "bos_token": "<|endoftext|>",
+                                    "eos_id": [50256], "eos_token": "<|endoftext|>"},
+
+            #   stablelm-3b tokenizer
+            "tokenizer_stablelm.json": {"bos_id": [0], "bos_token": "<|endoftext|>",
+                                        "eos_id": [0], "eos_token": "<|endoftext|>"},
+
+            #   tiny llama tokenizer
+            "tokenizer_tl.json": {"bos_id": [1], "bos_token": "<s>", "eos_id": [2], "eos_token": "</s>"},
+
+            #   01-ai yi tokenizer
+            "tokenizer_yi.json": {"bos_id": [1], "bos_token": "<|startoftext|>",
+                                  "eos_id": [2], "eos_token": "<|im_end|>"},
+
+            #   Qwen tokenizer
+            "tokenizer_qw.json": {"bos_id": [151643], "bos_token": "<|endoftext|>",
+                                  "eos_id": [151645], "eos_token": "<|im_end|>"},
+
+            #   Mistral tokenizer
+            "tokenizer_mistral.json": {"bos_id": [1], "bos_token": "<s>", "eos_id": [2], "eos_token": "</s>"},
+
+            #   llama2 tokenizer
+            "tokenizer_ll2.json": {"bos_id": [1], "bos_token": "<s>", "eod_id": [2], "eos_token": "</s>"},
+
+            #   llama3 tokenizer
+            "tokenizer_ll3.json": {"bos_id": [128000], "bos_token": "<|begin_of_text|>",
+                                   "eos_id": [128001], "eos_token": "<|end_of_text|>"},
+
+            #   bert tokenizer
+            "tokenizer_bert.json": {"pad_id": [0]},
+
+            #   roberta tokenizer
+            "tokenizer_roberta.json": {"bos_id": [0], "bos_token": "<s>", "eos_id": [2], "eos_token": "</s>",
+                                       "pad_id": [1], "pad_token": "<pad>"},
+
+            #   roberta xlm tokenizer
+            "tokenizer_roberta_xlm.json": {"bos_id": [0], "bos_token": "<s>", "eos_id": [2], "eos_token": "</s>",
+                                           "pad_id": [1], "pad_token": "<pad>"},
+
+            #   gpt2 tokenizer
+            "tokenizer_gpt2.json": {"bos_id": [50256], "bos_token": "", "eos_id": [50256], "eos_token": ""}
+
+        }
+
+        self.tokenizer_name = tokenizer_name
+        self.tokenizer_fn = tokenizer_fn
+        self.tokenizer = None
+
+        #   default dummy values
+        self.bos_id = [-1]
+        self.bos_token = ""
+        self.eos_id = [-1]
+        self.eos_token = ""
+        self.pad_id = [-1]
+        self.pad_token = ""
+
+        if tokenizer_name:
+            if tokenizer_name in self.tokenizer_mapping:
+                self.tokenizer_fn = self.tokenizer_mapping[tokenizer_name]
+
+        if self.tokenizer_fn:
+
+            if self.tokenizer_fn in self.supported_model:
+                for keys in self.supported_model[self.tokenizer_fn]:
+                    setattr(self, keys, self.supported_model[self.tokenizer_fn][keys])
+
+                #   will attempt to load the tokenizer
+                self.load_tokenizer(self.tokenizer_fn)
+
+            else:
+                raise LLMWareException(f"LocalTokenizer - could not identify selected tokenizer - "
+                                       f"tokenizer file - {self.tokenizer_fn} - "
+                                       f"tokenizer name - {self.tokenizer_name}")
+
+    def load_tokenizer(self, tokenizer_fn=None):
+
+        if tokenizer_fn:
+            self.tokenizer_fn = tokenizer_fn
+
+        try:
+            #   use the tokenizer library to instantiate - less overhead than transformers library when
+            #   only the tokenizer is needed
+            from tokenizers import Tokenizer
+        except:
+            raise LLMWareException(message="Exception: requires tokenizers to be installed.")
+
+        model_repo_path = LLMWareConfig().get_model_repo_path()
+
+        if not os.path.exists(model_repo_path):
+            os.mkdir(model_repo_path)
+
+        tokenizers_cache = os.path.join(model_repo_path, "tokenizers_local_cache")
+
+        if not os.path.exists(tokenizers_cache):
+            os.mkdir(tokenizers_cache)
+
+        tokenizers_in_cache = os.listdir(tokenizers_cache)
+
+        logger.debug(f"update: LocalTokenizer - tokenizers found in cache: {tokenizers_in_cache}")
+
+        if tokenizer_fn not in tokenizers_in_cache:
+            logger.info(f"update: LocalTokenizer - need to fetch tokenizer - {tokenizer_fn}")
+            self.fetch_tokenizer_from_hb(self.hf_repo_tokenizers, tokenizer_fn, tokenizers_cache)
+
+        self.tokenizer = Tokenizer.from_file(os.path.join(tokenizers_cache, tokenizer_fn))
+
+        return True
+
+    def fetch_tokenizer_from_hb(self, repo, file, local_path):
+
+        """ Retrieves the tokenizer json file from the llmware/bonchon repo. """
+
+        # need to pull from HF cache
+        from huggingface_hub import hf_hub_download
+
+        downloader = hf_hub_download(repo, file, local_dir=local_path, local_dir_use_symlinks=False)
+
+        #   remove ongoing links, if any, created by attributes not in the file repo
+        files_created = os.listdir(local_path)
+        if ".huggingface" in files_created:
+            try:
+                shutil.rmtree(os.path.join(local_path,".huggingface"))
+                logger.debug("LocalTokenizers cache: removed .huggingface")
+            except:
+                logger.info(f"LocalTokenizers cache: .huggingface folder created in repo and not auto-removed.")
+                pass
+
+        if ".gitattributes" in files_created:
+            try:
+                os.remove(os.path.join(local_path, ".gitattributes"))
+                logger.debug("LocalTokenizers cache - removed: .gitattributes")
+            except:
+                logger.info(f"LocalTokenizers cache - .gitattributes created in repo and not auto-removed.")
+                pass
+
+        if ".cache" in files_created:
+            try:
+                shutil.rmtree(os.path.join(local_path, ".cache"))
+                logger.debug("LocalTokenizers cache - removed: .cache")
+            except:
+                logger.info(f"LocalTokenizers cache - .cache folder created in repo and not auto-removed.")
+                pass
+
+        return True
+
+    def encode(self, seq):
+
+        """ Encode the sequence and return the token ids in a list. """
+
+        return self.tokenizer.encode(seq, add_special_tokens=False).ids
+
+    def decode(self, seq, strip_bos_token=True):
+
+        """ Decode a list of tokens and return the decoded string. """
+
+        if not isinstance(seq, list):
+            seq = [seq]
+
+        decoded = self.tokenizer.decode(seq, skip_special_tokens=False)
+
+        if strip_bos_token:
+            if decoded.startswith(self.bos_token):
+                decoded = decoded[len(self.bos_token):]
+
+        return decoded
+
+
+class Sources:
+
+    """Implements a source batching designed to build a set of 'source materials' for a source_client_obj, which
+    is passed into the constructor for Sources.
+
+    Sources is responsible for providing a consistent set of metadata attributes and algorithm for 'chunking' a large
+    input source into multiple separate context prompts (string) to send to a LLM, while preserving of all of the
+    metadata from the original source, to be able to post-processing comparison with individual chunks, e.g.,
+    preserving the page number.
+
+    The class is intended to support a wide range of potential 'source clients' with the only requirement that
+    the source client has a 'source_materials' attribute, which will be written to as part of constructing
+    the source batches.
+
+    Other optional attributes of a source_client will be checked and used if available:
+        -- tokenizer
+        -- context_window_size
+        -- batch_separator
+
+    Parameters
+    ----------
+    source_client_obj : object
+        Designed for Prompt or Agent client objects, but can be any Python object with a "source_materials" attribute
+
+    tokenizer: Optional - pass a tokenizer directly
+
+    context_window_size: Optional - default of 1000 as the target context size (this can be made larger, and is
+        set conservatively to better support accuracy with smaller models
+
+    batch_separator: string used to aggregate distinct entries to build a larger prompt (e.g., "\n" by default)
+
+    """
+
+    def __init__(self, source_client_obj, tokenizer=None,context_window_size=1000,batch_separator="\n"):
+
+        self.source_client= source_client_obj
+        self.tokenizer= tokenizer
+        self.context_window_size=context_window_size
+        self.batch_separator=batch_separator
+
+        self.source_input_keys = ["text", "file_source", "page_num"]
+        self.source_output_keys = []
+
+        self.source_keys = ["batch_id", "text", "metadata", "biblio", "batch_stats", "batch_stats.tokens",
+                            "batch_stats.chars", "batch_stats.samples"]
+
+        self.source_metadata = ["batch_source_num", "evidence_start_char", "evidence_stop_char",
+                                "source_name", "page_num", "doc_id", "block_id"]
+
+        if not tokenizer:
+            resolved_tokenizer = self.resolve_tokenizer()
+
+            if not resolved_tokenizer:
+                logger.debug(f"Sources - could not resolve tokenizer to use - may lead to downstream source "
+                             f"packaging issues.")
+
+        if hasattr(self.source_client, "context_window_size"):
+            self.context_window_size = self.source_client.context_window_size
+
+        if hasattr(self.source_client, "batch_separator"):
+            self.batch_separator = self.source_client.batch_separator
+
+        if not hasattr(source_client_obj, "source_materials"):
+            raise LLMWareException(message=f"Sources - expects a source_client object with a 'source_materials' "
+                                           f"attribute - which by default can be set to an empty list, e.g., []")
+
+    def resolve_tokenizer(self):
+
+        """ Will attempt to resolve the tokenizer associated with the Prompt, and use a default tokenizer
+        as a fallback if not found in the Prompt object. """
+
+        found_tokenizer = False
+
+        #   option 1 - pull the tokenizer from the prompt directly
+        if hasattr(self.source_client, "tokenizer"):
+            if self.source_client.tokenizer:
+                self.tokenizer = self.source_client.tokenizer
+                return True
+
+        #   option 2 - pull the 'tokenizer_local' file from the model card and instantiate
+        if not found_tokenizer:
+            if hasattr(self.source_client, "llm_model_card"):
+                if isinstance(self.source_client.llm_model_card, dict):
+                    if "tokenizer_local" in self.source_client.llm_model_card:
+                        tokenizer_fn = self.source_client.llm_model_card["tokenizer_local"]
+                        try:
+                            self.tokenizer = LocalTokenizer(tokenizer_fn=tokenizer_fn)
+                            return True
+                        except:
+                            pass
+
+        # option 3 - fallback
+        if not found_tokenizer:
+            #   use llama2 tokenizer as a default fallback
+            #   note: the tokenizer is used primarily for 'counting' against the context window, so if the
+            #   wrong tokenizer is used, the counts may be off, and the batch sizes not perfectly optimized
+            #   relative to the context window, but there should be any other detrimental impacts
+
+            default_tokenizer = "tokenizer_ll2.json"
+            self.tokenizer = LocalTokenizer(tokenizer_fn=default_tokenizer)
+            return True
+
+        return False
+
+    def token_counter(self, text_sample):
+
+        """ Token counter utility """
+
+        if not self.tokenizer:
+            self.resolve_tokenizer()
+
+        if self.tokenizer:
+            # toks = self.tokenizer.encode(text_sample).ids
+            toks = self.tokenizer.encode(text_sample)
+        else:
+            toks = ""
+            logger.warning(f"Sources - could not identify a tokenizer - batch size allocation compared to "
+                           f"context window may not be possible.")
+
+        return len(toks)
+
+    def tokenize (self, text_sample):
+
+        """ Tokenize utility """
+
+        if not self.tokenizer:
+            self.resolve_tokenizer()
+
+        # toks = self.tokenizer.encode(text_sample).ids
+        toks = self.tokenizer.encode(text_sample)
+        return toks
+
+    def package_source(self, retrieval_material, aggregate_source=True, add_to_prompt=True,
+                       backup_source_filename="user_provided_unknown_source"):
+
+        """ Generalized source packager
+           --assumes minimal metadata - doc_name, page_num and text chunk
+           --add to existing 'state' source & create new batch on top if overflow  """
+
+        # tracking variables
+        tokens_per_batch = []
+        samples_per_batch = []
+        sample_counter = 0
+        doc_sources = {}
+
+        doc_sources_per_batch = {}
+
+        biblio_per_batch = []
+        batches = []
+        meta = []
+
+        samples = []
+
+        for i, q in enumerate(retrieval_material):
+
+            # simple deduplication check to remove identical entries - more 'cleaning' options can be offered over time
+            if q not in samples:
+                samples.append(q)
+
+        # default
+        current_batch = ""
+        token_counter = 0
+        batch_metadata = []
+        batch_id = 0
+        char_counter = 0
+
+        if aggregate_source:
+            # start current batch with the last entry in source materials and aggregate from this point
+            if len(self.source_client.source_materials) > 0:
+
+                # pull up the last 'in-progress' entry in current source materials state
+                current_batch = self.source_client.source_materials[-1]["text"]
+                token_counter = self.token_counter(current_batch)
+                char_counter = len(current_batch)
+                batch_metadata = self.source_client.source_materials[-1]["metadata"]
+                batch_stats = self.source_client.source_materials[-1]["batch_stats"]
+                batch_id = len(self.source_client.source_materials) - 1
+
+                # experiment
+                doc_sources_per_batch = self.source_client.source_materials[-1]["biblio"]
+
+                # end - experiment
+
+                # 'pop' the last entry 'in-progress' off the list
+                self.source_client.source_materials = self.source_client.source_materials[:-1]
+
+        samples_chunked = []
+
+        for x in range(0,len(samples)):
+
+            t = self.token_counter(samples[x]["text"])
+
+            if t > self.context_window_size:
+                chunks = self.chunk_large_sample(samples[x])
+                samples_chunked += chunks
+            else:
+                samples_chunked.append(samples[x])
+
+        samples = samples_chunked
+
+        for x in range(0, len(samples)):
+
+            t = self.token_counter(samples[x]["text"])
+
+            if "file_source" in samples[x]:
+                source_fn = samples[x]["file_source"]
+            else:
+                source_fn = backup_source_filename
+
+            if "page_num" in samples[x]:
+                page_num = samples[x]["page_num"]
+            else:
+                if "master_index" in samples[x]:
+                    page_num = samples[x]["master_index"]
+                else:
+                    # if can not retrieve from metadata, then set as default - page 1
+                    page_num = 1
+
+            if "doc_id" in samples[x]:
+                    doc_id = samples[x]["doc_id"]
+            else:
+                    # if can not retrieve from metadata, then set as default - doc_id 1
+                    doc_id = 1
+
+            if "block_id" in samples[x]:
+                    block_id = samples[x]["block_id"]
+            else:
+                    # if can not retrieve from metadata, then set as default - block_id 1
+                    block_id = 1
+
+            # keep aggregating text batch up to the size of the target context_window for selected model
+            if (t + token_counter) < self.context_window_size:
+
+                # appends separator at end of sample text before adding the next chunk of text
+                current_batch += samples[x]["text"] + self.batch_separator
+                batch_char_len = len(current_batch)
+
+                new_source = {"batch_source_id": len(batch_metadata),
+                              "evidence_start_char": char_counter,
+                              # remove adding char_counter to evidence_stop_char
+                              "evidence_stop_char": batch_char_len,
+                              "source_name": source_fn,
+                              "page_num": page_num,
+                              "doc_id": doc_id,
+                              "block_id": block_id,
+                              }
+
+                batch_metadata.append(new_source)
+
+                char_counter = batch_char_len
+                token_counter += t
+
+                # new trackers
+                sample_counter += 1
+                if source_fn not in doc_sources:
+                    doc_sources.update({source_fn: [page_num]})
+                else:
+                    if page_num not in doc_sources[source_fn]:
+                        doc_sources[source_fn].append(page_num)
+
+                if source_fn not in doc_sources_per_batch:
+                    doc_sources_per_batch.update({source_fn: [page_num]})
+                else:
+                    if page_num not in doc_sources_per_batch[source_fn]:
+                        doc_sources_per_batch[source_fn].append(page_num)
+
+            else:
+                # capture number of tokens in batch
+                tokens_per_batch.append(token_counter)
+                samples_per_batch.append(sample_counter)
+                sample_counter = 1
+
+                biblio_per_batch.append(doc_sources_per_batch)
+
+                # doc_sources_per_batch = {}
+
+                if "file_source" in samples[x]:
+                    doc_filename = samples[x]["file_source"]
+                else:
+                    doc_filename = backup_source_filename
+
+                if "page_num" in samples[x]:
+                    page_num = samples[x]["page_num"]
+                else:
+                    # adding check for master_index
+                    if "master_index" in samples[x]:
+                        page_num = samples[x]["master_index"]
+                    else:
+                        # if no page_num identified, then default is page 1
+                        page_num = 1
+
+                # doc_sources_per_batch.update({doc_filename: [page_num]})
+                biblio = doc_sources_per_batch
+
+                # reset
+                doc_sources_per_batch = {}
+
+                batches.append(current_batch)
+                meta.append(batch_metadata)
+
+                if add_to_prompt:
+                    # corrected batch_id counter
+                    new_batch_dict = {"batch_id": batch_id, "text": current_batch, "metadata": batch_metadata,
+                                      "biblio": biblio, "batch_stats":
+                                          {"tokens": token_counter,
+                                           "chars": len(current_batch),
+                                           "samples": len(batch_metadata)}}
+
+                    self.source_client.source_materials.append(new_batch_dict)
+
+                    batch_id += 1
+
+                # reset current_batch -> current snippet
+                current_batch = samples[x]["text"]
+                token_counter = t
+                new_source = {"batch_source_id": 0,
+                              "evidence_start_char": 0,
+                              "evidence_stop_char": len(samples[x]["text"]),
+                              "source_name": source_fn,
+                              "page_num": page_num,
+                              "doc_id": doc_id,
+                              "block_id": block_id,
+                              }
+
+                batch_metadata = [new_source]
+                char_counter = len(samples[x]["text"])
+
+                # insert change - dec 23
+                if doc_filename not in doc_sources_per_batch:
+                    doc_sources_per_batch.update({doc_filename: [page_num]})
+                else:
+                    if page_num not in doc_sources_per_batch[doc_filename]:
+                        doc_sources_per_batch[doc_filename].append(page_num)
+                # end - insert change
+
+        if len(current_batch) > 0:
+
+            batches.append(current_batch)
+            meta.append(batch_metadata)
+
+            if add_to_prompt:
+                # change batch_id from batches -> len(batches)
+                new_batch_dict = {"batch_id": batch_id, "text": current_batch, "metadata": batch_metadata,
+                                  "biblio": doc_sources_per_batch, "batch_stats": {"tokens": token_counter,
+                                                                                   "chars": len(current_batch),
+                                                                                    "samples": len(batch_metadata)}}
+
+                self.source_client.source_materials.append(new_batch_dict)
+
+                # batch_id += 1
+
+            # add new stats for last batch
+            tokens_per_batch.append(token_counter)
+            samples_per_batch.append(sample_counter)
+            biblio_per_batch.append(doc_sources_per_batch)
+
+        new_sources = {"text_batch": batches, "metadata_batch": meta, "batches_count": len(batches)}
+
+        return new_sources
+
+    def chunk_large_sample(self, sample):
+
+        """ If single sample bigger than the context window, then break up into smaller chunks """
+
+        chunks = []
+        max_size = self.context_window_size
+        sample_len = self.token_counter(sample["text"])
+
+        chunk_count = sample_len // max_size
+        if max_size * chunk_count < sample_len:
+            chunk_count += 1
+
+        stopper = 0
+        base_dict = {}
+        for key, values in sample.items():
+            base_dict.update({key:values})
+
+        sample_tokens = self.tokenize(sample["text"])
+
+        for x in range(0,chunk_count):
+            starter = stopper
+            stopper = min((x+1)*max_size,sample_len)
+            new_chunk_tokens = sample_tokens[starter:stopper]
+            new_dict = base_dict
+            new_dict.update({"text":self.tokenizer.decode(new_chunk_tokens)})
+            chunks.append(new_dict)
+
+        return chunks

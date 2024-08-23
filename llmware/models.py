@@ -26,7 +26,7 @@ import shutil
 import importlib
 from importlib import util
 
-from llmware.util import Utilities, AgentWriter
+from llmware.util import Utilities, AgentWriter, LocalTokenizer
 from llmware.configs import LLMWareConfig
 from llmware.exceptions import (DependencyNotInstalledException, ModuleNotFoundException,
                                 ModelCardNotRegisteredException, GGUFLibNotLoadedException, LLMWareException)
@@ -1532,7 +1532,7 @@ class ModelCatalog:
 
             # tokenizer load
             if "tokenizer_local" in model_card:
-                tokenizer = LocalTokenizer(model_card["tokenizer_local"])
+                tokenizer = LocalTokenizer(tokenizer_fn=model_card["tokenizer_local"])
             elif util.find_spec("transformers"):
                 # hf tokenizer name
                 pt_loader = PyTorchLoader(api_key=api_key, trust_remote_code=True, custom_loader=None)
@@ -1542,18 +1542,28 @@ class ModelCatalog:
 
             try:
                 # pull bos attributes from tokenizer
-                bos_token_id = tokenizer.bos_token_id
+                # -- note: will be a list of .bos_id and .eos_id, e.g., [2], not 2
+                bos_token_id = tokenizer.bos_id
                 bos_str = tokenizer.bos_token
 
-                eos_token_id = tokenizer.eos_token_id
+                eos_token_id = tokenizer.eos_id
                 eos_str = tokenizer.eos_token
 
+                if not isinstance(eos_token_id, list):
+                    eos_token_id = [eos_token_id]
+
+                if isinstance(bos_token_id, list):
+                    if len(bos_token_id) > 0:
+                        bos_token_id = bos_token_id[0]
+                    else:
+                        #   set to llama as fallback
+                        bos_token_id = 1
             except:
                 # unexpected - but if fail, then take llama defaults
                 bos_token_id = 1
                 bos_str = "<s>"
 
-                eos_token_id = 2
+                eos_token_id = [2]
                 eos_str = "</s>"
 
             ryg_string = ""
@@ -1599,8 +1609,8 @@ class ModelCatalog:
                 if "[" in tokenizer.decode(toks):
                     vz_capture_on = True
 
-                # if toks == 2:
-                if toks == eos_token_id:
+                # e.g., if toks in [2]:
+                if toks in eos_token_id:
                     break
 
                 for x in range(0, len(logits[i])):
@@ -1946,7 +1956,7 @@ class ModelCatalog:
 
         # tokenizer load
         if tokenizer_local:
-            tokenizer = LocalTokenizer(model_card["tokenizer_local"])
+            tokenizer = LocalTokenizer(tokenizer_fn=model_card["tokenizer_local"])
         elif hf_tokenizer_name and util.find_spec("transformers"):
             # hf tokenizer name
             pt_loader = PyTorchLoader(api_key=api_key, trust_remote_code=True, custom_loader=None)
@@ -8397,119 +8407,6 @@ class LLMWareSemanticModel(BaseModel):
     def euclidean_distance(self,a,b):
         # aligning with FAISS - which returns square of Euclidean distance
         return np.linalg.norm(a - b) * np.linalg.norm(a-b)
-
-
-class LocalTokenizer:
-
-    """ LocalTokenizer class manages and caches tokenizer.json files for common base models used in
-    LLMWare.   Enables re-instantiating the Tokenizer directly using tokenizers library. """
-
-    def __init__(self, tokenizer_fn):
-
-        #   tokenizer files kept in llmware repo @ llmware/bonchon for easy access
-        self.hf_repo_tokenizers = "llmware/bonchon"
-
-        #   keeping a few key parameters hard-coded for easy access and assignment
-        self.supported_model = {"tokenizer_phi3.json": {"bos_id": 1, "bos_token": "<s>",
-                                                        "eos_id": 32000, "eos_token": "<|endoftext|>"},
-
-                                "tokenizer_stablelm.json": {"bos_id": 0, "bos_token": "<|endoftext|>",
-                                                            "eos_id": 0, "eos_token": "<|endoftext|>"},
-
-                                "tokenizer_tl.json": {"bos_id": 1, "bos_token": "<s>",
-                                                      "eos_id": 2, "eos_token": "</s>"}
-                                }
-
-        if tokenizer_fn in self.supported_model:
-            self.bos_token_id = self.supported_model[tokenizer_fn]["bos_id"]
-            self.bos_token = self.supported_model[tokenizer_fn]["bos_token"]
-            self.eos_token_id = self.supported_model[tokenizer_fn]["eos_id"]
-            self.eos_token = self.supported_model[tokenizer_fn]["eos_token"]
-
-        try:
-            #   use the tokenizer library to instantiate - less overhead than transformers library when
-            #   only the tokenizer is needed
-            from tokenizers import Tokenizer
-        except:
-            raise LLMWareException(message="Exception: requires tokenizers to be installed.")
-
-        model_repo_path = LLMWareConfig().get_model_repo_path()
-
-        if not os.path.exists(model_repo_path):
-            os.mkdir(model_repo_path)
-
-        tokenizers_cache = os.path.join(model_repo_path, "tokenizers_local_cache")
-
-        if not os.path.exists(tokenizers_cache):
-            os.mkdir(tokenizers_cache)
-
-        tokenizers_in_cache = os.listdir(tokenizers_cache)
-
-        logger.debug(f"update: LocalTokenizer - tokenizers found in cache: {tokenizers_in_cache}")
-
-        if tokenizer_fn not in tokenizers_in_cache:
-            logger.info(f"update: LocalTokenizer - need to fetch tokenizer - {tokenizer_fn}")
-            self.fetch_tokenizer_from_hb(self.hf_repo_tokenizers,tokenizer_fn, tokenizers_cache)
-
-        self.tokenizer = Tokenizer.from_file(os.path.join(tokenizers_cache, tokenizer_fn))
-
-    def fetch_tokenizer_from_hb(self, repo, file, local_path):
-
-        """ Retrieves the tokenizer json file from the llmware/bonchon repo. """
-
-        # need to pull from HF cache
-        from huggingface_hub import hf_hub_download
-
-        downloader = hf_hub_download(repo, file, local_dir=local_path, local_dir_use_symlinks=False)
-
-        #   remove ongoing links, if any, created by attributes not in the file repo
-        files_created = os.listdir(local_path)
-        if ".huggingface" in files_created:
-            try:
-                shutil.rmtree(os.path.join(local_path,".huggingface"))
-                logger.debug("LocalTokenizers cache: removed .huggingface")
-            except:
-                logger.info(f"LocalTokenizers cache: .huggingface folder created in repo and not auto-removed.")
-                pass
-
-        if ".gitattributes" in files_created:
-            try:
-                os.remove(os.path.join(local_path, ".gitattributes"))
-                logger.debug("LocalTokenizers cache - removed: .gitattributes")
-            except:
-                logger.info(f"LocalTokenizers cache - .gitattributes created in repo and not auto-removed.")
-                pass
-
-        if ".cache" in files_created:
-            try:
-                shutil.rmtree(os.path.join(local_path, ".cache"))
-                logger.debug("LocalTokenizers cache - removed: .cache")
-            except:
-                logger.info(f"LocalTokenizers cache - .cache folder created in repo and not auto-removed.")
-                pass
-
-        return True
-
-    def encode(self, seq):
-
-        """ Encode the sequence and return the token ids in a list. """
-
-        return self.tokenizer.encode(seq, add_special_tokens=False).ids
-
-    def decode(self, seq, strip_bos_token=True):
-
-        """ Decode a list of tokens and return the decoded string. """
-
-        if not isinstance(seq, list):
-            seq = [seq]
-
-        decoded = self.tokenizer.decode(seq, skip_special_tokens=False)
-
-        if strip_bos_token:
-            if decoded.startswith(self.bos_token):
-                decoded = decoded[len(self.bos_token):]
-
-        return decoded
 
 
 class ModelResources:
