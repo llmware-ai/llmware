@@ -16,10 +16,10 @@
 pre-processing, executing, and post-processing of inferences and tracking the state of related inferences,
 e.g. in conversational language models.
 
-The module also implements the Sources, QualityCheck, and HumanInTheLoop classes. The Sources class packages
-retrieved sources and appends them to a prompt. The QualityCheck class compares (i.e. verifies) the LLMs'
-response against the context information. Finally, the HumanInTheLoop class provides mechanisms for reviews,
-which includes access to the prompt history for corrections, as well as user ratings.
+The module also implements QualityCheck, and HumanInTheLoop classes, and leverages the Sources class (provided in the
+util.py module).  The QualityCheck class compares (i.e. verifies) the LLMs' response against the context information.
+Finally, the HumanInTheLoop class provides mechanisms for reviews, which includes access to the prompt history
+for corrections, as well as user ratings.
 """
 
 import statistics
@@ -28,7 +28,7 @@ import time
 import logging
 import os
 
-from llmware.util import Utilities, CorpTokenizer
+from llmware.util import Utilities, CorpTokenizer, Sources
 from llmware.web_services import YFinance
 from llmware.graph import Graph
 from llmware.resources import PromptState
@@ -116,6 +116,7 @@ class Prompt:
         self.llm_model = None
         self.llm_model_api_key = llm_api_key
         self.llm_name = llm_name
+        self.llm_model_card = None
 
         if from_hf and llm_model:
         
@@ -134,17 +135,13 @@ class Prompt:
             if "model_name" in model_card:
                 self.llm_model = ModelCatalog().load_model(model_card["model_name"], api_key=llm_api_key)
                 self.context_window_size = self.llm_model.max_input_len
+                self.llm_model_card = model_card
 
         # if passed llm model name, it will 'over-ride' the model_card if both passed
         if llm_name:
 
             self.llm_model = ModelCatalog().load_model(llm_name, api_key=llm_api_key)
             self.context_window_size = self.llm_model.max_input_len
-
-        if not tokenizer:
-            self.tokenizer = Utilities().get_default_tokenizer()
-        else:
-            self.tokenizer = tokenizer
 
         # inference parameters
         self.temperature = temperature
@@ -202,11 +199,6 @@ class Prompt:
 
         self.batch_separator = "\n"
 
-        """
-        if self.llm:
-            self.batch_separator = self.llm.separator
-        """
-
         self.query_results = None
 
         self.model_catalog = ModelCatalog()
@@ -238,6 +230,9 @@ class Prompt:
                                                            use_gpu=use_gpu, sample=sample, get_logits=get_logits,
                                                            max_output=max_output, temperature=temperature,
                                                            api_endpoint=api_endpoint, **kwargs)
+            if hasattr(self.llm_model, "model_card"):
+                self.llm_model_card = self.llm_model.model_card
+
         else:
 
             pt_loader = PyTorchLoader(api_key=api_key,trust_remote_code=trust_remote_code, custom_loader=None)
@@ -246,10 +241,12 @@ class Prompt:
 
             #   now, we have 'imported' our own custom 'instruct' model into llmware
             self.llm_model = self.model_catalog.load_hf_generative_model(custom_hf_model, hf_tokenizer,
-                                                                     instruction_following=False,
-                                                                     prompt_wrapper="human_bot")
+                                                                         instruction_following=False,
+                                                                         prompt_wrapper="human_bot")
+
             # prepare 'safe name' without file paths
             self.llm_model.model_name = re.sub("[/]","---",gen_model)
+            self.tokenizer = hf_tokenizer
 
         self.llm_name = gen_model
         self.context_window_size = self.llm_model.max_input_len
@@ -1306,334 +1303,6 @@ class Prompt:
 
         output = HumanInTheLoop(prompt=self).update_llm_response_record(self.prompt_id,updates_dict,keep_change_log=True)
         return output
-
-
-class Sources:
-    """Implements a source, which is for example a document that is appended to a prompt. It is used
-    by the ``Prompt`` class.
-
-    ``Sources`` is responsible for adding a source (sometines also called a knowledge source) to a prompt.
-    It accepts a Python iterable consisting of dictionary entries, where the dictionary has to have
-    the keys "text", "file_source", "page_num".
-
-    Parameters
-    ----------
-    prompt : object
-        An object of type ``Prompt``.
-
-    Examples
-    ----------
-    >>> import os
-    >>> from llmware.setup import Setup
-    >>> from llmware.library import Library
-    >>> from llmware.prompts import Prompt
-    >>> library = Library().create_new_library('prompt_with_sources')
-    >>> sample_files_path = Setup().load_sample_files(over_write=False)
-    >>> parsing_output = library.add_files(os.path.join(sample_files_path, "Agreements"))
-    >>> prompt = Prompt().load_model('llmware/bling-1b-0.1')
-    >>> prompt.add_source_document(os.path.join(sample_files_path, "Agreements"), 'Apollo EXECUTIVE EMPLOYMENT AGREEMENT.pdf')
-    >>> result = prompt.prompt_with_source(prompt='What is the base salery amount?', prompt_name='default_with_context')
-    >>> type(result)
-    <class 'list'>
-    >>> len(result)
-    1
-    >>> type(result[0])
-    <class 'dict'>
-    >>> result[0].keys()
-    dict_keys(['llm_response', 'prompt', 'evidence', 'instruction', 'model', 'usage',
-               'time_stamp', 'calling_app_ID', 'rating', 'account_name', 'prompt_id',
-               'batch_id', 'evidence_metadata', 'biblio', 'event_type', 'human_feedback',
-               'human_assessed_accuracy'])
-    >>> result[0]['biblio']
-    {'Apollo EXECUTIVE EMPLOYMENT AGREEMENT.pdf': ['1']}
-    >>> result[0]['llm_response']
-    ' $1,000,000.00'
-    """
-    def __init__(self, prompt):
-
-        self.prompt= prompt
-        # self.tokenizer = prompt.tokenizer
-        self.tokenizer = Utilities().get_default_tokenizer()
-
-        self.source_input_keys = ["text", "file_source", "page_num"]
-        self.source_output_keys = []
-
-        self.source_keys = ["batch_id", "text", "metadata", "biblio", "batch_stats", "batch_stats.tokens",
-                            "batch_stats.chars", "batch_stats.samples"]
-
-        self.source_metadata = ["batch_source_num", "evidence_start_char", "evidence_stop_char",
-                                "source_name", "page_num", "doc_id", "block_id"]
-
-    def token_counter(self, text_sample):
-
-        """ Token counter utility """
-
-        toks = self.tokenizer.encode(text_sample).ids
-        return len(toks)
-
-    def tokenize (self, text_sample):
-
-        """ Tokenize utility """
-
-        toks = self.tokenizer.encode(text_sample).ids
-        return toks
-
-    def package_source(self, retrieval_material, aggregate_source=True, add_to_prompt=True,
-                       backup_source_filename="user_provided_unknown_source"):
-
-        """ Generalized source packager
-           --assumes minimal metadata - doc_name, page_num and text chunk
-           --add to existing 'state' source & create new batch on top if overflow  """
-
-        # tracking variables
-        tokens_per_batch = []
-        samples_per_batch = []
-        sample_counter = 0
-        doc_sources = {}
-
-        doc_sources_per_batch = {}
-
-        biblio_per_batch = []
-        batches = []
-        meta = []
-
-        samples = []
-
-        for i, q in enumerate(retrieval_material):
-
-            # simple deduplication check to remove identical entries - more 'cleaning' options can be offered over time
-            if q not in samples:
-                samples.append(q)
-
-        # default
-        current_batch = ""
-        token_counter = 0
-        batch_metadata = []
-        batch_id = 0
-        char_counter = 0
-
-        if aggregate_source:
-            # start current batch with the last entry in source materials and aggregate from this point
-            if len(self.prompt.source_materials) > 0:
-
-                # pull up the last 'in-progress' entry in current source materials state
-                current_batch = self.prompt.source_materials[-1]["text"]
-                token_counter = self.token_counter(current_batch)
-                char_counter = len(current_batch)
-                batch_metadata = self.prompt.source_materials[-1]["metadata"]
-                batch_stats = self.prompt.source_materials[-1]["batch_stats"]
-                batch_id = len(self.prompt.source_materials) - 1
-
-                # experiment
-                doc_sources_per_batch = self.prompt.source_materials[-1]["biblio"]
-
-                # end - experiment
-
-                # 'pop' the last entry 'in-progress' off the list
-                self.prompt.source_materials = self.prompt.source_materials[:-1]
-
-        samples_chunked = []
-
-        for x in range(0,len(samples)):
-
-            t = self.token_counter(samples[x]["text"])
-
-            if t > self.prompt.context_window_size:
-                chunks = self.chunk_large_sample(samples[x])
-                samples_chunked += chunks
-            else:
-                samples_chunked.append(samples[x])
-
-        samples = samples_chunked
-
-        for x in range(0, len(samples)):
-
-            t = self.token_counter(samples[x]["text"])
-
-            if "file_source" in samples[x]:
-                source_fn = samples[x]["file_source"]
-            else:
-                source_fn = backup_source_filename
-
-            if "page_num" in samples[x]:
-                page_num = samples[x]["page_num"]
-            else:
-                if "master_index" in samples[x]:
-                    page_num = samples[x]["master_index"]
-                else:
-                    # if can not retrieve from metadata, then set as default - page 1
-                    page_num = 1
-
-            if "doc_id" in samples[x]:
-                    doc_id = samples[x]["doc_id"]
-            else:
-                    # if can not retrieve from metadata, then set as default - doc_id 1
-                    doc_id = 1
-
-            if "block_id" in samples[x]:
-                    block_id = samples[x]["block_id"]
-            else:
-                    # if can not retrieve from metadata, then set as default - block_id 1
-                    block_id = 1
-
-            # keep aggregating text batch up to the size of the target context_window for selected model
-            if (t + token_counter) < self.prompt.context_window_size:
-
-                # appends separator at end of sample text before adding the next chunk of text
-                current_batch += samples[x]["text"] + self.prompt.batch_separator
-                batch_char_len = len(current_batch)
-
-                new_source = {"batch_source_id": len(batch_metadata),
-                              "evidence_start_char": char_counter,
-                              # remove adding char_counter to evidence_stop_char
-                              "evidence_stop_char": batch_char_len,
-                              "source_name": source_fn,
-                              "page_num": page_num,
-                              "doc_id": doc_id,
-                              "block_id": block_id,
-                              }
-
-                batch_metadata.append(new_source)
-
-                char_counter = batch_char_len
-                token_counter += t
-
-                # new trackers
-                sample_counter += 1
-                if source_fn not in doc_sources:
-                    doc_sources.update({source_fn: [page_num]})
-                else:
-                    if page_num not in doc_sources[source_fn]:
-                        doc_sources[source_fn].append(page_num)
-
-                if source_fn not in doc_sources_per_batch:
-                    doc_sources_per_batch.update({source_fn: [page_num]})
-                else:
-                    if page_num not in doc_sources_per_batch[source_fn]:
-                        doc_sources_per_batch[source_fn].append(page_num)
-
-            else:
-                # capture number of tokens in batch
-                tokens_per_batch.append(token_counter)
-                samples_per_batch.append(sample_counter)
-                sample_counter = 1
-
-                biblio_per_batch.append(doc_sources_per_batch)
-
-                # doc_sources_per_batch = {}
-
-                if "file_source" in samples[x]:
-                    doc_filename = samples[x]["file_source"]
-                else:
-                    doc_filename = backup_source_filename
-
-                if "page_num" in samples[x]:
-                    page_num = samples[x]["page_num"]
-                else:
-                    # adding check for master_index
-                    if "master_index" in samples[x]:
-                        page_num = samples[x]["master_index"]
-                    else:
-                        # if no page_num identified, then default is page 1
-                        page_num = 1
-
-                # doc_sources_per_batch.update({doc_filename: [page_num]})
-                biblio = doc_sources_per_batch
-
-                # reset
-                doc_sources_per_batch = {}
-
-                batches.append(current_batch)
-                meta.append(batch_metadata)
-
-                if add_to_prompt:
-                    # corrected batch_id counter
-                    new_batch_dict = {"batch_id": batch_id, "text": current_batch, "metadata": batch_metadata,
-                                      "biblio": biblio, "batch_stats":
-                                          {"tokens": token_counter,
-                                           "chars": len(current_batch),
-                                           "samples": len(batch_metadata)}}
-
-                    self.prompt.source_materials.append(new_batch_dict)
-
-                    batch_id += 1
-
-                # reset current_batch -> current snippet
-                current_batch = samples[x]["text"]
-                token_counter = t
-                new_source = {"batch_source_id": 0,
-                              "evidence_start_char": 0,
-                              "evidence_stop_char": len(samples[x]["text"]),
-                              "source_name": source_fn,
-                              "page_num": page_num,
-                              "doc_id": doc_id,
-                              "block_id": block_id,
-                              }
-
-                batch_metadata = [new_source]
-                char_counter = len(samples[x]["text"])
-
-                # insert change - dec 23
-                if doc_filename not in doc_sources_per_batch:
-                    doc_sources_per_batch.update({doc_filename: [page_num]})
-                else:
-                    if page_num not in doc_sources_per_batch[doc_filename]:
-                        doc_sources_per_batch[doc_filename].append(page_num)
-                # end - insert change
-
-        if len(current_batch) > 0:
-
-            batches.append(current_batch)
-            meta.append(batch_metadata)
-
-            if add_to_prompt:
-                # change batch_id from batches -> len(batches)
-                new_batch_dict = {"batch_id": batch_id, "text": current_batch, "metadata": batch_metadata,
-                                  "biblio": doc_sources_per_batch, "batch_stats": {"tokens": token_counter,
-                                                                                   "chars": len(current_batch),
-                                                                                    "samples": len(batch_metadata)}}
-
-                self.prompt.source_materials.append(new_batch_dict)
-
-                # batch_id += 1
-
-            # add new stats for last batch
-            tokens_per_batch.append(token_counter)
-            samples_per_batch.append(sample_counter)
-            biblio_per_batch.append(doc_sources_per_batch)
-
-        new_sources = {"text_batch": batches, "metadata_batch": meta, "batches_count": len(batches)}
-
-        return new_sources
-
-    def chunk_large_sample(self, sample):
-
-        """ If single sample bigger than the context window, then break up into smaller chunks """
-
-        chunks = []
-        max_size = self.prompt.context_window_size
-        sample_len = self.token_counter(sample["text"])
-
-        chunk_count = sample_len // max_size
-        if max_size * chunk_count < sample_len:
-            chunk_count += 1
-
-        stopper = 0
-        base_dict = {}
-        for key, values in sample.items():
-            base_dict.update({key:values})
-
-        sample_tokens = self.tokenize(sample["text"])
-
-        for x in range(0,chunk_count):
-            starter = stopper
-            stopper = min((x+1)*max_size,sample_len)
-            new_chunk_tokens = sample_tokens[starter:stopper]
-            new_dict = base_dict
-            new_dict.update({"text":self.tokenizer.decode(new_chunk_tokens)})
-            chunks.append(new_dict)
-
-        return chunks
 
 
 class QualityCheck:

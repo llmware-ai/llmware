@@ -1159,6 +1159,22 @@ global_model_repo_catalog_list = [
      "marker_tokens": [], "marker_token_lookup": {}, "primary_keys": ["key data points"], "fc_output_values": [],
      "function": ["extract"]},
 
+ {"model_name": "slim-extract-tool", "display_name": "slim-extract-tool",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
+  "model_location": "llmware_repo", "context_window": 2048, "instruction_following": False,
+  "prompt_wrapper": "human_bot", "temperature": 0.0, "sample_default": False, "trailing_space": "",
+  "gguf_file": "slim-extract.gguf", "gguf_repo": "llmware/slim-extract-tool",
+  "link": "https://huggingface.co/llmware/slim-extract-tool",
+  "custom_model_files": [], "custom_model_repo": "", "output_type": "dict",
+  "function_call": True, "primary_keys": ["key data points"], "fc_output_values": [],
+  "tokenizer": "llmware/slim-extract",
+  "tokenizer_local": "tokenizer_stablelm.json",
+  "marker_tokens": [],
+  "marker_token_lookup": {}, "function": ["extract"],
+  "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+  "validation_files": ["slim-extract.gguf"],
+  },
+
   # NEW
   {"model_name": "slim-extract-phi-3-gguf", "display_name": "slim-extract-phi-3-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
