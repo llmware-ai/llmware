@@ -375,7 +375,21 @@ global_model_repo_catalog_list = [
      "custom_model_files": [], "custom_model_repo": "",
      "hf_repo": "llmware/dragon-mistral-7b-v0"},
 
-    {"model_name": "llmware/dragon-red-pajama-7b-v0", "display_name": "dragon-red-pajama-7b",
+ {"model_name": "llmware/dragon-mistral-0.3", "display_name": "dragon-mistral-0.3",
+  "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+  "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+  "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-mistral-0.3",
+  "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "llmware/dragon-mistral-0.3"},
+
+ {"model_name": "llmware/dragon-qwen-7b", "display_name": "dragon-qwen-7b",
+  "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+  "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+  "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-qwen-7b",
+  "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "llmware/dragon-qwen-7b"},
+
+ {"model_name": "llmware/dragon-red-pajama-7b-v0", "display_name": "dragon-red-pajama-7b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-red-pajama-7b-v0",
@@ -410,7 +424,14 @@ global_model_repo_catalog_list = [
      "custom_model_files": [], "custom_model_repo": "",
      "hf_repo": "llmware/dragon-deci-7b-v0"},
 
-   # adding bling-phi-3
+ {"model_name": "llmware/dragon-llama-3.1", "display_name": "dragon-llama-3.1",
+  "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+  "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+  "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-llama-3.1",
+  "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "llmware/dragon-llama-3.1"},
+
+ # adding bling-phi-3
    {"model_name": "llmware/bling-phi-3", "display_name": "bling-phi-3",
     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
     "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -418,7 +439,15 @@ global_model_repo_catalog_list = [
     "custom_model_files": [], "custom_model_repo": "",
     "hf_repo": "llmware/bling-phi-3"},
 
-    # gguf models
+ # adding bling-phi-3.5
+ {"model_name": "llmware/bling-phi-3.5", "display_name": "bling-phi-3.5",
+  "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+  "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+  "temperature": 0.0, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-phi-3.5",
+  "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "llmware/bling-phi-3.5"},
+
+ # gguf models
    {"model_name": "bling-phi-3-gguf", "display_name": "llmware/bling-phi-3-gguf",
     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
     "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -430,6 +459,45 @@ global_model_repo_catalog_list = [
     "tokenizer_local": "tokenizer_phi3.json",
     "link": "https://huggingface.co/llmware/bling-phi-3-gguf",
     "custom_model_files": [], "custom_model_repo": ""},
+
+ # NEW
+ {"model_name": "bling-phi-3.5-gguf", "display_name": "llmware/bling-phi-3.5-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+  "temperature": 0.0, "trailing_space": "",
+  "gguf_file": "bling-phi3-5.gguf",
+  "gguf_repo": "llmware/bling-phi-3.5-gguf",
+  "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+  "validation_files": ["bling-phi3-5.gguf"],
+  "tokenizer_local": "tokenizer_phi3.json",
+  "link": "https://huggingface.co/llmware/bling-phi-3.5-gguf",
+  "custom_model_files": [], "custom_model_repo": ""},
+
+ # NEW
+ {"model_name": "dragon-llama-3.1-gguf", "display_name": "llmware/dragon-llama-3.1-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+  "temperature": 0.0, "trailing_space": "",
+  "gguf_file": "dragon-llama31.gguf",
+  "gguf_repo": "llmware/dragon-llama-3.1-gguf",
+  "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+  "validation_files": ["dragon-llama31.gguf"],
+  "tokenizer_local": "tokenizer_phi3.json",
+  "link": "https://huggingface.co/llmware/dragon-llama-3.1-gguf",
+  "custom_model_files": [], "custom_model_repo": ""},
+
+# NEW
+ {"model_name": "dragon-mistral-0.3-gguf", "display_name": "llmware/dragon-mistral-0.3-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+  "temperature": 0.0, "trailing_space": "",
+  "gguf_file": "dragon-mistral-03.gguf",
+  "gguf_repo": "llmware/dragon-mistral-0.3-gguf",
+  "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+  "validation_files": ["dragon-mistral-03.gguf"],
+  "tokenizer_local": "tokenizer_phi3.json",
+  "link": "https://huggingface.co/llmware/dragon-mistral-0.3-gguf",
+  "custom_model_files": [], "custom_model_repo": ""},
 
  # NEW
  {"model_name": "bling-phi-2-gguf", "display_name": "llmware/bling-phi-2-gguf",
@@ -565,8 +633,71 @@ global_model_repo_catalog_list = [
     "link": "https://huggingface.co/llmware/dragon-mistral-answer-tool",
     "custom_model_files": [], "custom_model_repo": ""},
 
-    # selected top HF open source chat models - gguf
-    {"model_name": "TheBloke/Llama-2-7B-Chat-GGUF", "display_name": "llama-2-7b-chat-gguf",
+
+ # selected top HF open source chat models - gguf
+
+ # NEW
+{"model_name": "phi-3.5-gguf", "display_name": "phi-3.5-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 2048, "instruction_following": True, "prompt_wrapper": "phi_3",
+  "temperature": 0.3, "trailing_space": "",
+  "gguf_file": "phi35.gguf",
+  "gguf_repo": "llmware/bonchon",
+  "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+  "validation_files": ["phi35.gguf"],
+  "link": "https://huggingface.co/llmware/bonchon",
+  "custom_model_files": [], "custom_model_repo": ""},
+
+ # NEW
+{"model_name": "qwen2-7B-instruct-gguf", "display_name": "qwen2-7B-instruct-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 2048, "instruction_following": True, "prompt_wrapper": "hf_chat",
+  "temperature": 0.3, "trailing_space": "",
+  "gguf_file": "qwen2-7b-instruct.gguf",
+  "gguf_repo": "llmware/bonchon",
+  "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+  "validation_files": ["qwen2-7b-instruct.gguf"],
+  "link": "https://huggingface.co/llmware/bonchon",
+  "custom_model_files": [], "custom_model_repo": ""},
+
+# NEW
+{"model_name": "qwen2-1.5b-instruct-gguf", "display_name": "qwen2-1.5b-instruct-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 2048, "instruction_following": True, "prompt_wrapper": "hf_chat",
+  "temperature": 0.3, "trailing_space": "",
+  "gguf_file": "qwen-instruct-1-5b.gguf",
+  "gguf_repo": "llmware/bonchon",
+  "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+  "validation_files": ["qwen-instruct-1-5b.gguf"],
+  "link": "https://huggingface.co/llmware/bonchon",
+  "custom_model_files": [], "custom_model_repo": ""},
+
+# NEW
+{"model_name": "qwen2-0.5b-instruct-gguf", "display_name": "qwen2-0.5b-instruct-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 2048, "instruction_following": True, "prompt_wrapper": "hf_chat",
+  "temperature": 0.3, "trailing_space": "",
+  "gguf_file": "qwen2-0_5b-instruct-q4_k_m.gguf",
+  "gguf_repo": "llmware/bonchon",
+  "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+  "validation_files": ["qwen2-0_5b-instruct-q4_k_m.gguf"],
+  "link": "https://huggingface.co/llmware/bonchon",
+  "custom_model_files": [], "custom_model_repo": ""},
+
+#TODO:  NEW = meta-llama/Meta-Llama-3.1-8B-Instruct
+{"model_name": "llama-3.1-instruct-gguf", "display_name": "llama-3.1-instruct-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 2048, "instruction_following": True, "prompt_wrapper": "hf_chat",
+  "temperature": 0.3, "trailing_space": "",
+  "gguf_file": "llama-31-instruct.gguf",
+  "gguf_repo": "llmware/bonchon",
+  "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+  "validation_files": ["llama-31-instruct.gguf"],
+  "link": "https://huggingface.co/llmware/bonchon",
+  "custom_model_files": [], "custom_model_repo": ""},
+
+
+ {"model_name": "TheBloke/Llama-2-7B-Chat-GGUF", "display_name": "llama-2-7b-chat-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
      "context_window": 2048, "instruction_following": True, "prompt_wrapper": "<INST>",
      "temperature": 0.3, "trailing_space": "",
