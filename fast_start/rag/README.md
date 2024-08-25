@@ -18,7 +18,7 @@ Platforms:
 - Mac M1/M2/M3, Windows, Linux (Ubuntu 20 or Ubuntu 22 preferred)  
 - RAM: 16 GB minimum  
 - Python 3.9, 3.10, 3.11, 3.12 
-- Pull the latest version of llmware == 0.3.0 (as of early June 2024)  
+- Pull the latest version of llmware    
 - Please note that we have updated the examples from the original versions, to use new features in llmware, so there may be minor differences with the videos, which are annotated in the comments in each example.    
   
 There are 9 examples, designed to be used step-by-step, but each is self-contained,  
