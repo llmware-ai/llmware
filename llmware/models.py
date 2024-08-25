@@ -32,7 +32,7 @@ from llmware.exceptions import (DependencyNotInstalledException, ModuleNotFoundE
                                 ModelCardNotRegisteredException, GGUFLibNotLoadedException, LLMWareException)
 
 from llmware.model_configs import (global_model_repo_catalog_list, global_model_finetuning_prompt_wrappers_lookup,
-                                   global_default_prompt_catalog)
+                                   global_default_prompt_catalog, model_benchmark_data)
 
 from llmware.gguf_configs import *
 from llmware.gguf_configs import _LlamaModel, _LlamaContext, _LlamaBatch, _LlamaTokenDataArray
@@ -1305,6 +1305,90 @@ class ModelCatalog:
                 break
 
         return my_model
+
+    def save_benchmark_report(self, fp=None,fn=None):
+
+        """ Saves model benchmark score data to jsonl file.  Optional inputs to assign folder path (fp) and
+        filename (fn).  If not provided, then will be saved in llmware_data path with default name.
+        """
+
+        if not fp:
+            fp = LLMWareConfig().get_llmware_path()
+
+        if not fn:
+            fn = "llmware_model_benchmark_scores"
+
+        test_fn = fn + ".jsonl"
+
+        f_out = open(os.path.join(fp, test_fn), "w")
+
+        for entry in model_benchmark_data:
+            jsonl_row = json.dumps(entry)
+            f_out.write(jsonl_row)
+            f_out.write("\n")
+
+        f_out.close()
+
+        return fp
+    def get_benchmark_score(self, model_name):
+
+        """ Looks up benchmark score for a model, if available. Returns None if no benchmark available. """
+
+        for i, entry in enumerate(model_benchmark_data):
+            if entry["model_name"] == model_name:
+                return entry
+
+        logger.debug(f"ModelCatalog - get_benchmark_score - {model_name} does not have a benchmark available.")
+
+        return None
+
+    def get_benchmark_by_filter (self, conditions=None):
+
+        """ Will apply a list of {key:value} conditions to provide a subset of models that fit the conditions.
+
+        Conditions are a list of dictionaries, with each dictionary entry consisting of the following:
+            -- {key, "eval str"},
+            -- e.g., {"parameters", "parameters < 3"}
+
+        To create multiple conditions - create a list of several dictionaries:
+            -- e.g., [ {"parameters", "parameters < 6"}, {"accuracy_score", "accuracy_score > 95"} ]
+        """
+
+        if not conditions:
+
+            logger.debug("ModelCatalog - get_benchmark_by_filter - no conditions provided, so returning all of the "
+                         "benchmark data list.")
+
+            return model_benchmark_data
+
+        if isinstance(conditions,dict):
+            conditions = [conditions]
+        else:
+            if not isinstance(conditions,list):
+                logger.warning(f"ModelCatalog - conditions should be structured as a list of dictionary entries, "
+                               f"with each dictionary entry consisting of a pair of a key:eval_str")
+                return model_benchmark_data
+
+        results = []
+        for i, entry in enumerate(model_benchmark_data):
+
+            num_conditions = 0
+            true_conditions = 0
+
+            for cond in conditions:
+                if isinstance(cond, dict):
+                    num_conditions += 1
+                    for key,value in cond.items():
+                        print(key, value)
+                        if key in entry:
+                            truth_value = eval(value, {key:entry[key]})
+                            if truth_value:
+                                true_conditions += 1
+
+            if num_conditions > 0 and num_conditions == true_conditions:
+                results.append(entry)
+
+        return results
 
     def get_llm_toolkit(self, tool_list=None, api_key=None):
 
