@@ -1,6 +1,6 @@
 
 
-Fast Start: Learning RAG with llmware through examples  
+Fast Start: Building Agent workflows with small language models with llmware  
 ===============
 
 **Welcome to llmware!**    
@@ -18,42 +18,48 @@ Platforms:
 - Mac M1/M2/M3, Windows, Linux (Ubuntu 20 or Ubuntu 22 preferred)  
 - RAM: 16 GB minimum  
 - Python 3.9, 3.10, 3.11, 3.12 
-- Pull the latest version of llmware == 0.3.0 (as of early June 2024)  
+- Pull the latest version of llmware
 - Please note that we have updated the examples from the original versions, to use new features in llmware, so there may be minor differences with the videos, which are annotated in the comments in each example.    
   
-There are 9 examples, designed to be used step-by-step, but each is self-contained,  
+There are 15 examples, designed to be used step-by-step, but each is self-contained,  
 so you can feel free to jump into any of the examples, in any order, that you prefer.  
 
 Each example has been designed to be "copy-paste" and RUN with lots of helpful comments and explanations embedded in the code samples.  
 
-Please check out our [Fast Start Youtube tutorials](https://www.youtube.com/playlist?list=PL1-dn33KwsmD7SB9iSO6vx4ZLRAWea1DB) that walk through each example below.  
+Examples:  
 
-Examples:
+1.  **Start here** - start downloading and running question-answering and function-calling models in minutes.   
 
-**Section I - Learning the Main Components**
-1.  **Library** - parse, text chunk, and index to convert a "pile of files" into an AI-ready knowledge-base.  [Video](https://youtu.be/2xDefZ4oBOM?si=8vRCvqj0-HG3zc4c)  
-  
-2.  **Embeddings** - apply an embedding model to the Library, store vectors, and start enabling natural language queries.  [Video](https://youtu.be/xQEk6ohvfV0?si=B3X25ZsAZfW4AR_3)
-   
-3.  **Prompts** & **Model Catalog** - start running inferences and building prompts.  [Video](https://youtu.be/swiu4oBVfbA?si=0IVmLhiiYS3-pMIg)
+2.  **llmware_sampler_bling_dragon** - get started with BLING and DRAGON models for high-quality, fact-based inferencing.  
 
-**Section II - Connecting Knowledge with Prompts - 3 scenarios**  
+3.  **using-slim-extract** - start using a function-calling small specialized model for extracting information from documents.  
 
-4.  **RAG with Text Query** - start integrating documents into prompts.  [Video](https://youtu.be/6oALi67HP7U?si=pAbvio4ULXTIXKdL)
-  
-5.  **RAG with Semantic Query** - use natural language queries on documents and integrate with prompts.  [Video](https://youtu.be/XT4kIXA9H3Q?si=EBCAxVXBt5vgYY8s)
-    
-6.  **RAG with more complex retrieval** - start integrating more complex retrieval patterns.  [Video](https://youtu.be/G1Q6Ar8THbo?si=vIVAv35uXAcnaUJy)  
+4.  **using-slim-summary** - start using a function-calling small specialized model for summarizing information.  
 
-**Section III - Function Calls & Agents**  
+5.  **agent-llmfx** - build your first agent process and run it all locally.   
 
-7.  **Function Calls** - move beyond 'question-answer' prompting and start prompting with function calls.  
+6.  **agent-multistep-process** - a second example of a multi-step agent process to analyze, classify and extract information from a complex document.  
 
-8.  **Agents** - the power of function calls is the ability to integrate model function calls as 'tools' available to an agent orchestrator.  [Video](https://youtu.be/cQfdaTcmBpY?si=pMWQj0qpPBVRmm34)  
+7.  **using-whisper** - voice transcription to text in minutes, running locally with whisper-cpp.  
 
-9.  **Function Calls with Web Services** - one of the most exciting use cases is the ability to combine function calls with web services.   [Video](https://youtu.be/l0jzsg1_Ik0?si=ifwxVi_Z6I_hNtcf)  
+8.  **using-phi-3-function-calls** - using phi3-mini for various function call processes.  
 
-After completing these 9 examples, you should have a good foundation and set of recipes to start 
+9.  **summarize_document** - summarizing a larger document.  
+
+10.  **semantic similarity ranking** - using a semantic reranker to filter and build relevant text chunks from larger documents.  
+
+11.  **gguf_streaming** - use the stream interface to stream text for larger generations.  
+
+12.  **web_services** - integrate web services to build a complex research report, combined with three distinct function calling models.  
+
+13.  **text-2-sql** - convert natural language queries into SQL and extract information from structured databases.  
+
+14.  **rag-instruct-benchark-tester** - script for building rag benchmark performance tests.  
+
+15.  **using-rag-benchmark-scores** - how to access and filter models by ranking accuracy on the benchmark test.    
+
+
+After completing these 15 examples, you should have a good foundation and set of recipes to start 
 exploring the other 100+ examples in the /examples folder, and build more sophisticated 
 LLM-based applications.  
 
@@ -62,25 +68,6 @@ LLM-based applications.
   - If you want to substitute for any other model in the catalog, it is generally as easy as 
     switching the model_name.  If the model requires API keys, we show in the examples how to pass those keys as an
     environment variable.  
-
-**Collection Databases**  
-  - Our parsers are optimized to index text chunks directly into a persistent data store.   
-  - For Fast Start, we will use "sqlite" which is an embedded database, requiring no install  
-  - For more scalable deployment, we would recommend either "mongo" or "postgres"  
-  - Install instructions for "mongo" and "postgres" are provided in docker-compose files in the repository  
-
-**Vector Databases**  
-   - For Fast Start, we will use a no-install vector db (in Examples 2 and 5 specifically).  
-   - There are 4 no-install options supported, but depending upon your enviroment, you may need to pip3 install the corresponding vector db python sdk, eg.:  
-     
-     - chromadb:  `pip3 install chromadb`  
-     - milvus lite: `pip3 install pymilvus`  (Mac and Linux only)  
-     - faiss: `pip3 install faiss`   
-     - lancedb: `pip3 install lancedb`  
-       
-   - For more scalable deployment, we would recommend installing one of 9 supported vector databases, 
-     including Milvus, PGVector (Postgres), Redis, Qdrant, Neo4j, Mongo-Atlas, Chroma, LanceDB, or Pinecone.   
-   - Install instructions provided in "examples/Embedding" for specific db, as well as docker-compose scripts.  
 
 **Local Private**
     - All of the processing will take place locally on your laptop.
