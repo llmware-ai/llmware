@@ -4,11 +4,13 @@
 
 from llmware.models import ModelCatalog
 
+slim_xsum_models = ["slim-xsum-tool", "slim-xsum-phi-3-gguf"]
+
 #   load the model
-model = ModelCatalog().load_model("slim-xsum-tool",sample=False, temperature=0.0, max_output=200)
+model = ModelCatalog().load_model("slim-xsum-phi-3-gguf",sample=False, temperature=0.0, max_output=200)
 
 #   load the test dataset packaged with the model (will be cached locally the first time you load)
-test_set = ModelCatalog().get_test_script("slim-xsum-tool")
+test_set = ModelCatalog().get_test_script("slim-xsum-phi-3-gguf")
 
 #   iterate through the test set samples
 for i, sample in enumerate(test_set):
