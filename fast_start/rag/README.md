@@ -1,16 +1,9 @@
 
 
-Fast Start: Learning llmware through examples  
+Fast Start: Learning RAG with llmware through examples  
 ===============
 
 **Welcome to llmware!**    
-
-llmware has two separate fast start modules, depending upon your objective and use case:
-
-1. [**Agents**](https://www.github.com/llmware-ai/llmware/tree/main/fast_start/agents) - this structured set of examples will introduce you quickly to deploying small specialized language models - get started running models on your laptop, executing function calls, and building agent-based workflows in minutes.
-
-2.  [**RAG**](https://www.github.com/llmware-ai/llmware/tree/main/fast_start/rag) - this is our original course that builds up each step in the process of building an AI-ready knowledge base, and connecting to the knowledge base with models.   It will cover models and agents, but in the process of building a wider RAG foundation in terms of parsing, text chunking, embedding, retrieval, and creating Libraries.  
-
 
 Set up  
 
@@ -35,7 +28,7 @@ Each example has been designed to be "copy-paste" and RUN with lots of helpful c
 
 Please check out our [Fast Start Youtube tutorials](https://www.youtube.com/playlist?list=PL1-dn33KwsmD7SB9iSO6vx4ZLRAWea1DB) that walk through each example below.  
 
-**RAG Course:**  
+Examples:
 
 **Section I - Learning the Main Components**
 1.  **Library** - parse, text chunk, and index to convert a "pile of files" into an AI-ready knowledge-base.  [Video](https://youtu.be/2xDefZ4oBOM?si=8vRCvqj0-HG3zc4c)  
