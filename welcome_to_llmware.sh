@@ -11,7 +11,7 @@ pip3 install -r ./llmware/requirements_extras.txt
 
 # Move selected examples into root path for easy execution from command line
 scp ./examples/Getting_Started/welcome_example.py .
-scp ./fast_start/*.py .
+scp ./fast_start/rag/*.py .
 scp ./examples/UI/gguf_streaming_chatbot.py .
 scp ./examples/SLIM-Agents/agent-llmfx-getting-started.py .
 scp ./examples/SLIM-Agents/using_slim_extract_model.py .
