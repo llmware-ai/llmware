@@ -2,7 +2,10 @@
 """ This example illustrates how to use the slim-extract model to extract custom keys from selected text.
     We have included a set of sample earnings releases (comprising lines ~10 - ~385 of this script), and run a
     simple loop through the earnings releases, showing how to create an extract prompt to identify
-    'revenue growth' from these examples. """
+    'revenue growth' from these examples.
+
+    There are several function-calling models in the slim-extract family, fine-tuned on multiple leading
+    small model base foundations - full list and options are below in the code.  """
 
 from llmware.models import ModelCatalog
 
@@ -391,8 +394,17 @@ earnings_releases = [
 
 #   *** Execution script starts here ***
 
+#   specialized function-calling extraction models on top of several leading small model bases,
+#   ranging from 0.5b (qwen2) - 3.8b (phi3)
+
+slim_extract_models = ["slim-extract-tool",                 #   original - stablelm-3b (2.7b)
+                       "slim-extract-tiny-tool",            #   tiny-llama 1.1b
+                       "slim-extract-qwen-1.5b-gguf",       #   **NEW** qwen 1.5b
+                       "slim-extract-phi-3-gguf",           #   **NEW** phi-3 (3.8b)
+                       "slim-extract-qwen-0.5b-gguf"]       #   **NEW** qwen 0.5b
+
 #   load the model
-model = ModelCatalog().load_model("slim-extract-tool",sample=False, temperature=0.0, max_output=200)
+model = ModelCatalog().load_model("slim-extract-tool",sample=False,temperature=0.0, max_output=100)
 
 #   iterate through the earnings release samples above
 for i, sample in enumerate(earnings_releases):
