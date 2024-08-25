@@ -798,8 +798,8 @@ If you would like to use a proprietary model, you will need to provide your own 
 
 - 💡 Making it easy to deploy fine-tuned open source models to build state-of-the-art RAG workflows  
 - 💡 Private cloud - keeping documents, data pipelines, data stores, and models safe and secure  
-- 💡 Model quantization, especially GGUF, and democratizing the game-changing use of 1-7B CPU-based LLMs  
-- 💡 Developing small specialized RAG optimized LLMs between 1B-7B parameters  
+- 💡 Model quantization, especially GGUF, and democratizing the game-changing use of 1-9B CPU-based LLMs  
+- 💡 Developing small specialized RAG optimized LLMs between 1B-9B parameters  
 - 💡 Industry-specific LLMs, embedding models and processes to support core knowledge-based use cases  
 - 💡 Enterprise scalability - containerization, worker deployments and Kubernetes  
 - 💡 Integration of SQL and other scale enterprise data sources  
@@ -818,12 +818,38 @@ Questions and discussions are welcome in our [github discussions](https://github
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
 **Thursday, August 22 - v0.3.5-WIP**  
-- Added 12 new DRAGON+BLING+SLIM models to Model Catalog - featuring Qwen2, Phi3 and Yi-9B - examples coming soon  
+- Added 10 new BLING+SLIM models to Model Catalog - featuring Qwen2, Phi-3 and Phi-3.5  
+- Launched new DRAGON models on Qwen-7B, Yi-9B, Mistral-v0.3, and Llama-3.1  
+- New Qwen2 Models (and RAG + function-calling fine-tunes) - [using-qwen2-models](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using-qwen2-models.py)  
+- New Phi-3 function calling models - [using-phi-3-function-calls](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using-phi-3-function-calls.py)  
 - New use case example - [lecture_tool](https://github.com/llmware-ai/llmware/blob/main/examples/Use_Cases/lecture_tool/)   
 - Improved GGUF Configs to expand context window    
 - Enhanced Utilities hashing functions  
 - Changes merged in main branch and will be posted on pypi later this week   
   
+For complete history of release notes, please open the Change log tab.  
+
+**Supported Operating Systems**: MacOS (Metal - M1/M2/M3), Linux (x86), and Windows  
+- Linux - support Ubuntu 20+  (glibc 2.31+)   
+- if you need another Linux version, please raise an issue - we will prioritize testing and ensure support.  
+
+**Supported Vector Databases**: Milvus, Postgres (PGVector), Neo4j, Redis, LanceDB, ChromaDB, Qdrant, FAISS, Pinecone, Mongo Atlas Vector Search
+
+**Supported Text Index Databases**: MongoDB, Postgres, SQLite  
+
+
+<details>
+<summary><b>Optional</b></summary>
+
+- [Docker](https://docs.docker.com/get-docker/)
+  
+- To enable the OCR parsing capabilities, install [Tesseract v5.3.3](https://tesseract-ocr.github.io/tessdoc/Installation.html) and [Poppler v23.10.0](https://poppler.freedesktop.org/) native packages.
+
+</details>
+
+<details>
+  <summary><b>🚧 Change Log</b></summary>
+
 **Monday, July 29 - v03.4**  
 - Enhanced safety protections for text2sql db reads for LLMfx agents   
 - New examples - see [example](https://github.com/llmware-ai/llmware/blob/main/examples/UI/dueling_chatbot.py)    
@@ -932,28 +958,6 @@ See also [additional deployment/install release notes in wheel_archives](https:/
 - Updated OpenAI support >=1.0 and new text-3 embedding models.    
 - SLIM model keys and output_values now accessible in ModelCatalog.  
 - Updating encodings to 'utf-8-sig' to better handle txt/csv files with bom.  
-
-**Supported Operating Systems**: MacOS (Metal and x86), Linux (x86 and aarch64), Windows  
-- note on Linux: we test most extensively on Ubuntu 22 and now Ubuntu 20 and recommend where possible  
-- if you need another Linux version, please raise an issue - we will prioritize testing and ensure support.  
-
-**Supported Vector Databases**: Milvus, Postgres (PGVector), Neo4j, Redis, LanceDB, ChromaDB, Qdrant, FAISS, Pinecone, Mongo Atlas Vector Search
-
-**Supported Text Index Databases**: MongoDB, Postgres, SQLite  
-
-
-
-<details>
-<summary><b>Optional</b></summary>
-
-- [Docker](https://docs.docker.com/get-docker/)
-  
-- To enable the OCR parsing capabilities, install [Tesseract v5.3.3](https://tesseract-ocr.github.io/tessdoc/Installation.html) and [Poppler v23.10.0](https://poppler.freedesktop.org/) native packages.
-
-</details>
-
-<details>
-  <summary><b>🚧 Change Log</b></summary>
 
 **Latest Updates - 19 Jan 2024 - llmware v0.2.0**
   - Added new database integration options - Postgres and SQlite
