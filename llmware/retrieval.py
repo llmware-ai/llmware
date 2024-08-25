@@ -25,7 +25,11 @@ import logging
 import os
 from collections import Counter
 from datetime import datetime
-from bson.objectid import ObjectId
+
+try:
+    from bson.objectid import ObjectId
+except:
+    pass
 
 from llmware.configs import LLMWareConfig
 from llmware.embeddings import EmbeddingHandler
