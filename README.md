@@ -603,7 +603,7 @@ if __name__ == "__main__":
 
 ## 🔥 What's New? 🔥  
 
--**Benchmarking Small Model Capabilities** - see [benchmark results](https://medium.com/@darrenoberst/best-small-language-models-for-accuracy-and-enterprise-use-cases-benchmark-results-cf71964759c8) and using these results in llmware [model_ranking example](https://github.com/llmware-ai/llmware/tree/main/fast_start/agents/agents-15-get_model_benchmarks.py)  
+-**Benchmarking Small Model Capabilities** - see [benchmark results](https://medium.com/@darrenoberst/best-small-language-models-for-accuracy-and-enterprise-use-cases-benchmark-results-cf71964759c8) and [model_ranking example](fast_start/agents/agents-15-get_model_benchmarks.py)  
 
 -**Using Qwen2 Models for RAG, Function Calling and Chat** - get started in minutes - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-qwen2-models.py)  
 
