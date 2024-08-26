@@ -1379,7 +1379,6 @@ class ModelCatalog:
                 if isinstance(cond, dict):
                     num_conditions += 1
                     for key,value in cond.items():
-                        print(key, value)
                         if key in entry:
                             truth_value = eval(value, {key:entry[key]})
                             if truth_value:
