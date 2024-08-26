@@ -20,7 +20,7 @@ Most of our examples can be run without a GPU server - get started right away on
 
 [Join us on Discord](https://discord.gg/MhZn5Nc39h)   |  [Watch Youtube Tutorials](https://www.youtube.com/@llmware)  | [Explore our Model Families on Huggingface](https://www.huggingface.co/llmware)   
 
-New to Agents?  [Check out the Agent Fast Start series](https://github.com/llmware-ai/llmware/fast_start/agents)  
+New to Agents?  [Check out the Agent Fast Start series](https://github.com/llmware-ai/llmware/tree/main/fast_start/agents)  
 
 New to RAG?  [Check out the Fast Start video series](https://www.youtube.com/playlist?list=PL1-dn33KwsmD7SB9iSO6vx4ZLRAWea1DB)  
 
@@ -603,7 +603,7 @@ if __name__ == "__main__":
 
 ## 🔥 What's New? 🔥  
 
--**Benchmarking Small Model Capabilities** - see [benchmark results](https://medium.com/@darrenoberst/best-small-language-models-for-accuracy-and-enterprise-use-cases-benchmark-results-cf71964759c8) and how to start using these results in llmware [model_ranking example](https://github.com/llmware-ai/llmware/tree/main/fast_start/agents/agents-15-get_model_benchmarks.py)  
+-**Benchmarking Small Model Capabilities** - see [benchmark results](https://medium.com/@darrenoberst/best-small-language-models-for-accuracy-and-enterprise-use-cases-benchmark-results-cf71964759c8) and how to start using these results in llmware [model_ranking example](https://github.com/llmware-ai/llmware/tree/main/fast_start/agents/agents-15-get_model_benchmarks.py)    
 
 -**Using Qwen2 Models for RAG, Function Calling and Chat** - get started in minutes - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-qwen2-models.py)  
 
