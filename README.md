@@ -819,7 +819,7 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
-**Thursday, August 22 - v0.3.5-WIP**  
+**Monday, August 26 - v0.3.5**  
 - Added 10 new BLING+SLIM models to Model Catalog - featuring Qwen2, Phi-3 and Phi-3.5  
 - Launched new DRAGON models on Qwen-7B, Yi-9B, Mistral-v0.3, and Llama-3.1  
 - New Qwen2 Models (and RAG + function-calling fine-tunes) - [using-qwen2-models](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using-qwen2-models.py)  
@@ -828,7 +828,6 @@ See also [additional deployment/install release notes in wheel_archives](https:/
 - Improved GGUF Configs to expand context window  
 - Added model benchmark performance data to model configs 
 - Enhanced Utilities hashing functions  
-- Changes merged in main branch and will be posted on pypi later this week   
   
 For complete history of release notes, please open the Change log tab.  
 
