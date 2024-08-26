@@ -9,20 +9,20 @@ Set up
 
 `pip3 install llmware` or `pip3 install 'llmware[full]'` or, if you prefer clone the github repo locally, e.g., `git clone git@github.com:llmware-ai/llmware.git`.  If you clone the repo, then we would recommend that you run the `welcome_to_llmware.sh` or `welcome_to_llmware_windows.sh` scripts to install all of the dependencies.    
 
-Note: starting in llmware>=0.3.0, we offer two pip install options.  If you use the standard `pip3 install llmware`, then you will need to add a few additional pip3 installs to run examples 2 and 5 below, specifically:  
-
-  `pip3 install torch`  
-  `pip3 install transformers`  
-
 Platforms:  
 - Mac M1/M2/M3, Windows, Linux (Ubuntu 20 or Ubuntu 22 preferred)  
-- RAM: 16 GB minimum  
+- RAM: 16 GB minimum  (32 GB recommended)  
 - Python 3.9, 3.10, 3.11, 3.12 
-- Pull the latest version of llmware
-- Please note that we have updated the examples from the original versions, to use new features in llmware, so there may be minor differences with the videos, which are annotated in the comments in each example.    
-  
-There are 15 examples, designed to be used step-by-step, but each is self-contained,  
-so you can feel free to jump into any of the examples, in any order, that you prefer.  
+
+**What is an Agent in llmware?**  
+
+There are a lot of different industry definitions of an Agent or an agent-based process.   Our implementation is very specific in focusing on building multi-step, multi-model workflows that can be instantiated and run entirely locally or in a self-hosted manner.   We use small specialized models that are "tools" that can be easily stacked together as part of building a more complex pipeline consisting of multiple calls to LLMs, along with other processing logic.  
+
+In short, we see agents as the way to evolve beyond simple chatbots, and start using LLMs to unlock enterprise process automation, and integrating LLMs safely, securely and cost-effectively into private enterprise workflows.    
+
+Each of these examples below will walk you through the basics of how to start using models in llmware, and then how to start composing more complex applications by combining different combinations of models and related tools.
+
+There are 15 examples, designed to be used step-by-step, but each is self-contained, so you can feel free to jump into any of the examples, in any order, that you prefer.  
 
 Each example has been designed to be "copy-paste" and RUN with lots of helpful comments and explanations embedded in the code samples.  
 
@@ -32,9 +32,9 @@ Examples:
 
 2.  **llmware_sampler_bling_dragon** - get started with BLING and DRAGON models for high-quality, fact-based inferencing.  
 
-3.  **using-slim-extract** - start using a function-calling small specialized model for extracting information from documents.  
+3.  **using-slim-extract** - start using function-calling small specialized models for extracting information from documents.  
 
-4.  **using-slim-summary** - start using a function-calling small specialized model for summarizing information.  
+4.  **using-slim-summary** - start using function-calling small specialized models for summarizing information.  
 
 5.  **agent-llmfx** - build your first agent process and run it all locally.   
 
@@ -44,7 +44,7 @@ Examples:
 
 8.  **using-phi-3-function-calls** - using phi3-mini for various function call processes.  
 
-9.  **summarize_document** - summarizing a larger document.  
+9.  **summarize_document** - summarizing a larger document in multiple chunks of the document and then assembling.  
 
 10.  **semantic similarity ranking** - using a semantic reranker to filter and build relevant text chunks from larger documents.  
 
