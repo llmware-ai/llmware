@@ -3247,6 +3247,7 @@ class CustomTable:
 
         #   check if table_name already registered in LLMWareTableSchema
         if table_name in LLMWareTableSchema().get_custom_tables() and not self.schema:
+
             self.schema = LLMWareTableSchema().get_custom_schema()[table_name]
 
         #   check if table already created in DB, and if not, create table
