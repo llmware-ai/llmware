@@ -748,6 +748,75 @@ class Utilities:
 
         return matches_found
 
+    def locate_query_match(self,query, core_text):
+
+        """ Utility function to locate the character-level match of a query inside a core_text. """
+
+        matches_found = []
+
+        # edge case - but return empty match if query is null
+        if not query:
+            return matches_found
+
+        b = CorpTokenizer(one_letter_removal=False, remove_stop_words=False, remove_punctuation=False,
+                          remove_numbers=False)
+
+        query_tokens = b.tokenize(query)
+
+        for x in range(0, len(core_text)):
+            match = 0
+            for key_term in query_tokens:
+                if len(key_term) == 0:
+                    continue
+
+                if key_term.startswith('"'):
+                    key_term = key_term[1:-1]
+
+                if core_text[x].lower() == key_term[0].lower():
+                    match += 1
+                    if (x + len(key_term)) <= len(core_text):
+                        for y in range(1, len(key_term)):
+                            if key_term[y].lower() == core_text[x + y].lower():
+                                match += 1
+                            else:
+                                match = -1
+                                break
+
+                        if match == len(key_term):
+                            new_entry = [x, key_term]
+                            matches_found.append(new_entry)
+
+        return matches_found
+
+    def highlighter(self,matches, core_string, highlight_start_token="<b>",
+                    highlight_end_token="</b>"):
+
+        """ Utility function to 'highlight' a selected token, based on matches, typically found
+        in locate_query_match function - useful for visual display of a matching keyword. """
+
+        # assumes by default:
+        #   highlight_start_token = "<b>"
+        #   highlight_end_token = "</b>"
+
+        updated_string = ""
+        cursor_position = 0
+
+        for mat in matches:
+            starter = mat[0]
+            keyword = mat[1]
+
+            updated_string += core_string[cursor_position:starter]
+            updated_string += highlight_start_token
+            updated_string += keyword
+            updated_string += highlight_end_token
+
+            cursor_position = starter + len(keyword)
+
+        if cursor_position < len(core_string):
+            updated_string += core_string[cursor_position:]
+
+        return updated_string
+
     def package_answer(self, raw_query, text_core, answer_window, x):
 
         """ Takes a raw_query, text and answer_window as input and returns a context window around matches

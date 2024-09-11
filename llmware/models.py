@@ -89,7 +89,8 @@ class _ModelRegistry:
     #   most fine-tuned models require a specific prompt wrapping that was used in the fine-tuning process
     #   we are treating these "prompt_wrappers" as core attributes of the model
     prompt_wrappers = ["alpaca", "human_bot", "chatgpt", "<INST>", "open_chat", "hf_chat", "chat_ml", "phi_3",
-                       "llama_3_chat"]
+                       "llama_3_chat","tiny_llama_chat","stablelm_zephyr_chat", "google_gemma_chat",
+                       "vicuna_chat"]
 
     registered_wrappers = global_model_finetuning_prompt_wrappers_lookup
 
@@ -175,8 +176,11 @@ class _ModelRegistry:
         if "model_family" not in model_card_dict:
             return False
 
+        #   removing this condition from validation - provides more extensibility in creating new model classes
+        """
         if model_card_dict["model_family"] not in cls.model_classes:
             return False
+        """
 
         if "prompt_wrapper" in model_card_dict:
 
