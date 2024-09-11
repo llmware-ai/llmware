@@ -1737,8 +1737,26 @@ global_model_finetuning_prompt_wrappers_lookup = {
                          "system_stop": "<|eot_id|>",
                          "main_start": "<|start_header_id|>user>|end_header_id|>\n",
                          "main_stop": "<|eot_id|>",
-                         "start_llm_response": "<|start_header_id|>assistant<|end_header_id|>\n"}
-       }
+                         "start_llm_response": "<|start_header_id|>assistant<|end_header_id|>\n"},
+
+        "tiny_llama_chat": {"system_start": "<|system|>", "system_stop": "</s>",
+                            "main_start": "<|user|>", "main_stop": "</s>",
+                            "start_llm_response": "<|assistant|>"},
+
+        "stablelm_zephyr_chat": {"system_start": "", "system_stop": "",
+                                 "main_start": "<|user|>", "main_stop": "<|endoftext|>\n",
+                                 "start_llm_response": "<|assistant|>"},
+
+        "google_gemma_chat": {"system_start": "", "system_stop": "",
+                              "main_start": "<bos><start_of_turn>user\n",
+                              "main_stop": "<end_of_turn>\n",
+                              "start_llm_response": "<start_of_turn>model"},
+
+        "vicuna_chat": {"system_start": "", "system_stop": "",
+                        "main_start": "USER: ", "main_stop": "",
+                        "start_llm_response": " ASSISTANT:"}
+
+}
 
 """ Global default prompt catalog consists of a set of prebuilt useful prompt instructions across a wide range
 of models.   Unlike prompt_wrappers, which tend to be an attribute of the model, the prompt catalog can be invoked
