@@ -83,10 +83,10 @@ def msa_processing(library_name, llm_model_name):
         stats = prompter.evidence_comparison_stats(response)
         ev_source = prompter.evidence_check_sources(response)
 
-        for i, resp in enumerate(response):
+        for j, resp in enumerate(response):
             print("update: llm response - ", resp)
-            print("update: compare with evidence- ", stats[i]["comparison_stats"])
-            print("update: sources - ", ev_source[i]["source_review"])
+            print("update: compare with evidence- ", stats[j]["comparison_stats"])
+            print("update: sources - ", ev_source[j]["source_review"])
 
         prompter.clear_source_materials()
 
