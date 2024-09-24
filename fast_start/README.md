@@ -16,7 +16,7 @@ Set up
 
 `pip3 install llmware` or `pip3 install 'llmware[full]'` or, if you prefer clone the github repo locally, e.g., `git clone git@github.com:llmware-ai/llmware.git`.  If you clone the repo, then we would recommend that you run the `welcome_to_llmware.sh` or `welcome_to_llmware_windows.sh` scripts to install all of the dependencies.    
 
-Note: starting in llmware>=0.3.0, we offer two pip install options.  If you use the standard `pip3 install llmware`, then you will need to add a few additional pip3 installs to run examples 2 and 5 below, specifically:  
+Note: starting in llmware>=0.3.0, we offer two pip install options.  If you use the standard `pip3 install llmware`, then you will need to add a few additional pip3 installs in the RAG fast start to run examples 2 and 5 below, specifically:  
 
   `pip3 install torch`  
   `pip3 install transformers`  
