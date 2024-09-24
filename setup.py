@@ -62,7 +62,8 @@ setup(
         'psycopg==3.1.17',
         'pgvector==0.2.4',
         'colorama==0.4.6',
-        'librosa>=0.10.0'
+        'soundfile>=0.12.0',
+        'soxr>=0.5.0'
     ],
 
     extras_require={
