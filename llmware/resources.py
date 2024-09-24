@@ -4775,12 +4775,15 @@ class PromptState:
                     new_row = json.loads(lines)
 
                     # create new csv row
+                    # strip symbols that can disrupt csv output
+                    evidence_clean = re.sub(r"[,\"\'\n\r\u2018\u2019\u201c\u201d]"," ", new_row['evidence'])
+                    response_clean = re.sub(r"[,\"\'\n\r\u2018\u2019\u201c\u201d]", " ", new_row['llm_response'])
 
                     csv_row = [prompt_id,
                                new_row["prompt"],
-                               new_row["llm_response"],
+                               response_clean,
                                new_row["instruction"],
-                               new_row["evidence"],
+                               evidence_clean,
                                new_row["model"],
                                new_row["time_stamp"]
                                ]
@@ -4817,12 +4820,15 @@ class PromptState:
             for i, new_row in enumerate(self.prompt.interaction_history):
 
                 # create new csv row
+                # strip symbols that can disrupt csv output
+                evidence_clean = re.sub(r"[,\"\'\n\r\u2018\u2019\u201c\u201d]", " ", new_row['evidence'])
+                response_clean = re.sub(r"[,\"\'\n\r\u2018\u2019\u201c\u201d]", " ", new_row['llm_response'])
 
                 csv_row = [self.prompt.prompt_id,
                            new_row["prompt"],
-                           new_row["llm_response"],
+                           response_clean,
                            new_row["instruction"],
-                           new_row["evidence"],
+                           evidence_clean,
                            new_row["model"],
                            new_row["time_stamp"]
                            ]

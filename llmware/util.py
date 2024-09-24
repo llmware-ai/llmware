@@ -1089,7 +1089,7 @@ class Utilities:
 
     @staticmethod
     def create_hash_stamp (fp, save=True, hash_fn="hash_record", hash_type="sha256",
-                           ignore_file_extensions=None,**kwargs):
+                           ignore_file_extensions=None,ignore_files=None, **kwargs):
 
         """ Creates Hash Stamp for all files in a folder.
 
@@ -1130,6 +1130,10 @@ class Utilities:
                 if ft.lower() in ignore_file_extensions or ft.upper() in ignore_file_extensions:
                     ignore = True
 
+            if ignore_files:
+                if file in ignore_files:
+                    ignore = True
+
             if not ignore:
                 hash_value = Utilities().file_checksum(fp, file, hash_type=hash_type)
                 hash_record.update({file: hash_value})
@@ -1155,7 +1159,7 @@ class Utilities:
 
     @staticmethod
     def compare_hash (fp, hash_fn="hash_record", hash_type="sha256", selected_files=None, ignore_pattern="hash",
-                      ignore_file_extensions=None):
+                      ignore_file_extensions=None,ignore_files=None):
 
         """ Compares two hashes from a folder path (fp)  -
 
@@ -1177,7 +1181,7 @@ class Utilities:
         hash_full_name = hash_fn + "_" + hash_type + ".json"
 
         try:
-            hash_file = json.load(open(os.path.join(fp, hash_full_name), "r"))
+            hash_file = json.load(open(os.path.join(fp, hash_full_name), "r",errors='ignore',encoding='utf-8-sig'))
         except:
             logger.debug(f"Utilities - compare_hash_record - could not find an existing hash file at: "
                            f"{os.path.join(fp, hash_full_name)}.  Will create new hash record, but will not "
@@ -1185,7 +1189,8 @@ class Utilities:
             hash_file = {}
 
         new_hash_record = Utilities().create_hash_stamp(fp, hash_fn=hash_fn, hash_type=hash_type, save=False,
-                                                        ignore_file_extensions=ignore_file_extensions)
+                                                        ignore_file_extensions=ignore_file_extensions,
+                                                        ignore_files=ignore_files)
 
         #   apply any pruning of certain files
 
