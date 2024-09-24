@@ -8111,6 +8111,8 @@ class WhisperCPPModel(BaseModel):
 
         raise FileNotFoundError(f"Exception: WhisperCPP Shared library not found at paths - {str(_lib_paths)}")
 
+    # new method starts here
+
     def inference(self, prompt, inference_dict=None):
 
         """ Inference on Whisper model takes a single input 'prompt' which is a string corresponding to a
@@ -8132,11 +8134,10 @@ class WhisperCPPModel(BaseModel):
         #   preview before starting inference
         self.preview()
 
-        #   note: inference on wav file requires librosa library
-        try:
-            import librosa
-        except:
-            raise DependencyNotInstalledException("librosa")
+        #   note: updated dependencies for improved efficiency
+        #   previously, used librosa library
+        #   replaced librosa with two librosa sub-dependencies that do most of the work
+        #   e.g., soundfile, and soxr which results in smaller footprint for deployment
 
         file = prompt
 
@@ -8169,9 +8170,44 @@ class WhisperCPPModel(BaseModel):
 
                 file = new_file_path
 
-        data, sr = librosa.load(file, sr=self.WHISPER_SR)
+        # loading new dependencies starts here
 
-        self.duration = librosa.get_duration(y=data, sr=self.WHISPER_SR)
+        try:
+            import soundfile as sf
+            import soxr
+        except:
+            raise LLMWareException("WhisperCPPModel class requires dependencies of soundfile and soxr,"
+                                   "e.g., `pip install soundfile` and `pip install soxr`")
+
+        sfo = sf.SoundFile(file)
+
+        with sfo as sf_desc:
+            sr = sf_desc.samplerate
+            frame_duration = -1
+
+            data = sf_desc.read(frames=frame_duration, dtype=np.float32, always_2d=False).T
+
+            if self.WHISPER_SR != sr:
+
+                # y = resample(data, orig_sr=sr_native, target_sr=sr, res_type="soxr_hq")
+
+                ratio = float(sr) / self.WHISPER_SR
+                axis = -1
+                n_samples = int(np.ceil(data.shape[axis] * ratio))
+
+                yhat = np.apply_along_axis(soxr.resample, axis=axis, arr=data,
+                                           in_rate=sr, out_rate=self.WHISPER_SR, quality="soxr_hq")
+
+                data = np.asarray(yhat, dtype=np.float32)
+
+        # new dependencies end here
+        # replacing previous:   data, sr = librosa.load(file, sr=self.WHISPER_SR)
+
+        try:
+            self.duration = float(data.shape[-1]) / self.WHISPER_SR
+            # self.duration = librosa.get_duration(y=data, sr=self.WHISPER_SR)
+        except:
+            self.duration = float(0.0)
 
         data.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         self.params.language = self.language.encode('utf-8')
