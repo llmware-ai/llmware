@@ -794,9 +794,11 @@ class Utilities:
         """ Utility function to 'highlight' a selected token, based on matches, typically found
         in locate_query_match function - useful for visual display of a matching keyword. """
 
-        # assumes by default:
+        #   assumes by default:
         #   highlight_start_token = "<b>"
         #   highlight_end_token = "</b>"
+        #   -- highlight can be any markup/html/css that will be inserted into the text for formatting
+        #      around the highlighted word
 
         updated_string = ""
         cursor_position = 0
@@ -807,7 +809,11 @@ class Utilities:
 
             updated_string += core_string[cursor_position:starter]
             updated_string += highlight_start_token
-            updated_string += keyword
+
+            # updated_string += keyword
+            # og_keyword preserves capitalization of original string
+            og_keyword = core_string[starter:(starter+len(keyword))]
+            updated_string += og_keyword
             updated_string += highlight_end_token
 
             cursor_position = starter + len(keyword)
