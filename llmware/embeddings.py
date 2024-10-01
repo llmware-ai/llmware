@@ -103,7 +103,6 @@ class EmbeddingHandler:
 
     def __init__(self, library):
 
-        # self.supported_embedding_dbs = LLMWareConfig().get_supported_vector_db()
         self.supported_embedding_dbs = VectorDBRegistry().get_vector_db_list()
 
         self.library = library
@@ -609,7 +608,7 @@ class EmbeddingMilvus:
                 if self.use_milvus_lite:
 
                     try:
-                        # _id = int(hit["entity"]["block_mongo_id"])
+                        # alt: _id = int(hit["entity"]["block_mongo_id"])
                         _id = hit["entity"]["block_mongo_id"]
                     except:
                         logger.warning(f"update: EmbeddingHandler - Milvus - search - unexpected - "
@@ -735,7 +734,6 @@ class EmbeddingFAISS:
         # will leave "-" and "_" in file path, but remove "@" and " "
         model_safe_path = re.sub(r"[@\/. ]", "", self.model_name).lower()
         self.embedding_file_path = os.path.join(self.library.embedding_path, model_safe_path, "embedding_file_faiss")
-        # self.collection_key = "embedding_faiss_" + model_safe_path
 
     def create_new_embedding(self, doc_ids=None, batch_size=100):
 
@@ -744,7 +742,7 @@ class EmbeddingFAISS:
         if not self.index:
             if os.path.exists(self.embedding_file_path):
 
-                #   shifted faiss to optional dependency
+                #   faiss is optional dependency
                 #   note: there may be an edge case where this faiss command would fail even with
                 #   library installed, but we throw dependency not installed error as most likely cause
 
@@ -767,10 +765,6 @@ class EmbeddingFAISS:
 
         embeddings_created = 0
         finished = False
-
-        # batch_size = 50
-
-        # all_blocks_iter = iter(all_blocks_cursor)
 
         while not finished:
 
@@ -856,6 +850,7 @@ class EmbeddingFAISS:
             self.utils.unset_text_index()
 
         return 1
+
 
 class EmbeddingLanceDB:
 
@@ -943,13 +938,11 @@ class EmbeddingLanceDB:
         self.collection_name = self.utils.create_safe_collection_name()
         self.collection_key = self.utils.create_db_specific_key()
 
-        # build new name here
-        # self.index_name = self.collection_name
-
         if self.collection_name not in self.db.table_names():
             self.index = self._init_table(self.collection_name)
-            # you don't need to create an index with lanceDB upto million vectors is efficiently supported with peak performance,
-            # Creating an index will fasten the search process and it needs to be done once table has some vectors already.
+
+            # you don't need to create an index with lanceDB up to million vectors is efficiently supported with peak performance,
+            # Creating an index will accelerate the search process and it needs to be done once table has some vectors already.
 
         # connect to table
         self.index = self.db.open_table(self.collection_name)
@@ -982,14 +975,12 @@ class EmbeddingLanceDB:
             current_index = 0
 
             finished = False
-            # all_blocks_iter = iter(all_blocks_cursor)
 
             while not finished:
                 block_ids, doc_ids, sentences = [], [], []
                 # Build the next batch
                 for i in range(batch_size):
                     block = all_blocks_cursor.pull_one()
-                    # block = next(all_blocks_iter, None)
 
                     if not block:
                         finished = True
@@ -1045,13 +1036,6 @@ class EmbeddingLanceDB:
                 for block in block_result_list:
                     block_list.append((block, score))
 
-            # for match in result.itertuples(index=False):
-            #     _id = match.id
-            #     block_result_list = self.utils.lookup_text_index(_id)
-
-            #     for block in block_result_list:
-            #         block_list.append((block, match._distance))
-                    
         except Exception as e:
             raise LLMWareException(message=f"Exception: LanceDB - {e}")
 
@@ -1134,13 +1118,6 @@ class EmbeddingPinecone:
             else:
                 raise LLMWareException(message="Exception: need to import pinecone to use this class.")
 
-        """
-        try:
-            from pinecone import Pinecone, ServerlessSpec
-        except ImportError:
-            pass
-        """
-
         # initiate connection to Pinecone
         try:
             pinecone_client = pinecone.Pinecone(api_key=self.api_key)
@@ -1162,9 +1139,6 @@ class EmbeddingPinecone:
         self.collection_name = collection_name.replace('_', '-')
 
         self.collection_key = self.utils.create_db_specific_key()
-
-        # build new name here
-        # self.index_name = self.collection_name
 
         pinecone_indexes = [pincone_index['name'] for pincone_index in pinecone_client.list_indexes()]
         if self.collection_name not in pinecone_indexes:
@@ -1205,16 +1179,12 @@ class EmbeddingPinecone:
 
         finished = False
 
-        # all_blocks_iter = iter(all_blocks_cursor)
-
         while not finished:
             block_ids, doc_ids, sentences = [], [], []
             # Build the next batch
             for i in range(batch_size):
 
                 block = all_blocks_cursor.pull_one()
-
-                # block = next(all_blocks_iter, None)
 
                 if not block:
                     finished = True
@@ -1339,11 +1309,8 @@ class EmbeddingMongoAtlas:
         self.collection_name = self.utils.create_safe_collection_name()
         self.collection_key = self.utils.create_db_specific_key()
 
-        # build new name here
-        # self.index_name = self.collection_name
-
         # Connect and create a MongoClient
-        #   confirm that qdrant installed
+        #   confirm that pymongo installed
 
         global GLOBAL_PYMONGO_IMPORT
         if not GLOBAL_PYMONGO_IMPORT:
@@ -1360,7 +1327,7 @@ class EmbeddingMongoAtlas:
                 raise LLMWareException(message="Exception: need to import pymongo to use this class.")
 
         # end dynamic import here
-        # from pymongo import MongoClient
+        # alt: from pymongo import MongoClient
 
         self.mongo_client = pymongo.MongoClient(self.connection_uri)
 
@@ -1410,8 +1377,6 @@ class EmbeddingMongoAtlas:
 
         finished = False
 
-        # all_blocks_iter = iter(all_blocks_cursor)
-
         last_block_id = ""
 
         while not finished:
@@ -1422,8 +1387,6 @@ class EmbeddingMongoAtlas:
             for i in range(batch_size):
 
                 block = all_blocks_cursor.pull_one()
-
-                # block = next(all_blocks_iter, None)
 
                 if not block:
                     finished = True
@@ -1483,7 +1446,7 @@ class EmbeddingMongoAtlas:
 
         """ After doc insertion, we want to make sure the index is ready before proceeding ... """
 
-        # If we've been waiting for 5 mins, then time out and just return
+        # if wait longer than 5 mins, then time out and just return
         if time.time() > start_time + (5 * 60):
             return
 
@@ -1591,16 +1554,6 @@ class EmbeddingRedis:
         redis_host = RedisConfig().get_config("host")
         redis_port = RedisConfig().get_config("port")
 
-        """
-        try:
-            # import redis
-            from redis.commands.search.field import TagField, TextField, NumericField, VectorField
-            from redis.commands.search.indexDefinition import IndexDefinition, IndexType
-            from redis.commands.search.query import Query
-        except ImportError:
-            pass
-        """
-
         #   confirm that redis installed
 
         global GLOBAL_REDIS_IMPORT
@@ -1687,8 +1640,6 @@ class EmbeddingRedis:
         current_index = 0
         finished = False
 
-        # all_blocks_iter = iter(all_blocks_cursor)
-
         obj_batch = []
 
         while not finished:
@@ -1699,8 +1650,6 @@ class EmbeddingRedis:
             for i in range(batch_size):
 
                 block = all_blocks_cursor.pull_one()
-
-                # block = next(all_blocks_iter, None)
 
                 if not block:
                     finished = True
@@ -1741,8 +1690,6 @@ class EmbeddingRedis:
 
                 res = pipe.execute()
                 obj_batch = []
-
-                # end - insert
 
                 current_index = self.utils.update_text_index(block_ids,current_index)
 
@@ -1853,14 +1800,6 @@ class EmbeddingQdrant:
 
         # end dynamic import here
 
-        """
-        try:
-            from qdrant_client import QdrantClient
-            from qdrant_client.http.models import Distance, VectorParams, PointStruct
-        except ImportError:
-            pass
-        """
-
         self.qclient = qdrant_client.QdrantClient(**QdrantConfig.get_config())
 
         # look up model card
@@ -1918,8 +1857,6 @@ class EmbeddingQdrant:
         current_index = 0
         finished = False
 
-        # all_blocks_iter = iter(all_blocks_cursor)
-
         points_batch = []
 
         while not finished:
@@ -1962,8 +1899,6 @@ class EmbeddingQdrant:
                 self.qclient.upsert(collection_name=self.collection_name, wait=True, points=points_batch)
 
                 points_batch = []
-
-                # end - insert
 
                 current_index = self.utils.update_text_index(block_ids,current_index)
 
@@ -2075,10 +2010,9 @@ class EmbeddingPGVector:
             self.full_schema = True
 
         #   determines whether to use 'skinny' schema or 'full' schema
-        #   --note:  in future releases, we will be building out more support for PostGres
-        # self.full_schema = full_schema
+        #   --note:  in future releases, we will be building out more support for Postgres
 
-        #   fist check for core postgres driver, and load if not present
+        #   first check for core postgres driver, and load if not present
         global GLOBAL_PSYCOPG_IMPORT
         if not GLOBAL_PSYCOPG_IMPORT:
             if util.find_spec("psycopg"):
@@ -2107,14 +2041,6 @@ class EmbeddingPGVector:
 
             else:
                 raise LLMWareException(message="Exception: need to import neo4j to use this class.")
-
-        """
-        try:
-            from pgvector.psycopg import register_vector
-            import psycopg
-        except ImportError:
-            pass
-        """
 
         #   note: for initial connection, need to confirm that the database exists
         self.conn = psycopg.connect(host=postgres_host, port=postgres_port, dbname=postgres_db_name,
@@ -2187,8 +2113,6 @@ class EmbeddingPGVector:
         current_index = 0
         finished = False
 
-        # all_blocks_iter = iter(all_blocks_cursor)
-
         obj_batch = []
 
         while not finished:
@@ -2199,8 +2123,6 @@ class EmbeddingPGVector:
             for i in range(batch_size):
 
                 block = all_blocks_cursor.pull_one()
-
-                # block = next(all_blocks_iter, None)
 
                 if not block:
                     finished = True
@@ -2281,8 +2203,6 @@ class EmbeddingPGVector:
 
                 obj_batch = []
 
-                # end - insert
-
                 current_index = self.utils.update_text_index(block_ids,current_index)
 
                 embeddings_created += len(sentences)
@@ -2314,7 +2234,7 @@ class EmbeddingPGVector:
         self.conn.execute(create_index_command)
         self.conn.commit()
 
-        # tbd - next steps - will create text index and options to query directly against PG
+        # TODO - add options to create text index and options to query directly against PG
 
         # Closing the connection
         self.conn.close()
@@ -2330,7 +2250,7 @@ class EmbeddingPGVector:
              f"FROM {self.collection_name} ORDER BY distance LIMIT %s")
 
         """
-        # look to generalize the query
+        # alt - look to generalize the query
         q = (f"SELECT embedding <-> %s AS distance, * FROM {self.collection_name} ORDER BY "
              f"distance LIMIT %s")
         """
@@ -2451,15 +2371,6 @@ class EmbeddingNeo4j:
 
         # end dynamic import here
 
-        #   optional import of neo4j - not in project requirements
-        """
-        try:
-            import neo4j
-            from neo4j import GraphDatabase
-        except:
-            pass
-        """
-
         # Connect to Neo4J and verify connection.
         # Code taken from the code below
         # https://github.com/langchain-ai/langchain/blob/master/libs/community/langchain_community/vectorstores/neo4j_vector.py#L165C9-L177C14
@@ -2475,8 +2386,8 @@ class EmbeddingNeo4j:
                 "Could not connect to Neo4j database. "
                 "Please ensure that the username and password are correct.")
         except Exception as err:
-            # We raise here any other excpetion that happend.
-            # This is usefull for debugging when some other error occurs.
+            # We raise here any other exception that happened.
+            # This is useful for debugging when some other error occurs.
             raise 
 
         # Make sure that the Neo4j version supports vector indexing.
@@ -2490,7 +2401,6 @@ class EmbeddingNeo4j:
         target_version = (5, 11, 0)
         if neo4j_version < target_version:
             raise ValueError('Vector indexing requires a Neo4j version >= 5.11.0')
-
 
         # If the index does not exist, then we create the vector search index.
         neo4j_indexes = self._query('SHOW INDEXES yield name')
@@ -2531,8 +2441,6 @@ class EmbeddingNeo4j:
         current_index = 0
         finished = False
 
-        # all_blocks_iter = all_blocks_cursor.pull_one()
-        
         while not finished:
             block_ids, doc_ids, sentences = [], [], []
 
@@ -2626,7 +2534,7 @@ class EmbeddingNeo4j:
 
     def _query(self, query, parameters=None):
 
-        # from neo4j.exceptions import CypherSyntaxError
+        # alt: from neo4j.exceptions import CypherSyntaxError
 
         parameters = parameters or {}
 
@@ -2668,7 +2576,7 @@ class EmbeddingChromaDB:
     def __init__(self, library, model=None, model_name=None, embedding_dims=None):
 
         #
-        # General llmware set up code
+        #   General llmware set up code
         #
         #   confirm that pymilvus installed
 
@@ -2755,8 +2663,6 @@ class EmbeddingChromaDB:
         embeddings_created = 0
         current_index = 0
         finished = False
-
-        # all_blocks_iter = all_blocks_cursor.pull_one()
 
         while not finished:
             block_ids, doc_ids, sentences = [], [], []
