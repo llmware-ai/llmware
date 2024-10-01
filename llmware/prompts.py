@@ -357,8 +357,6 @@ class Prompt:
         ai_trx_list = PromptState(self).lookup_prompt_with_filter(filter_dict)
         return ai_trx_list
 
-    # prepare sources
-
     def add_source_new_query(self, library, query=None, query_type="semantic", result_count=10):
 
         """ Attach a new source to a prompt object by running a new query against a library. """
@@ -702,8 +700,6 @@ class Prompt:
 
         return response_list
 
-    # prompt management
-
     def select_prompt_from_catalog(self, prompt_name):
 
         """ Selects a prompt style from the catalog. """
@@ -727,12 +723,10 @@ class Prompt:
 
         return response
 
-    # useful 'out of the box' prompts
     def number_or_none(self, prompt, context=None):
 
         """ Inference method - convenience method using 'number_or_none' prompt style instruction. """
 
-        # rename - "facts_or_not_found"
         output = self.prompt_from_catalog(prompt, context=context,prompt_name="number_or_none")
         return output
 
@@ -810,7 +804,6 @@ class Prompt:
 
         return response
 
-    # core basic prompt inference method
     def prompt_main (self, prompt, prompt_name=None, context=None, call_back_attempts=1, calling_app_id="",
                      prompt_id=0,batch_id=0, trx_dict=None, selected_model= None, register_trx=False,
                      inference_dict=None, max_output=None, temperature=None):
@@ -839,8 +832,6 @@ class Prompt:
             self.temperature = temperature
             
         self.llm_model.temperature = self.temperature
-
-        # if max_output:  self.llm_model.max_tokens = max_output
 
         if max_output:
             self.llm_max_output_len = max_output
@@ -905,9 +896,6 @@ class Prompt:
             output = str(output).replace("<s>","")
             output = str(output).replace("</s>","")
 
-        # output = re.sub("<s>","", output)
-        # output = re.sub("</s>","", output)
-
         if "usage" in output_dict:
             usage = output_dict["usage"]
 
@@ -919,7 +907,6 @@ class Prompt:
                        "calling_app_ID": calling_app_id,
                        "rating": "",
                        "account_name": self.account_name,
-                       # "library_name": self.library_name,
                        "prompt_id": prompt_id,
                        "batch_id": batch_id,
                         }
@@ -941,6 +928,9 @@ class Prompt:
         return output_dict
 
     def _doc_summarizer_old_works(self, query_results, max_batch_size=100, max_batch_cap=None,key_issue=None):
+
+        """ Deprecated - summarizes a batch of query results - will be removed in the future, but kept for backwards
+        compatibility, and if useful for a particular summarization task. """
 
         # runs core summarization loop thru document
 
@@ -1006,12 +996,11 @@ class Prompt:
 
         return response
 
-    # new method - designed to receive one document - and directly summarize
     def summarize_document(self, input_fp,input_fn, query=None, text_only=True, max_batch_cap=10,
                            key_issue=None):
 
-        """ Returns a document summary from input folder path and file name, along with any optional
-        query filter and key issue. """
+        """ Input is a path to a document file (fp, fn), which will then be parsed in line, searched if there is a
+        query provided, then summarize and return a document summary as output. """
 
         output = Parser().parse_one(input_fp,input_fn)
 
@@ -1162,12 +1151,12 @@ class Prompt:
 
         return aggregated_response_dict
 
-    # post processing
-
     def evidence_check_numbers(self, response):
 
-        """ Runs analysis of the numbers in the llm_response and attempts to verify the values of those numbers
-        in the source materials.  Returns an updated list of response dictionaries, enriched with "fact_check" key. """
+        """ Post Inference Processing - runs analysis of the numbers in the llm_response and attempts to verify
+         the values of those numbers in the source materials.
+
+         Returns an updated list of response dictionaries, enriched with "fact_check" key. """
 
         # expect that response is a list of response dictionaries
         if isinstance(response, dict):
@@ -1185,8 +1174,10 @@ class Prompt:
 
     def evidence_check_sources(self, response):
 
-        """ Runs analysis of the llm_response and uses statistical token-matching with the source materials to
-        try to identify a smaller 'snippet' that is the most likely source with metadata of file and page number.
+        """ Post Inference Processing - runs analysis of the llm_response and uses statistical token-matching
+        with the source materials to try to identify a smaller 'snippet' that is the most likely source with
+        metadata of file and page number.
+
         Returns an updated list of response dictionaries, enriched with 'source_review' key. """
 
         # expect that response is a list of response dictionaries
@@ -1204,10 +1195,11 @@ class Prompt:
 
     def evidence_comparison_stats(self, response):
 
-        """ Runs analysis of the llm_response and uses statistical token-matching with the source materials to provide
-        an overall comparison 'match' level which can be a good quantitative indicator if the model output has
-        hallucinated or deviated materially from the source.  Returns an updated list of response dictionaries,
-        enriched with 'comparison_stats' key. """
+        """ Post Inference Processing - runs analysis of the llm_response and uses statistical token-matching
+        with the source materials to provide an overall comparison 'match' level which can be a good
+        quantitative indicator if the model output has hallucinated or deviated materially from the source.
+
+        Returns an updated list of response dictionaries, enriched with 'comparison_stats' key. """
 
         # expect that response is a list of response dictionaries
         if isinstance(response, dict):
@@ -1224,8 +1216,8 @@ class Prompt:
 
     def classify_not_found_response(self, response_list,parse_response=True,evidence_match=True,ask_the_model=False):
 
-        """ Takes a list of response dictionaries as input, and then runs tests to validate if the llm_response
-        appears to be 'not found'."""
+        """ Post Inference Processing - takes a list of response dictionaries as input, and then runs tests to
+        validate if the llm_response appears to be 'not found'."""
 
         output_response_all = []
 
@@ -1278,8 +1270,6 @@ class Prompt:
             output_response.update({"not_found_classification": "undetermined"})
 
         return output_response
-
-    # user ratings
 
     def send_to_human_for_review(self, output_path=None, output_fn=None):
 
@@ -1655,7 +1645,7 @@ class QualityCheck:
         c2 = CorpTokenizer(remove_stop_words=False, one_letter_removal=False, remove_punctuation=True,
                            remove_numbers=False, lower_case=False)
 
-        # ai_tmp_output = re.sub("[()\"\u201d\u201c]"," ", ai_tmp_output)
+        # alt: ai_tmp_output = re.sub("[()\"\u201d\u201c]"," ", ai_tmp_output)
         ai_tokens = c.tokenize(ai_tmp_output)
         ai_token_len = len(ai_tokens)
 
@@ -1673,9 +1663,9 @@ class QualityCheck:
             ev_stopper = evidence_metadata[x]["evidence_stop_char"]
 
             local_text = evidence_batch[ev_starter:ev_stopper]
-            # local_text = re.sub("[()\"\u201d\u201c]", "", local_text)
+            # alt: local_text = re.sub("[()\"\u201d\u201c]", "", local_text)
             evidence_tokens_tmp = c2.tokenize(local_text)
-            # evidence_tokens_tmp = local_text.split(" ")
+            # alt: evidence_tokens_tmp = local_text.split(" ")
 
             for tok in ai_tokens:
                 for i, etoks in enumerate(evidence_tokens_tmp):
@@ -1794,7 +1784,6 @@ class QualityCheck:
                 for tok in ai_tokens:
                     match = -1
 
-                    # change starts here - july 19
                     # sharpen matching rules for dollar amounts
                     if tok.endswith("."):
                         tok = tok[:-1]
@@ -1824,7 +1813,7 @@ class QualityCheck:
                     if run_compare:
                         for etoks in evidence_tokens:
 
-                            # change here - mirrrors check in the evidence
+                            # mirrors check in the evidence
                             if etoks.endswith("."):
                                 etoks = etoks[:-1]
 
