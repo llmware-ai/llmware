@@ -820,8 +820,6 @@ class Parser:
         if debug_mode not in supported_options:
             debug_mode = 0
 
-        # input_debug_mode = c_int(debug_mode)  # default - 0 = "off"
-
         if self.get_images:
             image_save = 1  # TRUE - get images
         else:
@@ -941,7 +939,8 @@ class Parser:
 
     def parse_pdf_deprecated_026 (self, fp, write_to_db=True, save_history=True, image_save=1):
 
-        """ Main PDF parser method through version 0.2.6 - deprecated - wraps ctypes interface to call PDF parser. """
+        """ Main PDF parser method through version 0.2.6 - deprecated - wraps ctypes interface to call PDF parser.
+        Will be removed in future release. """
 
         output = []
 
@@ -1104,7 +1103,7 @@ class Parser:
     def parse_pdf_deprecated (self, fp, write_to_db=True, save_history=True, image_save=1):
 
         """ Deprecated - this is the pdf entry point for PDF binaries packaged up to llmware-0.1.14 -- replaced
-        starting with llmware-0.2.0 """
+        starting with llmware-0.2.0.  Will be removed in future release.  """
 
         output = []
 
@@ -1252,7 +1251,7 @@ class Parser:
     def parse_office_deprecated (self, input_fp, write_to_db=True, save_history=True):
 
         """ Deprecated - this is the office parser entry point for Office parser binaries packaged up to
-        llmware-0.1.14 -- replaced starting with llmware-0.2.0 """
+        llmware-0.1.14 -- replaced starting with llmware-0.2.0.  Will be removed in future release. """
 
         output = []
 
@@ -1443,7 +1442,8 @@ class Parser:
                            f"{self.collection_path}.  Will write parsing output to file and will place the "
                            f"file in Library /images path.")
 
-        # deprecation warning for aarch64 linux
+        #   deprecation warning for aarch64 linux
+
         system = platform.system().lower()
 
         if system == "linux":
@@ -1488,8 +1488,6 @@ class Parser:
         if not os.path.exists(workspace_fp):
             os.mkdir(workspace_fp)
             os.chmod(workspace_fp, 0o777)
-
-        # need to synchronize as config parameter
 
         # start timing track for parsing job
         t0 = time.time()
@@ -1829,8 +1827,6 @@ class Parser:
             debug_mode = 0
 
         debug_mode_c = c_int(debug_mode)
-
-        # image_fp = self.library.image_path
 
         image_fp = self.parser_image_folder
         if not image_fp.endswith(os.sep):
@@ -2941,7 +2937,6 @@ class Parser:
                            f"file in /parser_history path.")
 
         local_work_folder = self.parser_tmp_folder
-        # local_work_folder = self.library.tmp_path
 
         if not os.path.exists(local_work_folder):
             os.mkdir(local_work_folder)
@@ -2966,14 +2961,13 @@ class Parser:
             entries, img_counter = website.website_main_processor(website.image_counter,
                                                                   output_index=False)
 
-            # if get_links, then pursue internal links and 'add' to indexed output gathered
+            #  if get_links, then pursue internal links and 'add' to indexed output gathered
+
             if get_links:
 
                 if len(website.internal_links) > 0:
 
                     max_links = min(len(website.internal_links), max_links)
-
-                    # img_counter = new_image_count
 
                     for z in range(0, max_links):
 
@@ -2998,7 +2992,6 @@ class Parser:
         file_type = "html"
 
         file_source = str(random.randint(100000, 999999)) + "_" + website.url_main.split(".")[-2] + ".html"
-        # file_source = website.url_main.split(".")[-2] + ".html"
 
         meta = {"author": "", "modified_date": "", "created_date": "", "creator_tool": ""}
         coords_dict = {"coords_x": 0, "coords_y": 0, "coords_cx": 0, "coords_cy": 0}
@@ -3091,7 +3084,7 @@ class Parser:
                                                                     added_images=images_created,
                                                                     added_pages=1)
 
-        # c.uploads - upload website_file
+        # upload website_file
         fp_tmp = os.path.join(local_work_folder, "process_website" + os.sep)
 
         website_name = "my_website.html"
@@ -3677,8 +3670,6 @@ class Parser:
 
         fn_c = create_string_buffer(fn.encode('ascii', 'ignore'))
 
-        # shift output fp to
-        # image_fp = self.library.image_path
         image_fp = self.parser_tmp_folder
         if not image_fp.endswith(os.sep):
             image_fp += os.sep
@@ -3816,8 +3807,6 @@ class Parser:
 
         fn_c = create_string_buffer(fn.encode('ascii', 'ignore'))
 
-        # shift output fp to
-        # image_fp = self.library.image_path
         image_fp = self.parser_tmp_folder
         if not image_fp.endswith(os.sep):
             image_fp += os.sep
@@ -4168,8 +4157,6 @@ class Parser:
         output = Utilities().fast_search_dicts(query,results, text_key="text",remove_stop_words=remove_stop_words)
 
         return output
-
-    # update 012924 - new methods start here for duplicate checking
 
     def input_build_folder(self, fp_list, exclude_if_already_in_library=True):
 
@@ -4684,7 +4671,8 @@ class Parser:
 
 class ImageParser:
 
-    """ ImageParser for handling OCR of scanned documents - may be called directly, or through Parser. """
+    """ ImageParser for handling OCR of scanned documents - may be called directly, or through Parser.
+    Current implementation requires separate install of tesseract and pytesseract. """
 
     def __init__(self, parser=None, library=None, text_chunk_size=600, look_back_range=300):
 
@@ -5093,8 +5081,6 @@ class TextParser:
 
             file.close()
 
-        # my_file = open(os.path.join(dir_fp, sample_file), 'r', encoding='utf-8-sig',errors='ignore')
-
         if not key_list:
             # as default, if no key_list, then look for "text" attribute in jsonl by default
             key_list = ["text"]
@@ -5102,7 +5088,6 @@ class TextParser:
         for i, lines in enumerate(my_file):
 
             row_tmp = lines
-            # row_tmp = json.loads(lines)
 
             if not interpret_as_table:
                 row_text = ""
@@ -5261,7 +5246,6 @@ class DialogParser:
         # currently only has support for AWS dialog format
         self.supported_format_types = ["aws"]
 
-    # map to aws transcript json output format
     def parse_aws_json_file_format(self, input_folder, fn_json):
 
         """ Parse AWS JSON file. """
