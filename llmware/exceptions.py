@@ -1,5 +1,5 @@
 
-# Copyright 2023 llmware
+# Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -14,8 +14,9 @@
 # permissions and limitations under the License.
 
 
-# Base exception class for all others
 class LLMWareException(Exception):
+
+    """ Base exception class in LLMWare. """
 
     __module__ = 'llmware'
 
@@ -103,8 +104,9 @@ class LibraryNotFoundException(LLMWareException):
         super().__init__(message)
 
 
-# when Library obj passed, and either null or lacking correct attributes
 class LibraryObjectNotFoundException(LLMWareException):
+
+    """ Used in classes that expect a Library object to be passed - thrown when library object not found."""
 
     def __init__(self, library):
         message = f"'{library}' object must be passed to use this function."
@@ -179,13 +181,14 @@ class InvalidNameException(LLMWareException):
                    f"characters and/or may be reserved name.")
         super().__init__(message)
 
+
 class ModuleNotFoundException(LLMWareException):
 
     def __init__(self, module_name):
         message = (f"Module '{module_name}' could not be located.  Please confirm the file path and extension. "
                    f"\n--There may be a missing binary, or an unsupported "
-                   f"operating system platform.\n--Binaries are shipped in LLMWare for Mac (Metal, x86), Windows (x86), "
-                   f"and Linux (aarch64, x86).\n--Please try re-installing and check documentation or raise issue "
+                   f"operating system platform.\n--Binaries are shipped in LLMWare for Mac (Metal), Windows (x86), "
+                   f"and Linux (x86).\n--Please try re-installing and check documentation or raise issue "
                    f"at main Github repository at:  https://www.github.com/llmware-ai/llmware.git.")
 
         super().__init__(message)
@@ -220,7 +223,7 @@ class GGUFLibNotLoadedException(LLMWareException):
 
                 message = (f"GGUF lib '{module_name}' could not be successfully loaded from shared library.  This is "
                            f"most likely because the prepackaged binary does not match your OS configuration.   "
-                           f"LLMWare ships with 6 pre-built GGUF back-ends for Mac (Metal, x86), Windows (x86, CUDA), and "
+                           f"LLMWare ships with 6 pre-built GGUF back-ends for Mac (Metal, Metal-no-acc), Windows (x86, CUDA), and "
                            f"Linux (x86, CUDA).  These binaries depend upon low-level instruction capabilities provided"
                            f"by the processor and OS, and for Windows and Linux assume that AVX and AVX2 will be "
                            f"enabled.  Useful debugging tips:\n--Ensure llmware 0.2.4+ installed, and if cloned from "

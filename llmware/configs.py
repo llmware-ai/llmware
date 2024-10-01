@@ -1,4 +1,4 @@
-# Copyright 2023 llmware
+# Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -598,7 +598,6 @@ class PostgresConfig:
 
         # canonical simple format of postgres uri string
         input_collection_db_path = f"postgresql://postgres@{host}:{port}/{db_name}"
-        # print("update: postgres get_uri_string - ", input_collection_db_path)
 
         return input_collection_db_path
 
@@ -659,6 +658,7 @@ class PineconeConfig:
     def set_config(cls, name, value):
         cls._conf[name] = value
 
+
 class LanceDBConfig:
 
     _conf = {'uri': '/tmp/lancedb/'}
@@ -702,13 +702,14 @@ class SQLiteConfig:
         db_file = os.path.join(cls._conf["sqlite_db_folder_path"], cls._conf["db_name"])
         return db_file
 
-    #   new method for SQLTables DB
     @classmethod
     def get_uri_string_experimental_db(cls):
         """For SQLite the URI string is the local file with full absolute path"""
+
+        # used in SQLTables DB in llmware.agents module
+
         db_file = os.path.join(cls._conf["sqlite_db_folder_path"], cls._conf["db_experimental"])
         return db_file
-    #   end method
 
     @classmethod
     def get_db_configs(cls):
@@ -780,6 +781,8 @@ class AWSS3Config:
 
 
 class LLMWareTableSchema:
+
+    """ Table Schema used for Parsing, Library Cards and other llmware modules.  """
 
     #   notes:
     #   1.  bigserial type for Postgres
@@ -982,6 +985,7 @@ class ChromaDBConfig:
         # update - v0.2.12 -> by default, persistent path set to make chroma persistent.
         # If this is None, then an in-memory only chroma instance will be created.
         #
+
         'persistent_path': LLMWareConfig().get_library_path(),
 
         #
