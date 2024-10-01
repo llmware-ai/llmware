@@ -819,7 +819,7 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
-**Tuesday, October 6 - v0.3.6**  
+**Tuesday, October 1 - v0.3.6**  
 - Added new prompt chat templates  
 - Improved and updated model configurations    
 - New utility functions for locating and highlighting text matches in search results  
