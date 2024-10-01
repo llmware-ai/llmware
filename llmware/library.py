@@ -32,8 +32,7 @@ from llmware.parsers import Parser
 from llmware.models import ModelCatalog
 from llmware.resources import CollectionRetrieval, CollectionWriter, CloudBucketManager
 from llmware.embeddings import EmbeddingHandler
-from llmware.exceptions import LibraryNotFoundException, SetUpLLMWareWorkspaceException, \
-    CollectionDatabaseNotFoundException, ImportingSentenceTransformerRequiresModelNameException, \
+from llmware.exceptions import LibraryNotFoundException, ImportingSentenceTransformerRequiresModelNameException, \
     UnsupportedEmbeddingDatabaseException, InvalidNameException
 
 logger = logging.getLogger(__name__)
@@ -91,9 +90,6 @@ class Library:
         self.doc_ID = 0
         self.block_ID = 0
 
-        # db settings
-        # self.collection = None
-
         # check for llmware path & create if not already set up
         if not os.path.exists(LLMWareConfig.get_llmware_path()):
 
@@ -111,13 +107,6 @@ class Library:
         if not os.path.exists(tmp_path):
             os.mkdir(tmp_path)
             os.chmod(tmp_path, 0o777)
-
-        # check if collection datastore is connected
-        """
-        if not DBConnectManager().test_connection():
-            # if not check_db_uri(timeout_secs=3):
-            raise CollectionDatabaseNotFoundException(LLMWareConfig.get_config("collection_db"))
-        """
 
     # explicit constructor to create a new library
     def create_new_library(self, library_name, account_name="llmware"):
@@ -230,17 +219,12 @@ class Library:
         # LibraryCatalog will register the new library card
         new_library_card = LibraryCatalog(self).create_new_library_card(new_library_entry)
 
-        # assumes DB Connection for saving .collection
-        # self.collection = DBConnectManager().connect(db_name=self.account_name,collection_name=self.library_name)
-        # self.collection = LibraryCollection(self).create_library_collection()
-
         if CollectionWriter(self.library_name,account_name=self.account_name).check_if_table_build_required():
 
             CollectionWriter(self.library_name,account_name=self.account_name).create_table(self.library_name,
                                                                                             self.library_block_schema)
 
-        # *** change *** - update collection text index in collection after adding documents
-        # LibraryCollection(self).create_index()
+        # update collection text index in collection after adding documents
         CollectionWriter(self.library_name,account_name=self.account_name).build_text_index()
 
         return self
