@@ -44,11 +44,10 @@ logger.setLevel(level=LLMWareConfig().get_logging_level_by_module(__name__))
 
 class LLMfx:
 
-    """Provides an interface to models to interact with text, e.g. to first perform named entity recognition
-    (ner) and then answer a question you want to have answered.
+    """
 
     ``LLMfx`` provides a high-level orchestration abstraction that implements multi-model, multi-step processes
-    with the ability to load and orchestrate multiple SLIM classifier models as tools with centralized journaling,
+    with the ability to load and orchestrate multiple SLIM models as tools with centralized journaling,
     structured work management and information aggregation. Currently, LLMfx only supports SLIM classifier
     models, support for additional model classes will be added over time.
 
@@ -883,13 +882,23 @@ class LLMfx:
 
         """ Boolean receives an input text passage, a yes/no question as its parameter, and then returns a
         dictionary with two keys - 'answer' and 'explain' with the 'answer' providing a yes/no classification, and the
-        explanation providing text from the passage that was used as the basis for the classification. """
+        explanation providing text from the passage that was used as the basis for the classification.
+
+        Example:
+            text = "The stock was down sharply after the company announced an earnings miss."
+            params = "Is the stock down?"
+
+            response = boolean(text=text, params=params)
+
+        By default, the method will append the "explain" flag and include in the params to pass to the model
+
+        """
 
         if not params:
-            #TODO:  what is right way to handle - needs params
-            params = ["Is this true?"]
+            params = ["Is this true? (explain)"]
 
         if isinstance(params, str):
+            params = params + " (explain)"
             params = [params]
 
         return self.exec_function_call("boolean", text=text, params=params)
@@ -1417,6 +1426,11 @@ class SQLTables:
     local file-based DB, e.g., sqlite-experimental.db
 
     Use of this class will create a separate sqlite_experimental.db per the configs in SQLiteConfig
+
+    Please note that the CustomTables class in llmware.resources provides a superset of this functionality, and
+    offers support for Postgres, in addition to SQLite.  This class is provided for a 'fast example' but
+    generally we would recommend using CustomTables for more complex use cases.
+
     """
 
     def __init__(self, db=None, db_name=None, experimental=True):
