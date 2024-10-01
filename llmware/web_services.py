@@ -1,5 +1,5 @@
 
-# Copyright 2023 llmware
+# Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -51,6 +51,8 @@ class WikiKnowledgeBase:
 
     def get_article(self, article_name):
 
+        """ Retrieves a Wikipedia article by name. """
+
         article_response = {"title": "", "summary": "", "text": ""}
 
         try:
@@ -73,6 +75,8 @@ class WikiKnowledgeBase:
         return article_response
 
     def search_wikipedia(self, query, result_count=10, suggestion=False):
+
+        """ Searches Wikipedia database API with a search 'topic' query. """
 
         # output result
         output = []
@@ -663,11 +667,6 @@ class WebSiteParser:
             if content_found > 0:
                 master_index = (self.url_main, self.url_link, counter)
 
-                """
-                if not text:
-                    text = last_text
-                """
-
                 if text and not text_dupe_flag:
 
                     entry = {"content_type": entry_type,
@@ -676,8 +675,6 @@ class WebSiteParser:
                              "link": {"link_type": link_type, "link": link},
                              "master_index": master_index,
                              "last_header": last_header}
-
-                    # entry = (entry_type, text, (img_name, img_url), (link_type, link), master_index, last_header)
 
                     counter += 1
                     # save entry if image, or if (A) text > 50 and (B) not a dupe
@@ -822,7 +819,6 @@ class WebSiteParser:
 
         # image name of format:   image{{doc_ID}}_{{img_num}}.png
         new_img_name = "image" + str(doc_id) + "_" + str(img_core) + "." + img_type
-        # new_img_name = "image" + str(library.image_ID) + "." + img_type
         created = 0
 
         img = open(os.path.join(fp, img_num), "rb").read()
@@ -834,7 +830,6 @@ class WebSiteParser:
 
         return new_img_name, created
 
-    # called by main handler
     def _request_image(self, img_extension, img):
 
         """ Retrieve images from links. """
@@ -848,7 +843,6 @@ class WebSiteParser:
         # check if url_main gives better performance than .url_base
 
         url_base = self.url_main
-        # url_ext = img.attrs['src']
         url_ext = img_extension
 
         full_url = url_ext
@@ -867,10 +861,11 @@ class WebSiteParser:
 
         return r.raw, r.status_code, full_url
 
-    # not called by the main handler - keep as direct callable method
     def get_all_links(self):
 
         """ Utility to retrieve all links. """
+
+        # note: not called by the main handler - kept as direct callable method
 
         internal_links = []
         external_links = []
@@ -934,10 +929,11 @@ class WebSiteParser:
 
         return link_results
 
-    # not called by main handler - keep as separate standalone method
     def get_all_img(self, save_dir):
 
         """ Utility to get all images from html pages. """
+
+        # note: not called by main handler - kept as separate standalone method
 
         counter = 0
         for content in self.html:
