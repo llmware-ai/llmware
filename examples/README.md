@@ -1,7 +1,6 @@
 # 🔥 Top New Examples 🔥  
 
 New to LLMWare - [**Fast Start tutorial series**](https://github.com/llmware-ai/llmware/tree/main/fast_start)   
-SLIM Examples -  [**SLIM Models**](SLIM-Agents/)  
 Agent Examples - [**Agent Fast Start**](https://github.com/llmware-ai/llmware/tree/main/fast_start/agents)  
 
 | Example     |  Detail      |
@@ -9,7 +8,7 @@ Agent Examples - [**Agent Fast Start**](https://github.com/llmware-ai/llmware/tr
 | 1. ⭐ Benchmarking small model capabilities ([code](fast_start/agents/agents-15-get_model_benchmarks.py) / [video](https://youtu.be/78CnvJUmQe4?si=JhLsbgmHXf0oUKz)) | Recent performance evaluations  |   
 | 2. ⭐  BizBot - RAG + SQL Local Chatbot ([example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/biz_bot.py) and [video](https://youtu.be/4nBYDEjxxTE?si=o6PDPbu0PVcT-tYd) | Business-focused Local Chatbot in Minutes |  
 | 3. ⭐  Using Qwen2 Models for Chat, RAG and Function Calling ([example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-qwen2-models.py)) | Leverage new models |  
-| 4. ⭐ Extracting Values from Embedded Tables in PDF ([example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/examples/using-llm-for-table-reading.py| - Innovative new experimental recipe | 
+| 4. ⭐ Extracting Values from Embedded Tables in PDF ([example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/using-llm-for-table-reading.py)) |  Innovative new experimental recipe | 
 | 5. ⭐ Adjusting Sampling for Better LLM Results ([code](Models/adjusting_sampling_settings.py) / [video](https://youtu.be/iXp1tj-pPjM?si=4fauK9P49c22H82x)) | How to control and analyze stochastic sampling impact  
 | 6. ⭐ CSV Parsing Configuration ([code](Parsing/parse_csv_custom.py)) | Different options for configuring CSV parsing |  
 | 7. ⭐ JSON Parsing Configuration ([code](Parsing/parse_jsonl_custom.py)) | Different options for configuring JSON and JSONL parsing | 
