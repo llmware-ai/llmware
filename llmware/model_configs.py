@@ -15,7 +15,7 @@
 
 """Global Default Configs for Models, Finetune Wrappers and Prompt Instructions Catalog.
 
-These configs generally do not need to be accessed directly, but can be viewed, accessed and modified through
+These configs generally do not need to be accessed directly, but should be viewed, accessed and modified through
 ModelCatalog and PromptCatalog classes.
 
 For customization, there is also the option in ModelCatalog to load a custom model catalog from json file, which
@@ -24,7 +24,77 @@ would over-write this list.
 
 global_model_repo_catalog_list = [
 
-    # embedding models
+    {"model_name": "bling-tiny-llama-onnx", "model_family": "ONNXGenerativeModel",
+     "model_category": "generative_local", "display_name": "llmware/bling-tiny-llama-onnx",
+     "model_location": "llmware_repo","context_window": 2048, "instruction_following": False,
+     "prompt_wrapper": "human_bot", "temperature": 0.0, "sample_default": False, "trailing_space": "",
+     "hf_repo": "llmware/bling-tiny-llama-onnx", "custom_model_files": [], "custom_model_repo": "",
+     "snapshot": True, "tokenizer_local": "tokenizer_tl.json",
+     "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["model.onnx", "model.onnx.data"],
+     "link": "https://huggingface.co/llmware/bling-tiny-llama-onnx"},
+
+     {"model_name": "bling-tiny-llama-ov", "model_family": "OVGenerativeModel",
+      "model_category": "generative_local", "display_name": "bling-tiny-llama-ov",
+      "model_location": "llmware_repo",
+      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
+      "temperature": 0.0, "sample_default": False, "trailing_space": "",
+      "tokenizer_local": "tokenizer_tl.json",
+      "hf_repo": "llmware/bling-tiny-llama-ov",
+      "custom_model_files": [], "custom_model_repo": "",
+      "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
+      "validation_files": ["openvino_model.xml"],
+      "link": "https://huggingface.co/llmware/bling-tiny-llama-ov"},
+
+     {"model_name": "bling-phi-3-ov", "model_family": "OVGenerativeModel",
+        "model_category": "generative_local", "display_name": "bling-phi-3-ov",
+        "model_location": "llmware_repo",
+        "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+        "temperature": 0.0, "sample_default": False, "trailing_space": "",
+        "tokenizer_local": "tokenizer_phi3.json",
+        "hf_repo": "llmware/bling-phi-3-ov",
+        "custom_model_files": [], "custom_model_repo": "",
+        "fetch": {"snapshot": True, "module": "llmware.models","method": "pull_snapshot_from_hf"},
+        "validation_files": ["openvino_model.xml"],
+        "link": "https://huggingface.co/llmware/bling-phi-3-ov"},
+
+    {"model_name": "bling-phi-3-onnx", "model_family": "ONNXGenerativeModel",
+        "model_category": "generative_local", "display_name": "bling-phi-3-onnx",
+        "model_location": "llmware_repo",
+        "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+        "temperature": 0.0, "sample_default": False, "trailing_space": "",
+        "tokenizer_local": "tokenizer_phi3.json",
+        "hf_repo": "llmware/bling-phi-3-onnx",
+        "custom_model_files": [], "custom_model_repo": "",
+        "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
+        "validation_files": ["model.onnx", "model.onnx.data"],
+        "link": "https://huggingface.co/llmware/bling-phi-3-onnx"},
+
+     {"model_name": "phi-3-onnx", "model_family": "ONNXGenerativeModel",
+        "model_category": "generative_local", "display_name": "phi-3-onnx",
+        "model_location": "llmware_repo",
+        "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+        "temperature": 0.0, "sample_default": False, "trailing_space": "",
+        "tokenizer_local": "tokenizer_phi3.json",
+        "hf_repo": "llmware/phi-3-onnx",
+        "custom_model_files": [], "custom_model_repo": "",
+        "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
+        "validation_files": ["model.onnx", "model.onnx.data"],
+        "link": "https://huggingface.co/llmware/phi-3-onnx"},
+
+      {"model_name": "phi-3-ov", "model_family": "OVGenerativeModel",
+        "model_category": "generative_local", "display_name": "phi-3-ov",
+        "model_location": "llmware_repo",
+        "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+        "temperature": 0.0, "sample_default": False, "trailing_space": "",
+        "tokenizer_local": "tokenizer_phi3.json",
+        "hf_repo": "llmware/phi-3-ov",
+        "custom_model_files": [], "custom_model_repo": "",
+        "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
+        "validation_files": ["openvino_model.xml"],
+        "link": "https://huggingface.co/llmware/phi-3-ov"},
+
+ # embedding models
 
     {"model_name": "all-MiniLM-L6-v2", "display_name": "mini-lm-sbert", "model_family": "HFEmbeddingModel",
      "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 384, "context_window": 512,
