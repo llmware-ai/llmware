@@ -892,6 +892,11 @@ class GGUFConfigs:
                   "force_gpu": False,
                   "use_macos_accelerate": True,
 
+                  # option to capture and provide the 'first token' of generation
+                  # used for GGUF - and implemented for HFGenerative (Pytorch) and
+                  # ONNXGenerative classes as well
+                  "get_first_token_speed": False,
+
                   # prebuilt shared libraries included in llmware
                   "windows": "libllama_win.dll",
                   "windows_cuda": "libllama_win_cuda.dll",

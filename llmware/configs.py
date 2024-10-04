@@ -1,4 +1,4 @@
-# Copyright 2023-2024 llmware
+# Copyright 2023 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -502,6 +502,66 @@ class VectorDBRegistry:
 logging.basicConfig(format=LLMWareConfig().get_logging_format(), level=LLMWareConfig().get_logging_level())
 
 
+class OVConfig:
+
+    """ Configuration object for OpenVino - these parameters are consumed by the
+    OVGenerativeModel class in module llmware.models. In most cases, the parameters
+    do not require attention, but provided for more options for performance tuning with
+    GPU deployment in particular. """
+
+    _conf = {"device": "GPU",
+             "use_ov_tokenizer": False,
+             "generation_version": "ov_genai_pip",
+             "use_gpu_if_available": True,
+             "cache": True,
+             "cache_with_model": True,
+             "cache_custom_path": "",
+             "apply_performance_hints": True,
+             "verbose_mode": False,
+             "get_token_counts": True
+             }
+
+    _supported_hints = ["MODEL_PRIORITY", "GPU_HOST_TASK_PRIORITY",
+                        "GPU_QUEUE_THROTTLE", "GPU_QUEUE_PRIORITY"]
+
+    # this is a subset of useful GPU performance hints - will expand options over time
+
+    _gpu_hints = {
+             "MODEL_PRIORITY": "HIGH",
+             "GPU_HOST_TASK_PRIORITY": "HIGH",
+             "GPU_QUEUE_THROTTLE": "HIGH",
+             "GPU_QUEUE_PRIORITY": "HIGH"
+             }
+
+    @classmethod
+    def get_config(cls, param):
+        return cls._conf[param]
+
+    @classmethod
+    def set_config(cls, param, value):
+        cls._conf[param]= value
+
+    @classmethod
+    def get_gpu_hints(cls):
+        return cls._gpu_hints
+
+    @classmethod
+    def set_gpu_hint(cls, param, value):
+
+        #   will add safety checks for type - most in form of "HIGH" | "MEDIUM" | "LOW"
+        #   for more information, please see OpenVino documentation
+        if param in cls._supported_hints:
+            cls._gpu_hints[param] = value
+
+    @classmethod
+    def optimize_for_gpu(cls):
+        return cls._conf["use_gpu_if_available"]
+
+    @classmethod
+    def generation_version(cls):
+        return cls._conf["generation_version"]
+
+
 class MilvusConfig:
 
     """Configuration object for Milvus"""
@@ -598,6 +658,7 @@ class PostgresConfig:
 
         # canonical simple format of postgres uri string
         input_collection_db_path = f"postgresql://postgres@{host}:{port}/{db_name}"
+        # print("update: postgres get_uri_string - ", input_collection_db_path)
 
         return input_collection_db_path
 
@@ -658,7 +719,6 @@ class PineconeConfig:
     def set_config(cls, name, value):
         cls._conf[name] = value
 
-
 class LanceDBConfig:
 
     _conf = {'uri': '/tmp/lancedb/'}
@@ -702,14 +762,13 @@ class SQLiteConfig:
         db_file = os.path.join(cls._conf["sqlite_db_folder_path"], cls._conf["db_name"])
         return db_file
 
+    #   new method for SQLTables DB
     @classmethod
     def get_uri_string_experimental_db(cls):
         """For SQLite the URI string is the local file with full absolute path"""
-
-        # used in SQLTables DB in llmware.agents module
-
         db_file = os.path.join(cls._conf["sqlite_db_folder_path"], cls._conf["db_experimental"])
         return db_file
+    #   end method
 
     @classmethod
     def get_db_configs(cls):
@@ -781,8 +840,6 @@ class AWSS3Config:
 
 
 class LLMWareTableSchema:
-
-    """ Table Schema used for Parsing, Library Cards and other llmware modules.  """
 
     #   notes:
     #   1.  bigserial type for Postgres
@@ -985,7 +1042,6 @@ class ChromaDBConfig:
         # update - v0.2.12 -> by default, persistent path set to make chroma persistent.
         # If this is None, then an in-memory only chroma instance will be created.
         #
-
         'persistent_path': LLMWareConfig().get_library_path(),
 
         #
