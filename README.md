@@ -819,6 +819,12 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
+**Sunday, October 6 - v0.3.7**  
+- Added new model class - OVGenerativeModel - to support the use of models packaged in OpenVino format  
+- Added new model class - ONNXGenerativeModel - to support use of models packaged in ONNX format  
+- Getting started with [OpenVino example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_models.py)  
+- Getting started with [ONNX example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_onnx_models.py)  
+  
 **Tuesday, October 1 - v0.3.6**  
 - Added new prompt chat templates  
 - Improved and updated model configurations    
