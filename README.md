@@ -4,6 +4,8 @@
 [![discord](https://img.shields.io/badge/Chat%20on-Discord-blue?logo=discord&logoColor=white)](https://discord.gg/MhZn5Nc39h)   
 [![Documentation](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml/badge.svg)](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml)
 
+![DevFest](https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExc3dodTV4czFsd2lrYWV5N3BhaXV5MXpucDhrcWZ2ODF4amM2aXo3diZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Bkax2GRzAt0PDHcmSq/giphy.gif)
+
 ## 🧰🛠️🔩Building Enterprise RAG Pipelines with Small, Specialized Models  
 
 `llmware` provides a unified framework for building LLM-based applications (e.g, RAG, Agents), using small, specialized models that can be deployed privately, integrated with enterprise knowledge sources safely and securely, and cost-effectively tuned and adapted for any business process.  
