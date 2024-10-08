@@ -10,6 +10,11 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
 [![discord](https://img.shields.io/badge/Chat%20on-Discord-blue?logo=discord&logoColor=white)](https://discord.gg/MhZn5Nc39h)   
 [![Documentation](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml/badge.svg)](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml)
+[![Number of GitHub stars](https://img.shields.io/github/stars/chartdb/chartdb)](https://github.com/llmware-ai/llmware/stargazers)
+[![Number of GitHub issues that are open](https://img.shields.io/github/issues/chartdb/chartdb)](https://github.com/llmware-ai/llmware/issues)
+![Number of GitHub contributors](https://img.shields.io/github/contributors/llmware-ai/llmware)
+![Number of GitHub pull requests that are open](https://img.shields.io/github/issues-pr-raw/llmware-ai/llmware)
+
 
 </div>
 
