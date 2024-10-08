@@ -1,7 +1,7 @@
 # llmware
 
 <p align="center">
-  <img src="https://llmware-ai.github.io/llmware/assets/images/llmware_logo_color_cropped.png" alt="LLMware Logo" width="300">
+  <img src="https://llmware-ai.github.io/llmware/assets/images/llmware_logo_color_cropped.png" alt="LLMware Logo" width="500">
 </p>
 
 <div align="center">
