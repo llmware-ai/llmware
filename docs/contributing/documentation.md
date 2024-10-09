@@ -20,7 +20,7 @@ Here is a non exhaustive list of these ways for the docstrings which also apply 
 
 ## Docstrings
 **Docstrings** document the code within the code, which allows programmers to easily have a look while they are programming.
-For an exmaple, have a look at [this docstring](https://github.com/llmware-ai/llmware/blob/c9e12a7a150162986622738e127c37ac70f31cd6/llmware/agents.py#L27-L66) which documents the ``LLMfx`` class.
+For an example, have a look at [this docstring](https://github.com/llmware-ai/llmware/blob/c9e12a7a150162986622738e127c37ac70f31cd6/llmware/agents.py#L27-L66) which documents the ``LLMfx`` class.
 
 We follow the docstring style of **numpy**, for which you can find an example [here](https://github.com/numpy/numpydoc/blob/main/doc/example.py) and [here](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html).
 Please be sure to follow the conventions and go over your pull request before you submit it.
@@ -34,10 +34,10 @@ Please be sure to follow the conventions and go over your pull request before yo
 Contributing to this documentation is extremely important as many users will refer to it.
 
 If you plan to contribute to the docs, we recommend that you locally install `jekyll` so you can test your changes locally.
-We also recommend, that you install `jekyll` into a a ruby enviroment so it does not interfere with any other installations you might have.
+We also recommend, that you install `jekyll` into a ruby environment so it does not interfere with any other installations you might have.
 
 We recommend that you install `rbenv` and `rvm` to manage your ruby installation.
-`rbenv` is a tool that mangages different ruby versions, similar to what `conda` does for `python`.
+`rbenv` is a tool that manages different ruby versions, similar to what `conda` does for `python`.
 Please [install rbenv](https://github.com/rbenv/rbenv?tab=readme-ov-file#installation) following their instructions, and the same for [install rvm](https://github.com/rvm/rvm?tab=readme-ov-file#installing-rvm).
 We recommend that you install a ruby version `>=3.0`.
 After having installed an isolated ruby version, you have to install the dependencies to build the docs locally.
@@ -49,7 +49,7 @@ bundle install
 ```
 
 You should now be able to build and serve the documentation locally.
-To do this, simply to the following.
+To do this, simply do the following.
 ```bash
 bundle exec jekyll server --livereload --verbose
 ```

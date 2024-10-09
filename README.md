@@ -45,7 +45,7 @@ ModelCatalog().tool_test_run("slim-sentiment-tool") # see the model in action wi
 Writing code with`llmware` is based on a few main concepts:
 
 <details>
-<summary><b>Model Catalog</b>: Access all models the same way with easy lookup, regardless of underlying implementation. 
+<summary><b>Model Catalog</b>: Access all models the same way with easy lookup, regardless of the underlying implementation. 
 </summary>  
 
 
@@ -218,7 +218,7 @@ def hello_world_questions():
                 "billion yen. Data from Japan’s customs agency revealed that exports in September "
                 "increased 4.3% year on year, while imports slid 16.3% compared to the same period "
                 "last year. According to FactSet, exports to Asia fell for the ninth straight month, "
-                "which reflected ongoing China weakness. Exports were supported by shipments to "
+                "which reflected ongoing China's weakness. Exports were supported by shipments to "
                 "Western markets, FactSet added. — Lim Hui Jie"},
 
     {"query": "When did the LISP machine market collapse?",
@@ -846,7 +846,7 @@ See also [additional deployment/install release notes in wheel_archives](https:/
 - Added model benchmark performance data to model configs 
 - Enhanced Utilities hashing functions  
   
-For complete history of release notes, please open the Change log tab.  
+For a complete history of release notes, please open the Change log tab.  
 
 **Supported Operating Systems**: MacOS (Metal - M1/M2/M3), Linux (x86), and Windows  
 - Linux - support Ubuntu 20+  (glibc 2.31+)   
@@ -1023,7 +1023,7 @@ For complete history of release notes, please open the Change log tab.
   - Markdown (.md) files are now parsed and treated as text files.
   - PDF and Office parser stack optimizations which should avoid the need to set ulimit -s.
   - New llmware_models_fast_start.py example that allows discovery and selection of all llmware HuggingFace models.
-  - Native dependencies (shared libraries and dependencies) now included in repo to faciliate local development.
+  - Native dependencies (shared libraries and dependencies) now included in repo to facilitate local development.
   - Updates to the Status class to support PDF and Office document parsing status updates.
   - Minor defect fixes including image block handling in library exports.
 
