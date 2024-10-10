@@ -4,6 +4,11 @@
 [![discord](https://img.shields.io/badge/Chat%20on-Discord-blue?logo=discord&logoColor=white)](https://discord.gg/MhZn5Nc39h)   
 [![Documentation](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml/badge.svg)](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml)
 
+![DevFest GIF](https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExc3dodTV4czFsd2lrYWV5N3BhaXV5MXpucDhrcWZ2ODF4amM2aXo3diZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Bkax2GRzAt0PDHcmSq/giphy.gif)
+
+
+**Selected Winners will Win $25 in GitHub Sponsorship Prize!**
+
 ## 🧰🛠️🔩Building Enterprise RAG Pipelines with Small, Specialized Models  
 
 `llmware` provides a unified framework for building LLM-based applications (e.g, RAG, Agents), using small, specialized models that can be deployed privately, integrated with enterprise knowledge sources safely and securely, and cost-effectively tuned and adapted for any business process.  
@@ -819,6 +824,12 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
+**Sunday, October 6 - v0.3.7**  
+- Added new model class - OVGenerativeModel - to support the use of models packaged in OpenVino format  
+- Added new model class - ONNXGenerativeModel - to support use of models packaged in ONNX format  
+- Getting started with [OpenVino example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_models.py)  
+- Getting started with [ONNX example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_onnx_models.py)  
+  
 **Tuesday, October 1 - v0.3.6**  
 - Added new prompt chat templates  
 - Improved and updated model configurations    

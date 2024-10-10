@@ -8,7 +8,7 @@ Wheel Archives: `llmware` pip install from pypy
 1.  Download a selected wheel, unzip, and then deploy the code directly into a project.   (Only selected wheels kept in the archive - raise an issue if there is a particular wheel you are looking for - and we can post by request.)  
 2.  Place the wheel archive in a folder, and in that folder path, run:  
 
-```pip3 install llmware-0.3.4-py3-none-any.whl```  
+```pip3 install llmware-0.3.5-py3-none-any.whl```  
 
 New wheels are built generally on PyPy on a weekly basis and updated on PyPy versioning.   The development repo is updated  
 and current at all times, but may have updates that are not yet in the PyPy wheel.  
@@ -16,14 +16,14 @@ and current at all times, but may have updates that are not yet in the PyPy whee
 All wheels are built and tested on:  
 
 1.  Mac Metal (M1+)  
-2.  Windows x86 (+ with CUDA)  
-3.  Linux x86 (+ with CUDA) - most testing on Ubuntu 22 and Ubuntu 20 - which are recommended.  
-4.  Mac x86 (see 0.2.11 note below)  
-5.  Linux aarch64* (see 0.2.7 note below)  
+2.  Windows x86 (Intel + with CUDA)  
+3.  Linux x86 (Intel + with CUDA) - most testing on Ubuntu 22 and Ubuntu 20 - which are recommended.  
 
 **Release Notes**  
 
---**0.3.3 and 0.3.4** - released in July 2024 - continued improvements in the model lifecycle architecture and configurations, providing more options around the BaseModel class as the foundation with the ability to manage key steps in the loading, instantiation and inferencing lifecycle across different model classes and types.  
+-**0.3.5 and 0.3.6** - released in Aug/Sept 2024 - streamlining pip package - removing older deprecated platform support for Linux aarch64 and Mac x86 - removing from the repository as well by early October.  If someone needs deprecated/limited support, then the binaries are available, and can either be provided by request, or through pulling older pip versions, e.g., Linux aarch64 (version before 0.2.7) and Mac x86 (version before 0.2.11).  
+
+--**0.3.3 and 0.3.4** - released in July 2024 - continued improvements in the model lifecycle architecture and configurations, providing more options around the BaseModel class as the foundation with the ability to manage key steps in the loading, instantiation and inferencing lifecycle across different model classes and types. 
 
 --**0.3.2** released in the week of June 29, 2024 - enhanced entry points into both pdf and office parser for providing more text chunking configuration options for a 'one file' in memory parse - extends to provide the same options as multi-document, db-based parse.   
 
