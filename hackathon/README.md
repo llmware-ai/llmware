@@ -3,7 +3,7 @@
 🔥🔥 Hackathon Entries  🔥🔥
 =======================
 
-**If you are participating in a Hackathon or school project and would like to add a submission to llmware. **
+**If you are participating in a Hackathon or school project and would like to add a submission to llmware.**
 
 1.  Clone the llmware repository
 2.  Submit pull request with your submission
@@ -12,4 +12,4 @@
 5.  If any special instructions, please include in a README
 
 
-### **Let's get started!  🚀**
+### **Let's get started!**  🚀
