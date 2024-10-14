@@ -108,9 +108,9 @@ if __name__ == "__main__":
     LLMWareConfig().set_active_db("sqlite")
 
     #   this is part of the DRAGON model series - RAG-fine-tuned fact-based Q&A model
-    llm = "dragon-yi-answer-tool"
+    llm = "bling-phi-3-gguf"
     
-    #   feel free to also try:  "bling-phi-3-gguf" as a good substitute option
+    #   feel free to also try:  "dragon-yi-answer-tool" as a good substitute option
 
     m = msa_processing("example6_library", llm)
 
