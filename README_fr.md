@@ -792,8 +792,6 @@ Pour l'historique complet des notes de version, veuillez ouvrir l'onglet journal
 - Cas d'utilisation [Biz Bot] - voir [exemple](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/biz_bot.py) et [vidéo](https://youtu.be/4nBYDEjxxTE?si=o6PDPbu0PVcT-tYd)  
 - Mise à jour des exigences numpy <2 et mise à jour de la version minimum de yfinance (>=0.2.38)  
 
-</details> 
-
 
 
 **Mardi 4 juin - v0.3.0**  
