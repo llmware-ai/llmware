@@ -513,7 +513,10 @@ if __name__ == "__main__":
     ]
 
     #   for most use cases, we would recommend using the GGUF for faster inference
-
+    #   NEW - if you are running on a Windows machine, then try substituting for one of the following:
+    #    -- "bling-tiny-llama-ov" -> uses OpenVino model version - requires `pip install openvino` and `pip install openvino_genai`  
+    #    -- "bling-tiny-llama-onnx" -> uses ONNX model version - requires `pip install onnxruntime_genai`  
+    
     my_model = bling_gguf[1]
 
     llmware_bling_dragon_hello_world(my_model)
