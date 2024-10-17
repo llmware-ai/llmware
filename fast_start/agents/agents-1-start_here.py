@@ -149,6 +149,10 @@ ModelCatalog().tool_test_run("slim-xsum-tool")
 
 #   Check out some of the other examples in the other files for more details and building off these recipes
 
+#    NEW - if you are running on Windows machines, then we would encourage you to also check out the following two examples
+#    -- using_openvino - /examples/Models/using_openvino_models.py
+#    -- using_onnx - /examples/Models/using_onnx_models.py
+
 #   Welcome to LLMWare!
 
 
