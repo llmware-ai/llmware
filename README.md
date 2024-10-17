@@ -1,3 +1,7 @@
+<a name="top"></a>
+<h1 align="center">
+  mistral.rs
+</h1>
 # llmware
 ![Static Badge](https://img.shields.io/badge/python-3.9_%7C_3.10%7C_3.11%7C_3.12-blue?color=blue)
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
@@ -1078,4 +1082,6 @@ For complete history of release notes, please open the Change log tab.
 
 
 </details>
-
+<p align="centre">
+  <a href="#top">⬆️ Back to Top</a>
+</p>
