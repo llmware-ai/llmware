@@ -58,7 +58,7 @@ Here is a non exhaustive list of contributions you can make.
 9. Improve documentation by adding or updating docstrings in modules, classes, methods, or functions (see for example [Add docstrings](https://github.com/llmware-ai/llmware/issues/219))
 10. Improve test coverage
 11. Answer questions in our [Discord channel](https://discord.gg/MhZn5Nc39h), especially in the [technical support forum](https://discord.com/channels/1179245642770559067/1218498778915672194)
-12. Post projects in which you use ``llmware`` in our Discord forum [made with llmware](https://discord.com/channels/1179245642770559067/1218567269471486012), ideially with a link to a public GitHub repository
+12. Post projects in which you use ``llmware`` in our Discord forum [made with llmware](https://discord.com/channels/1179245642770559067/1218567269471486012), ideally with a link to a public GitHub repository
 
 ## Open Issues
 If you're interested in existing issues, you can

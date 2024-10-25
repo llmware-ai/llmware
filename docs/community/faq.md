@@ -14,7 +14,7 @@ permalink: /community/faq
 You can set the chunk size with the ``chunk_size`` parameter of the ``add_files`` method.
 
 The ``add_files`` method from the ``Library`` class has a ``chunk_size`` parameter that controls the chunk size.
-The method in addition has a parameter to control the maxium chunk size with ``max_chunk_size``.
+The method in addition has a parameter to control the maximum chunk size with ``max_chunk_size``.
 These two parameters are passed on to the ``Parser`` class.
 In the following example, we add the same files with different chunk sizes to the library ``chunk_size_example``.
 ```python
@@ -32,10 +32,10 @@ my_library.add_files(input_folder_path=path_to_my_library_files, chunk_size=600)
 
 ### How can I set the embedding store?
 #### "I want to use a specific embedding store"
-You can set the embedding store with the ``vector_db`` parameter of the ``install_new_embedding`` method, which you call on a ``Library`` object eacht time you want to create an embedding for a *library*.
+You can set the embedding store with the ``vector_db`` parameter of the ``install_new_embedding`` method, which you call on a ``Library`` object each time you want to create an embedding for a *library*.
 
 The ``install_new_embedding`` method from the ``Library`` class has a ``vector_db`` parameter that sets the embedding store.
-At the moment of this writting, *LLMWare* supports the embedding stores [chromadb](https://github.com/chroma-core/chroma), [neo4j](https://github.com/neo4j/neo4j), [milvus](https://github.com/milvus-io/milvus), [pg_vector](https://github.com/pgvector/pgvector), [postgres](https://github.com/postgres/postgres), [redis](https://github.com/redis/redis), [pinecone](https://www.pinecone.io/), [faiss](https://github.com/facebookresearch/faiss), [qdrant](https://github.com/qdrant/qdrant), [mongo atlas](https://www.mongodb.com/products/platform/atlas-database), and [lancedb](https://github.com/lancedb/lancedb).
+At the moment of this writing, *LLMWare* supports the embedding stores [chromadb](https://github.com/chroma-core/chroma), [neo4j](https://github.com/neo4j/neo4j), [milvus](https://github.com/milvus-io/milvus), [pg_vector](https://github.com/pgvector/pgvector), [postgres](https://github.com/postgres/postgres), [redis](https://github.com/redis/redis), [pinecone](https://www.pinecone.io/), [faiss](https://github.com/facebookresearch/faiss), [qdrant](https://github.com/qdrant/qdrant), [mongo atlas](https://www.mongodb.com/products/platform/atlas-database), and [lancedb](https://github.com/lancedb/lancedb).
 In the following example, we create the same embeddings three times for the same library, but store them in three different embedding stores.
 ```python
 import logging
@@ -60,9 +60,9 @@ library.install_new_embedding(vector_db="faiss")
 You can set the collection store with the ``set_active_db`` method of the ``LLMWareConfig`` class.
 
 The collection store is set using the ``LLMWareConfig`` class with the ``set_active_db`` method.
-At the time of writting, **LLMWare** supports the three collection stores *MongoDB*, *Postgres*, and *SQLite* - which is the default.
+At the time of writing, **LLMWare** supports the three collection stores *MongoDB*, *Postgres*, and *SQLite* - which is the default.
 You can retrieve the supported collection store with the method ``get_supported_collection_db``.
-In the example below, we first print the currently active collection store, then we retrieve the supported collection stores, before we swith to *Postgres*.
+In the example below, we first print the currently active collection store, then we retrieve the supported collection stores, before we switch to *Postgres*.
 
 ```python
 import logging
@@ -87,7 +87,7 @@ The ``Query`` class has the methods ``query``, ``text_query``, and ``semantic_qu
 On a side note, ``query`` is a wrapper function for ``text_query`` and ``semantic_query``.
 The value of ``result_count`` is passed on to the queried embedding store to control the number of retrieved results.
 For example, for *pgvector* ``result_count`` is passed on to the value after the ``LIMIT`` keyword.
-In the ``SQL`` example below, you can see the resulting ``SQL`` query of ``LLMWare`` if ``result_count=10``, the name of the collectoin being ``agreements``, and the query vector being ``[1, 2, 3]``.
+In the ``SQL`` example below, you can see the resulting ``SQL`` query of ``LLMWare`` if ``result_count=10``, the name of the collection being ``agreements``, and the query vector being ``[1, 2, 3]``.
 ```sql
 SELECT
     id,
@@ -126,7 +126,7 @@ You can set the Large Language Model (LLM) with the ``gen_model`` parameter of t
 
 The ``Prompt`` class has the method ``load_model`` with the ``gen_model`` parameter which sets the LLM.
 The ``gen_model`` parameter is passed on to the ``ModelCatalog`` class, which loads the LLM either from HuggingFace or from another source.
-The ``ModelCatalog`` allows you to **list all available models** with the method ``list_generative_mdoels``, or just the local models ``list_generative_local_models``, or just the open source models ``list_open_source_models``.
+The ``ModelCatalog`` allows you to **list all available models** with the method ``list_generative_models``, or just the local models ``list_generative_local_models``, or just the open source models ``list_open_source_models``.
 In the example below, we log all available LLMs, including the ones that are available locally and the open source ones, and also create the prompters.
 Each prompter uses a different LLM from our [BLING model series](https://llmware.ai/about), which you can also find on [HuggingFace](https://huggingface.co/collections/llmware/bling-models-6553c718f51185088be4c91a).
 
@@ -158,7 +158,7 @@ You can set the embedding model with the ``embedding_model_name`` parameter of t
 
 The ``Library`` class has the method ``install_new_embedding`` with the ``embedding_model_name`` parameter which sets the embedding model.
 The ``ModelCatalog`` allows you to **list all available embedding models** with the ``list_embedding_models`` method.
-In the following example, we list all available embedding models, and then we create a library with the name ``embedding_models_example``, which we embedd two times with embedding models ``'mini-lm-sber'`` and ``'industry-bert-contracts'``.
+In the following example, we list all available embedding models, and then we create a library with the name ``embedding_models_example``, which we embed two times with embedding models ``'mini-lm-sber'`` and ``'industry-bert-contracts'``.
 
 ```python
 import logging
