@@ -1085,4 +1085,6 @@ For complete history of release notes, please open the Change log tab.
 
 
 </details>
-
+<p align="centre">
+  <a href="#top">⬆️ Back to Top</a>
+</p>
