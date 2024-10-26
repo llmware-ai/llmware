@@ -9,6 +9,18 @@
 
 **Selected Winners will Win $25 in GitHub Sponsorship Prize!**
 
+## Table of Contents
+
+- [Building Enterprise RAG Pipelines with Small, Specialized Models](%EF%B8%8Fbuilding-enterprise-rag-pipelines-with-small-specialized-models)
+- [Key Features](#--key-features)
+- [What's New](#️-whats-new)
+- [Getting Started](#-getting-started)
+- [Working with the llmware Github repository](#%EF%B8%8F-working-with-the-llmware-github-repository)
+- [Data Store Options](#data-store-options)
+- [Meet our Models](#meet-our-models)
+- [Using LLMs and setting-up API keys & secrets](#using-llms-and-setting-up-api-keys--secrets)
+- [Release notes and Change Log](#--release-notes-and-change-log)
+
 ## 🧰🛠️🔩Building Enterprise RAG Pipelines with Small, Specialized Models  
 
 `llmware` provides a unified framework for building LLM-based applications (e.g., RAG, Agents), using small, specialized models that can be deployed privately, integrated with enterprise knowledge sources safely and securely, and cost-effectively tuned and adapted for any business process.  
