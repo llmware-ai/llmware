@@ -11,7 +11,7 @@
 
 ## 🧰🛠️🔩Building Enterprise RAG Pipelines with Small, Specialized Models  
 
-`llmware` provides a unified framework for building LLM-based applications (e.g, RAG, Agents), using small, specialized models that can be deployed privately, integrated with enterprise knowledge sources safely and securely, and cost-effectively tuned and adapted for any business process.  
+`llmware` provides a unified framework for building LLM-based applications (e.g., RAG, Agents), using small, specialized models that can be deployed privately, integrated with enterprise knowledge sources safely and securely, and cost-effectively tuned and adapted for any business process.  
 
  `llmware` has two main components:  
  
@@ -624,7 +624,7 @@ if __name__ == "__main__":
 
 -**Phi-3 GGUF Streaming Local Chatbot with UI** - setup your own Phi-3-gguf chatbot on your laptop in minutes - [example](examples/UI/gguf_streaming_chatbot.py)  with [video](https://youtu.be/gzzEVK8p3VM?si=8cNn_do0oxSzCEnM)  
 
--**Natural Language Query to CSV End to End example** - using slim-sql model - [video](https://youtu.be/z48z5XOXJJg?si=V-CX1w-7KRioI4Bi) and [example](examples/SLIM-Agents/text2sql-end-to-end-2.py)  and now using Custom Tables on Postgres [example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/agent_with_custom_tables.py)  
+-**Natural Language Query to CSV End to End example** - using the slim-sql model - [video](https://youtu.be/z48z5XOXJJg?si=V-CX1w-7KRioI4Bi) and [example](examples/SLIM-Agents/text2sql-end-to-end-2.py)  and now using Custom Tables on Postgres [example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/agent_with_custom_tables.py)  
 
 -**Multi-Model Agents with SLIM models** - multi-step Agents with SLIMs on CPU - [video](https://www.youtube.com/watch?v=cQfdaTcmBpY) - [example](examples/SLIM-Agents)  
 
@@ -725,9 +725,9 @@ Alternatively, if you prefer to complete setup without the welcome automation sc
 
 4.  **install vector db** - no-install vector db options include milvus lite, chromadb, faiss and lancedb - which do not require a server install, but do require that you install the python sdk library for that vector db, e.g., `pip3 install pymilvus`, or `pip3 install chromadb`.  If you look in [examples/Embedding](https://github.com/llmware-ai/llmware/tree/main/examples/Embedding), you will see examples for getting started with various vector DB, and in the root of the repo, you will see easy-to-get-started docker compose scripts for installing milvus, postgres/pgvector, mongo, qdrant, neo4j, and redis.  
 
-5.  Pytorch 2.3 note:  we have seen recently issues with Pytorch==2.3 on some platforms - if you run into any issues, we have seen that uninstalling Pytorch and downleveling to Pytorch==2.1 usually solves the problem.  
+5.  Pytorch 2.3 note:  We have recently seen issues with Pytorch==2.3 on some platforms - if you run into any issues, we have seen that uninstalling Pytorch and downleveling to Pytorch==2.1 usually solves the problem.  
 
-6.  Numpy 2.0 note: we have seen issues with numpy 2.0 with many libraries not yet supporting.  Our pip install setup will accept numpy 2.0 (to avoid pip conflicts), but if you pull from repo, we restrict to <2.   If you run into issues with numpy, we have found that they can be fixed by downgrading numpy to <2, e.g., 1.26.4.  To use WhisperCPP, you should downlevel to numpy <2.  
+6.  Numpy 2.0 note: we have seen issues with numpy 2.0 with many libraries not yet supporting.  Our pip install setup will accept numpy 2.0 (to avoid pip conflicts), but if you pull from repo, we restrict numpy to versions <2.   If you run into issues with numpy, we have found that they can be fixed by downgrading numpy to <2, e.g., 1.26.4.  To use WhisperCPP, you should downlevel to numpy <2.  
 
 
 ## Data Store Options
@@ -831,7 +831,7 @@ See also [additional deployment/install release notes in wheel_archives](https:/
 - Getting started with [ONNX example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_onnx_models.py)  
   
 **Tuesday, October 1 - v0.3.6**  
-- Added new prompt chat templates  
+- Added new prompt and chat templates  
 - Improved and updated model configurations    
 - New utility functions for locating and highlighting text matches in search results  
 - Improved hashing check utility functions  
