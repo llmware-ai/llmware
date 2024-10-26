@@ -219,7 +219,7 @@ class _ModelRegistry:
         return True
 
     @classmethod
-    def add_model(cls, model_card_dict):
+    def add_model(cls, model_card_dict, over_write=True):
 
         """ Adds a model to the registry """
 
@@ -231,8 +231,15 @@ class _ModelRegistry:
                 if (model["model_name"] in [model_card_dict["model_name"], model_card_dict["display_name"]] or
                         model["display_name"] in [model_card_dict["model_name"], model_card_dict["display_name"]]):
 
-                    raise LLMWareException(message=f"Exception: model name overlaps with another model already "
-                                                   f"in the ModelCatalog - {model}")
+                    if not over_write:
+
+                        raise LLMWareException(message=f"Exception: model name overlaps with another model already "
+                                                       f"in the ModelCatalog - {model}")
+
+                    else:
+                        # logger.warning(f"_ModelRegistry - over-write = True - {model['model_name']} - mew model added.")
+
+                        del cls.registered_models[i]
 
             #   go ahead and add model to the catalog
 
@@ -476,6 +483,9 @@ class ModelCatalog:
         self.selected_model = None
         self.api_key= None
         self.custom_loader = None
+
+        # new - add - 102024
+        self.model_kwargs = {}
 
     def to_state_dict(self):
 
@@ -889,6 +899,7 @@ class ModelCatalog:
                 #   to "re-direct" the model loading parameters
                 if isinstance(success_dict, dict):
                     for k, v in success_dict.items():
+                        # updating and setting attrs
                         setattr(self,k,v)
 
         return True
@@ -934,6 +945,14 @@ class ModelCatalog:
                          f"selected model - {self.selected_model}")
 
             raise ModelNotFoundException(self.selected_model)
+
+        # new - 1020 add
+        if self.model_kwargs:
+            if not kwargs:
+                kwargs = {}
+            for k,v in self.model_kwargs.items():
+                kwargs.update({k:v})
+        # end - new add
 
         # step 2- instantiate the right model class
         my_model = self.get_model_by_name(model_card["model_name"], api_key=self.api_key,
@@ -1697,7 +1716,19 @@ class ModelCatalog:
 
                     for x in range(0, len(logits[i])):
                         if logits[i][x][0] in marker_tokens:
-                            new_entry = (marker_token_lookup[logits[i][x][0]],
+
+                            # if model catalog loaded from json config file, then dict number converted to str
+
+                            if logits[i][x][0] in marker_token_lookup:
+                                entry0 = marker_token_lookup[logits[i][x][0]]
+
+                            elif str(logits[i][x][0]) in marker_token_lookup:
+                                entry0 = marker_token_lookup[str(logits[i][x][0])]
+
+                            else:
+                                entry0 = "NA"
+
+                            new_entry = (entry0,
                                          logits[i][x][0],
                                          logits[i][x][1])
                             marker_token_probs.append(new_entry)
