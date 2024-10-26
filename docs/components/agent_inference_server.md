@@ -176,8 +176,8 @@ The company offers a Software as a Service (SaaS) Retrieval Augmented Generation
     <li class="d-inline-block mr-1">
         <a href="https://www.youtube.com/@llmware"><span><i class="fa-brands fa-youtube"></i></span></a>
     </li>
-     <li class="d-inline-block mr-1">
-    <a href="https://huggingface.co/llmware"><span> <img src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg" alt="Hugging Face" class="hugging-face-logo" style="width: 20px; height: 20px;"/> </span></a>
+ <li class="d-inline-block mr-1">
+    <a href="https://huggingface.co/llmware"><span> <img src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg" alt="Hugging Face" class="hugging-face-logo"/> </span></a>
      </li>
 
     <li class="d-inline-block mr-1">
