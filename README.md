@@ -836,6 +836,10 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
+**Sunday, October 27 - v0.3.8**
+ - Integrating Model Depot collection of 100+ OpenVino and ONNX Models into LLMWare default model catalog  
+ - Supporting changes in model classes, model catalog and model configs  
+   
 **Sunday, October 6 - v0.3.7**  
 - Added new model class - OVGenerativeModel - to support the use of models packaged in OpenVino format  
 - Added new model class - ONNXGenerativeModel - to support use of models packaged in ONNX format  
