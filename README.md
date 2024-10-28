@@ -2,12 +2,7 @@
 ![Static Badge](https://img.shields.io/badge/python-3.9_%7C_3.10%7C_3.11%7C_3.12-blue?color=blue)
 ![PyPI - Version](https://img.shields.io/pypi/v/llmware?color=blue)
 [![discord](https://img.shields.io/badge/Chat%20on-Discord-blue?logo=discord&logoColor=white)](https://discord.gg/MhZn5Nc39h)   
-[![Documentation](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml/badge.svg)](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml)
-
-![DevFest GIF](https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExc3dodTV4czFsd2lrYWV5N3BhaXV5MXpucDhrcWZ2ODF4amM2aXo3diZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Bkax2GRzAt0PDHcmSq/giphy.gif)
-
-
-**Selected Winners will Win $25 in GitHub Sponsorship Prize!**  
+[![Documentation](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml/badge.svg)](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml)  
 
 🆕Check out [Model Depot](https://medium.com/@darrenoberst/model-depot-9e6625c5fc55)  
 Are you using a Windows/Linux x86 machine?  
