@@ -6,6 +6,12 @@
 
 ![DevFest GIF](https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExc3dodTV4czFsd2lrYWV5N3BhaXV5MXpucDhrcWZ2ODF4amM2aXo3diZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Bkax2GRzAt0PDHcmSq/giphy.gif)
 
+<div style="display: flex; justify-content: center; margin: 20px 0;">
+    <a href="README.md" style="padding: 5px 10px; background-color: #e7e7e7; color: #333; text-decoration: none; border: 1px solid #ccc; border-radius: 3px; margin-right: 5px; font-size: 12px;">English</a>
+    <a href="README_fr.md" style="padding: 5px 10px; background-color: #e7e7e7; color: #333; text-decoration: none; border: 1px solid #ccc; border-radius: 3px; font-size: 12px;">Français</a>
+</div>
+
+
 
 **Selected Winners will Win $25 in GitHub Sponsorship Prize!**
 
@@ -1079,6 +1085,7 @@ For complete history of release notes, please open the Change log tab.
 - **20 Oct 2023: llmware v0.1.4**
   - GPU support for Hugging Face models.
   - Defect fixes and additional test scripts.
+
 - **13 Oct 2023: llmware v0.1.3**
   - MongoDB Atlas Vector Search support.
   - Support for authentication using a MongoDB connection string.
