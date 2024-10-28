@@ -9,8 +9,8 @@
 
 **Selected Winners will Win $25 in GitHub Sponsorship Prize!**  
 
-🆕Check out Model Depot (https://medium.com/@darrenoberst/model-depot-9e6625c5fc55)  
-Are you using a Windows x86 machine?  
+🆕Check out [Model Depot](https://medium.com/@darrenoberst/model-depot-9e6625c5fc55)  
+Are you using a Windows/Linux x86 machine?  
 - Getting started with [OpenVino example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_models.py)  
 - Getting started with [ONNX example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_onnx_models.py)  
 
