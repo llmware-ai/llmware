@@ -731,7 +731,7 @@ Alternatively, if you prefer to complete setup without the welcome automation sc
 
 1.  **install requirements.txt** - inside the /llmware path - e.g., ```pip3 install -r llmware/requirements.txt```  
 
-2.  **Install requirements_extras.txt** - inside the /llmware path (e.g., ```pip3 install -r llmware/requirements_extras.txt```).Depending upon your use case, you may not need all or any of these installs, but some of these will be used in the examples.
+2.  **install requirements_extras.txt** - inside the /llmware path - e.g., ```pip3 install -r llmware/requirements_extras.txt```(Depending upon your use case, you may not need all or any of these installs, but some of these will be used in the examples.)
 
 3.  **run examples** - copy one or more of the example .py files into the root project path.   (We have seen several IDEs that will attempt to run interactively from the nested /example path, and then not have access to the /llmware module - the easy fix is to just copy the example you want to run into the root path).  
 
@@ -836,7 +836,7 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
-**Sunday, October 6th - v0.3.7**  
+**Sunday, October 6 - v0.3.7**  
 - Added new model class - OVGenerativeModel - to support the use of models packaged in OpenVino format  
 - Added new model class - ONNXGenerativeModel - to support use of models packaged in ONNX format  
 - Getting started with [OpenVino example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_models.py)  
