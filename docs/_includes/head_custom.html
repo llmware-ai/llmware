@@ -2,12 +2,15 @@
 
 
 <style>
+/* Updated font size for better readability */
 ul li span {
-    font-size: 3em;
+    font-size: 2em;
 }
 
+/* Added transition for smoother hover effects */
 .fa-youtube:hover {
     color: red;
+    transition: color 0.3s;
 }
 
 /*
@@ -20,32 +23,36 @@ https://stackoverflow.com/questions/38507734/fontawesome-instagram-icon-colorize
     background: -webkit-radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
     background-clip: text;
     -webkit-background-clip: text;
+    transition: background 0.3s;
 }
 
 .fa-square-x-twitter:hover {
     color: black;
+    transition: color 0.3s;
 }
 
 .fa-linkedin:hover {
     color: #0077B5;
+    transition: color 0.3s;
 }
 
 .fa-discord:hover {
     color: white;
     background-color: #5865F2;
     border-radius: 5px;
+    transition: background-color 0.3s;
 }
 
 .hugging-face-logo {
-    height: 50px;
-    width: 50px;
+    height: 60px;
+    width: 60px;
     padding-top: 5px;
     filter: hue-rotate(210deg);
 }
 
 footer ul li .hugging-face-logo {
-    height: 15px;
-    width: 15px;
+    height: 20px;
+    width: 20px;
     padding-top: 0px;
     padding: 0px;
     filter: hue-rotate(210deg);
@@ -53,5 +60,6 @@ footer ul li .hugging-face-logo {
 
 ul li .hugging-face-logo:hover {
     filter: hue-rotate(0deg);
+    transition: filter 0.3s;
 }
 </style>
