@@ -622,36 +622,76 @@ if __name__ == "__main__":
 ```
 </details>
 
+## 🔥 Latest Enhancements and Features 🔥  
 
-## 🔥 What's New? 🔥  
+### Model Capabilities & Benchmarks
 
--**Benchmarking Small Model Capabilities** - see [benchmark results](https://medium.com/@darrenoberst/best-small-language-models-for-accuracy-and-enterprise-use-cases-benchmark-results-cf71964759c8) and [model_ranking example](fast_start/agents/agents-15-get_model_benchmarks.py)  
+- **Benchmarking Small Model Capabilities**  
+  Explore the latest benchmark results for small language models focusing on accuracy and enterprise use cases.  
+  - [Read benchmark results](https://medium.com/@darrenoberst/best-small-language-models-for-accuracy-and-enterprise-use-cases-benchmark-results-cf71964759c8)
+  - [Example code for model ranking](fast_start/agents/agents-15-get_model_benchmarks.py)
 
--**Using Qwen2 Models for RAG, Function Calling and Chat** - get started in minutes - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-qwen2-models.py)  
+### New Models and Functionality
 
--**New Phi-3 Function Calling Models** - get started in minutes - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-phi-3-function-calls.py)  
+- **Qwen2 Models for RAG, Function Calling, and Chat**  
+  Start using Qwen2 models quickly with resources for Retrieval-Augmented Generation (RAG), function calling, and chat functionalities.
+  - [Quickstart example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-qwen2-models.py)
 
--**BizBot - RAG + SQL Local Chatbot** - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/biz_bot.py) and [video](https://youtu.be/4nBYDEjxxTE?si=o6PDPbu0PVcT-tYd)  
+- **Phi-3 Function Calling Models**  
+  Get started in minutes with Phi-3 models designed for function calling.
+  - [Quickstart example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-phi-3-function-calls.py)
 
-**Lecture Tool Use Case - ask questions to a voice recording** - see [lecture_tool](https://github.com/llmware-ai/llmware/blob/main/examples/Use_Cases/lecture_tool/)   
+### New Use Cases & Applications
 
--**Web Services with Agent Calls for Financial Research** - end-to-end scenario - [video](https://youtu.be/l0jzsg1_Ik0?si=hmLhpT1iv_rxpkHo) and [example](examples/Use_Cases/web_services_slim_fx.py)  
+- **BizBot: RAG + SQL Local Chatbot**  
+  Implement a local chatbot for business intelligence using RAG and SQL.
+  - [Code example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/biz_bot.py) | [Demo video](https://youtu.be/4nBYDEjxxTE?si=o6PDPbu0PVcT-tYd)
 
--**Voice Transcription with WhisperCPP** - [getting_started](examples/Models/using-whisper-cpp-getting-started.py), [using_sample_files](examples/Models/using-whisper-cpp-sample-files.py), and [analysis_use_case](examples/Use_Cases/parsing_great_speeches.py) with [great_speeches_video](https://youtu.be/5y0ez5ZBpPE?si=KVxsXXtX5TzvlEws)    
+- **Lecture Tool**  
+  Enables Q&A on voice recordings for education and lecture analysis.
+  - [Lecture tool code](https://github.com/llmware-ai/llmware/blob/main/examples/Use_Cases/lecture_tool/)
 
--**Phi-3 GGUF Streaming Local Chatbot with UI** - setup your own Phi-3-gguf chatbot on your laptop in minutes - [example](examples/UI/gguf_streaming_chatbot.py)  with [video](https://youtu.be/gzzEVK8p3VM?si=8cNn_do0oxSzCEnM)  
+- **Web Services for Financial Research**  
+  An end-to-end example demonstrating web services with agent calls for financial research.
+  - [Demo video](https://youtu.be/l0jzsg1_Ik0?si=hmLhpT1iv_rxpkHo) | [Code example](examples/Use_Cases/web_services_slim_fx.py)
 
--**Natural Language Query to CSV End to End example** - using the slim-sql model - [video](https://youtu.be/z48z5XOXJJg?si=V-CX1w-7KRioI4Bi) and [example](examples/SLIM-Agents/text2sql-end-to-end-2.py)  and now using Custom Tables on Postgres [example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/agent_with_custom_tables.py)  
+### Audio & Text Processing
 
--**Multi-Model Agents with SLIM models** - multi-step Agents with SLIMs on CPU - [video](https://www.youtube.com/watch?v=cQfdaTcmBpY) - [example](examples/SLIM-Agents)  
+- **Voice Transcription with WhisperCPP**  
+  Start transcription projects with WhisperCPP, featuring tools for sample file usage and famous speeches.
+  - [Getting started guide](examples/Models/using-whisper-cpp-getting-started.py) | [Parsing great speeches](examples/Use_Cases/parsing_great_speeches.py) | [Demo video](https://youtu.be/5y0ez5ZBpPE?si=KVxsXXtX5TzvlEws)
 
--**OCR Embedded Document Images Example** - systematically extract text from images embedded in documents [example](examples/Parsing/ocr_embedded_doc_images.py)   
+- **Natural Language Query to CSV**  
+  Convert natural language queries to CSV with Slim-SQL, supporting custom Postgres tables.
+  - [Demo video](https://youtu.be/z48z5XOXJJg?si=V-CX1w-7KRioI4Bi) | [End-to-end example](examples/SLIM-Agents/text2sql-end-to-end-2.py) | [Custom table usage](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/agent_with_custom_tables.py)
 
--**Enhanced Parser Functions for PDF, Word, Powerpoint and Excel** - new text-chunking controls and strategies, extract tables, images, header text - [example](examples/Parsing/pdf_parser_new_configs.py)   
+### Multi-Model Agents
 
--**Agent Inference Server** - set up multi-model Agents over Inference Server [example](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/agent_api_endpoint.py)  
+- **Multi-Model Agents with SLIM**  
+  Use SLIM models on CPU for multi-step agents in complex workflows.
+  - [Demo video](https://www.youtube.com/watch?v=cQfdaTcmBpY) | [Example directory](examples/SLIM-Agents)
 
--**Optimizing Accuracy of RAG Prompts** - check out [example](examples/Models/adjusting_sampling_settings.py) and videos - [part I](https://youtu.be/7oMTGhSKuNY?si=14mS2pftk7NoKQbC) and [part II](https://youtu.be/iXp1tj-pPjM?si=T4teUAISnSWgtThu)  
+### Document & OCR Processing
+
+- **OCR Embedded Document Images**  
+  Extract text systematically from images embedded in documents for enhanced document processing.
+  - [OCR example](examples/Parsing/ocr_embedded_doc_images.py)
+
+- **Enhanced Document Parsing for PDFs, Word, PowerPoint, and Excel**  
+  Improved text-chunking controls, table extraction, and content parsing.
+  - [Parsing example](examples/Parsing/pdf_parser_new_configs.py)
+
+### Deployment & Optimization
+
+- **Agent Inference Server**  
+  Set up an inference server for multi-model agents to optimize deployments.
+  - [Server setup example](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/agent_api_endpoint.py)
+
+- **Optimizing Accuracy of RAG Prompts**  
+  Tutorials for tuning RAG prompt settings for increased accuracy.
+  - [Settings example](examples/Models/adjusting_sampling_settings.py) | Videos: [Part I](https://youtu.be/7oMTGhSKuNY?si=14mS2pftk7NoKQbC), [Part II](https://youtu.be/iXp1tj-pPjM?si=T4teUAISnSWgtThu)
+
+
 
 ## 🌱 Getting Started
 
