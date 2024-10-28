@@ -736,7 +736,7 @@ Alternatively, if you prefer to complete setup without the welcome automation sc
 
 1.  **install requirements.txt** - inside the /llmware path - e.g., ```pip3 install -r llmware/requirements.txt```  
 
-2.  **install requirements_extras.txt** - inside the /llmware path - e.g., ```pip3 install -r llmware/requirements_extras.txt```  (Depending upon your use case, you may not need all or any of these installs, but some of these will be used in the examples.)  
+2.  **install requirements_extras.txt** - inside the /llmware path - e.g., ```pip3 install -r llmware/requirements_extras.txt```(Depending upon your use case, you may not need all or any of these installs, but some of these will be used in the examples.)
 
 3.  **run examples** - copy one or more of the example .py files into the root project path.   (We have seen several IDEs that will attempt to run interactively from the nested /example path, and then not have access to the /llmware module - the easy fix is to just copy the example you want to run into the root path).  
 
@@ -871,7 +871,7 @@ For complete history of release notes, please open the Change log tab.
 
 **Supported Operating Systems**: MacOS (Metal - M1/M2/M3), Linux (x86), and Windows  
 - Linux - support Ubuntu 20+  (glibc 2.31+)   
-- if you need another Linux version, please raise an issue - we will prioritize testing and ensure support.  
+- If you need support for another Linux version, please raise an issue - we will prioritize testing and ensure support.  
 
 **Supported Vector Databases**: Milvus, Postgres (PGVector), Neo4j, Redis, LanceDB, ChromaDB, Qdrant, FAISS, Pinecone, Mongo Atlas Vector Search
 
