@@ -24,19 +24,9 @@ if not util.find_spec("openvino_genai"):
     print("\nto run this example, you need to install openvino_genai first, e.g., pip3 install openvino_genai")
 
 
-#   we will be adding more OpenVino models to the default catalog, but we currently support:
-#   -- bling-tiny-llama-ov
-#   -- bling-phi-3-ov
-#   -- phi-3-ov
-#   -- qwen2.5-1.5b-ov
-#   -- qwen2.5-3b-ov
-#   -- qwen2.5-0.5b-ov
-#   -- dragon-llama2-ov
-#   -- dragon-mistral-ov
-#   -- dragon-yi-9b-ov
-#   -- slim-extract-tiny-ov
-#   -- slim-extract-phi-3-ov
-#   -- slim-sentiment-ov
+#  as of llmware 0.3.8, we have integrated the Model Depot collection into the default llmware model catalog
+#  please check out home page in Huggingface for a complete view of the collection
+#  https://www.huggingface.co/llmware
 
 #   to add your own OpenVino models, please see the example 'adding_openvino_or_onnx_model.py'
 
