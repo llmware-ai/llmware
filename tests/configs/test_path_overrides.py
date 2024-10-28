@@ -1,4 +1,3 @@
-
 """ Tests paths both for a standard account setup and custom account setup.
 
     Note: by default, this test will run on MongoDB - to switch DB used - add one-line:
@@ -27,7 +26,7 @@ def test_standard_account_setup():
     # run test query
     results = Query(library).text_query("base salary")
 
-    assert len(results) > 0
+    assert len(results) > 0, "Expected results to be greater than 0 for standard account setup."
 
 
 # Test overriding llmware_data folder
@@ -46,9 +45,9 @@ def test_setup_custom_location():
         if not os.path.exists(LLMWareConfig().get_llmware_path()):
             LLMWareConfig.setup_llmware_workspace()
 
-    assert new_home_folder in LLMWareConfig.get_home()
-    assert new_home_folder in LLMWareConfig.get_llmware_path() and new_llmware_path in LLMWareConfig.get_llmware_path()
-    assert new_home_folder in LLMWareConfig.get_library_path() and new_llmware_path in LLMWareConfig.get_library_path()
+    assert new_home_folder in LLMWareConfig.get_home(), "Custom home folder not set correctly."
+    assert new_home_folder in LLMWareConfig.get_llmware_path() and new_llmware_path in LLMWareConfig.get_llmware_path(), "Custom LLMWare path not set correctly."
+    assert new_home_folder in LLMWareConfig.get_library_path() and new_llmware_path in LLMWareConfig.get_library_path(), "Library path not set correctly."
 
     # test with library setup and adding files
     library_name = "library_with_custom_path"
@@ -56,9 +55,10 @@ def test_setup_custom_location():
     sample_files_path = Setup().load_sample_files()
     library.add_files(os.path.join(sample_files_path,"Agreements"))
 
-    assert new_home_folder in library.library_main_path
+    assert new_home_folder in library.library_main_path, "Custom path not found in library main path."
 
     results = Query(library).text_query("salary")
 
     assert len(results) > 0
+
 
