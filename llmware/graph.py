@@ -1,4 +1,3 @@
-
 # Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -65,14 +64,22 @@ class Graph:
         self.pre_initialization_bow_data = {}
         self.post_initialization_bow_data = {}
 
-        # create stop words txt file in nlp path
-        self.stop_words = Utilities().load_stop_words_list(self.library.nlp_path)
+        # Load stop words with error handling
+        try:
+            self.stop_words = Utilities().load_stop_words_list(self.library.nlp_path)
+        except Exception as e:
+            logger.error(f"Failed to load stop words: {e}")
+            self.stop_words = []
 
-        # load graph c modules - note: if any issues loading module, will be captured in get_module_graph_functions()
-        self._mod_utility = Utilities().get_module_graph_functions()
+        # Load graph C modules with error handling
+        try:
+            self._mod_utility = Utilities().get_module_graph_functions()
+        except Exception as e:
+            logger.error(f"Failed to load graph utility module: {e}")
+            self._mod_utility = None
 
     # new method - used to track 'counter' inside the bow files for incremental read/write/analysis
-    def bow_locator(self):
+    def bow_locator(self) -> tuple:
 
         """ Internal utility method used to enable scalability across multiple underlying BOW (Bag-of-Word)
         files which are created by the graph module. """
@@ -103,16 +110,26 @@ class Graph:
                                f"{top_bow_file}")
                 bow_index = 0
 
-            fp = open(os.path.join(dataset_fp, top_bow_file), "r", encoding='utf-8')
-            fp.seek(0, 2)
-            bow_byte_index = fp.tell()
-            fp.seek(0, 0)  # rewind
-            bow_tokens = len(fp.read().split(","))
-            fp.close()
+            try:
+                fp = open(os.path.join(dataset_fp, top_bow_file), "r", encoding='utf-8')
+                fp.seek(0, 2)
+                bow_byte_index = fp.tell()
+                fp.seek(0, 0)  # rewind
+                bow_tokens = len(fp.read().split(","))
+                fp.close()
+            except FileNotFoundError:
+                logger.error(f"BOW file not found: {top_bow_file}")
+                return 0, 0, 0, [], True
+            except Exception as e:
+                logger.error(f"Error reading BOW file: {e}")
+                return 0, 0, 0, [], True
+            finally:
+                if 'fp' in locals():
+                    fp.close()
 
         return bow_index, bow_byte_index, bow_tokens, bow_files, no_bow
 
-    def build_graph(self):
+    def build_graph(self) -> dict:
 
         """ Generates multiple valuable nlp artifacts in the library's /nlp folder path, with the
         primary objective of generating the co-occurrence matrix. """
@@ -186,9 +203,11 @@ class Graph:
         graph_summary.update({"time_stamp": ts})
 
         #   write to manifest.json for knowledge graph
-        json_dict = json.dumps(graph_summary,indent=2)
-        with open(os.path.join(self.library.nlp_path,"manifest.json"),"w", encoding='utf-8') as outfile:
-            outfile.write(json_dict)
+        try:
+            with open(os.path.join(self.library.nlp_path,"manifest.json"), "w", encoding='utf-8') as outfile:
+                outfile.write(json.dumps(graph_summary, indent=2))
+        except Exception as e:
+            logger.error(f"Failed to write manifest.json: {e}")
 
         return graph_summary
 
@@ -833,16 +852,25 @@ class Graph:
 
         return len(self.get_unique_vocab_lookup())
 
-    def get_unique_vocab_lookup(self):
+    def get_unique_vocab_lookup(self) -> dict:
 
         """ Returns the unique vocab list found in the Library corpus. """
 
         if self.library.get_knowledge_graph_status() != "yes":
             self.build_graph()
 
-        j = json.load(open(os.path.join(self.library.nlp_path,"vocab_lookup.json"), "r", encoding='utf-8'))
-
-        return j
+        try:
+            with open(os.path.join(self.library.nlp_path, "vocab_lookup.json"), "r", encoding='utf-8') as file:
+                return json.load(file)
+        except FileNotFoundError:
+            logger.error("vocab_lookup.json file not found.")
+            return {}
+        except json.JSONDecodeError:
+            logger.error("Error decoding JSON from vocab_lookup.json.")
+            return {}
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            return {}
 
     def get_unique_vocab_reverse_lookup(self):
 
