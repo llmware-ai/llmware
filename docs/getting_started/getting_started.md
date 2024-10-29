@@ -30,7 +30,7 @@ Our specific focus is on making it easy to integrate open source small specializ
 1.  Install llmware - `pip3 install llmware`  
 
 
-2.  Make sure that you are running on a [supported platform](https://www.github.com/llmware-ai/llmware/tree/main/docs/platforms.md#platform-support).  
+2.  Make sure that you are running on a [supported platform](https://github.com/llmware-ai/llmware/blob/main/docs/getting_started/platforms.md#platform-support).  
 
 
 3.  Learn by example:  
