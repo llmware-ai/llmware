@@ -1,31 +1,47 @@
-
 """This example demonstrates several leading open source chat models running in 4-bit GGUF on local laptop."""
 
 import time
 import re
 from llmware.prompts import Prompt
+import logging
 
 
 # Run the benchmark test
-def run_test(model_name, prompt_list):
+def run_test(model_name: str, prompt_list: list[dict]) -> int:
+    """Run the benchmark test on the specified model with the given prompts.
 
-    print(f"\n > Loading model '{model_name}'")
+    Args:
+        model_name (str): The name of the model to load.
+        prompt_list (list[dict]): A list of prompts to test the model with.
 
-    prompter = Prompt().load_model(model_name)
+    Returns:
+        int: Status code (0 for success).
+    """
+    logging.basicConfig(level=logging.INFO)
+
+    logging.info(f"Loading model '{model_name}'")
+    
+    try:
+        prompter = Prompt().load_model(model_name)
+    except Exception as e:
+        logging.error(f"Failed to load model: {e}")
+        return 1
 
     for i, entry in enumerate(prompt_list):
-
         start_time = time.time()
-        print("\n")
-        print(f"query - {i+1} - {entry['query']}")
+        logging.info(f"query - {i+1} - {entry['query']}")
 
-        response = prompter.prompt_main(entry["query"])
+        try:
+            response = prompter.prompt_main(entry["query"])
+        except Exception as e:
+            logging.error(f"Error during prompting: {e}")
+            continue
 
         # Print results
         time_taken = round(time.time() - start_time, 2)
         llm_response = re.sub("[\n\n]", "\n", response['llm_response'])
-        print(f"llm_response - {i+1} - {llm_response}")
-        print(f"time_taken - {i+1} - {time_taken}")
+        logging.info(f"llm_response - {i+1} - {llm_response}")
+        logging.info(f"time_taken - {i+1} - {time_taken}")
 
     return 0
 
