@@ -32,7 +32,7 @@ In this repository, we show several key features of parsing with llmware:
 
 - Parse directly into a Prompt - [**Parse in Prompt**](https://www.github.com/llmware-ai/llmware/tree/main/examples/Parsing/parse_into_prompt.py)  
 
-- Parse to JSON file - [**Parse to JSON**](https://www.github.com/llmware-ai/llmware/tree/main/examples/main/examples/Parsing/parse_to_json.py)  
+- Parse to JSON file - [**Parse to JSON**](https://github.com/llmware-ai/llmware/blob/6936ef404487a0fc88e2571648c7181bd7c07ad5/examples/Parsing/parse_to_json.py)  
 
 
 **Other Content Types**  
