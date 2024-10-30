@@ -121,7 +121,8 @@ The company offers a Software as a Service (SaaS) Retrieval Augmented Generation
         <a href="https://www.youtube.com/@llmware"><span><i class="fa-brands fa-youtube"></i></span></a>
     </li>
     <li class="d-inline-block mr-1">
-        <a href="https://huggingface.co/llmware"><span><img src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg" alt="Hugging Face" class="hugging-face-logo"/></span></a>
+        <a href="https://huggingface.co/llmware"><span>  <i class="fa-solid fa-face-smiling-hands"></i>
+        </span></a>
     </li>
     <li class="d-inline-block mr-1">
         <a href="https://www.linkedin.com/company/aibloks/"><span><i class="fa-brands fa-linkedin"></i></span></a>
