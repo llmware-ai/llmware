@@ -72,21 +72,23 @@ class Utilities:
 
         #   deprecation warning for aarch64 linux
         if system == 'linux' and machine == 'aarch64':
-            logger.warning("Deprecation warning: as of llmware 0.2.7, we are deprecating support for aarch64 "
-                           "linux - we build, support and test on Linux x86_64, Linux x86_64 with CUDA, "
-                           "Windows x86_64, Windows x86_64 with CUDA, and Mac Metal.  We will revisit "
-                           "platform support from time-to-time, due to availability and interest.  "
-                           "If you have an important need for support for aarch 64 linux, please "
-                           "raise an issue at github/llmware-ai/llmware.git")
+
+            error_msg = ("Linux Aarch64 detected as OS - this is not a supported platform.  Support "
+                         "was deprecated in llmware version 0.2.6 and removed in llmware version 0.3.9. "
+                         "Options - move to linux x86_64, back-level llmware to supported version, or "
+                         "if urgent requirement for aarch64, please raise ticket on github.")
+
+            raise LLMWareException(message=error_msg)
 
         #   deprecation warning for darwin x86_64
         if system == "darwin" and machine == "x86_64":
-            logger.warning("Deprecation warning: as of llmware 0.2.11, we are deprecating support for Mac x86_64 - "
-                           "we build, support, and test on Linux x86_64, Linux x86_64 with CUDA, Windows "
-                           "x86_64, Windows x86_64 with CUDA, and Mac Metal (M1-M2-M3).  We will revisit "
-                           "platform support from time-to-time, due to availability and interest.  "
-                           "If you have an important need to support this older version of Mac, please raise an "
-                           "issue at github/llmware-ai/llmware.git")
+
+            error_msg = ("Mac x86 detected as OS - this is not a supported platform.  Support "
+                         "was deprecated in llmware version 0.2.6 and removed in llmware version 0.3.9. "
+                         "Options - move to Mac Metal (M1+), back-level llmware to supported version, or "
+                         "if urgent requirement for Mac x86, please raise ticket on github.")
+
+            raise LLMWareException(message=error_msg)
 
         # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
         machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
@@ -129,21 +131,23 @@ class Utilities:
 
         # deprecation warning for aarch64 linux
         if system == 'linux' and machine == 'aarch64':
-            logger.warning("Deprecation warning: as of llmware 0.2.7, we are deprecating support for aarch64 "
-                           "linux - we build, support and test the following strategic platforms - Linux x86_64, "
-                           "Linux x86_64 with CUDA, Windows x86_64, Windows x86_64 with CUDA, and Mac Metal.  "
-                           "We will revisit from time-to-time, due "
-                           "to availability and interest.  If you have an important need for "
-                           "support for aarch 64 linux, please raise an issue at github/llmware-ai/llmware.git")
+
+            error_msg = ("Linux Aarch64 detected as OS - this is not a supported platform.  Support "
+                         "was deprecated in llmware version 0.2.6 and removed in llmware version 0.3.9. "
+                         "Options - move to linux x86_64, back-level llmware to supported version, or "
+                         "if urgent requirement for aarch64, please raise ticket on github.")
+
+            raise LLMWareException(message=error_msg)
 
         #   deprecation warning for darwin x86_64
         if system == "darwin" and machine == "x86_64":
-            logger.warning("Deprecation warning: as of llmware 0.2.11, we are deprecating support for Mac x86_64 - "
-                           "we build, support, and test on Linux x86_64, Linux x86_64 with CUDA, Windows "
-                           "x86_64, Windows x86_64 with CUDA, and Mac Metal (M1-M2-M3).  We will revisit "
-                           "platform support from time-to-time, due to availability and interest.  "
-                           "If you have an important need to support this older version of Mac, please raise an "
-                           "issue at github/llmware-ai/llmware.git")
+
+            error_msg = ("Mac x86 detected as OS - this is not a supported platform.  Support "
+                         "was deprecated in llmware version 0.2.6 and removed in llmware version 0.3.9. "
+                         "Options - move to Mac Metal (M1+), back-level llmware to supported version, or "
+                         "if urgent requirement for Mac x86, please raise ticket on github.")
+
+            raise LLMWareException(message=error_msg)
 
         # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
         machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
@@ -190,21 +194,23 @@ class Utilities:
 
         # deprecation warning for aarch64 linux
         if system == 'linux' and machine == 'aarch64':
-            logger.warning("Deprecation warning: as of llmware 0.2.7, we are deprecating support for aarch64 "
-                           "linux - we build, support and test on the following strategic platforms - Linux x86_64, "
-                           "Linux x86_64 with CUDA, Windows x86_64, Windows x86_64 with CUDA, and Mac Metal.  "
-                           "We will revisit from time-to-time, due "
-                           "to availability and interest.  If you have an important need for "
-                           "support for aarch 64 linux, please raise an issue at github/llmware-ai/llmware.git")
+
+            error_msg = ("Linux Aarch64 detected as OS - this is not a supported platform.  Support "
+                         "was deprecated in llmware version 0.2.6 and removed in llmware version 0.3.9. "
+                         "Options - move to linux x86_64, back-level llmware to supported version, or "
+                         "if urgent requirement for aarch64, please raise ticket on github.")
+
+            raise LLMWareException(message=error_msg)
 
         #   deprecation warning for darwin x86_64
         if system == "darwin" and machine == "x86_64":
-            logger.warning("Deprecation warning: as of llmware 0.2.11, we are deprecating support for Mac x86_64 - "
-                           "we build, support, and test on Linux x86_64, Linux x86_64 with CUDA, Windows "
-                           "x86_64, Windows x86_64 with CUDA, and Mac Metal (M1-M2-M3).  We will revisit "
-                           "platform support from time-to-time, due to availability and interest.  "
-                           "If you have an important need to support this older version of Mac, please raise an "
-                           "issue at github/llmware-ai/llmware.git")
+
+            error_msg = ("Mac x86 detected as OS - this is not a supported platform.  Support "
+                         "was deprecated in llmware version 0.2.6 and removed in llmware version 0.3.9. "
+                         "Options - move to Mac Metal (M1+), back-level llmware to supported version, or "
+                         "if urgent requirement for Mac x86, please raise ticket on github.")
+
+            raise LLMWareException(message=error_msg)
 
         # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
         machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
