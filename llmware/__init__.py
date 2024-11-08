@@ -21,6 +21,6 @@ the vector databases.
 """
 
 
-__version__ = '0.3.8'
+__version__ = '0.3.9'
 __author__ = 'llmware'
 __license__ = 'Apache 2.0 License'
