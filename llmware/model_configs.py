@@ -488,6 +488,18 @@ global_model_repo_catalog_list = [
     {"model_name": "gpt-4o-2024-05-13", "display_name": "gpt-4o-2024-05-13", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 128000},
 
+    # gpt-4o-2024-08-06
+    {"model_name": "gpt-4o-2024-08-06", "display_name": "gpt-4o-2024-08-06", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
+
+    # gpt-4o-mini
+    {"model_name": "gpt-4o-mini", "display_name": "gpt-4o-mini", "model_family": "OpenAIGenModel",
+    "model_category": "generative-api", "model_location": "api", "context_window": 128000},
+
+    # gpt-4o-mini-2024-07-18
+    {"model_name": "gpt-4o-mini-2024-07-18", "display_name": "gpt-4o-mini-2024-07-18", "model_family": "OpenAIGenModel",
+    "model_category": "generative-api", "model_location": "api", "context_window": 128000},
+
     # add api-based llmware custom model
     {"model_name": "llmware-inference-server", "display_name": "LLMWare-GPT", "model_family": "LLMWareModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 2048},

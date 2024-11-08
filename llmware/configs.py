@@ -1,4 +1,4 @@
-# Copyright 2023 llmware
+# Copyright 2023-2024 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -1145,7 +1145,7 @@ class OpenAIConfig:
         client = AzureOpenAI(
                             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
                             api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-                            api_version="2024-02-01")
+                            api_version="2024-08-01-preview")
 
         # add that client to the OpenAIConfig:
 
@@ -1157,6 +1157,13 @@ class OpenAIConfig:
              "api_key": None,               # placeholder / not used currently
              "api_version": None,           # placeholder / not used currently
              "use_azure_endpoint": False}   # placeholder / not used currently
+
+    _azure_model_name_maps = {
+    }
+
+    #   useful mapping for Azure OpenAI default model names
+    #   e.g., Azure removes the "."
+    _azure_strip_dot = True
 
     @classmethod
     def get_config(cls, name):
@@ -1176,4 +1183,19 @@ class OpenAIConfig:
     def get_azure_client(cls):
         return cls._conf["openai_client"]
 
+    @classmethod
+    def get_azure_model_name(cls, model_name):
 
+        """ Azure OpenAI default names remove '.' from OpenAI names. """
+
+        if cls._azure_strip_dot:
+            azure_name = model_name.replace(".","")
+        else:
+            azure_name = model_name
+
+        return azure_name
+
+    @classmethod
+    def set_azure_strip_dot(cls, setting):
+        if isinstance(setting,bool):
+            cls._azure_strip_dot = setting
