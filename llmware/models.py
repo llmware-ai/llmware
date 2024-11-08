@@ -899,7 +899,6 @@ class ModelCatalog:
                 #   to "re-direct" the model loading parameters
                 if isinstance(success_dict, dict):
                     for k, v in success_dict.items():
-                        # updating and setting attrs
                         setattr(self,k,v)
 
         return True
@@ -1717,8 +1716,7 @@ class ModelCatalog:
                     for x in range(0, len(logits[i])):
                         if logits[i][x][0] in marker_tokens:
 
-                            # if model catalog loaded from json config file, then dict number converted to str
-
+                            # new add 1020 - if from file, then dict number converted to str
                             if logits[i][x][0] in marker_token_lookup:
                                 entry0 = marker_token_lookup[logits[i][x][0]]
 
@@ -1727,6 +1725,7 @@ class ModelCatalog:
 
                             else:
                                 entry0 = "NA"
+                            # end here
 
                             new_entry = (entry0,
                                          logits[i][x][0],
@@ -5274,6 +5273,14 @@ class OpenAIGenModel(BaseModel):
         self.add_context = ""
         self.prompt = ""
 
+        # provides option to pass custom openai_client to model class at inference time
+        self.openai_client = None
+
+        if "model_card" in kwargs:
+            self.model_card = kwargs["model_card"]
+        else:
+            self.model_card = {}
+
         self.post_init()
 
     def set_api_key (self, api_key, env_var="USER_MANAGED_OPENAI_API_KEY"):
@@ -5385,15 +5392,23 @@ class OpenAIGenModel(BaseModel):
             if "openai_client" in inference_dict:
                 self.openai_client = inference_dict["openai_client"]
 
+        from llmware.configs import OpenAIConfig
+
+        if not self.openai_client:
+            azure_client = OpenAIConfig().get_azure_client()
+        else:
+            azure_client = self.openai_client
+
         # api_key
         if api_key:
             self.api_key = api_key
 
         if not self.api_key:
-            self.api_key = self._get_api_key()
+            if not azure_client:
+                self.api_key = self._get_api_key()
 
-        if not self.api_key:
-            logger.error("error: invoking OpenAI Generative model with no api_key")
+        if not self.api_key and not azure_client:
+            logger.error("OpenAIGenModel: invoking OpenAI Generative model with no api_key.")
 
         #   call to preview hook (not implemented by default)
         self.preview()
@@ -5407,32 +5422,33 @@ class OpenAIGenModel(BaseModel):
         except ImportError:
             raise DependencyNotInstalledException("openai >= 1.0")
 
-        from llmware.configs import OpenAIConfig
-
         usage = {}
         time_start = time.time()
 
         try:
 
             if self.model_name in ["gpt-3.5-turbo","gpt-4","gpt-4-1106-preview","gpt-3.5-turbo-1106", 
-                                   "gpt-4-0125-preview", "gpt-3.5-turbo-0125", "gpt-4o", "gpt-4o-2024-05-13"]:
+                                   "gpt-4-0125-preview", "gpt-3.5-turbo-0125", "gpt-4o", "gpt-4o-2024-05-13",
+                                   "gpt-4o-mini-2024-07-18","gpt-4o-mini","gpt-4o-2024-08-06"]:
 
                 messages = self.prompt_engineer_chatgpt3(prompt_enriched, self.add_context, inference_dict)
 
                 # updated OpenAI client to >v1.0 API - create client, and returns pydantic objects
 
-                azure_client = OpenAIConfig().get_azure_client()
-
                 if not azure_client:
                     client = OpenAI(api_key=self.api_key)
+                    model_name = self.model_name
 
                 else:
 
-                    logger.info("update: applying custom OpenAI client from OpenAIConfig")
+                    logger.debug("OpenAIGenModel - applying custom OpenAI client from OpenAIConfig")
 
                     client = azure_client
 
-                response = client.chat.completions.create(model=self.model_name,messages=messages,
+                    # adapt model name for azure, e.g., replace(".", "")
+                    model_name = OpenAIConfig().get_azure_model_name(self.model_name)
+
+                response = client.chat.completions.create(model=model_name,messages=messages,
                                                           max_tokens=self.target_requested_output_tokens)
 
                 text_out = response.choices[0].message.content
@@ -5456,14 +5472,16 @@ class OpenAIGenModel(BaseModel):
 
                 if not azure_client:
                     client = OpenAI(api_key=self.api_key)
-
+                    model_name = self.model_name
                 else:
 
-                    logger.info("update: applying custom OpenAI client from OpenAIConfig")
+                    logger.debug("OpenAIGenModel - applying custom OpenAI client from OpenAIConfig")
 
                     client = azure_client
+                    # adapt model name for azure, e.g., replace(".", "")
+                    model_name = OpenAIConfig().get_azure_model_name(self.model_name)
 
-                response = client.completions.create(model=self.model_name, prompt=text_prompt,
+                response = client.completions.create(model=model_name, prompt=text_prompt,
                                                      temperature=self.temperature,
                                                      max_tokens=self.target_requested_output_tokens)
 
@@ -5476,12 +5494,186 @@ class OpenAIGenModel(BaseModel):
                          "processing_time": time.time() - time_start}
 
         except Exception as e:
-            # this is special error code that will be picked and handled in AIModels().inference handler
+            # catch error
             text_out = "/***ERROR***/"
             usage = {"input":0, "output":0, "total":0, "metric": "tokens",
                      "processing_time": time.time() - time_start}
 
-            logger.error("error: OpenAI model inference produced error - %s ", e)
+            logger.error("OpenAIGenModel - inference produced error - %s ", e)
+
+        output_response = {"llm_response": text_out, "usage": usage}
+
+        # output inference parameters
+        self.llm_response = text_out
+        self.usage = usage
+        self.logits = None
+        self.output_tokens = None
+        self.final_prompt = prompt_enriched
+
+        self.register()
+
+        return output_response
+
+    def stream(self, prompt, add_context=None, add_prompt_engineering=None, inference_dict=None,
+                  api_key=None):
+
+        """ Executes stream inference on OpenAI Model.
+
+        Only required input is text-based prompt, with optional
+        parameters to "add_context" passage that will be assembled using the prompt style in the
+        "add_prompt_engineering" parameter.  Optional inference_dict for temperature and max_tokens configuration,
+        and optional passing of api_key at time of inference.
+        """
+
+        self.prompt = prompt
+
+        if add_context:
+            self.add_context = add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+            if "openai_client" in inference_dict:
+                self.openai_client = inference_dict["openai_client"]
+
+        from llmware.configs import OpenAIConfig
+
+        if not self.openai_client:
+            azure_client = OpenAIConfig().get_azure_client()
+        else:
+            azure_client = self.openai_client
+
+        # api_key
+        if api_key:
+            self.api_key = api_key
+
+        if not self.api_key:
+            if not azure_client:
+                self.api_key = self._get_api_key()
+
+        if not self.api_key and not azure_client:
+            logger.error("OpenAIGenModel - invoking OpenAI Generative model with no api_key.")
+
+        #   call to preview hook (not implemented by default)
+        self.preview()
+
+        # default case - pass the prompt received without change
+        prompt_enriched = self.prompt
+
+        # new - change with openai v1 api
+        try:
+            from openai import OpenAI
+        except ImportError:
+            raise DependencyNotInstalledException("openai >= 1.0")
+
+        usage = {}
+        time_start = time.time()
+
+        try:
+
+            if self.model_name in ["gpt-3.5-turbo","gpt-4","gpt-4-1106-preview","gpt-3.5-turbo-1106",
+                                   "gpt-4-0125-preview", "gpt-3.5-turbo-0125", "gpt-4o", "gpt-4o-2024-05-13",
+                                   "gpt-4o-mini-2024-07-18","gpt-4o-mini","gpt-4o-2024-08-06"]:
+
+                messages = self.prompt_engineer_chatgpt3(prompt_enriched, self.add_context, inference_dict)
+
+                # updated OpenAI client to >v1.0 API - create client, and returns pydantic objects
+
+                if not azure_client:
+                    client = OpenAI(api_key=self.api_key)
+                    model_name = self.model_name
+
+                else:
+
+                    logger.debug("OpenAIGenModel - applying custom OpenAI client from OpenAIConfig.")
+
+                    client = azure_client
+
+                    # adapt model name for azure, e.g., replace(".", "")
+                    model_name = OpenAIConfig().get_azure_model_name(self.model_name)
+
+                text_out = ""
+                prompt_tokens = 0
+                completion_tokens = 0
+                total_tokens = 0
+
+                stream_response = client.chat.completions.create(model=model_name,messages=messages,
+                                                                 max_tokens=self.target_requested_output_tokens,
+                                                                 stream=True)
+
+                # implement streaming generator to yield chunk of tokens
+                for chunk in stream_response:
+                    if len(chunk.choices) > 0:
+                        token = chunk.choices[0].delta.content or ""
+                        text_out += token
+                        yield token
+
+                usage = {"input": prompt_tokens,
+                         "output": completion_tokens,
+                         "total": prompt_tokens + completion_tokens,
+                         "metric": "tokens",
+                         "processing_time": time.time() - time_start}
+
+            else:
+                # openai traditional 'instruct gpt' completion models
+
+                prompt_enriched = self.prompt_engineer(prompt_enriched, self.add_context, inference_dict=inference_dict)
+
+                prompt_final = prompt_enriched
+
+                text_prompt = prompt_final + self.separator
+
+                azure_client = OpenAIConfig().get_azure_client()
+
+                if not azure_client:
+                    client = OpenAI(api_key=self.api_key)
+                    model_name = self.model_name
+
+                else:
+
+                    logger.debug("OpenAIGenModel - applying custom OpenAI client from OpenAIConfig.")
+
+                    client = azure_client
+                    model_name = OpenAIConfig().get_azure_model_name(self.model_name)
+
+                text_out = ""
+                prompt_tokens = 0
+                completion_tokens = 0
+                total_tokens = 0
+
+                stream_response = client.completions.create(model=model_name, prompt=text_prompt,
+                                                            temperature=self.temperature,
+                                                            max_tokens=self.target_requested_output_tokens,
+                                                            stream=True)
+
+                # implement streaming generator to yield chunk of tokens
+                for chunk in stream_response:
+                    if len(chunk.choices) > 0:
+                        token = chunk.choices[0].delta.content or ""
+                        text_out += token
+                        yield token
+
+                usage = {"input": prompt_tokens,
+                         "output": completion_tokens,
+                         "total": prompt_tokens + completion_tokens,
+                         "metric": "tokens",
+                         "processing_time": time.time() - time_start}
+
+        except Exception as e:
+            # catch error
+            text_out = "/***ERROR***/"
+            usage = {"input":0, "output":0, "total":0, "metric": "tokens",
+                     "processing_time": time.time() - time_start}
+
+            logger.error("OpenAIGenModel - OpenAI model inference produced error - %s ", e)
 
         output_response = {"llm_response": text_out, "usage": usage}
 
