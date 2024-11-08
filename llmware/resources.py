@@ -3899,7 +3899,7 @@ class CustomTable:
 
         return sql_create_table
 
-    def insert_rows(self, table_name=None, rows=None, schema=None):
+    def insert_rows(self, table_name=None, rows=None, schema=None, callback=None):
 
         """ Designed for rapid prototyping - by default, intended to be called after a preliminary step of
         'load_csv' or 'load_json' file, which will package up the schema and save the rows, e.g.,
@@ -3931,11 +3931,77 @@ class CustomTable:
 
                 if i >= 100 and i % 100 == 0:
 
-                    logger.info(f"update: CustomTable - insert_rows - status - rows loaded - "
-                                f"{i} - out of {len(self.rows)}")
+                    msg = f"update: CustomTable - insert_rows - status - rows loaded - " \
+                          f"{i} - out of {len(self.rows)}"
+
+                    if not callback:
+                        logger.info(msg)
+                    elif callback:
+                        callback(msg)
 
                 try:
                     self.write_new_record(self.rows[i])
+
+                except:
+                    logger.warning(f"warning: write transaction not successful - skipping row - "
+                                   f"{i} - {self.rows[i]}")
+
+                rows_completed += 1
+
+        else:
+            raise LLMWareException(message=f"Exception: unable to confirm build_table - table_name - "
+                                           f"{self.table_name} - schema - {self.schema}")
+
+        return rows_completed
+
+    def insert_rows_generator(self, table_name=None, rows=None, schema=None, callback=None,yield_updates=True):
+
+        """ Intended to be called as a generator function that will yield periodic progress updates -
+        intended for ingesting larger CSV files - by default, intended to be called after a preliminary step of
+        'load_csv' or 'load_json' file, which will package up the schema and save the rows, e.g.,
+
+            ct = CustomTable(table_name='my_test_table', db_name='sqlite')
+            analysis = ct.validate_csv('/path/to/csv', 'file.csv')
+            ct.load_csv('/path/to/csv', 'file.csv')
+
+            for i in ct.insert_rows_generator(yield_updates=True, callback=callback_fn):
+                # insert logic to capture/update on progress of every 100 rows
+
+            If table_name and schema not previously passed/created, then these parameters should be passed in
+        calling this method.
+
+            This method will insert the rows, held/packaged in self.rows, into the table."""
+
+        if table_name:
+            self.table_name = table_name
+
+        if rows:
+            self.rows = rows
+
+        if schema:
+            self.schema = schema
+
+        rows_completed = 0
+
+        if self.build_table():
+
+            for i in range(0, len(self.rows)):
+
+                if i >= 100 and i % 100 == 0:
+
+                    msg = f"update: CustomTable - insert_rows - status - rows loaded - " \
+                          f"{i} - out of {len(self.rows)}"
+
+                    if not callback and not yield_updates:
+                        logger.info(msg)
+                    elif callback and not yield_updates:
+                        callback(msg)
+                    else:
+                        yield i
+
+                try:
+                    self.write_new_record(self.rows[i])
+
                 except:
                     logger.warning(f"warning: write transaction not successful - skipping row - "
                                    f"{i} - {self.rows[i]}")

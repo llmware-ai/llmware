@@ -297,6 +297,7 @@ global_model_repo_catalog_list = [
    "link": "https://huggingface.co/jinaai/jina-embeddings-v2-small-en", "custom_model_files": [], "custom_model_repo": "",
    "hf_repo": "jinaai/jina-embeddings-v2-small-en"},
 
+  # new add - reranker models
   {"model_name": 'jinaai/jina-reranker-v1-turbo-en', "display_name": "jina-reranker-turbo",
   "model_family": "HFReRankerModel",
   "model_category": "reranker", "model_location": "hf_repo", "embedding_dims": 384, "context_window": 8192,
@@ -310,6 +311,7 @@ global_model_repo_catalog_list = [
   "link": "https://huggingface.co/jinaai/jina-reranker-v1-tiny-en", "custom_model_files": [],
   "custom_model_repo": "",
   "hf_repo": "jinaai/jina-reranker-v1-tiny-en"},
+  # end - reranker models
 
  {"model_name": 'BAAI/bge-small-en-v1.5', "display_name": "bge-small-en-v1.5", "model_family": "HFEmbeddingModel",
    "model_category": "embedding", "model_location": "hf_repo", "embedding_dims": 384, "context_window": 512,
@@ -373,6 +375,7 @@ global_model_repo_catalog_list = [
     {"model_name": 'xlarge', "display_name": "Cohere-XLarge-Embedding", "model_family": "CohereEmbeddingModel",
      "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 4096},
 
+    # insert new cohere embedding model - v3 - announced first week of November 2023
     {"model_name": 'embed-english-v3.0', "display_name": "Cohere-English-v3", "model_family": "CohereEmbeddingModel",
      "model_category": "embedding", "model_location": "api",  "context_window": 2048, "embedding_dims": 1024},
 
@@ -397,6 +400,7 @@ global_model_repo_catalog_list = [
     {"model_name": 'embed-multilingual-v2.0', "display_name": "Cohere-English-v3",
      "model_family": "CohereEmbeddingModel", "model_category": "embedding", "model_location": "api",
      "context_window": 2048, "embedding_dims": 768},
+    # end - new cohere embeddings
 
     # add google embeddings - textembedding-gecko@001
     {"model_name": 'textembedding-gecko@latest', "display_name": "Google-Embedding", "model_family": "GoogleEmbeddingModel",
@@ -416,7 +420,9 @@ global_model_repo_catalog_list = [
     # --this can be configured and over-ridden if you prefer to use the full 200K window
 
     {"model_name": 'claude-3-opus-20240229', "display_name": "Anthropic-Claude-3-Opus", "model_family": "ClaudeModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 8192},
+     "model_category": "generative-api", "model_location": "api", "context_window": 8192,
+     "tags": ["llmware-chat", "p50", "anthropic", "green"]
+     },
 
     {"model_name": 'claude-3-sonnet-20240229', "display_name": "Anthropic-Claude-3-Sonnet", "model_family": "ClaudeModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 8192},
@@ -486,6 +492,18 @@ global_model_repo_catalog_list = [
 
     # gpt-4o-2024-0513 model announced in May 2024
     {"model_name": "gpt-4o-2024-05-13", "display_name": "gpt-4o-2024-05-13", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
+
+    # gpt-4o-2024-08-06
+    {"model_name": "gpt-4o-2024-08-06", "display_name": "gpt-4o-2024-08-06", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
+
+    #  gpt-4o-mini
+    {"model_name": "gpt-4o-mini", "display_name": "gpt-4o-mini", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
+
+    #  gpt-4o-mini-2024-07-18
+    {"model_name": "gpt-4o-mini-2024-07-18", "display_name": "gpt-4o-mini-2024-07-18", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 128000},
 
     # add api-based llmware custom model
@@ -558,7 +576,7 @@ global_model_repo_catalog_list = [
      "custom_model_files": [], "custom_model_repo": "",
      "hf_repo": "llmware/bling-tiny-llama-v0"},
 
-    # dragon models
+    # create dragon models
     {"model_name": "llmware/dragon-yi-6b-v0", "display_name": "dragon-yi-6b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -629,13 +647,14 @@ global_model_repo_catalog_list = [
      "custom_model_files": [], "custom_model_repo": "",
      "hf_repo": "llmware/dragon-deci-7b-v0"},
 
-    {"model_name": "llmware/dragon-llama-3.1", "display_name": "dragon-llama-3.1",
-     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-     "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
-     "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-llama-3.1",
-     "custom_model_files": [], "custom_model_repo": "",
-     "hf_repo": "llmware/dragon-llama-3.1"},
+ {"model_name": "llmware/dragon-llama-3.1", "display_name": "dragon-llama-3.1",
+  "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+  "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+  "temperature": 0.3, "trailing_space": "", "link": "https://huggingface.co/llmware/dragon-llama-3.1",
+  "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "llmware/dragon-llama-3.1"},
 
+ # adding bling-phi-3
    {"model_name": "llmware/bling-phi-3", "display_name": "bling-phi-3",
     "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
     "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -643,14 +662,15 @@ global_model_repo_catalog_list = [
     "custom_model_files": [], "custom_model_repo": "",
     "hf_repo": "llmware/bling-phi-3"},
 
-  {"model_name": "llmware/bling-phi-3.5", "display_name": "bling-phi-3.5",
-   "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
-   "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
-   "temperature": 0.0, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-phi-3.5",
-   "custom_model_files": [], "custom_model_repo": "",
-   "hf_repo": "llmware/bling-phi-3.5"},
+ # adding bling-phi-3.5
+ {"model_name": "llmware/bling-phi-3.5", "display_name": "bling-phi-3.5",
+  "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
+  "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+  "temperature": 0.0, "trailing_space": "", "link": "https://huggingface.co/llmware/bling-phi-3.5",
+  "custom_model_files": [], "custom_model_repo": "",
+  "hf_repo": "llmware/bling-phi-3.5"},
 
-   # gguf models
+ # gguf models
    {"model_name": "bling-phi-3-gguf", "display_name": "llmware/bling-phi-3-gguf",
     "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
     "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -663,42 +683,46 @@ global_model_repo_catalog_list = [
     "link": "https://huggingface.co/llmware/bling-phi-3-gguf",
     "custom_model_files": [], "custom_model_repo": ""},
 
-  {"model_name": "bling-phi-3.5-gguf", "display_name": "llmware/bling-phi-3.5-gguf",
-   "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-   "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
-   "temperature": 0.0, "trailing_space": "",
-   "gguf_file": "bling-phi3-5.gguf",
-   "gguf_repo": "llmware/bling-phi-3.5-gguf",
-   "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
-   "validation_files": ["bling-phi3-5.gguf"],
-   "tokenizer_local": "tokenizer_phi3.json",
-   "link": "https://huggingface.co/llmware/bling-phi-3.5-gguf",
-   "custom_model_files": [], "custom_model_repo": ""},
+ # NEW
+ {"model_name": "bling-phi-3.5-gguf", "display_name": "llmware/bling-phi-3.5-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+  "temperature": 0.0, "trailing_space": "",
+  "gguf_file": "bling-phi3-5.gguf",
+  "gguf_repo": "llmware/bling-phi-3.5-gguf",
+  "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+  "validation_files": ["bling-phi3-5.gguf"],
+  "tokenizer_local": "tokenizer_phi3.json",
+  "link": "https://huggingface.co/llmware/bling-phi-3.5-gguf",
+  "custom_model_files": [], "custom_model_repo": ""},
 
-  {"model_name": "dragon-llama-3.1-gguf", "display_name": "llmware/dragon-llama-3.1-gguf",
-   "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-   "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
-   "temperature": 0.0, "trailing_space": "",
-   "gguf_file": "dragon-llama31.gguf",
-   "gguf_repo": "llmware/dragon-llama-3.1-gguf",
-   "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
-   "validation_files": ["dragon-llama31.gguf"],
-   "tokenizer_local": "tokenizer_phi3.json",
-   "link": "https://huggingface.co/llmware/dragon-llama-3.1-gguf",
-   "custom_model_files": [], "custom_model_repo": ""},
+ # NEW
+ {"model_name": "dragon-llama-3.1-gguf", "display_name": "llmware/dragon-llama-3.1-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+  "temperature": 0.0, "trailing_space": "",
+  "gguf_file": "dragon-llama31.gguf",
+  "gguf_repo": "llmware/dragon-llama-3.1-gguf",
+  "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+  "validation_files": ["dragon-llama31.gguf"],
+  "tokenizer_local": "tokenizer_phi3.json",
+  "link": "https://huggingface.co/llmware/dragon-llama-3.1-gguf",
+  "custom_model_files": [], "custom_model_repo": ""},
 
-  {"model_name": "dragon-mistral-0.3-gguf", "display_name": "llmware/dragon-mistral-0.3-gguf",
-   "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-   "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
-   "temperature": 0.0, "trailing_space": "",
-   "gguf_file": "dragon-mistral-03.gguf",
-   "gguf_repo": "llmware/dragon-mistral-0.3-gguf",
-   "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
-   "validation_files": ["dragon-mistral-03.gguf"],
-   "tokenizer_local": "tokenizer_phi3.json",
-   "link": "https://huggingface.co/llmware/dragon-mistral-0.3-gguf",
-   "custom_model_files": [], "custom_model_repo": ""},
+# NEW
+ {"model_name": "dragon-mistral-0.3-gguf", "display_name": "llmware/dragon-mistral-0.3-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
+  "temperature": 0.0, "trailing_space": "",
+  "gguf_file": "dragon-mistral-03.gguf",
+  "gguf_repo": "llmware/dragon-mistral-0.3-gguf",
+  "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+  "validation_files": ["dragon-mistral-03.gguf"],
+  "tokenizer_local": "tokenizer_phi3.json",
+  "link": "https://huggingface.co/llmware/dragon-mistral-0.3-gguf",
+  "custom_model_files": [], "custom_model_repo": ""},
 
+ # NEW
  {"model_name": "bling-phi-2-gguf", "display_name": "llmware/bling-phi-2-gguf",
   "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
   "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -711,6 +735,7 @@ global_model_repo_catalog_list = [
   "link": "https://huggingface.co/llmware/bling-phi-2-gguf",
   "custom_model_files": [], "custom_model_repo": ""},
 
+ # NEW
  {"model_name": "dragon-yi-9b-gguf", "display_name": "llmware/dragon-yi-9b-gguf",
   "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
   "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -723,6 +748,7 @@ global_model_repo_catalog_list = [
   "link": "https://huggingface.co/llmware/dragon-yi-9b-gguf",
   "custom_model_files": [], "custom_model_repo": ""},
 
+ # NEW
  {"model_name": "dragon-qwen-7b-gguf", "display_name": "llmware/dragon-qwen-7b-gguf",
   "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
   "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -735,6 +761,7 @@ global_model_repo_catalog_list = [
   "link": "https://huggingface.co/llmware/dragon-qwen-7b-gguf",
   "custom_model_files": [], "custom_model_repo": ""},
 
+ # NEW
  {"model_name": "bling-qwen-1.5b-gguf", "display_name": "bling-qwen-mini-tool",
   "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
   "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -747,6 +774,7 @@ global_model_repo_catalog_list = [
   "link": "https://huggingface.co/llmware/bling-qwen-1.5b-gguf",
   "custom_model_files": [], "custom_model_repo": ""},
 
+ # NEW
  {"model_name": "bling-qwen-0.5b-gguf", "display_name": "llmware/bling-qwen-nano-tool",
   "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
   "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -759,7 +787,7 @@ global_model_repo_catalog_list = [
   "link": "https://huggingface.co/llmware/bling-qwen-nano-tool",
   "custom_model_files": [], "custom_model_repo": ""},
 
-   # deprecated access to dragon-mistral-7b-gguf -> replaced by dragon-mistral-answer-tool
+ # deprecated access to dragon-mistral-7b-gguf -> replaced by dragon-mistral-answer-tool
     {"model_name": "llmware/dragon-mistral-7b-gguf", "display_name": "dragon-mistral-7b-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
      "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -828,20 +856,23 @@ global_model_repo_catalog_list = [
     "link": "https://huggingface.co/llmware/dragon-mistral-answer-tool",
     "custom_model_files": [], "custom_model_repo": ""},
 
+
  # selected top HF open source chat models - gguf
 
-  {"model_name": "phi-3.5-gguf", "display_name": "phi-3.5-gguf",
-   "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
-   "context_window": 2048, "instruction_following": True, "prompt_wrapper": "phi_3",
-   "temperature": 0.3, "trailing_space": "",
-   "gguf_file": "phi35.gguf",
-   "gguf_repo": "llmware/bonchon",
-   "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
-   "validation_files": ["phi35.gguf"],
-   "link": "https://huggingface.co/llmware/bonchon",
-   "custom_model_files": [], "custom_model_repo": ""},
+ # NEW
+{"model_name": "phi-3.5-gguf", "display_name": "phi-3.5-gguf",
+  "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
+  "context_window": 2048, "instruction_following": True, "prompt_wrapper": "phi_3",
+  "temperature": 0.3, "trailing_space": "",
+  "gguf_file": "phi35.gguf",
+  "gguf_repo": "llmware/bonchon",
+  "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
+  "validation_files": ["phi35.gguf"],
+  "link": "https://huggingface.co/llmware/bonchon",
+  "custom_model_files": [], "custom_model_repo": ""},
 
- {"model_name": "qwen2-7B-instruct-gguf", "display_name": "qwen2-7B-instruct-gguf",
+ # NEW
+{"model_name": "qwen2-7B-instruct-gguf", "display_name": "qwen2-7B-instruct-gguf",
   "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
   "context_window": 2048, "instruction_following": True, "prompt_wrapper": "hf_chat",
   "temperature": 0.3, "trailing_space": "",
@@ -852,7 +883,8 @@ global_model_repo_catalog_list = [
   "link": "https://huggingface.co/llmware/bonchon",
   "custom_model_files": [], "custom_model_repo": ""},
 
- {"model_name": "qwen2-1.5b-instruct-gguf", "display_name": "qwen2-1.5b-instruct-gguf",
+# NEW
+{"model_name": "qwen2-1.5b-instruct-gguf", "display_name": "qwen2-1.5b-instruct-gguf",
   "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
   "context_window": 2048, "instruction_following": True, "prompt_wrapper": "hf_chat",
   "temperature": 0.3, "trailing_space": "",
@@ -863,6 +895,7 @@ global_model_repo_catalog_list = [
   "link": "https://huggingface.co/llmware/bonchon",
   "custom_model_files": [], "custom_model_repo": ""},
 
+# NEW
 {"model_name": "qwen2-0.5b-instruct-gguf", "display_name": "qwen2-0.5b-instruct-gguf",
   "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
   "context_window": 2048, "instruction_following": True, "prompt_wrapper": "hf_chat",
@@ -874,16 +907,18 @@ global_model_repo_catalog_list = [
   "link": "https://huggingface.co/llmware/bonchon",
   "custom_model_files": [], "custom_model_repo": ""},
 
+#TODO:  NEW = meta-llama/Meta-Llama-3.1-8B-Instruct
 {"model_name": "llama-3.1-instruct-gguf", "display_name": "llama-3.1-instruct-gguf",
   "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
   "context_window": 2048, "instruction_following": True, "prompt_wrapper": "hf_chat",
   "temperature": 0.3, "trailing_space": "",
-  "gguf_file": "llama-031-instruct.gguf",
+  "gguf_file": "llama-31-instruct.gguf",
   "gguf_repo": "llmware/bonchon",
   "fetch": {"module": "llmware.models", "method": "pull_model_from_hf"},
-  "validation_files": ["llama-031-instruct.gguf"],
+  "validation_files": ["llama-31-instruct.gguf"],
   "link": "https://huggingface.co/llmware/bonchon",
   "custom_model_files": [], "custom_model_repo": ""},
+
 
  {"model_name": "TheBloke/Llama-2-7B-Chat-GGUF", "display_name": "llama-2-7b-chat-gguf",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
@@ -1494,6 +1529,7 @@ global_model_repo_catalog_list = [
   "validation_files": ["slim-extract.gguf"],
   },
 
+  # NEW
   {"model_name": "slim-extract-phi-3-gguf", "display_name": "slim-extract-phi-3-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
      "model_location": "llmware_repo", "context_window": 4096, "instruction_following": False,
@@ -1510,6 +1546,7 @@ global_model_repo_catalog_list = [
      "validation_files": ["phi3-extract.gguf"],
      },
 
+ # NEW
  {"model_name": "slim-extract-qwen-1.5b-gguf", "display_name": "slim-extract-qwen-1.5b-gguf",
   "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
   "model_location": "llmware_repo", "context_window": 4096, "instruction_following": False,
@@ -1572,6 +1609,7 @@ global_model_repo_catalog_list = [
       "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
       "validation_files": ["tiny-summary.gguf"]},
 
+  # NEW
   {"model_name": "slim-summary-phi-3-gguf", "display_name": "slim-summary-phi-3-tool",
   "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
   "model_location": "llmware_repo", "context_window": 2048, "instruction_following": False,
@@ -1587,6 +1625,7 @@ global_model_repo_catalog_list = [
   "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
   "validation_files": ["phi3-summary.gguf"]},
 
+ # NEW
  {"model_name": "slim-xsum-phi-3-gguf", "display_name": "slim-xsum-phi-3-gguf",
   "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
   "model_location": "llmware_repo", "context_window": 2048, "instruction_following": False,
@@ -1602,7 +1641,7 @@ global_model_repo_catalog_list = [
   "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
   "validation_files": ["slim-xsum.gguf"]},
 
-   {"model_name": "slim-boolean", "display_name": "llmware/slim-boolean",
+ {"model_name": "slim-boolean", "display_name": "llmware/slim-boolean",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
      "temperature": 0.0, "sample_default": False, "trailing_space": "", "gguf_file": "", "gguf_repo": "",
@@ -1612,22 +1651,23 @@ global_model_repo_catalog_list = [
      "primary_keys": [], "fc_output_values": [],
      "function": ["boolean"]},
 
-   {"model_name": "slim-boolean-tool", "display_name": "slim-boolean-tool",
-    "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
-    "model_location": "llmware_repo", "context_window": 2048, "instruction_following": False,
-    "prompt_wrapper": "human_bot", "temperature": 0.0, "sample_default": False, "trailing_space": "",
-    "gguf_file": "slim-boolean.gguf", "gguf_repo": "llmware/slim-boolean-tool",
-    "link": "https://huggingface.co/llmware/slim-boolean-tool",
-    "custom_model_files": [], "custom_model_repo": "", "output_type": "dict",
-    "function_call": True, "primary_keys": [], "fc_output_values": [],
-    "tokenizer": "llmware/slim-extract",
-    "tokenizer_local": "tokenizer_stablelm.json",
-    "marker_tokens": [2369,9820], "marker_token_lookup": {2369: "no", 9820: "yes"},
-    "function": ["boolean"],
-    "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
-    "validation_files": ["slim-boolean.gguf"],
-    },
+    {"model_name": "slim-boolean-tool", "display_name": "slim-boolean-tool",
+     "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
+     "model_location": "llmware_repo", "context_window": 2048, "instruction_following": False,
+     "prompt_wrapper": "human_bot", "temperature": 0.0, "sample_default": False, "trailing_space": "",
+     "gguf_file": "slim-boolean.gguf", "gguf_repo": "llmware/slim-boolean-tool",
+     "link": "https://huggingface.co/llmware/slim-boolean-tool",
+     "custom_model_files": [], "custom_model_repo": "", "output_type": "dict",
+     "function_call": True, "primary_keys": [], "fc_output_values": [],
+     "tokenizer": "llmware/slim-extract",
+     "tokenizer_local": "tokenizer_stablelm.json",
+     "marker_tokens": [2369,9820], "marker_token_lookup": {2369: "no", 9820: "yes"},
+     "function": ["boolean"],
+     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+     "validation_files": ["slim-boolean.gguf"],
+     },
 
+ # NEW
  {"model_name": "slim-boolean-phi-3-gguf", "display_name": "slim-boolean-phi-3-gguf",
   "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
   "model_location": "llmware_repo", "context_window": 2048, "instruction_following": False,
@@ -1654,6 +1694,7 @@ global_model_repo_catalog_list = [
      "primary_keys": ["sentiment, person, organization, place"], "fc_output_values": [],
      "function": ["classify"]},
 
+ # NEW
   {"model_name": "slim-sa-ner-phi-3-gguf", "display_name": "slim-sa-ner-phi-3-gguf",
   "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
   "model_location": "llmware_repo", "context_window": 2048, "instruction_following": False,
@@ -1745,6 +1786,7 @@ global_model_repo_catalog_list = [
      "validation_files": ["slim-summarize.gguf"],
      },
 
+    # adding new slim q-gen models
     {"model_name": "slim-q-gen-phi-3-tool", "display_name": "slim-q-gen-tool",
      "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",
      "context_window": 4096, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -1879,7 +1921,7 @@ global_model_repo_catalog_list = [
       "marker_token_lookup": {},
       "function": ["generate"]},
 
-     {"model_name": "bling-qwen-500m-ov", "model_family": "OVGenerativeModel",
+{"model_name": "bling-qwen-500m-ov", "model_family": "OVGenerativeModel",
          "model_category": "generative_local", "display_name": "bling-qwen-500m-ov",
          "model_location": "llmware_repo",
          "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -1889,7 +1931,8 @@ global_model_repo_catalog_list = [
          "custom_model_files": [], "custom_model_repo": "",
          "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
          "validation_files": ["openvino_model.bin", "openvino_model.xml"],
-         "link": "https://huggingface.co/llmware/bling-qwen-500m-ov"},
+         "link": "https://huggingface.co/llmware/bling-qwen-500m-ov",
+            "tags": ["llmware-rag", "p1","ov","green"]},
 
         {"model_name": "bling-qwen-1.5b-ov", "model_family": "OVGenerativeModel",
          "model_category": "generative_local", "display_name": "bling-qwen-1.5b-ov",
@@ -1901,7 +1944,8 @@ global_model_repo_catalog_list = [
          "custom_model_files": [], "custom_model_repo": "",
          "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
          "validation_files": ["openvino_model.bin", "openvino_model.xml"],
-         "link": "https://huggingface.co/llmware/bling-qwen-1.5b-ov"},
+         "link": "https://huggingface.co/llmware/bling-qwen-1.5b-ov",
+           "tags": ["llmware-rag", "p1","ov","green", "emerald"]},
 
         {"model_name": "dragon-qwen-7b-ov", "model_family": "OVGenerativeModel",
          "model_category": "generative_local", "display_name": "dragon-qwen-7b-ov",
@@ -1913,7 +1957,8 @@ global_model_repo_catalog_list = [
          "custom_model_files": [], "custom_model_repo": "",
          "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
          "validation_files": ["openvino_model.bin", "openvino_model.xml"],
-         "link": "https://huggingface.co/llmware/dragon-qwen-7b-ov"},
+         "link": "https://huggingface.co/llmware/dragon-qwen-7b-ov",
+          "tags": ["llmware-rag", "p7","ov","green", "emerald"]},
 
         {"model_name": "slim-xsum-phi-3-ov", "display_name": "slim-xsum-phi-3-ov",
                "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -1933,7 +1978,8 @@ global_model_repo_catalog_list = [
                "marker_tokens": [],
                "marker_token_lookup": {},
                "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-               "validation_files": ["openvino_model.bin", "openvino_model.xml"]},
+               "validation_files": ["openvino_model.bin", "openvino_model.xml"],
+               "tags": ["llmware-fx", "p3","ov","green", "emerald"]},
 
           {"model_name": "slim-boolean-phi-3-ov", "display_name": "slim-boolean-phi-3-ov",
                "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -1953,7 +1999,8 @@ global_model_repo_catalog_list = [
                "marker_tokens": [],
                "marker_token_lookup": {},
                "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-               "validation_files": ["openvino_model.bin", "openvino_model.xml"]
+               "validation_files": ["openvino_model.bin", "openvino_model.xml"],
+               "tags": ["llmware-fx", "p3","ov","green"]
                },
 
              {"model_name": "slim-sa-ner-phi-3-ov", "display_name": "slim-sa-ner-phi-3-ov",
@@ -1974,7 +2021,8 @@ global_model_repo_catalog_list = [
                "marker_tokens": [],
                "marker_token_lookup": {},
                "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-               "validation_files": ["openvino_model.bin", "openvino_model.xml"]
+               "validation_files": ["openvino_model.bin", "openvino_model.xml"],
+               "tags": ["llmware-fx", "p3","ov","green"]
                },
 
        {"model_name": "slim-summary-phi-3-ov", "display_name": "slim-summary-phi-3-ov",
@@ -1995,7 +2043,8 @@ global_model_repo_catalog_list = [
                "marker_tokens": [],
                "marker_token_lookup": {},
                "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-               "validation_files": ["openvino_model.bin", "openvino_model.xml"]
+               "validation_files": ["openvino_model.bin", "openvino_model.xml"],
+               "tags": ["llmware-fx", "p3","ov","green"]
                },
 
        {"model_name": "slim-extract-qwen-0.5b-ov", "display_name": "slim-extract-qwen-0.5b-ov",
@@ -2016,7 +2065,8 @@ global_model_repo_catalog_list = [
             "marker_tokens": [],
             "marker_token_lookup": {},
             "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-            "validation_files": ["openvino_model.bin", "openvino_model.xml"]
+            "validation_files": ["openvino_model.bin", "openvino_model.xml"],
+            "tags": ["llmware-fx", "p1","ov","green"]
              },
 
        {"model_name": "slim-extract-qwen-1.5b-ov", "display_name": "slim-extract-qwen-1.5b-ov",
@@ -2037,7 +2087,8 @@ global_model_repo_catalog_list = [
              "marker_tokens": [],
              "marker_token_lookup": {},
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-             "validation_files": ["openvino_model.bin", "openvino_model.xml"]
+             "validation_files": ["openvino_model.bin", "openvino_model.xml"],
+             "tags": ["llmware-fx", "p1","ov","green"]
              },
 
       {"model_name": "slim-summary-tiny-ov", "display_name": "slim-summary-tiny-ov",
@@ -2054,7 +2105,8 @@ global_model_repo_catalog_list = [
                 "marker_tokens": [], "marker_token_lookup": {}, "function": ["summarize"],
                 "snapshot": True,
                 "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-                "validation_files": ["openvino_model.bin", "openvino_model.xml"]
+                "validation_files": ["openvino_model.bin", "openvino_model.xml"],
+                "tags": ["llmware-fx", "p1","ov","green"]
                 },
 
     {"model_name": "slim-sql-ov", "display_name": "slim-sql-ov",
@@ -2068,7 +2120,8 @@ global_model_repo_catalog_list = [
                  "tokenizer_local": "tokenizer_tl.json",
                  "snapshot": True,
                  "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-                 "validation_files": ["openvino_model.bin", "openvino_model.xml"]
+                 "validation_files": ["openvino_model.bin", "openvino_model.xml"],
+                 "tags": ["llmware-fx", "p1","ov","green","emerald"]
                  },
 
     {"model_name": "slim-emotions-ov", "display_name": "slim-emotions-ov",
@@ -2093,7 +2146,8 @@ global_model_repo_catalog_list = [
                     "function": ["classify"],
                     "snapshot": True,
                     "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-                    "validation_files": ["openvino_model.bin", "openvino_model.xml"]
+                    "validation_files": ["openvino_model.bin", "openvino_model.xml"],
+                    "tags": ["llmware-fx", "p1","ov","green","emerald"]
                     },
 
         {"model_name": "slim-topics-ov", "display_name": "slim-topics-ov",
@@ -2109,7 +2163,8 @@ global_model_repo_catalog_list = [
                 "marker_tokens": [], "marker_token_lookup": {},  "function": ["classify"],
                 "snapshot": True,
                 "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-                "validation_files": ["openvino_model.bin", "openvino_model.xml"]},
+                "validation_files": ["openvino_model.bin", "openvino_model.xml"],
+                "tags": ["llmware-fx", "p1","ov","green","emerald"]},
 
         {"model_name": "slim-ner-ov", "display_name": "slim-ner-ov",
                  "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2127,7 +2182,8 @@ global_model_repo_catalog_list = [
                  "tokenizer": "llmware/slim-sentiment",
                  "tokenizer_local": "tokenizer_tl.json",
                  "marker_tokens": [], "marker_token_lookup": {},
-                 "function": ["classify"]},
+                 "function": ["classify"],
+                 "tags": ["llmware-fx", "p1","ov","green"]},
 
         {"model_name": "slim-intent-ov", "display_name": "slim-intent-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2144,7 +2200,8 @@ global_model_repo_catalog_list = [
              "tokenizer": "llmware/slim-intent",
              "tokenizer_local": "tokenizer_tl.json",
              "marker_tokens": [], "marker_token_lookup": {},
-             "function": ["classify"]},
+             "function": ["classify"],
+             "tags": ["llmware-fx", "p1","ov","green"]},
 
        {"model_name": "slim-tags-ov", "display_name": "slim-tags-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2161,7 +2218,8 @@ global_model_repo_catalog_list = [
              "tokenizer": "llmware/slim-tags",
              "tokenizer_local": "tokenizer_tl.json",
              "marker_tokens": [], "marker_token_lookup": {},
-             "function": ["classify"]},
+             "function": ["classify"],
+             "tags": ["llmware-fx", "p1","ov","green","emerald"]},
 
        {"model_name": "slim-ratings-ov", "display_name": "slim-ratings-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2178,7 +2236,8 @@ global_model_repo_catalog_list = [
              "tokenizer": "llmware/slim-ratings",
              "tokenizer_local": "tokenizer_tl.json",
              "marker_tokens": [], "marker_token_lookup": {},
-             "function": ["classify"]},
+             "function": ["classify"],
+             "tags": ["llmware-fx", "p1","ov","green"]},
 
         {"model_name": "dragon-mistral-0.3-ov", "model_family": "OVGenerativeModel",
          "model_category": "generative_local", "display_name": "dragon-mistral-0.3-ov",
@@ -2190,7 +2249,8 @@ global_model_repo_catalog_list = [
          "custom_model_files": [], "custom_model_repo": "",
          "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
          "validation_files": ["openvino_model.bin", "openvino_model.xml"],
-         "link": "https://huggingface.co/llmware/dragon-mistral-0.3-ov"},
+         "link": "https://huggingface.co/llmware/dragon-mistral-0.3-ov",
+         "tags": ["llmware-rag", "p7", "ov", "green","emerald"]},
 
         {"model_name": "dragon-yi-6b-ov", "model_family": "OVGenerativeModel",
          "model_category": "generative_local", "display_name": "dragon-yi-6b-ov",
@@ -2202,7 +2262,8 @@ global_model_repo_catalog_list = [
          "custom_model_files": [], "custom_model_repo": "",
          "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
          "validation_files": ["openvino_model.bin", "openvino_model.xml"],
-         "link": "https://huggingface.co/llmware/dragon-yi-6b-ov"},
+         "link": "https://huggingface.co/llmware/dragon-yi-6b-ov",
+         "tags": ["llmware-rag", "p6", "ov", "green","emerald"]},
 
          {"model_name": "dragon-yi-9b-ov", "model_family": "OVGenerativeModel",
           "model_category": "generative_local", "display_name": "dragon-yi-9b-ov",
@@ -2214,7 +2275,8 @@ global_model_repo_catalog_list = [
           "custom_model_files": [], "custom_model_repo": "",
           "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
           "validation_files": ["openvino_model.bin", "openvino_model.xml"],
-          "link": "https://huggingface.co/llmware/dragon-yi-9b-ov"},
+          "link": "https://huggingface.co/llmware/dragon-yi-9b-ov",
+          "tags": ["llmware-rag", "p9", "ov", "green","emerald"]},
 
         {"model_name": "llama-2-chat-ov", "display_name": "llama-2-chat-ov",
          "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2225,7 +2287,8 @@ global_model_repo_catalog_list = [
          "tokenizer_local": "tokenizer_ll2.json",
          "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
          "validation_files": [],
-         "custom_model_files": [], "custom_model_repo": ""},
+         "custom_model_files": [], "custom_model_repo": "",
+         "tags": ["llmware-chat", "p7", "ov", "green","emerald"]},
 
         {"model_name": "llama-2-13b-chat-ov", "display_name": "llama-2-13b-chat-ov",
          "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2236,7 +2299,8 @@ global_model_repo_catalog_list = [
          "tokenizer_local": "tokenizer_ll2.json",
          "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
          "validation_files": [],
-         "custom_model_files": [], "custom_model_repo": ""},
+         "custom_model_files": [], "custom_model_repo": "",
+         "tags": ["llmware-chat", "p13", "ov", "green","emerald"]},
 
           {"model_name": "tiny-llama-chat-ov", "display_name": "tiny-llama-chat-ov",
            "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2247,7 +2311,8 @@ global_model_repo_catalog_list = [
            "tokenizer_local": "tokenizer_tl.json",
            "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
            "validation_files": [],
-           "custom_model_files": [], "custom_model_repo": ""},
+           "custom_model_files": [], "custom_model_repo": "",
+           "tags": ["llmware-chat", "p1", "ov", "green","emerald"]},
 
           {"model_name": "qwen2-7b-instruct-ov", "display_name": "qwen2-7b-instruct-ov",
             "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2258,7 +2323,8 @@ global_model_repo_catalog_list = [
             "tokenizer_local": "tokenizer_qw.json",
             "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
             "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p7", "ov", "green"]},
 
            {"model_name": "yi-9b-chat-ov", "display_name": "yi-9b-chat-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2269,7 +2335,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_yi.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p9", "ov", "green","emerald"]},
 
             {"model_name": "mistral-7b-instruct-v0.3-ov", "display_name": "mistral-7b-instruct-v0.3-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2280,7 +2347,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_mistral.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p7", "ov", "green","emerald"]},
 
             {"model_name": "mistral-small-instruct-2409-ov", "display_name": "mistral-small-instruct-2409-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2291,7 +2359,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_mistral.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p22", "ov", "green","emerald"]},
 
             {"model_name": "mistral-nemo-instruct-2407-ov", "display_name": "mistral-nemo-instruct-2407-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2302,7 +2371,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_mistral.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p12", "ov", "green"]},
 
             {"model_name": "mistral-7b-instruct-v0.2-ov", "display_name": "mistral-7b-instruct-v0.2-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2313,7 +2383,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_mistral.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p7", "ov", "green","emerald"]},
 
              {"model_name": "zephyr-mistral-7b-chat-ov", "display_name": "zephyr-mistral-7b-chat-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2324,7 +2395,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_mistral.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p7", "ov", "green","emerald"]},
 
             {"model_name": "gemma-7b-it-ov", "display_name": "gemma-7b-it-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2335,7 +2407,8 @@ global_model_repo_catalog_list = [
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "tokenizer_local": "tokenizer_gemma.json",
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p7", "ov", "green"]},
 
             {"model_name": "codegemma-7b-it-ov", "display_name": "codegemma-7b-it-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2346,7 +2419,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_gemma.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p7", "ov", "green"]},
 
             {"model_name": "gemma-2b-it-ov", "display_name": "gemma-2b-it-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2357,7 +2431,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_gemma.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+              "tags": ["llmware-chat", "p2", "ov", "green"]},
 
             {"model_name": "stablelm-zephyr-3b-ov", "display_name": "stablelm-zephyr-3b-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2368,7 +2443,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_stablelm.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p3", "ov", "green","emerald"]},
 
           {"model_name": "teknium-open-hermes-2.5-mistral-ov", "display_name": "teknium-open-hermes-2.5-mistral-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2379,7 +2455,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_mistral_chat.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p7", "ov", "green"]},
 
           {"model_name": "llama-3.1-instruct-ov", "display_name": "llama-3.1-instruct-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2390,7 +2467,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_ll3.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p8", "ov", "green","emerald"]},
 
             {"model_name": "qwen2-1.5b-instruct-ov", "display_name": "qwen2-1.5b-instruct-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2401,7 +2479,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_qw.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p1", "ov", "green","emerald"]},
 
        {"model_name": "qwen2-0.5b-chat-ov", "display_name": "qwen2-0.5b-chat-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2412,7 +2491,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_qw.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p1", "ov", "green"]},
 
          {"model_name": "nvidia-llama3-chatqa-1.5-8b-ov", "display_name": "nvidia-llama3-chatqa-1.5-8b-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2423,7 +2503,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_ll3.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p8", "ov", "green"]},
 
            {"model_name": "yi-6b-1.5v-chat-ov", "display_name": "yi-6b-1.5v-chat-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2434,7 +2515,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_yi.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p6", "ov", "green","emerald"]},
 
           {"model_name": "tiny-dolphin-2.8-1.1b-ov", "display_name": "tiny-dolphin-2.8b-1.1b-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2445,7 +2527,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_tl.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p1", "ov", "green"]
             },
 
           {"model_name": "dolphin-2.9.3-mistral-7b-32k-ov", "display_name": "dolphin-2.9.3-mistral-7b-32k-ov",
@@ -2457,7 +2540,8 @@ global_model_repo_catalog_list = [
            "tokenizer_local": "tokenizer_mistral_chat.json",
            "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
            "validation_files": [],
-           "custom_model_files": [], "custom_model_repo": ""
+           "custom_model_files": [], "custom_model_repo": "",
+           "tags": ["llmware-chat", "p7", "ov", "green"]
            },
 
            {"model_name": "dolphin-2.9.4-llama3.1-8b-ov", "display_name": "dolphin-2.9.4-llama3.1-8b-ov",
@@ -2469,7 +2553,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_ll3.json",
             "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
             "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p8", "ov", "green"]
              },
 
             {"model_name": "intel-neural-chat-7b-v3-2-ov", "display_name": "intel-neural-chat-7b-v3-2-ov",
@@ -2481,7 +2566,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_mistral.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p7", "ov", "green"]
              },
 
            {"model_name": "stablelm-2-zephyr-1_6b-ov", "display_name": "stablelm-2-zephyr-1_6b-ov",
@@ -2493,7 +2579,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_stablelm_1_6.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p1", "ov", "green", "emerald"]},
 
             {"model_name": "dreamgen-wizardlm-2-7b-ov", "display_name": "dreamgen-wizardlm-2-7b-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2504,7 +2591,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_mistral.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["p7", "llmware-chat", "ov", "green"]},
 
             {"model_name": "openchat-3.6-8b-20240522-ov", "display_name": "llmware/openchat-3.6-8b-20240522-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2515,7 +2603,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_ll3.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["p8", "llmware-chat", "ov","green"]},
 
             {"model_name": "mathstral-7b-ov", "display_name": "mathstral-7b-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2526,7 +2615,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_mistral.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["p7", "green","ov", "llmware-chat"]},
 
             {"model_name": "qwen2.5-0.5b-instruct-ov", "display_name": "qwen2.5-0.5b-instruct-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2537,7 +2627,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_qw.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p1", "ov", "green","emerald"]},
 
             {"model_name": "qwen2.5-3b-instruct-ov", "display_name": "qwen2.5-3b-instruct-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2548,7 +2639,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_qw.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p3", "ov", "green","emerald"]},
 
             {"model_name": "qwen2.5-7b-instruct-ov", "display_name": "qwen2.5-7b-instruct-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2559,7 +2651,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_qw.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p7", "ov", "green","emerald"]},
 
             {"model_name": "qwen2.5-14b-instruct-ov", "display_name": "qwen2.5-14b-instruct-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2570,7 +2663,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_qw.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p7", "ov", "green","emerald"]},
 
             {"model_name": "llama-3.2-3b-instruct-ov", "display_name": "llama-3.2-3b-instruct-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2581,7 +2675,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_ll3.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p3", "ov", "green","emerald"]},
 
             {"model_name": "llama-3.2-1b-instruct-ov", "display_name": "llama-3.2-1b-instruct-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2592,7 +2687,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_ll3.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p1", "ov", "green","emerald"]},
 
             {"model_name": "qwen2.5-coder-7b-instruct-ov", "display_name": "qwen2.5-coder-7b-instruct-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2603,7 +2699,8 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_qw.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p7", "ov", "green","emerald"]},
 
             {"model_name": "slim-q-gen-tiny-ov", "display_name": "slim-q-gen-tiny-ov",
              "model_family": "OVGenerativeModel", "model_category": "generative_local",
@@ -2621,7 +2718,8 @@ global_model_repo_catalog_list = [
              "function": ["classify"],
              "snapshot": True,
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-             "validation_files": ["openvino_model.bin", "openvino_model.xml"]
+             "validation_files": ["openvino_model.bin", "openvino_model.xml"],
+             "tags": ["llmware-fx", "p1","ov","green"]
             },
 
             {"model_name": "slim-qa-gen-tiny-ov", "display_name": "slim-qa-gen-tiny-ov",
@@ -2640,14 +2738,15 @@ global_model_repo_catalog_list = [
              "function": ["classify"],
              "snapshot": True,
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-             "validation_files": ["openvino_model.bin", "openvino_model.xml"]
+             "validation_files": ["openvino_model.bin", "openvino_model.xml"],
+             "tags": ["llmware-fx", "p1","ov","green"]
            },
 
           {"model_name": "slim-sentiment-onnx", "display_name": "slim-sentiment-onnx",
              "model_family": "ONNXGenerativeModel", "model_category": "generative_local",
              "model_location": "llmware_repo", "context_window": 2048, "instruction_following": False,
              "prompt_wrapper": "human_bot", "temperature": 0.0, "sample_default": False,
-             "trailing_space": "",
+             "trailing_space": "", "gguf_file": "slim-sentiment.gguf",
              "hf_repo": "llmware/slim-sentiment-onnx",
              "link": "https://huggingface.co/llmware/slim-sentiment-onnx",
              "custom_model_files": [], "custom_model_repo": "", "output_type": "dict",
@@ -2661,14 +2760,15 @@ global_model_repo_catalog_list = [
              "function": ["classify"],
              "snapshot": True,
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-             "validation_files": ["model.onnx", "model.onnx.data"]
+             "validation_files": ["model.onnx", "model.onnx.data"],
+             "tags": ["llmware-fx", "p1", "onnx", "green"]
              },
 
          {"model_name": "slim-extract-tiny-onnx", "display_name": "slim-extract-tiny-onnx",
              "model_family": "ONNXGenerativeModel", "model_category": "generative_local",
              "model_location": "llmware_repo", "context_window": 2048, "instruction_following": False,
              "prompt_wrapper": "human_bot", "temperature": 0.0, "sample_default": False,
-             "trailing_space": "",
+             "trailing_space": "", "gguf_file": "onnx",
              "hf_repo": "llmware/slim-extract-tiny-onnx",
              "link": "https://huggingface.co/llmware/slim-extract-tiny-onnx",
              "custom_model_files": [], "custom_model_repo": "", "output_type": "dict",
@@ -2682,7 +2782,8 @@ global_model_repo_catalog_list = [
              "function": ["extract"],
              "snapshot": True,
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-             "validation_files": ["model.onnx", "model.onnx.data"]
+             "validation_files": ["model.onnx", "model.onnx.data"],
+             "tags": ["llmware-fx", "p1", "onnx", "green"]
              },
 
          {"model_name": "slim-summary-tiny-onnx", "display_name": "slim-summary-tiny-onnx",
@@ -2698,7 +2799,8 @@ global_model_repo_catalog_list = [
                 "marker_tokens": [], "marker_token_lookup": {}, "function": ["summarize"],
                 "snapshot": True,
                 "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-                "validation_files": ["model.onnx", "model.onnx.data"]
+                "validation_files": ["model.onnx", "model.onnx.data"],
+                "tags": ["llmware-fx", "p1", "onnx", "green"]
                 },
 
         {"model_name": "slim-sql-onnx", "display_name": "slim-sql-onnx",
@@ -2706,13 +2808,15 @@ global_model_repo_catalog_list = [
                  "model_location": "llmware_repo", "context_window": 2048,
                  "instruction_following": False, "prompt_wrapper": "human_bot",
                  "temperature": 0.0, "sample_default": False, "trailing_space": "",
+                 "gguf_repo": "llmware/slim-sql-onnx",
                  "hf_repo": "llmware/slim-sql-onnx",
                  "fc_output_values": [], "link": "https://huggingface.co/llmware/slim-sql-onnx",
                  "custom_model_files": [], "custom_model_repo": "", "tokenizer": "llmware/slim-sql-1b-v0",
                  "tokenizer_local": "tokenizer_tl.json",
                  "snapshot": True,
                  "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-                 "validation_files": ["model.onnx", "model.onnx.data"]
+                 "validation_files": ["model.onnx", "model.onnx.data"],
+                 "tags": ["llmware-fx", "p1", "onnx", "green"]
                  },
 
         {"model_name": "slim-emotions-onnx", "display_name": "slim-emotions-onnx",
@@ -2737,7 +2841,8 @@ global_model_repo_catalog_list = [
                     "function": ["classify"],
                     "snapshot": True,
                     "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-                    "validation_files": ["model.onnx", "model.onnx.data"]
+                    "validation_files": ["model.onnx", "model.onnx.data"],
+                    "tags": ["llmware-fx", "p1", "onnx", "green"]
                     },
 
         {"model_name": "slim-topics-onnx", "display_name": "slim-topics-onnx",
@@ -2753,7 +2858,8 @@ global_model_repo_catalog_list = [
                   "marker_tokens": [], "marker_token_lookup": {},  "function": ["classify"],
                   "snapshot": True,
                   "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
-                  "validation_files": ["model.onnx", "model.onnx.data"]},
+                  "validation_files": ["model.onnx", "model.onnx.data"],
+                  "tags": ["llmware-fx", "p1", "onnx", "green"]},
 
         {"model_name": "slim-ner-onnx", "display_name": "slim-ner-onnx",
                    "model_family": "ONNXGenerativeModel", "model_category": "generative_local",
@@ -2771,7 +2877,8 @@ global_model_repo_catalog_list = [
                    "tokenizer": "llmware/slim-sentiment",
                    "tokenizer_local": "tokenizer_tl.json",
                    "marker_tokens": [], "marker_token_lookup": {},
-                   "function": ["classify"]},
+                   "function": ["classify"],
+                    "tags": ["llmware-fx", "p1", "onnx", "green"]},
 
        {"model_name": "slim-intent-onnx", "display_name": "slim-intent-onnx",
                "model_family": "ONNXGenerativeModel", "model_category": "generative_local",
@@ -2788,7 +2895,8 @@ global_model_repo_catalog_list = [
                "tokenizer": "llmware/slim-intent",
                "tokenizer_local": "tokenizer_tl.json",
                "marker_tokens": [], "marker_token_lookup": {},
-               "function": ["classify"]},
+               "function": ["classify"],
+                "tags": ["llmware-fx", "p1", "onnx", "green"]},
 
       {"model_name": "slim-tags-onnx", "display_name": "slim-tags-onnx",
                "model_family": "ONNXGenerativeModel", "model_category": "generative_local",
@@ -2805,7 +2913,8 @@ global_model_repo_catalog_list = [
                "tokenizer": "llmware/slim-tags",
                "tokenizer_local": "tokenizer_tl.json",
                "marker_tokens": [], "marker_token_lookup": {},
-               "function": ["classify"]},
+               "function": ["classify"],
+                "tags": ["llmware-fx", "p1", "onnx", "green"]},
 
       {"model_name": "slim-ratings-onnx", "display_name": "slim-ratings-onnx",
                "model_family": "ONNXGenerativeModel", "model_category": "generative_local",
@@ -2822,7 +2931,8 @@ global_model_repo_catalog_list = [
                "tokenizer": "llmware/slim-ratings",
                "tokenizer_local": "tokenizer_tl.json",
                "marker_tokens": [], "marker_token_lookup": {},
-               "function": ["classify"]},
+               "function": ["classify"],
+                "tags": ["llmware-fx", "p1", "onnx", "green"]},
 
       {"model_name": "phi-3-onnx",
               "model_family": "ONNXGenerativeModel",
@@ -2836,7 +2946,8 @@ global_model_repo_catalog_list = [
               "snapshot": True,
               "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
               "validation_files": ["model.onnx", "model.onnx.data"],
-              "link": "https://huggingface.co/llmware/phi-3-onnx"},
+              "link": "https://huggingface.co/llmware/phi-3-onnx",
+             "tags": ["llmware-chat", "p3", "onnx", "green"]},
 
       {"model_name": "llama-2-chat-onnx",
               "model_family": "ONNXGenerativeModel",
@@ -2850,7 +2961,8 @@ global_model_repo_catalog_list = [
               "snapshot": True,
               "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
               "validation_files": ["model.onnx", "model.onnx.data"],
-              "link": "https://huggingface.co/llmware/llama-2-chat-onnx"},
+              "link": "https://huggingface.co/llmware/llama-2-chat-onnx",
+              "tags": ["llmware-chat", "p7", "onnx", "green"]},
 
       {"model_name": "llama-3.1-instruct-onnx",
               "model_family": "ONNXGenerativeModel",
@@ -2864,7 +2976,8 @@ global_model_repo_catalog_list = [
               "snapshot": True,
               "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
               "validation_files": ["model.onnx", "model.onnx.data"],
-              "link": "https://huggingface.co/llmware/llama-3.1-instruct-onnx"},
+              "link": "https://huggingface.co/llmware/llama-3.1-instruct-onnx",
+            "tags": ["llmware-chat", "p8", "onnx", "green"]},
 
       {"model_name": "dragon-mistral-0.3-onnx",
               "model_family": "ONNXGenerativeModel",
@@ -2878,7 +2991,8 @@ global_model_repo_catalog_list = [
               "snapshot": True,
               "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
               "validation_files": ["model.onnx", "model.onnx.data"],
-              "link": "https://huggingface.co/llmware/dragon-mistral-0.3-onnx"},
+              "link": "https://huggingface.co/llmware/dragon-mistral-0.3-onnx",
+             "tags": ["llmware-chat", "p7", "onnx", "green"]},
 
       {"model_name": "mistral-7b-instruct-v0.3-onnx", "display_name": "mistral-7b-instruct-v0.3-onnx",
              "model_family": "ONNXGenerativeModel", "model_category": "generative_local",
@@ -2889,115 +3003,10 @@ global_model_repo_catalog_list = [
              "tokenizer_local": "tokenizer_mistral.json",
              "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": ["model.onnx", "model.onnx.data"],
-             "custom_model_files": [], "custom_model_repo": ""},
+             "custom_model_files": [], "custom_model_repo": "",
+             "tags": ["llmware-chat", "p7", "onnx", "green","emerald"]}
 
-      {"model_name": "tiny-llama-chat-onnx", "display_name": "tiny-llama-chat-onnx",
-             "model_family": "ONNXGenerativeModel", "model_category": "generative_local",
-             "model_location": "llmware_repo", "context_window": 2048,  "instruction_following": False,
-             "prompt_wrapper": "tiny_llama_chat", "temperature": 0.3, "trailing_space": "",
-             "gguf_repo": "llmware/tiny-llama-chat-onnx",
-             "link": "https://huggingface.co/llmware/tiny-llama-chat-onnx",
-             "tokenizer_local": "tokenizer_tl.json",
-             "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
-             "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
-
-        {"model_name": "llama-3.2-1b-instruct-onnx", "display_name": "llama-3.2-1b-instruct-onnx",
-             "model_family": "ONNXGenerativeModel", "model_category": "generative_local",
-             "model_location": "llmware_repo", "context_window": 4096,  "instruction_following": False,
-             "prompt_wrapper": "llama_3_chat", "temperature": 0.3, "trailing_space": "",
-             "gguf_repo": "llmware/llama-3.2-1b-instruct-onnx",
-             "link": "https://huggingface.co/llmware/llama-3.2-1b-instruct-onnx",
-             "tokenizer_local": "tokenizer_ll3.json",
-             "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
-             "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
-
-         {"model_name": "llama-3.2-3b-instruct-onnx", "display_name": "llama-3.2-3b-instruct-onnx",
-             "model_family": "ONNXGenerativeModel", "model_category": "generative_local",
-             "model_location": "llmware_repo", "context_window": 4096,  "instruction_following": False,
-             "prompt_wrapper": "llama_3_chat", "temperature": 0.3, "trailing_space": "",
-             "gguf_repo": "llmware/llama-3.2-3b-instruct-onnx",
-             "link": "https://huggingface.co/llmware/llama-3.2-3b-instruct-onnx",
-             "tokenizer_local": "tokenizer_ll3.json",
-             "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
-             "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""},
-
-         {"model_name": "slim-boolean-phi-3-onnx", "display_name": "slim-boolean-phi-3-onnx",
-               "model_family": "ONNXGenerativeModel", "model_category": "generative_local",
-               "model_location": "llmware_repo", "context_window": 4096, "instruction_following": False,
-               "prompt_wrapper": "human_bot", "temperature": 0.0, "sample_default": False,
-               "trailing_space": "",
-               "hf_repo": "llmware/slim-boolean-phi-3-onnx",
-               "link": "https://huggingface.co/llmware/slim-boolean-phi-3-onnx",
-               "custom_model_files": [], "custom_model_repo": "", "output_type": "dict",
-               "function_call": True,
-               "primary_keys": [""],
-               "fc_output_values": [],
-               "tokenizer": "llmware/bling-phi-3",
-               "tokenizer_local": "tokenizer_phi3.json",
-               "function": ["boolean"],
-               "snapshot": True,
-               "marker_tokens": [],
-               "marker_token_lookup": {},
-               "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
-               "validation_files": []
-               },
-
-              {"model_name": "slim-summary-phi-3-onnx", "display_name": "slim-summary-phi-3-onnx",
-               "model_family": "ONNXGenerativeModel", "model_category": "generative_local",
-               "model_location": "llmware_repo", "context_window": 4096, "instruction_following": False,
-               "prompt_wrapper": "human_bot", "temperature": 0.0, "sample_default": False,
-               "trailing_space": "",
-               "hf_repo": "llmware/slim-summary-phi-3-onnx",
-               "link": "https://huggingface.co/llmware/slim-summary-phi-3-onnx",
-               "custom_model_files": [], "custom_model_repo": "", "output_type": "dict",
-               "function_call": True,
-               "primary_keys": ["key points"],
-               "fc_output_values": [],
-               "tokenizer": "llmware/bling-phi-3",
-               "tokenizer_local": "tokenizer_phi3.json",
-               "function": ["summarize"],
-               "snapshot": True,
-               "marker_tokens": [],
-               "marker_token_lookup": {},
-               "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
-               "validation_files": [],
-               },
-
-          {"model_name": "slim-extract-phi-3-onnx", "display_name": "slim-extract-phi-3-onnx",
-               "model_family": "ONNXGenerativeModel", "model_category": "generative_local",
-               "model_location": "llmware_repo", "context_window": 4096, "instruction_following": False,
-               "prompt_wrapper": "human_bot", "temperature": 0.0, "sample_default": False,
-               "trailing_space": "",
-               "hf_repo": "llmware/slim-extract-phi-3-onnx",
-               "link": "https://huggingface.co/llmware/slim-extract-phi-3-onnx",
-               "custom_model_files": [], "custom_model_repo": "", "output_type": "dict",
-               "function_call": True,
-               "primary_keys": ["key points"],
-               "fc_output_values": [],
-               "tokenizer": "llmware/bling-phi-3",
-               "tokenizer_local": "tokenizer_phi3.json",
-               "function": ["extract"],
-               "snapshot": True,
-               "marker_tokens": [],
-               "marker_token_lookup": {},
-               "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
-               "validation_files": []},
-
-          {"model_name": "gemma-2b-it-onnx", "display_name": "gemma-2b-it-onnx",
-             "model_family": "ONNXGenerativeModel", "model_category": "generative_local",
-             "model_location": "llmware_repo", "context_window": 4096,  "instruction_following": False,
-             "prompt_wrapper": "google_gemma_chat", "temperature": 0.3, "trailing_space": "",
-             "hf_repo": "llmware/gemma-2b-it-onnx",
-             "link": "https://huggingface.co/llmware/gemma-2b-it-onnx",
-             "tokenizer_local": "tokenizer_gemma.json",
-             "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
-             "validation_files": [],
-             "custom_model_files": [], "custom_model_repo": ""}
-
-          ]
+]
 
 """ Fine-tuning Prompt Wrappers - virtually all instruct fine-tuned models will have a special 'prompt wrapper' 
 that is an artifact from fine-tuning and needs to be applied consistently to lead to the expected model behavior.   
