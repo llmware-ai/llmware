@@ -4,9 +4,13 @@ source 'https://rubygems.org'
 #
 # Gems that are locked to a version.
 #
+
+ruby ">=2.7"
+
 gem "jekyll", "~> 4.3.2" # installed by `gem jekyll`
 gem "just-the-docs", "0.7.0" # pinned to the current release
-gem "rexml", "3.2.8" # pinned to that version to fix security alert
+gem "rexml", ">= 3.3.9" # pinned to that version to fix security alert
+gem "google-protobuf", ">= 3.25.5"
 
 #
 # Gems that are only loaded if they are configured correctly.
