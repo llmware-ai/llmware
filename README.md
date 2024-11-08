@@ -876,6 +876,11 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
+**Friday, November 8 - v0.3.9**  
+ - Enhanced Azure OpenAI configuration, including streaming generation  
+ - Removed deprecated parser binaries for Linux aarch64 and Mac x86  
+ - Added generator option for CustomTable insert rows to provide progress on larger table builds  
+   
 **Sunday, October 27 - v0.3.8**
  - Integrating Model Depot collection of 100+ OpenVino and ONNX Models into LLMWare default model catalog  
  - Supporting changes in model classes, model catalog and model configs  
