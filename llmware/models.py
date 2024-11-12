@@ -3933,6 +3933,14 @@ class OVGenerativeModel(BaseModel):
 
         self.get_token_counts = OVConfig().get_config("get_token_counts")
 
+        #   check for llmware path & create if not already set up
+        if not os.path.exists(LLMWareConfig.get_llmware_path()):
+            # if not explicitly set up by user, then create folder directory structure
+            LLMWareConfig.setup_llmware_workspace()
+
+        if not os.path.exists(LLMWareConfig.get_model_repo_path()):
+            os.mkdir(LLMWareConfig.get_model_repo_path())
+
         # please note that the external tokenizer is used solely for producing
         # input and output token counts - and can be switched off in OVConfig
         if self.get_token_counts:
@@ -5272,6 +5280,7 @@ class OpenAIGenModel(BaseModel):
         self.add_prompt_engineering = False
         self.add_context = ""
         self.prompt = ""
+        self.context = ""
 
         # provides option to pass custom openai_client to model class at inference time
         self.openai_client = None

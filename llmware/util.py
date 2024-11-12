@@ -1626,6 +1626,11 @@ class LocalTokenizer:
         except:
             raise LLMWareException(message="Exception: requires tokenizers to be installed.")
 
+        #   check for llmware path & create if not already set up
+        if not os.path.exists(LLMWareConfig.get_llmware_path()):
+            # if not explicitly set up by user, then create folder directory structure
+            LLMWareConfig.setup_llmware_workspace()
+
         model_repo_path = LLMWareConfig().get_model_repo_path()
 
         if not os.path.exists(model_repo_path):
