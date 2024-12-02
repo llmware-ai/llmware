@@ -1,0 +1,35 @@
+{
+  "name": "mquery",
+  "version": "2.3.3",
+  "description": "Expressive query building for MongoDB",
+  "main": "lib/mquery.js",
+  "scripts": {
+    "test": "mocha test/index.js test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/aheckmann/mquery.git"
+  },
+  "dependencies": {
+    "bluebird": "3.5.0",
+    "debug": "2.6.9",
+    "regexp-clone": "0.0.1",
+    "sliced": "0.0.5"
+  },
+  "devDependencies": {
+    "mongodb": "~2.2",
+    "mocha": "3.2.0",
+    "istanbul": "0.3.2"
+  },
+  "bugs": {
+    "url": "https://github.com/aheckmann/mquery/issues/new"
+  },
+  "author": "Aaron Heckmann <aaron.heckmann+github@gmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "mongodb",
+    "query",
+    "builder"
+  ],
+  "homepage": "https://github.com/aheckmann/mquery/"
+}
