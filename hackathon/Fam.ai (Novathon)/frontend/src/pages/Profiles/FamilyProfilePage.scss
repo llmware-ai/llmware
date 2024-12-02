@@ -1,0 +1,149 @@
+.family-page {
+  position: relative;
+  width: 100%;
+  height: 90vh;
+  background-color: var(--ui-background);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+a {
+  color: #151b23;
+}
+
+.fam-profiles {
+  width: 100%;
+  padding: 0px 60px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.profile-card-wrapper {
+  position: relative;
+}
+.profile-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--ui-background);
+  border: 2px solid #ececec;
+  padding: 20px;
+  gap: 40px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+.left-profile-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.name {
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--ui-dark-bg);
+}
+.dob {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.data-tabs {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.tabb {
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ebebeb;
+  color: #151b23;
+  border-radius: 100px;
+  font-size: 14px;
+}
+
+.bottom-bar {
+  position: sticky;
+  bottom: 60px;
+  padding: 0px 60px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.add-profile-btn {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  padding: 20px 24px;
+  border-radius: 16px;
+  font-weight: 400;
+  font-size: 14px;
+  cursor: pointer;
+  background: var(--ui-dark-bg);
+  color: #fff;
+  text-decoration: none;
+  transition: all 0.3s ease-in-out;
+  gap: 10px;
+}
+
+.add-profile-btn:hover {
+  scale: 0.98;
+  transition: all 0.3s ease-in-out;
+}
+
+.profile-card:hover {
+  scale: 0.98;
+  transition: all 0.3s ease-in-out;
+}
+
+.chat-btn {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border: 2px solid #ececec;
+  border-radius: 16px;
+  cursor: pointer;
+  background-color: var(--ui-background);
+}
+
+.delete-btn {
+  position: absolute;
+  right: -10px;
+  top: -20px;
+  background: var(--ui-gray-bg);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  z-index: 2000;
+  transition: all 0.4s ease-in-out;
+  cursor: pointer;
+  scale: 0;
+}
+
+.profile-card-wrapper:hover .delete-btn {
+  scale: 1;
+  transition: all 0.3s ease-in-out;
+}
+
+.delete-btn:hover {
+  scale: 1.1;
+  transition: all 0.3s ease-in-out;
+}

@@ -1,0 +1,188 @@
+/*google fonts*/
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--poppins);
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  text-decoration: none;
+}
+/* for home page */
+.wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .img-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .dashboard-img {
+    width: 90vw;
+    height: 60vw;
+  }
+  .features-sec {
+    padding: 60px 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 80px;
+  }
+}
+
+/*for page not found page*/
+.page-not-found-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  background: var(--ui-background);
+
+  .main-head {
+    font-size: 40px;
+  }
+  .sub-txt {
+    font-size: 14px;
+    padding: 10px;
+    margin-bottom: 40px;
+  }
+}
+
+/**/
+.error-msg {
+  color: var(--eventzo-feedback-error);
+}
+
+/*for outlet routing in events*/
+.outlet-page{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+.outlet-wrapper {
+  max-width: 840px;
+  width: 100%;
+  height: 100%;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.outlet {
+  padding-top: 16px;
+}
+
+@media (max-width: 480px) {
+  .outlet-wrapper {
+    padding: 16px;
+  }
+}
+:root {
+  --poppins: "Poppins", sans-serif;
+  --inter: "Inter", sans-serif;
+
+  /* Font Weights */
+  --fw-thin: 100;
+  --fw-extra-light: 200;
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semi-bold: 600;
+  --fw-bold: 700;
+  --fw-extra-bold: 800;
+  --fw-black: 900;
+
+  /* Brand Colors */
+  --ui-brand-color: #121212;
+  --ui-blue: rgba(87, 235, 255, 0.38);
+
+  /* UI Colors */
+  --ui-background: #ffffff;
+  --ui-dark-bg: #121212;
+  --ui-gray-bg: #f1f1f1;
+  --home-card: #f4f4f4;
+
+  --input-border: #cccccc;
+  --input-title: #0b0b0b;
+  /* Text Colors */
+  --ui-text-color: #323232;
+  --ui-secondary-txt: #6c6c6c;
+  --ui-sub-text: #656565;
+  --ui-text-inverse: #ffffff;
+  --tab-switcher-border: rgba(0, 0, 0, 0.08);
+
+  /* Feedback Colors */
+  --ui-feedback-error: #ff4d4d;
+  --ui-feedback-success: rgba(0, 197, 126, 1);
+
+  /*colors for create event page*/
+  --light-placeholder: #d0d0d0da;
+  --icon-color-static: #656565;
+  --caret-color: #77777791;
+  --tab-color: #f5f5f5;
+  --selected-tab-color: #222834;
+  --tab-txt-color: #787878;
+  --tab-icon-color: #656565;
+  --tab-border: #e3e3e5;
+  --light-btn: #f5f5f5;
+  --dark-btn: #121212;
+
+  /* space or gap variables */
+
+  --space-0: 4px;
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-7: 56px;
+  --space-8: 64px;
+  --space-10: 80px;
+
+  /* Text sizes */
+  --text-xs: clamp(0.625rem, 0.6rem + 0.125vw, 0.75rem); /* ~10px to 12px */
+  --text-sm: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem); /* ~12px to 14px */
+  --text-base: clamp(0.875rem, 0.8rem + 0.375vw, 1rem); /* ~14px to 16px */
+  --text-md: clamp(1rem, 0.9rem + 0.5vw, 1.125rem); /* ~16px to 18px */
+  --text-lg: clamp(1.125rem, 1rem + 0.625vw, 1.25rem); /* ~18px to 20px */
+
+  /* Heading sizes */
+  --heading-sm: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem); /* ~20px to 24px */
+  --heading-md: clamp(1.5rem, 1.3rem + 1vw, 1.875rem); /* ~24px to 30px */
+  --heading-lg: clamp(1.875rem, 1.6rem + 1.375vw, 2.25rem); /* ~30px to 36px */
+  --heading-xl: clamp(2.25rem, 1.9rem + 1.75vw, 3rem); /* ~36px to 48px */
+
+  /* Display sizes (for very large text) */
+  --display-sm: clamp(2.5rem, 2rem + 2.5vw, 3.5rem); /* ~40px to 56px */
+  --display-md: clamp(3rem, 2.5rem + 2.5vw, 4rem); /* ~48px to 64px */
+  --display-lg: clamp(3.5rem, 3rem + 2.5vw, 4.5rem); /* ~56px to 72px */
+
+  /* Specialized sizes */
+  --text-tiny: clamp(0.5rem, 0.475rem + 0.125vw, 0.625rem); /* ~8px to 10px */
+  --text-huge: clamp(4rem, 3.5rem + 2.5vw, 5rem); /* ~64px to 80px */
+
+  /* Breakpoints */
+  --bp-small: 320px; /* Small mobile devices */
+  --bp-mobile: 480px; /* Larger mobile devices */
+  --bp-tablet: 768px; /* Tablets */
+  --bp-laptop: 1024px; /* Laptops/smaller desktops */
+  --bp-desktop: 1440px; /* Larger desktops */
+}
+
