@@ -1,0 +1,53 @@
+{
+  "name": "kruptein",
+  "version": "3.0.7",
+  "description": "crypto; from kruptein to hide or conceal",
+  "keywords": [
+    "crypto",
+    "cryptography",
+    "cryptr",
+    "crypter",
+    "encryption",
+    "decryption",
+    "encrypt",
+    "decrypt",
+    "AES",
+    "GCM",
+    "authenticated",
+    "authenticate",
+    "unicode",
+    "symmetric",
+    "cipher",
+    "key derivation",
+    "scrypt",
+    "pbkdf2",
+    "security",
+    "asn.1"
+  ],
+  "author": {
+    "name": "Jason Gerfen",
+    "email": "jason.gerfen@gmail.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jas-/kruptein.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jas-/kruptein/issues"
+  },
+  "devDependencies": {
+    "expect.js": "0.3.1",
+    "mocha": "10.7.3",
+    "nyc": "17.0.0"
+  },
+  "scripts": {
+    "test": "nyc mocha test/*.js"
+  },
+  "engines": {
+    "node": ">8"
+  },
+  "dependencies": {
+    "asn1.js": "^5.4.1"
+  }
+}

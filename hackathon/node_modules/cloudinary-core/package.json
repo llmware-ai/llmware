@@ -1,0 +1,34 @@
+{
+  "name": "cloudinary-core",
+  "version": "2.13.1",
+  "description": "Cloudinary Client Side JS library. Cloudinary streamlines your web application’s image manipulation needs. Cloudinary's cloud-based servers automate image uploading, resizing, cropping, optimizing, sprite generation and more.",
+  "main": "cloudinary-core.js",
+  "types": "cloudinary-core.d.ts",
+  "files": [
+    "README.md",
+    "cloudinary-core*.js",
+    "cloudinary-core*.map",
+    "cloudinary-core.d.ts",
+    "src/**/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cloudinary/cloudinary_js.git"
+  },
+  "author": {
+    "name": "Cloudinary",
+    "email": "info@cloudinary.com",
+    "homepage": "http://cloudinary.com"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cloudinary/cloudinary_js/issues"
+  },
+  "homepage": "https://github.com/cloudinary/cloudinary_js",
+  "peerDependencies": {
+    "lodash": ">=4.0"
+  },
+  "scripts": {
+    "prepublishOnly": "../copy_deployment core"
+  }
+}
