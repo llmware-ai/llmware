@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign up</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .card-registration .select-input.form-control[readonly]:not([disabled]) {
+      font-size: 1rem;
+      line-height: 2.15;
+      padding-left: .75em;
+      padding-right: .75em;
+    }
+
+    .card-registration .select-arrow {
+      top: 13px;
+    }
+  </style>
+</head>
+
+<body class="bg-dark">
+
+  <section class="h-100">
+    <div class="container py-5 h-100">
+      <div class="row d-flex justify-content-center align-items-center h-100">
+        <div class="col">
+          <div class="card card-registration my-4">
+            <div class="row g-0">
+              <div class="col-xl-6 d-none d-xl-block">
+                <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-registration/img4.webp"
+                  alt="Sample photo" class="img-fluid"
+                  style="border-top-left-radius: .25rem; border-bottom-left-radius: .25rem;" />
+              </div>
+              <div class="col-xl-6">
+                <div class="card-body p-md-5 text-black">
+                  <h3 class="mb-5 text-uppercase">Sign up </h3>
+
+                  <div class="row">
+                    <div class="col-md-6 mb-4">
+                      <div class="form-outline">
+
+
+                      </div>
+                    </div>
+                    <form action="/signup" method="post">
+                      <div class="form-outline mb-4">
+                        <input type="text" name="username" id="form3Example9" class="form-control form-control-lg" />
+                        <label class="form-label" for="form3Example9">username</label>
+                      </div>
+
+
+
+                      <div class="form-outline mb-4">
+                        <input type="number" id="form3Example9" name="phone" class="form-control form-control-lg" />
+                        <label class="form-label" for="form3Example9">Phone Number</label>
+                      </div>
+
+                      <div class="form-outline mb-4">
+                        <input type="email" id="form3Example90" name="email" class="form-control form-control-lg" />
+                        <label class="form-label" for="form3Example90">Email Id</label>
+                      </div>
+
+                      <div class="form-outline mb-4">
+                        <input type="password" name="password" id="form3Example99" class="form-control form-control-lg" />
+                        <label class="form-label" for="form3Example99">Password</label>
+                      </div>
+
+
+
+                      <div class="d-flex justify-content-end pt-3">
+                        <button type="button" class="btn btn-light btn-lg">Reset all</button>
+                        <button type="submit" class="btn btn-warning btn-lg ms-2">Submit</button>
+                      </div>
+                    </form>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  </section>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
