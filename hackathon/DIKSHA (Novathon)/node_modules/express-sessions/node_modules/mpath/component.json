@@ -1,8 +1,0 @@
-{
-  "name": "mpath",
-  "version": "0.2.1",
-  "main": "lib/index.js",
-  "scripts": [
-    "lib/index.js"
-  ]
-}

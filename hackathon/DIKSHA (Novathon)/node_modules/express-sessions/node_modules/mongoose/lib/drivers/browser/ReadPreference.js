@@ -1,5 +1,0 @@
-/*!
- * ignore
- */
-
-module.exports = function() {};
