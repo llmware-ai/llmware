@@ -1147,7 +1147,6 @@ For complete history of release notes, please open the Change log tab.
 
 
 - **Revolutionizing AI Deployment: Unleashing AI Acceleration with Intel's AI PCs and Model HQ by LLMWare** [AI PC Model HQ.pdf](https://github.com/user-attachments/files/18024139/AI.PC.Model.HQ.pdf)
-- **Accelerating AI Powered Productivity with AI PCs** [Laptop.Performance.WP.Final (10).pdf](https://github.com/user-attachments/files/18024155/Laptop.Performance.WP.Final.pdf)
+- **Accelerating AI Powered Productivity with AI PCs** [Laptop.Performance.WP.Final (10).pdf](https://github.com/user-attachments/files/18024294/Laptop.Performance.WP.Final.10.pdf)
 
-  
   
