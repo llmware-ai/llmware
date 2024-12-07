@@ -1,0 +1,7 @@
+{
+  "branches": 75,
+  "lines": 80,
+  "functions": 78,
+  "statements": 80,
+  "exclude": ["src/test", "src/lib/MongoStore.spec.ts"]
+}

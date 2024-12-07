@@ -1,0 +1,51 @@
+{
+  "author": "Jackson Tian <shyvo1987@gmail.com>",
+  "contributors": [
+    "Jackson Tian <shyvo1987@gmail.com> (https://github.com/JacksonTian)",
+    "Robert Sköld <robert@publicclass.se> (http://publicclass.se)",
+    "Tom Carden <tom@tom-carden.co.uk>"
+  ],
+  "name": "ejs-mate",
+  "description": "Express 4.x locals for layout, partial.",
+  "version": "4.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/JacksonTian/ejs-mate.git"
+  },
+  "homepage": "https://github.com/JacksonTian/ejs-mate",
+  "engines": {
+    "node": ">=10.0.0"
+  },
+  "dependencies": {
+    "ejs": "^3.1.7"
+  },
+  "devDependencies": {
+    "codecov": "^3.8.3",
+    "eslint": "^8.15.0",
+    "express": "^4.10.0",
+    "mocha": "^10.0.0",
+    "nyc": "^15.1.0",
+    "supertest": "^6.2.3"
+  },
+  "scripts": {
+    "lint": "eslint --fix lib test example",
+    "test": "mocha --inline-diffs -b -R spec test/*.test.js",
+    "test-cov": "nyc -r=html -r=text -r=lcov npm run test",
+    "ci": "npm run lint && npm run test-cov && codecov"
+  },
+  "bugs": {
+    "url": "https://github.com/JacksonTian/ejs-mate/issues"
+  },
+  "main": "lib/index.js",
+  "directories": {
+    "example": "example",
+    "test": "test"
+  },
+  "keywords": [
+    "ejs",
+    "layout",
+    "partial"
+  ],
+  "license": "MIT",
+  "files": ["lib"]
+}
