@@ -312,6 +312,10 @@ class _ModelRegistry:
         cls.model_catalog_state_attributes.append(new_attr)
         return True
 
+    @classmethod
+    def reset_to_default_catalog(cls):
+        cls.registered_models = global_model_repo_catalog_list
+
 
 def pull_model_from_hf(model_card, local_model_repo_path, api_key=None, **kwargs):
 
@@ -502,6 +506,12 @@ class ModelCatalog:
         """ Not implemented currently """
         # will add to check manifest in global repo and make available for pull down
         return 0
+
+    def reset_to_default_catalog(self):
+        """ Resets model catalog to default list in model_configs """
+
+        _ModelRegistry().reset_to_default_catalog()
+        self.global_model_list = _ModelRegistry().get_model_list()
 
     def save_model_registry(self, fp=None, fn="llmware_model_catalog.json"):
 
@@ -3932,14 +3942,6 @@ class OVGenerativeModel(BaseModel):
         self.verbose_mode = OVConfig().get_config("verbose_mode")
 
         self.get_token_counts = OVConfig().get_config("get_token_counts")
-
-        #   check for llmware path & create if not already set up
-        if not os.path.exists(LLMWareConfig.get_llmware_path()):
-            # if not explicitly set up by user, then create folder directory structure
-            LLMWareConfig.setup_llmware_workspace()
-
-        if not os.path.exists(LLMWareConfig.get_model_repo_path()):
-            os.mkdir(LLMWareConfig.get_model_repo_path())
 
         # please note that the external tokenizer is used solely for producing
         # input and output token counts - and can be switched off in OVConfig
@@ -10072,7 +10074,6 @@ class WhisperCPPModel(BaseModel):
 
         #   set verbose level in environ level - will be picked up by callback in whisper_cpp
         os.environ["whisper_cpp_verbose"] = GGUFConfigs().get_config("whisper_cpp_verbose")
-
         self.WHISPER_SR = GGUFConfigs().get_config("whisper_sr")
         self.strategy = GGUFConfigs().get_config("whisper_strategy")
         self.n_threads = GGUFConfigs().get_config("whisper_threads")
@@ -10154,7 +10155,6 @@ class WhisperCPPModel(BaseModel):
 
         # set to True by default - will display in 'real-time' the transcription
         self.params.print_realtime = GGUFConfigs().get_config("whisper_cpp_realtime_display")
-
         self.params.print_timestamps = True
         self.params.tdrz_enable = self.tiny_diarize
         self.params.progress_callback = whisper_progress_callback(self.callback)
@@ -10316,7 +10316,8 @@ class WhisperCPPModel(BaseModel):
                 self.remove_segment_markers = inference_dict["remove_segment_markers"]
 
         #   preview before starting inference
-        self.preview()
+
+        # self.preview()
 
         #   note: updated dependencies for improved efficiency
         #   previously, used librosa library
@@ -10437,6 +10438,8 @@ class WhisperCPPModel(BaseModel):
     def _generate(self, data):
 
         """ Executes lib_whisper generation on data from audio file. """
+
+        print("self.context len - ",self.context)
 
         w = self._lib.whisper_full(ctypes.c_void_p(self.context),
                                    self.params,
