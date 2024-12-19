@@ -3943,6 +3943,14 @@ class OVGenerativeModel(BaseModel):
 
         self.get_token_counts = OVConfig().get_config("get_token_counts")
 
+        #   check for llmware path & create if not already set up
+        if not os.path.exists(LLMWareConfig.get_llmware_path()):
+            # if not explicitly set up by user, then create folder directory structure
+            LLMWareConfig.setup_llmware_workspace()
+
+        if not os.path.exists(LLMWareConfig.get_model_repo_path()):
+            os.mkdir(LLMWareConfig.get_model_repo_path())
+
         # please note that the external tokenizer is used solely for producing
         # input and output token counts - and can be switched off in OVConfig
         if self.get_token_counts:
@@ -10438,8 +10446,6 @@ class WhisperCPPModel(BaseModel):
     def _generate(self, data):
 
         """ Executes lib_whisper generation on data from audio file. """
-
-        print("self.context len - ",self.context)
 
         w = self._lib.whisper_full(ctypes.c_void_p(self.context),
                                    self.params,
