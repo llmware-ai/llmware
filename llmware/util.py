@@ -496,7 +496,7 @@ class Utilities:
                       "begins" ,"behind" ,"being" ,"believe" ,"below" ,"beside" ,"besides" ,"between" ,"beyond", "biol"
                       ,"both", "brief" ,"briefly" ,"but" ,"by" ,"c" ,"ca" ,"came" ,"can" ,"cannot" ,"can't" ,"cant" ,"cause"
                       ,"causes", "certain" ,"certainly" ,"co" ,"com" ,"come" ,"comes" ,"contain" ,"containing" ,"contains",
-                      "could","couldnt", "d" ,"date" ,"did" ,"didnt" ,"didn't", "different" ,"do" ,"does" ,"doesn't",
+                      "could","couldnt", "d","did" ,"didnt" ,"didn't", "different" ,"do" ,"does" ,"doesn't",
                       "doesnt" ,"doing","done","don't" ,"dont" ,"down" ,"downwards" ,"due" ,"during" ,"e" ,"each" ,
                       "ed","edu","effect","eg","e.g." ,"eight", "eighty" ,"either" ,"else" ,"elsewhere" ,"end" ,
                       "ending" ,"enough" ,"especially" ,"et" ,"etal" ,"etc" ,"even","ever" ,"every" ,"everybody",
@@ -514,7 +514,7 @@ class Utilities:
                       "l","largely","last","lately", "later","latter","latterly","least","less","lest","let","lets",
                       "let's" ,"like" ,"liked","likely", "line" ,"little" ,"'ll" ,"look" ,"looking" ,"looks",
                       "ltd" ,"m" ,"made" ,"mainly" ,"make" ,"makes","many", "may" ,"maybe" ,"me" ,"mean" ,"means" ,
-                      "meantime" ,"meanwhile" ,"merely" ,"mg" ,"might" ,"million","miss", "ml" ,"more" ,"moreover",
+                      "meantime" ,"meanwhile" ,"merely" ,"mg" ,"might","miss", "ml" ,"more" ,"moreover",
                       "most" ,"mostly" ,"mr" ,"mr." ,"mrs" ,"mrs." ,"ms", "ms." ,"much" ,"mug","must" ,"my" ,"myself",
                       "n" ,"na" ,"name" ,"namely" ,"nay" ,"nd" ,"near" ,"nearly" ,"necessarily" ,"necessary" ,"need"
                       ,"needs", "neither" ,"never""nevertheless" ,"new" ,"next" ,"nine" ,"ninety" ,"no" ,"nobody",
@@ -528,12 +528,12 @@ class Utilities:
                       "promptly" ,"proud" ,"provide", "provides" ,"put" ,"q" ,"que" ,"quickly" ,"quite" ,"qv" ,
                       "r" ,"ran" ,"rather" ,"rd" ,"re" ,"readily","really","recent" ,"recently" ,"ref" ,"refs",
                       "regarding" ,"regardless" ,"regards" ,"regard" ,"related","relative", "relatively" ,
-                      "research","respectively" ,"resulted" ,"resulting" ,"results" ,"right" ,"run" ,"s","said",
+                      "research","respectively" ,"resulted" ,"resulting", "right" ,"run" ,"s","said",
                       "same" ,"saw" ,"say" ,"saying" ,"says" ,"see" ,"seeing" ,"seem" ,"seemed","seeming","seems",
                       "seen" ,"self","selves" ,"sent" ,"seven" ,"several" ,"shall" ,"she" ,"shed" ,"she'll" ,"shes",
                       "she's" ,"should","shouldn't", "shouldnt" ,"show" ,"showed" ,"shown" ,"showns" ,"shows" ,
                       "significant" ,"significantly" ,"similar", "similarly" ,"since" ,"six" ,"slightly" ,"so" ,
-                      "some" ,"somebody" ,"somehow" ,"someone" ,"somethan","something" ,"sometime" ,"sometimes" ,
+                      "some" ,"somebody" ,"somehow" ,"someone","something" ,"sometime" ,"sometimes" ,
                       "somewhat" ,"somewhere" ,"soon" ,"sorry" ,"specifically","specified", "specify" ,
                       "specifying" ,"still" ,"stop" ,"strongly" ,"sub" ,"substantially" ,"successfully" ,"such",
                       "sufficiently" ,"suggest" ,"sup" ,"sure" ,"t" ,"take" ,"taken" ,"taking" ,"talk" ,
@@ -556,7 +556,7 @@ class Utilities:
                       "words" ,"world" ,"would" ,"wouldnt","www" ,"x" ,"xx" ,"xxx", "y" ,"yes" ,"yet" ,
                       "you" ,"youd" ,"you'll" ,"your" ,"youre" ,"yours" ,"yourself","yourselves" ,"you've" ,"z",
                       "zero" ,"xoxo", "ii", "iii", "iv" ,"ix" ,"vi" ,"vii" ,"viii" ,"<th>",
-                      "<tr>" ,"three" ,"ten" ,"view" ,"met" ,"follow" ,"consist" ,"lack" ,"lacks" ,"base" ,"based" ,"ago",
+                      "<tr>" ,"three" ,"ten" ,"view" ,"met" ,"follow" ,"consist" ,"lack" ,"lacks","based" ,"ago",
                       "addition" ,"additional" ,"depend" ,"depends" ,"include" ,"includes" ,"including" ,"continue"
                       ,"bring", "brings" ,"ahead" ,"add" ,"adds" ,"attribute" ,"attributes" ,"associated" ,"associate", "follow",
                       "happen" ,"happened" ,"happening" ,"single" ,"consider" ,"considered" ,"looked" ,"involve"
@@ -597,7 +597,7 @@ class Utilities:
 
         """ Used by CorpTokenizer to provide a clean list stripping punctuation. """
 
-        punctuation = ("-" ,"," ,"'", "/" ,"(')", "'('" ,":" ,".", "?" ,"%", "[", "]" ,"(')'" ,"('('" ,"'–'")
+        punctuation = ("-" ,"," ,"'", "/" ,"(')", "'('" ,":" ,".", "?" ,"%", "[", "]" ,"(')'" ,"('('" ,"'–'", ";")
         clean_out = []
         for z in range(0 ,len(token_list)):
             t = token_list[z]
@@ -655,6 +655,140 @@ class Utilities:
                 label_id.append(x)
 
         return label_id
+
+    def exact_search_dicts(self, query, output_dicts, text_key="text",remove_stop_words=True,
+                           mode="or"):
+
+        """ Executes a fast 'lightweight' in-memory token search across a list of dictionaries
+
+        -- query: filtering query - looking for an exact phrase
+        -- output_dicts: can be any list of dicts provided that the text_key is found in the dict
+        -- text_key: by default, this is "text", but can be configured to any field in the dict
+        -- remove_stop_words: set to True by default
+
+        Returns a subset of the list of the dicts with only those entries that match the query
+        """
+
+        matched_dicts = []
+
+        # handle edge case - if empty search result, then return all dicts with updated keys
+        if not query:
+            for i, entries in enumerate(output_dicts):
+                if "page_num" not in entries:
+                    if "master_index" in entries:
+                        page_num = entries["master_index"]
+                    else:
+                        page_num = 0
+                    entries.update({"page_num": page_num})
+                if "query" not in entries:
+                    entries.update({"query": ""})
+                matched_dicts.append(entries)
+            return matched_dicts
+
+        for i, entries in enumerate(output_dicts):
+
+            if query.lower() in entries[text_key].lower():
+
+                if "page_num" not in entries:
+                    if "master_index" in entries:
+                        page_num = entries["master_index"]
+                    else:
+                        page_num = 0
+
+                    entries.update({"page_num": page_num})
+
+                if "query" not in entries:
+                    entries.update({"query": query})
+
+                matched_dicts.append(entries)
+
+        return matched_dicts
+
+    def token_search_dicts(self, query, output_dicts, text_key="text",remove_stop_words=True,
+                           mode="or"):
+
+        """ Executes a fast 'lightweight' in-memory token search across a list of dictionaries
+
+        -- query: filtering query - tokenized
+        -- output_dicts: can be any list of dicts provided that the text_key is found in the dict
+        -- text_key: by default, this is "text", but can be configured to any field in the dict
+        -- remove_stop_words: set to True by default
+        -- mode: set to either logical 'or' or 'and'
+            -- if 'or', then will return any entry with one of the matching tokens in the query.
+            -- if 'and', then will return entry only if it contains all tokens in the query.
+
+        Returns a subset of the list of the dicts with only those entries that match the query
+        """
+
+        matched_dicts = []
+
+        c = CorpTokenizer(remove_stop_words=remove_stop_words, remove_numbers=False, one_letter_removal=True,
+                          remove_punctuation=True)
+
+        key_terms = c.tokenize(query)
+
+        # handle edge case - if empty search result, then return all dicts with updated keys
+        if len(key_terms) == 0:
+            for i, entries in enumerate(output_dicts):
+                if "page_num" not in entries:
+                    if "master_index" in entries:
+                        page_num = entries["master_index"]
+                    else:
+                        page_num = 0
+                    entries.update({"page_num": page_num})
+                if "query" not in entries:
+                    entries.update({"query": ""})
+                matched_dicts.append(entries)
+            return matched_dicts
+
+        # len of key_terms >= 1 -> initiate key term match search
+        for i, entries in enumerate(output_dicts):
+            text_tokens = c.tokenize(entries[text_key])
+            match = 0
+            keep = False
+
+            for j, tok in enumerate(key_terms):
+
+                # match of token with text
+                if tok in text_tokens:
+                    match += 1
+                    if mode == "or":
+                        keep = True
+                        break
+
+                # strip trailing 's' and look for match
+                elif tok.endswith("s"):
+                    if tok[:-1] in text_tokens:
+                        match += 1
+                        if mode == "or":
+                            keep = True
+                            break
+
+                # append trailing 's' and look for match
+                elif (tok+"s") in text_tokens:
+                    match += 1
+                    if mode == "or":
+                        keep = True
+                        break
+
+            if mode == "and" and match == len(key_terms):
+                keep = True
+
+            if keep:
+                if "page_num" not in entries:
+                    if "master_index" in entries:
+                        page_num = entries["master_index"]
+                    else:
+                        page_num = 0
+
+                    entries.update({"page_num": page_num})
+
+                if "query" not in entries:
+                    entries.update({"query": query})
+
+                matched_dicts.append(entries)
+
+        return matched_dicts
 
     def fast_search_dicts(self, query,output_dicts, text_key="text", remove_stop_words=True):
 
@@ -754,7 +888,41 @@ class Utilities:
 
         return matches_found
 
-    def locate_query_match(self,query, core_text):
+    def locate_query_match(self, query, core_text):
+
+        """ Utility function to locate character-level match of a query inside a core_text. """
+
+        import re
+        matches_found = []
+        if not query:
+            return matches_found
+
+        # tokenize the query
+
+        b = CorpTokenizer(one_letter_removal=True, remove_stop_words=True, remove_punctuation=True,
+                          remove_numbers=False)
+
+        query_tokens = b.tokenize(query)
+
+        # use simple whitespace tokenizing for core_text
+        text_tokens = core_text.split(" ")
+
+        char_count = 0
+
+        for i, tok in enumerate(text_tokens):
+
+            tok_clean = re.sub(r"[,.;:()?'-]", "", tok)
+
+            for qt in query_tokens:
+                if qt == tok_clean.lower():
+                    matches_found.append([char_count, tok])
+                    break
+
+            char_count += len(tok) + 1
+
+        return matches_found
+
+    def locate_query_match_og(self,query, core_text):
 
         """ Utility function to locate the character-level match of a query inside a core_text. """
 
@@ -795,7 +963,7 @@ class Utilities:
         return matches_found
 
     def highlighter(self,matches, core_string, highlight_start_token="<b>",
-                    highlight_end_token="</b>"):
+                    highlight_end_token="</b>", exclude_stop_words=True):
 
         """ Utility function to 'highlight' a selected token, based on matches, typically found
         in locate_query_match function - useful for visual display of a matching keyword. """
@@ -808,21 +976,32 @@ class Utilities:
 
         updated_string = ""
         cursor_position = 0
+        stop_word_list = []
+
+        if exclude_stop_words:
+            stop_word_list = self.get_stop_words_master_list()
 
         for mat in matches:
             starter = mat[0]
             keyword = mat[1]
 
-            updated_string += core_string[cursor_position:starter]
-            updated_string += highlight_start_token
+            go_ahead = True
+            if exclude_stop_words:
+                if keyword in stop_word_list:
+                    go_ahead = False
 
-            # updated_string += keyword
-            # og_keyword preserves capitalization of original string
-            og_keyword = core_string[starter:(starter+len(keyword))]
-            updated_string += og_keyword
-            updated_string += highlight_end_token
+            if go_ahead:
 
-            cursor_position = starter + len(keyword)
+                updated_string += core_string[cursor_position:starter]
+                updated_string += highlight_start_token
+
+                # updated_string += keyword
+                # og_keyword preserves capitalization of original string
+                og_keyword = core_string[starter:(starter+len(keyword))]
+                updated_string += og_keyword
+                updated_string += highlight_end_token
+
+                cursor_position = starter + len(keyword)
 
         if cursor_position < len(core_string):
             updated_string += core_string[cursor_position:]
@@ -1625,11 +1804,6 @@ class LocalTokenizer:
             from tokenizers import Tokenizer
         except:
             raise LLMWareException(message="Exception: requires tokenizers to be installed.")
-
-        #   check for llmware path & create if not already set up
-        if not os.path.exists(LLMWareConfig.get_llmware_path()):
-            # if not explicitly set up by user, then create folder directory structure
-            LLMWareConfig.setup_llmware_workspace()
 
         model_repo_path = LLMWareConfig().get_model_repo_path()
 
