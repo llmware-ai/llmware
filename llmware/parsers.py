@@ -2687,8 +2687,12 @@ class Parser:
         else:
             strip_header = c_int(0)
 
+        # update - expose configs for table extraction strategy
         if self.get_tables:
-            table_extract = c_int(1)
+            if 0 <= self.table_strategy <= 2:
+                table_extract = c_int(self.table_strategy)
+            else:
+                table_extract = c_int(1)
         else:
             table_extract = c_int(0)
 
