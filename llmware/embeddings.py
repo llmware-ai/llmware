@@ -2692,7 +2692,7 @@ class EmbeddingChromaDB:
                              for doc_id, block_id, sentence in zip(doc_ids, block_ids, sentences)]
 
                 self._collection.add(ids=ids,
-                                     documents=doc_ids,
+                                     # documents=doc_ids,
                                      embeddings=vectors,
                                      metadatas=metadatas)
 
