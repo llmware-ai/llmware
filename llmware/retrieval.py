@@ -1380,6 +1380,7 @@ class Query:
         result.update({"matches": []})
         result.update({"page_num": result["master_index"]})
 
+
         return result
 
     def get_header_text_from_collection(self, text_field="header_text"):

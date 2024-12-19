@@ -1233,6 +1233,81 @@ class Library:
 
         return output
 
+    def expand_text_result_before(self, block, window_size=400):
+
+        """ Expands text result before. Duplicate of Query method - added to Library class for direct access and
+        convenience in certain use cases."""
+
+        block_id = block["block_ID"] -1
+        doc_id = block["doc_ID"]
+
+        before_text = ""
+        pre_blocks = []
+
+        while len(before_text) < window_size and block_id >= 0:
+
+            before_block = self.block_lookup(block_id, doc_id)
+
+            if before_block:
+                before_text += before_block["text"]
+                pre_blocks.append(before_block)
+
+        output = {"expanded_text": before_text, "results": pre_blocks}
+
+        return output
+
+    def expand_text_result_after(self, block, window_size=400):
+
+        """ Expands text result after. Duplicate of Query method - added to Library class for direct access and
+        convenience in certain use cases. """
+
+        block_id = block["block_ID"] + 1
+        doc_id = block["doc_ID"]
+
+        after_text = ""
+        post_blocks = []
+
+        while len(after_text) < window_size:
+            after_block = self.block_lookup(block_id, doc_id)
+            if not after_block:
+                break  # Break if no block is found
+
+            after_text += after_block["text"]
+            post_blocks.append(after_block)
+            block_id += 1  # Increment block_id for next iteration
+
+        output = {"expanded_text": after_text, "results": post_blocks}
+        return output
+
+    def block_lookup(self, block_id, doc_id):
+
+        """ Look up by a specific pair of doc_id and block_id in a library. Duplicate of Query method -
+        added to Library class for direct access and convenience in certain use cases."""
+
+        result = None
+
+        kv_dict = {"doc_ID": doc_id, "block_ID": block_id}
+
+        output = CollectionRetrieval(self.library_name, account_name=self.account_name).filter_by_key_dict(kv_dict)
+
+        if len(output) == 0:
+            logger.info(f"update: Query - Library - block_lookup - block not found: {block_id}")
+            result = None
+
+            return result
+
+        if len(output) > 1:
+            result = output[0]
+
+        if len(output) == 1:
+            result = output[0]
+
+        # if arrived this point, then positive result has been identified
+        result.update({"matches": []})
+        result.update({"page_num": result["master_index"]})
+
+        return result
+
 
 class LibraryCatalog:
     """Implements the management of tracking details for libraries via the library card, which is stored
