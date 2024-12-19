@@ -149,6 +149,7 @@ if __name__ == "__main__":
     MilvusConfig().set_config("lite", True)
 
     #   select one of:  'milvus' | 'chromadb' | 'lancedb' | 'faiss'
+    #   note: if you run into an error with chromadb, please update to the latest version of llmware==0.3.10 which fixes the issue  
     LLMWareConfig().set_vector_db("chromadb")
 
     #  Step 1 - this example requires us to have a library created - two options:
