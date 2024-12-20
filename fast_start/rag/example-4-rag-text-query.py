@@ -61,7 +61,7 @@ def example_4a_contract_analysis_from_library (model_name, verbose=False):
 
         print("\nAnalyzing contract: ", str(i+1), doc_id, fn_list[i])
 
-        print("LLM Responses:")
+        print("LLM Responses")
 
         for question in question_list:
 
@@ -124,7 +124,7 @@ def example_4b_contract_analysis_direct_from_prompt(model_name, verbose=False):
 
             print("\nAnalyzing contract: ", str(i + 1), contract)
 
-            print("LLM Responses:")
+            print("LLM Responses")
 
             for question in question_list:
 
