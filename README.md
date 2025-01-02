@@ -1147,6 +1147,18 @@ For complete history of release notes, please open the Change log tab.
 
 
 - **Revolutionizing AI Deployment: Unleashing AI Acceleration with Intel's AI PCs and Model HQ by LLMWare** [AI PC Model HQ.pdf](https://github.com/user-attachments/files/18024139/AI.PC.Model.HQ.pdf)
+- **Revultionizing AI Deployment (Intel Abstract Version)**  [LNL White paper (Abstract Version) final.pdf](https://github.com/user-attachments/files/18281644/LNL.White.paper.Abstract.Version.final.pdf)
+
 - **Accelerating AI Powered Productivity with AI PCs** [Laptop.Performance.WP.Final (10).pdf](https://github.com/user-attachments/files/18024294/Laptop.Performance.WP.Final.10.pdf)
 
-  
+## Intel Joint Solutions
+
+- **Arrow Lake** 
+[IPA.Optimization.Summary.LLMWare (1).pdf](https://github.com/user-attachments/files/18292873/IPA.Optimization.Summary.LLMWare.1.pdf)
+
+## About Model HQ
+  - **Privacy Policy** [AI BLOKS PRIVACY POLICY (1.2.25).docx](https://github.com/user-attachments/files/18291352/AI.BLOKS.PRIVACY.POLICY.1.2.25.docx)
+
+- **Terms of Service** [AI Bloks Terms of Service 1.3.25.docx](https://github.com/user-attachments/files/18291360/AI.Bloks.Terms.of.Service.1.3.25.docx)
+- **Acceptable Use Policy**[Acceptable Use Policy for Model HQ by AI BLOKS LLC.docx](https://github.com/user-attachments/files/18291481/Acceptable.Use.Policy.for.Model.HQ.by.AI.BLOKS.LLC.docx)
+
