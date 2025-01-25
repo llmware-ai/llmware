@@ -1,4 +1,4 @@
-# Copyright 2023-2024 llmware
+# Copyright 2023-2025 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -32,7 +32,7 @@ from llmware.exceptions import (DependencyNotInstalledException, ModuleNotFoundE
                                 ModelCardNotRegisteredException, GGUFLibNotLoadedException, LLMWareException)
 
 from llmware.model_configs import (global_model_repo_catalog_list, global_model_finetuning_prompt_wrappers_lookup,
-                                   global_default_prompt_catalog, model_benchmark_data)
+                                   global_default_prompt_catalog, model_benchmark_data, global_tokenizer_bos_eos_lookup)
 
 from llmware.gguf_configs import *
 from llmware.gguf_configs import _LlamaModel, _LlamaContext, _LlamaBatch, _LlamaTokenDataArray
@@ -104,9 +104,12 @@ class _ModelRegistry:
     #   we are treating these "prompt_wrappers" as core attributes of the model
     prompt_wrappers = ["alpaca", "human_bot", "chatgpt", "<INST>", "open_chat", "hf_chat", "chat_ml", "phi_3",
                        "llama_3_chat","tiny_llama_chat","stablelm_zephyr_chat", "google_gemma_chat",
-                       "vicuna_chat"]
+                       "vicuna_chat", "phi_4"]
 
     registered_wrappers = global_model_finetuning_prompt_wrappers_lookup
+
+    #   new attribute - track bos/eos for common tokenizers
+    tokenizer_bos_eos_config = global_tokenizer_bos_eos_lookup
 
     #   list of specialized function calling tools
 
@@ -162,6 +165,11 @@ class _ModelRegistry:
         """ List current registered wrapper formats """
         return cls.registered_wrappers
 
+    # new method
+    @classmethod
+    def get_tokenizer_bos_eos_lookup(cls):
+        return cls.tokenizer_bos_eos_config
+
     @classmethod
     def get_llm_fx_tools_list (cls):
         """ List of function calling model tools available """
@@ -181,6 +189,25 @@ class _ModelRegistry:
         cls.prompt_wrappers.append(wrapper_name)
 
         return wrapper_dict
+
+    @classmethod
+    def load_prompt_wrappers_from_file(cls, new_wrapper_registry):
+
+        cls.registered_wrappers = {}
+        cls.prompt_wrappers = []
+
+        for key,value in new_wrapper_registry.items():
+            if key not in cls.prompt_wrappers:
+                cls.prompt_wrappers.append(key)
+
+            cls.registered_wrappers.update({key:value})
+
+    @classmethod
+    def load_tokenizer_configs_from_file(cls, new_tokenizer_configs):
+
+        cls.tokenizer_bos_eos_config = {}
+        for key, value in new_tokenizer_configs.items():
+            cls.tokenizer_bos_eos_config.update({key:value})
 
     @classmethod
     def validate(cls, model_card_dict):
@@ -541,6 +568,68 @@ class ModelCatalog:
         self.global_model_list = _ModelRegistry().get_model_list()
 
         return 0
+
+    def load_prompt_wrapper_registry(self, fp=None, fn="prompt_wrappers.json"):
+
+        """ Utility method to load updated prompt wrapper registry from json file. Will
+        remove the current global prompt wrapper registry and replace with updated registry from file. """
+
+        if not fp:
+            fp = LLMWareConfig().get_llmware_path()
+
+        prompt_list = json.load(open(os.path.join(fp,fn), "r"))
+        _ModelRegistry().load_prompt_wrappers_from_file(prompt_list)
+
+        return True
+
+    def save_prompt_wrapper_registry(self, fp=None, fn="prompt_wrappers.json"):
+
+        """ Utility method to export global prompt wrapper list to json file """
+
+        if not fp:
+            fp = LLMWareConfig().get_llmware_path()
+
+        prompt_list = _ModelRegistry().get_wrapper_list()
+
+        json_dict = json.dumps(prompt_list, indent=1)
+        with open(os.path.join(fp, fn), "w", encoding='utf-8') as outfile:
+            outfile.write(json_dict)
+
+        return True
+
+    def get_tokenizer_bos_eos_configs(self):
+
+        """" Returns the tokenizer bos eos configs for common models. """
+
+        return _ModelRegistry().get_tokenizer_bos_eos_lookup()
+
+    def save_tokenizer_bos_eos_configs(self, fp=None, fn="tokenizer_bos_eos_configs.json"):
+
+        """ Utility method to export tokenizer bos_eos configs to json file """
+
+        if not fp:
+            fp = LLMWareConfig().get_llmware_path()
+
+        tok_configs = _ModelRegistry().get_tokenizer_bos_eos_lookup()
+
+        json_dict = json.dumps(tok_configs, indent=1)
+        with open(os.path.join(fp, fn), "w", encoding='utf-8') as outfile:
+            outfile.write(json_dict)
+
+        return True
+
+    def load_tokenizer_bos_eos_configs(self, fp=None, fn="tokenizer_bos_eos_configs.json"):
+
+        """ Utility method to load updated tokenizer bos_eos configs from json file. Will
+        remove the current tokenizer bos eos configs and replace with updated configs from file. """
+
+        if not fp:
+            fp = LLMWareConfig().get_llmware_path()
+
+        tok_config_list = json.load(open(os.path.join(fp, fn), "r"))
+        _ModelRegistry().load_tokenizer_configs_from_file(tok_config_list)
+
+        return True
 
     def add_model_cards_from_file(self, fp=None, fn="custom_models_manifest.json"):
 

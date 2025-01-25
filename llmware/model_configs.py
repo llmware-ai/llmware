@@ -1,4 +1,4 @@
-# Copyright 2023-2024 llmware
+# Copyright 2023-2025 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -3044,6 +3044,12 @@ global_model_finetuning_prompt_wrappers_lookup = {
         "phi_3": {"system_start": "<|system|>\n", "system_stop": "<|end|>\n",
                   "main_start": "<|user|>\n", "main_stop": "<|end|>\n", "start_llm_response": "<|assistant|>"},
 
+        "phi_4": {"system_start": "<|im_start|>system<|im_sep|>\n",
+                  "system_stop": "<|im_end|>\n",
+                  "main_start": "<|im_start|>user<|im_sep|>\n",
+                  "main_stop": "<|im_end|>\n",
+                  "start_llm_response": "<|im_start|>assistant<|im_sep|>"},
+
         "llama_3_chat": {"system_start": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n",
                          "system_stop": "<|eot_id|>",
                          "main_start": "<|start_header_id|>user>|end_header_id|>\n",
@@ -3068,6 +3074,58 @@ global_model_finetuning_prompt_wrappers_lookup = {
                         "start_llm_response": " ASSISTANT:"}
 
 }
+
+
+""" Tokenizer EOS/BOS lookup master table """
+
+global_tokenizer_bos_eos_lookup = {
+
+      "tokenizer_phi3.json": {"bos_id": 1, "bos_token": "<s>",
+                              "eos_id": [32000, 32001, 32007], "eos_token": "<|endoftext|>"},
+
+      # e.g., 100265 = <|im_end|>
+      "tokenizer_phi4.json": {"bos_id": 100257, "bos_token": "<|endoftext|>",
+                              "eos_id": [100257, 100265], "eos_token": "<|endoftext|>"},
+
+      "tokenizer_stablelm.json": {"bos_id": 0, "bos_token": "<|endoftext|>",
+                                  "eos_id": [0], "eos_token": "<|endoftext|>"},
+
+      "tokenizer_stablelm_1_6.json": {"bos_id": 100257, "bos_token": "<|endoftext|>",
+                                                   "eos_id": [100257], "eos_token": "<|endoftext|>"},
+
+      "tokenizer_tl.json": {"bos_id": 1, "bos_token": "<s>",
+                                         "eos_id": [2, 32000], "eos_token": "</s>"},
+
+      "tokenizer_ll2.json": {"bos_id": 1, "bos_token": "<s>",
+                                          "eos_id": [2], "eos_token": "</s>"},
+
+      "tokenizer_gemma.json": {"bos_id": 2, "bos_token": "<bos>",
+                                            "eos_id": [1], "eos_token": "<eos>"},
+
+      "tokenizer_ll3.json": {"bos_id": 128000, "bos_token": "<|begin_of_text|>",
+                                          "eos_id": [128001, 128008, 128009, 128256], "eos_token": "<|eot_id|>"
+                                          },
+
+      "tokenizer_qw.json": {"bos_id": 151643, "bos_token": "<|endoftext|>",
+                                         "eos_id": [151643, 151645],
+                                         "eos_token": ["<|im_end|>"]},
+
+      "tokenizer_phi2.json": {"bos_id": 50256, "bos_token": "<|endoftext|>",
+                                           "eos_id": [50256], "eos_token": "<|endoftext|>"},
+
+      #   01-ai yi tokenizer
+      "tokenizer_yi.json": {"bos_id": 1, "bos_token": "<|startoftext|>",
+                                         "eos_id": [2, 7], "eos_token": "<|endoftext|>"},
+
+      #   Mistral tokenizer
+      "tokenizer_mistral.json": {"bos_id": 1, "bos_token": "<s>",
+                                              "eos_id": [2], "eos_token": "</s>"},
+
+      "tokenizer_mistral_chat.json": {"bos_id": 1, "bos_token": "<s>",
+                                                   "eos_id": [2, 32000, 32768], "eos_token": ["</s>", "<|im_end|>"]},
+
+}
+
 
 """ Global default prompt catalog consists of a set of prebuilt useful prompt instructions across a wide range
 of models.   Unlike prompt_wrappers, which tend to be an attribute of the model, the prompt catalog can be invoked
