@@ -1,5 +1,5 @@
 
-# Copyright 2023-2024 llmware
+# Copyright 2023-2025 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -1641,10 +1641,14 @@ class AgentWriter:
         -- 'off'        - turns off (no action taken)
         """
 
-    def __init__(self):
+    def __init__(self, mode=None):
 
         # options configured through global LLMWareConfigs
-        self.mode = LLMWareConfig().get_agent_writer_mode()
+        if mode:
+            self.mode = mode
+        else:
+            self.mode = LLMWareConfig().get_agent_writer_mode()
+
         self.fp_base = LLMWareConfig().get_llmware_path()
         self.fn = LLMWareConfig().get_agent_log_file()
 
