@@ -1,0 +1,41 @@
+root: true
+env:
+  node: true
+  es6: true
+
+parser: '@typescript-eslint/parser'
+
+parserOptions:
+  ecmaVersion: 9
+  project: './tsconfig.json'
+
+extends:
+  - standard
+  - prettier
+  - prettier/standard
+  - plugin:eslint-comments/recommended
+  - plugin:@typescript-eslint/recommended
+  - prettier/@typescript-eslint
+
+plugins:
+  - eslint-comments
+  - prettier
+  - '@typescript-eslint'
+
+rules:
+  prettier/prettier: error
+  camelcase: warn
+  standard/no-callback-literal: off
+  '@typescript-eslint/no-unused-vars':
+    - warn
+    - args: none
+      varsIgnorePattern: '^_'
+      argsIgnorePattern: '^_'
+  prefer-const:
+    - error
+    - destructuring: any
+      ignoreReadBeforeAssign: false
+  '@typescript-eslint/explicit-function-return-type': off
+  '@typescript-eslint/no-var-requires': off
+  '@typescript-eslint/interface-name-prefix': off
+  '@typescript-eslint/ban-ts-comment': off
