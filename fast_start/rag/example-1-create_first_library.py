@@ -102,6 +102,7 @@ if __name__ == "__main__":
     #   optional - set the active DB to be used - by default, it is "mongo"
     #   if you are just getting started, and have not installed a separate db, select "sqlite"
 
+    #   update: as of llmware v0.4.0 (March 2025), the default db is set to sqlite  
     LLMWareConfig().set_active_db("sqlite")
 
     #   if you want to see a different log view, e.g., see a list of each parsed files 'in progress',
