@@ -88,7 +88,8 @@ class LLMWareConfig:
                   "collection_db": ["mongo", "postgres", "sqlite"],
                   "table_db": ["postgres", "sqlite"]}
 
-    _conf = {"collection_db": "mongo",
+    # change 0.4.0: default collection_db set to "sqlite"
+    _conf = {"collection_db": "sqlite",
              "vector_db": "milvus",
              "table_db": "sqlite",
              "debug_mode": 0,
@@ -500,6 +501,37 @@ class VectorDBRegistry:
 
 
 logging.basicConfig(format=LLMWareConfig().get_logging_format(), level=LLMWareConfig().get_logging_level())
+
+
+class ONNXConfig:
+
+    """ Configuration object for ONNXRuntime and ONNXRuntime Genai - these parameters are consumed by
+    the ONNXGenerativeModel class in module llmware.models.  In most cases, the parameters do not
+    require attention, but provided for more options to adapt to particular environments and use cases. """
+
+    # note: breaking changes in the onnxruntime_genai api starting in version 0.6, which was released in
+    # February 2025 - if you pip install, you should get version 0.6
+    # if using an older version of onnxruntime_genai, then set the legacy flag to True
+
+    _conf = {"version": "0.6",
+             "legacy": False}
+
+    @classmethod
+    def get_config(cls, param):
+        return cls._conf[param]
+
+    @classmethod
+    def set_config(cls, param, value):
+        cls._conf[param] = value
+
+    @classmethod
+    def get_legacy_flag(cls):
+        return cls._conf["legacy"]
+
+    @classmethod
+    def set_legacy_flag(cls, boolean_val):
+        cls._conf["legacy"] = boolean_val
+        return boolean_val
 
 
 class OVConfig:
