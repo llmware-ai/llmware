@@ -882,6 +882,8 @@ See also [additional deployment/install release notes in wheel_archives](https:/
  - New Models added to ModelCatalog, including phi-4, Deepseek-Qwen-7B, Deepseek-Qwen-14B, and many others  
  - Added support for Windows ARM64  
  - Changed default active_db to "sqlite" (both mongo and postgres available for production)  
+ - Streamlined dependencies in core requirements.txt and pip install  
+ - 'Extra/optional' dependencies available in requirements_extras.txt and through configurations passed in the pip install process (see setup.py for options)
    
 **Friday, November 8 - v0.3.9**  
  - Enhanced Azure OpenAI configuration, including streaming generation  
