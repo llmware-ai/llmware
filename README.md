@@ -1166,8 +1166,9 @@ For complete history of release notes, please open the Change log tab.
 [IPA.Optimization.Summary.LLMWare (1).pdf](https://github.com/user-attachments/files/18292873/IPA.Optimization.Summary.LLMWare.1.pdf)
 
 ## About Model HQ
-  - **Privacy Policy** [AI BLOKS PRIVACY POLICY (1.2.25).docx](https://github.com/user-attachments/files/18291352/AI.BLOKS.PRIVACY.POLICY.1.2.25.docx)
+  - **Privacy Policy** [AI.BLOKS.PRIVACY.POLICY.1.3.25.pdf](https://github.com/user-attachments/files/19289355/AI.BLOKS.PRIVACY.POLICY.1.3.25.pdf)
 
-- **Terms of Service** [AI Bloks Terms of Service 1.3.25.docx](https://github.com/user-attachments/files/18291360/AI.Bloks.Terms.of.Service.1.3.25.docx)
+- **Terms of Service** [AI.Bloks.Terms.of.Service.3.3.25.pdf](https://github.com/user-attachments/files/19289545/AI.Bloks.Terms.of.Service.3.3.25.pdf)
+
 - **Acceptable Use Policy**[Acceptable Use Policy for Model HQ by AI BLOKS LLC.docx](https://github.com/user-attachments/files/18291481/Acceptable.Use.Policy.for.Model.HQ.by.AI.BLOKS.LLC.docx)
 
