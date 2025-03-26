@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syllabus Generator</title>
+    <link rel="stylesheet" href="/css/syllabus.css">
+</head>
+<body>
+
+    
+    <div class="container">
+        <h1>Syllabus Generator</h1>
+        <form id="syllabusForm" method="post" action="/syllabus">
+            <label for="class">Class:</label>
+            <select id="class" name="std" required>
+                <option value="" disabled selected>Select Class</option>
+                <option value="1">Class 1</option>
+                <option value="2">Class 2</option>
+                <option value="3">Class 3</option>
+                <option value="4">Class 4</option>
+                <option value="5">Class 5</option>
+                <option value="6">Class 6</option>
+                <option value="7">Class 7</option>
+                <option value="8">Class 8</option>
+                <option value="9">Class 9</option>
+                <option value="10">Class 10</option>
+            </select><br><br>
+            <label for="subject">Subject:</label>
+            <input type="text" id="subject" name="subject" required><br><br>
+            <button type="submit">Generate Syllabus</button>
+        </form>
+        <div class="result">
+            <h2>Generated Syllabus</h2>
+            <textarea id="syllabusResult" rows="10" readonly class="syllabus" ><%= result %></textarea>
+        </div>
+    </div>
+    <script src="/app.js"></script>
+</body>
+</html>

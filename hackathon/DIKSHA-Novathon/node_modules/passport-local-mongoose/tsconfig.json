@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "paths": {
+      "passport-local-mongoose" : ["./index.d.ts"]
+    }
+  }
+}

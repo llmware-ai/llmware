@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diksha</title>
+  <style>
+    /* Global Styles */
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f2f2f2;
+      color: #333;
+    }
+
+    .container {
+      display: flex;
+      height: 105vh; /* Reduced height for better alignment */
+    }
+
+    /* Sidebar Styles */
+    .sidebar {
+      background-color: #ffb300;
+      color: #fff;
+      padding: 20px;
+      width: 200px;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .menu {
+      list-style: none;
+      padding: 0;
+    }
+
+    .menu li {
+      margin-bottom: 10px;
+    }
+
+    .menu a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 500;
+      display: block;
+      transition: color 0.3s ease;
+    }
+
+    .menu a:hover {
+      color: #333;
+    }
+
+    /* Main Content Styles */
+    .main-content {
+      flex-grow: 1;
+      padding: 30px;
+      margin-top: -40px; /* Moved content higher */
+    }
+
+    .welcome-section {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .quick-resources {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .quick-resources h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .quick-resources h6 {
+      margin: 0 0 15px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .quick-resources button {
+      background-color: #ffb300;
+      color: #fff;
+      border: none;
+      padding: 10px 15px;
+      margin-right: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .quick-resources button:hover {
+      background-color: #e6a200;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">Diksha</div>
+      <nav>
+        <ul class="menu">
+          <li><a href="#">Dashboard</a></li>
+          <li><a href="#">AI Chatbot</a></li>
+          <li><a href="#">Problem Solving</a></li>
+          <li><a href="#">My Curriculum</a></li>
+          <li><a href="#">Quizzes</a></li>
+          <li><a href="#">Career Guide</a></li>
+          <li><a href="#">Feedback</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Welcome Section -->
+      <div class="welcome-section">
+        <h2>Welcome back, Student!</h2>
+        <h5>Let's continue your learning journey.</h5>
+      </div>
+
+      <!-- Quick Resources -->
+      <div class="quick-resources">
+        <h2>AI Learning Assistant</h2>
+        <h6>Get instant help with your questions and doubts.</h6>
+        <button>Ask Questions</button>
+        <button>View History</button>
+      </div>
+
+      <div class="quick-resources">
+        <h2>Visual Problem Solver</h2>
+        <h6>Upload images of questions for instant solutions.</h6>
+        <button>Upload Images</button>
+        <button>Recent Solutions</button>
+      </div>
+
+      <div class="quick-resources">
+        <h2>My Progress</h2>
+        <h6>Track your learning journey and achievements.</h6>
+        <button>View Progress</button>
+        <button>Set Goals</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
