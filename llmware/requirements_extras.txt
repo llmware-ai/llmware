@@ -1,14 +1,31 @@
 #   requirements_extras - optional libraries most often used in conjunction with llmware
 #   these libraries will be installed with the welcome_to_llmware.sh script and are used in many examples  
 
+# to use pytorch models (including embedding models)
 torch>=1.13.1
 transformers>=4.36.0
 einops>=0.7.0
+
+# to use milvus - note: we have seen compatibility issues with 2.5.4, so recommend 2.5.0
+pymilvus<=2.5.1
+
+#   to use mongo db
+pymongo>=4.7.0
+
+# to use postgres and pg vector
+psycopg-binary==3.1.17
+psycopg==3.1.17
+pgvector==0.2.4
+
+# for voice-to-text processing
+soundfile>=0.12.0
+soxr>=0.5.0
+
+# misc
 Wikipedia-API>=0.6.0
 openai>=1.0
 datasets>=2.15.0
 yfinance>=0.2.38
-pymilvus>=2.3.0
 chromadb>=0.4.22
 streamlit
 Flask

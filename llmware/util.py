@@ -27,7 +27,6 @@ import random
 import platform
 from pathlib import Path
 import re
-from tokenizers import Tokenizer
 from datetime import datetime
 from ctypes import *
 import shutil
@@ -38,6 +37,13 @@ from llmware.resources import CloudBucketManager
 from llmware.configs import LLMWareConfig
 from llmware.exceptions import (ModelNotFoundException, LLMWareException,
                                 DependencyNotInstalledException, ModuleNotFoundException)
+
+try:
+    from tokenizers import Tokenizer
+except:
+    logging.warning("tokenizers library could not be imported - some functionality may not be available.\n"
+                    "to fix:  pip3 install tokenizers")
+    tokenizers = None
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +62,15 @@ class Utilities:
 
         # Detect based on machine architecture
         if platform.system() == "Windows":
+
             system = "windows"
             machine = "x86_64"
             file_ext = ".dll"
+
+            if platform.machine().lower() == "arm64":
+                raise LLMWareException(message=f"Graph module is not implemented currently for Windows Arm64.  "
+                                               f"It is available on Windows x86, Linux x86 and Mac.")
+
         else:
             system = platform.system().lower()
             machine = os.uname().machine.lower()
@@ -90,10 +102,8 @@ class Utilities:
 
             raise LLMWareException(message=error_msg)
 
-        # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
         machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
 
-        # replace for local testing:  file_ext -> .dylib
         _path_graph = os.path.join(machine_dependent_lib_path, "llmware", "libgraph_llmware" + file_ext)
 
         _mod_utility = None
@@ -101,8 +111,7 @@ class Utilities:
         try:
             _mod_utility = cdll.LoadLibrary(_path_graph)
         except:
-            logger.warning(f"warning: Module 'Graph Processor' could not be loaded from path - "
-                           f"\n {_path_graph}.\n")
+            logger.warning(f"Module 'Graph Processor' could not be loaded from path - \n {_path_graph}.\n")
 
         if not _mod_utility:
             raise ModuleNotFoundException("Graph Processor")
@@ -116,8 +125,17 @@ class Utilities:
         # Detect machine architecture
         if platform.system() == "Windows":
             system = "windows"
-            machine = "x86_64"
             file_ext = ".dll"
+
+            if platform.machine().lower() == "arm64":
+                machine = "arm64"
+                if LLMWareConfig().get_active_db() != "sqlite":
+                    logger.warning(f"Currently Windows Arm64 parser only supports SQLite.  Automatically "
+                                   f"changing active db setting to SQLite.")
+                    LLMWareConfig().set_active_db("sqlite")
+
+            else:
+                machine = "x86_64"
         else:
             system = platform.system().lower()
             machine = os.uname().machine.lower()
@@ -149,10 +167,7 @@ class Utilities:
 
             raise LLMWareException(message=error_msg)
 
-        # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
         machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
-
-        # shift to file_ext
         _path_pdf = os.path.join(machine_dependent_lib_path, "llmware", "libpdf_llmware" + file_ext)
 
         _mod_pdf = None
@@ -163,8 +178,7 @@ class Utilities:
 
         except:
             # catch error, if possible
-            logger.warning(f"warning: Module 'PDF Parser' could not be loaded from path - "
-                           f"\n {_path_pdf}.\n")
+            logger.warning(f"Module 'PDF Parser' could not be loaded from path - \n {_path_pdf}.\n")
 
         #   if no module loaded, then raise exception
         if not _mod_pdf:
@@ -179,8 +193,18 @@ class Utilities:
         # Detect machine architecture
         if platform.system() == "Windows":
             system = "windows"
-            machine = "x86_64"
             file_ext = ".dll"
+
+            if platform.machine().lower() == "arm64":
+                machine = "arm64"
+
+                if LLMWareConfig().get_active_db() != "sqlite":
+                    logger.warning(f"Currently Windows Arm64 parser only supports SQLite.  Automatically "
+                                   f"changing active db setting to SQLite.")
+                    LLMWareConfig().set_active_db("sqlite")
+
+            else:
+                machine = "x86_64"
         else:
             system = platform.system().lower()
             machine = os.uname().machine.lower()
@@ -212,9 +236,7 @@ class Utilities:
 
             raise LLMWareException(message=error_msg)
 
-        # Construct the path to a specific lib folder.  Eg. .../llmware/lib/darwin/x86_64
         machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
-
         _path_office = os.path.join(machine_dependent_lib_path, "llmware", "liboffice_llmware" + file_ext)
 
         _mod = None
@@ -222,12 +244,9 @@ class Utilities:
         try:
             # attempt to load the shared library with ctypes
             _mod = cdll.LoadLibrary(_path_office)
-
         except:
-
             # catch the error, if possible
-            logger.warning(f"warning: Module 'Office Parser' could not be loaded from path - "
-                           f"\n {_path_office}.\n")
+            logger.warning(f"Module 'Office Parser' could not be loaded from path - \n {_path_office}.\n")
 
         # if no module loaded, then raise exception
         if not _mod:
@@ -306,10 +325,10 @@ class Utilities:
                         # unusual, but if unable to write a particular element, then will catch error and skip
                         c.writerow(cfile[z])
                     except:
-                        logger.warning(f"warning: could not write item in row {z} - skipping")
+                        logger.warning(f"File save - could not write item in row {z} - skipping")
                         pass
                 else:
-                    logger.error(f"error:  CSV ERROR:   Row exceeds MAX SIZE: {sys.getsizeof(cfile[z])} - "
+                    logger.error(f"CSV ERROR:   Row exceeds MAX SIZE: {sys.getsizeof(cfile[z])} - "
                                  f"{cfile[z]}")
 
         csvfile.close()
@@ -922,46 +941,6 @@ class Utilities:
 
         return matches_found
 
-    def locate_query_match_og(self,query, core_text):
-
-        """ Utility function to locate the character-level match of a query inside a core_text. """
-
-        matches_found = []
-
-        # edge case - but return empty match if query is null
-        if not query:
-            return matches_found
-
-        b = CorpTokenizer(one_letter_removal=False, remove_stop_words=False, remove_punctuation=False,
-                          remove_numbers=False)
-
-        query_tokens = b.tokenize(query)
-
-        for x in range(0, len(core_text)):
-            match = 0
-            for key_term in query_tokens:
-                if len(key_term) == 0:
-                    continue
-
-                if key_term.startswith('"'):
-                    key_term = key_term[1:-1]
-
-                if core_text[x].lower() == key_term[0].lower():
-                    match += 1
-                    if (x + len(key_term)) <= len(core_text):
-                        for y in range(1, len(key_term)):
-                            if key_term[y].lower() == core_text[x + y].lower():
-                                match += 1
-                            else:
-                                match = -1
-                                break
-
-                        if match == len(key_term):
-                            new_entry = [x, key_term]
-                            matches_found.append(new_entry)
-
-        return matches_found
-
     def highlighter(self,matches, core_string, highlight_start_token="<b>",
                     highlight_end_token="</b>", exclude_stop_words=True):
 
@@ -1462,10 +1441,9 @@ class CorpTokenizer:
 
         # strip the whitespace from the beginning and end of the text so we can tokenize the data
         text = text.strip()
-        # start with basic whitespace tokenizing, 
-        #is there a reason the text is being split on one space only?   
-        #text2 = text.split(" ")
-        # this line will split on whitespace regardless of tab or multispaces between words
+
+        # start with basic whitespace tokenizing,
+        # this line will split on whitespace regardless of tab or multi-spaces between words
         text2 = text.split()
 
         if self.remove_punctuation:
@@ -1807,7 +1785,8 @@ class LocalTokenizer:
             #   only the tokenizer is needed
             from tokenizers import Tokenizer
         except:
-            raise LLMWareException(message="Exception: requires tokenizers to be installed.")
+            raise LLMWareException(message="LocalTokenizer class requires tokenizers to be installed, e.g., "
+                                           "`pip3 install tokenizers`.")
 
         model_repo_path = LLMWareConfig().get_model_repo_path()
 
@@ -1821,10 +1800,10 @@ class LocalTokenizer:
 
         tokenizers_in_cache = os.listdir(tokenizers_cache)
 
-        logger.debug(f"update: LocalTokenizer - tokenizers found in cache: {tokenizers_in_cache}")
+        logger.debug(f"LocalTokenizer - tokenizers found in cache: {tokenizers_in_cache}")
 
         if tokenizer_fn not in tokenizers_in_cache:
-            logger.info(f"update: LocalTokenizer - need to fetch tokenizer - {tokenizer_fn}")
+            logger.info(f"LocalTokenizer - need to fetch tokenizer - {tokenizer_fn}")
             self.fetch_tokenizer_from_hb(self.hf_repo_tokenizers, tokenizer_fn, tokenizers_cache)
 
         self.tokenizer = Tokenizer.from_file(os.path.join(tokenizers_cache, tokenizer_fn))
@@ -1989,7 +1968,11 @@ class Sources:
             #   relative to the context window, but there should be any other detrimental impacts
 
             default_tokenizer = "tokenizer_ll2.json"
-            self.tokenizer = LocalTokenizer(tokenizer_fn=default_tokenizer)
+            try:
+                self.tokenizer = LocalTokenizer(tokenizer_fn=default_tokenizer)
+            except:
+                logger.warning("Could not resolve tokenizer - some functionality may not work correctly."
+                               "\nHave you installed tokenizers, e.g., `pip3 install tokenizers`")
             return True
 
         return False

@@ -1,3 +1,4 @@
+
 # Copyright 2023-2025 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -12,30 +13,49 @@
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
 
-"""GGUF Configs module implements a wide range of configuration and formal interface elements to enable GGUF and the
-use of llama.cpp as a back-end inference engine.   This module consists of the following major elements:
+""" GGUF Configs module implements the 'internal' ctypes interfaces into llama cpp, which is referenced
+in llmware in the GGUFGenerativeModel class in the models module.  For more information,
+see:
 
-    1.  Formal ctype interfaces to access C++/C methods and objects in Python
-        -- includes exposing ~100 python interfaces in 'add_ctypes_declarations' method
-        -- over time, will add more linkages into GGUFGenerativeModel class
-    2.  Formal python wrapper objects on major llama.cpp classes - _Model, _Context, _Batch, _TokenDataArray
-    3.  Minimal callback function to control verbosity from back-end llama.cpp
-    4.  GGUFConfigs - most commonly used configuration items
+    -- Llama CPP:  www.github.com/ggerganov/llama.cpp
+    -- Python binding:  www.github.com/abetlen/llama_cpp_python
 
-    Most of the items in 1-3 are 'formal' code that should generally not need to be changed.
+"""
 
-    Where possible, we have opted to use similar class and object names to conform with norms from llama_cpp
-    and llama_cpp_python and provide intuitive mapping for users of those libraries. """
-
-
-import ctypes
+import logging
 import os
-import sys
 import numpy as np
-from dataclasses import field
+import sys
+import time
 import multiprocessing
+from llmware.exceptions import LLMWareException, ModelNotFoundException, ModuleNotFoundException, GGUFLibNotLoadedException
+logger = logging.getLogger(__name__)
+import ctypes
+from dataclasses import field
 
-from llmware.exceptions import FilePathDoesNotExistException, ModelNotFoundException, ConfigKeyException
+# Constants
+LLAMA_ROPE_SCALING_TYPE_UNSPECIFIED = -1
+LLAMA_ROPE_SCALING_TYPE_NONE = 0
+LLAMA_ROPE_SCALING_TYPE_LINEAR = 1
+LLAMA_ROPE_SCALING_TYPE_YARN = 2
+LLAMA_ROPE_SCALING_TYPE_LONGROPE = 3
+LLAMA_ROPE_SCALING_TYPE_MAX_VALUE = LLAMA_ROPE_SCALING_TYPE_YARN
+
+LLAMA_POOLING_TYPE_UNSPECIFIED = -1
+LLAMA_POOLING_TYPE_NONE = 0
+LLAMA_POOLING_TYPE_MEAN = 1
+LLAMA_POOLING_TYPE_CLS = 2
+LLAMA_POOLING_TYPE_LAST = 3
+LLAMA_POOLING_TYPE_RANK = 4
+
+LLAMA_ATTENTION_TYPE_UNSPECIFIED = -1
+LLAMA_ATTENTION_TYPE_CAUSAL = 0
+LLAMA_ATTENTION_TYPE_NON_CAUSAL = 1
+
+LLAMA_SPLIT_MODE_NONE = 0
+LLAMA_SPLIT_MODE_LAYER = 1
+LLAMA_SPLIT_MODE_ROW = 2
+
 
 #   Ctypes Struct wrappers that map to llama.cpp C++/C objects
 llama_model_p_ctypes = ctypes.c_void_p
@@ -48,6 +68,8 @@ ggml_backend_sched_eval_callback = ctypes.CFUNCTYPE(ctypes.c_bool, ctypes.c_void
 llama_log_callback = ctypes.CFUNCTYPE(None, ctypes.c_int, ctypes.c_char_p, ctypes.c_void_p)
 llama_grammar_p = ctypes.c_void_p
 llama_progress_callback = ctypes.CFUNCTYPE(ctypes.c_bool, ctypes.c_float, ctypes.c_void_p)
+
+llama_vocab_p_ctypes = ctypes.c_void_p
 
 # whisper_log_callback mirrors llama_log_callback
 whisper_log_callback = ctypes.CFUNCTYPE(None, ctypes.c_int, ctypes.c_char_p, ctypes.c_void_p)
@@ -83,10 +105,13 @@ class llama_batch(ctypes.Structure):
         ("n_seq_id", ctypes.POINTER(ctypes.c_int32)),
         ("seq_id", ctypes.POINTER(ctypes.POINTER(llama_seq_id))),
         ("logits", ctypes.POINTER(ctypes.c_int8)),
-        ("all_pos_0", llama_pos),
-        ("all_pos_1", llama_pos),
-        ("all_seq_id", llama_seq_id),
+
+        # deprecated/removed
+        # ("all_pos_0", llama_pos),
+        # ("all_pos_1", llama_pos),
+        # ("all_seq_id", llama_seq_id),
     ]
+
 
 class llama_model_kv_override_value(ctypes.Union):
     _fields_ = [
@@ -103,19 +128,31 @@ class llama_model_kv_override(ctypes.Structure):
         ("value", llama_model_kv_override_value),
     ]
 
+
 class llama_model_params(ctypes.Structure):
 
     _fields_ = [
+
+        # NEW
+        ("devices", ctypes.c_void_p),
+
         ("n_gpu_layers", ctypes.c_int32),
         ("split_mode", ctypes.c_int),
         ("main_gpu", ctypes.c_int32),
         ("tensor_split", ctypes.POINTER(ctypes.c_float)),
+
+        # NEW
+        ("rpc_servers", ctypes.c_char_p),
+
         ("progress_callback", llama_progress_callback),
         ("progress_callback_user_data", ctypes.c_void_p),
         ("kv_overrides", ctypes.POINTER(llama_model_kv_override)),
         ("vocab_only", ctypes.c_bool),
         ("use_mmap", ctypes.c_bool),
         ("use_mlock", ctypes.c_bool),
+
+        # NEW
+        ("check_tensors", ctypes.c_bool)
     ]
 
 
@@ -124,17 +161,24 @@ ggml_abort_callback = ctypes.CFUNCTYPE(ctypes.c_bool, ctypes.c_void_p)
 
 class llama_context_params(ctypes.Structure):
 
-    # update to new llama_context_params as of March 10, 2024
-
     _fields_ = [
-        ("seed", ctypes.c_uint32),
+        # ("seed", ctypes.c_uint32),
         ("n_ctx", ctypes.c_uint32),
         ("n_batch", ctypes.c_uint32),
-        ("n_parallel", ctypes.c_uint32),
+
+        # NEW
+        ("n_ubatch", ctypes.c_uint32),
+        ("n_seq_max", ctypes.c_uint32),
+
+        # ("n_parallel", ctypes.c_uint32),
         ("n_threads", ctypes.c_uint32),
         ("n_threads_batch", ctypes.c_uint32),
         ("rope_scaling_type", ctypes.c_int),
         ("pooling_type", ctypes.c_int),
+
+        # NEW
+        ("attention_type", ctypes.c_int),
+
         ("rope_freq_base", ctypes.c_float),
         ("rope_freq_scale", ctypes.c_float),
         ("yarn_ext_factor", ctypes.c_float),
@@ -150,47 +194,33 @@ class llama_context_params(ctypes.Structure):
         ("logits_all", ctypes.c_bool),
         ("embeddings", ctypes.c_bool),
         ("offload_kqv", ctypes.c_bool),
+
+        # NEW
+        ("flash_attn", ctypes.c_bool),
+
         ("abort_callback", ggml_abort_callback),
         ("abort_callback_data", ctypes.c_void_p),
     ]
 
-    """
-    _fields_ = [
-        ("seed", ctypes.c_uint32),
-        ("n_ctx", ctypes.c_uint32),
-        ("n_batch", ctypes.c_uint32),
-        ("n_threads", ctypes.c_uint32),
-        ("n_threads_batch", ctypes.c_uint32),
-        ("rope_scaling_type", ctypes.c_int32),
-        ("rope_freq_base", ctypes.c_float),
-        ("rope_freq_scale", ctypes.c_float),
-        ("yarn_ext_factor", ctypes.c_float),
-        ("yarn_attn_factor", ctypes.c_float),
-        ("yarn_beta_fast", ctypes.c_float),
-        ("yarn_beta_slow", ctypes.c_float),
-        ("yarn_orig_ctx", ctypes.c_uint32),
-        ("cb_eval", ggml_backend_sched_eval_callback),
-        ("cb_eval_user_data", ctypes.c_void_p),
-        ("type_k", ctypes.c_int),
-        ("type_v", ctypes.c_int),
-        ("mul_mat_q", ctypes.c_bool),
-        ("logits_all", ctypes.c_bool),
-        ("embedding", ctypes.c_bool),
-        ("offload_kqv", ctypes.c_bool),
-        ("do_pooling", ctypes.c_bool),
-    ]
-"""
 
 class llama_model_quantize_params(ctypes.Structure):
 
     _fields_ = [
         ("nthread", ctypes.c_int32),
         ("ftype", ctypes.c_int),
+
+        # NEW
+        ("output_tensor_type", ctypes.c_int),
+        ("token_embedding_type", ctypes.c_int),
+
         ("allow_requantize", ctypes.c_bool),
         ("quantize_output_tensor", ctypes.c_bool),
         ("only_copy", ctypes.c_bool),
         ("pure", ctypes.c_bool),
         ("imatrix", ctypes.c_void_p),
+
+        # NEW
+        ("kv_overrides", ctypes.c_void_p)
     ]
 
 
@@ -215,14 +245,17 @@ class llama_timings(ctypes.Structure):
         ("n_eval", ctypes.c_int32),
     ]
 
+
 class llama_chat_message(ctypes.Structure):
     _fields_ = [
         ("role", ctypes.c_char_p),
         ("content", ctypes.c_char_p),
     ]
 
+
 class llama_kv_cache_view_cell(ctypes.Structure):
     _fields_ = [("pos", llama_pos)]
+
 
 class llama_kv_cache_view(ctypes.Structure):
     _fields_ = [
@@ -236,7 +269,9 @@ class llama_kv_cache_view(ctypes.Structure):
         ("cells_sequences", ctypes.POINTER(llama_seq_id)),
     ]
 
+
 llama_kv_cache_view_p = ctypes.POINTER(llama_kv_cache_view)
+
 
 class llama_beam_view(ctypes.Structure):
     _fields_ = [
@@ -255,7 +290,113 @@ class llama_beams_state(ctypes.Structure):
         ("last_call", ctypes.c_bool),
     ]
 
+
+# TODO: NEW SAMPLER_CHAIN_PARAMS
+
+llama_sampler_context_t = ctypes.c_void_p
+
+
+class llama_sampler_i(ctypes.Structure):
+    ...
+
+
+class llama_sampler_chain_params(ctypes.Structure):
+
+    """Parameters for llama_sampler_chain
+
+    Attributes:
+        no_perf (bool): whether to measure performance timings"""
+
+    # if TYPE_CHECKING:
+    #    no_perf: bool
+
+    _fields_ = [
+        ("no_perf", ctypes.c_bool),
+    ]
+
+
+class llama_sampler(ctypes.Structure):
+    _fields_ = [
+        ("iface", ctypes.POINTER(llama_sampler_i)),
+        ("ctx", llama_sampler_context_t),
+    ]
+
+
+llama_sampler_p = ctypes.POINTER(llama_sampler)
+llama_sampler_p_ctypes = ctypes.POINTER(llama_sampler)
+
+llama_sampler_chain_get = ctypes.CFUNCTYPE(llama_sampler_p, llama_sampler_p_ctypes, ctypes.c_int32, llama_sampler_p_ctypes)
+llama_sampler_chain_n = ctypes.CFUNCTYPE(ctypes.c_int, llama_sampler_p_ctypes)
+llama_sampler_chain_remove = ctypes.CFUNCTYPE(llama_sampler_p , llama_sampler_p_ctypes, ctypes.c_int32, llama_sampler_p_ctypes)
+llama_sampler_p_ctypes = ctypes.POINTER(llama_sampler)
+
+llama_sampler_i_name = ctypes.CFUNCTYPE(ctypes.c_char_p, llama_sampler_p_ctypes)
+llama_sampler_i_accept = ctypes.CFUNCTYPE(None, llama_sampler_p_ctypes, llama_token)
+llama_sampler_i_apply = ctypes.CFUNCTYPE(
+    None, llama_sampler_p_ctypes, llama_token_data_array_p
+)
+llama_sampler_i_reset = ctypes.CFUNCTYPE(None, llama_sampler_p_ctypes)
+llama_sampler_i_clone = ctypes.CFUNCTYPE(llama_sampler_p_ctypes, llama_sampler_p_ctypes)
+llama_sampler_i_free = ctypes.CFUNCTYPE(None, llama_sampler_p_ctypes)
+
+llama_sampler_i._fields_ = [
+    ("name", llama_sampler_i_name),
+    ("accept", llama_sampler_i_accept),
+    ("apply", llama_sampler_i_apply),
+    ("reset", llama_sampler_i_reset),
+    ("clone", llama_sampler_i_clone),
+    ("free", llama_sampler_i_free),
+]
+
+llama_sampler_name = ctypes.CFUNCTYPE(ctypes.c_char_p, llama_sampler_p_ctypes)
+llama_sampler_accept = ctypes.CFUNCTYPE(None, llama_sampler_p_ctypes, llama_token)
+llama_sampler_apply = ctypes.CFUNCTYPE(None, llama_sampler_p_ctypes, llama_token_data_array_p)
+llama_sampler_reset = ctypes.CFUNCTYPE(None, llama_sampler_p_ctypes)
+llama_sampler_clone = ctypes.CFUNCTYPE(llama_sampler_p, llama_sampler_p_ctypes)
+llama_sampler_free = ctypes.CFUNCTYPE(None, llama_sampler_p_ctypes)
+llama_sampler_init_dist = ctypes.CFUNCTYPE(llama_sampler_p, ctypes.c_uint32, llama_sampler_p_ctypes)
+
+llama_sampler_init_softmax = ctypes.CFUNCTYPE(llama_sampler_p, llama_sampler_p_ctypes)
+
+llama_sampler_init_top_k = ctypes.CFUNCTYPE(llama_sampler_p, ctypes.c_int32, llama_sampler_p_ctypes)
+
+llama_sampler_init_top_p = ctypes.CFUNCTYPE(llama_sampler_p, ctypes.c_float, ctypes.c_size_t)
+llama_sampler_init_min_p = ctypes.CFUNCTYPE(llama_sampler_p, ctypes.c_float, ctypes.c_size_t)
+llama_sampler_init_typical = ctypes.CFUNCTYPE(llama_sampler_p, ctypes.c_float, ctypes.c_size_t)
+
+llama_sampler_init_temp = ctypes.CFUNCTYPE(llama_sampler_p, ctypes.c_float, llama_sampler_p_ctypes)
+
+llama_sampler_init_temp_ext = ctypes.CFUNCTYPE(llama_sampler_p_ctypes, ctypes.c_float, ctypes.c_float, ctypes.c_float)
+
+llama_sampler_init_xtc = ctypes.CFUNCTYPE(llama_sampler_p_ctypes, ctypes.c_float, ctypes.c_float, ctypes.c_size_t, ctypes.c_uint32)
+
+llama_sampler_init_mirostat = ctypes.CFUNCTYPE(llama_sampler_p_ctypes, ctypes.c_int32, ctypes.c_uint32, ctypes.c_float,
+                                               ctypes.c_float, ctypes.c_int32)
+
+llama_sampler_init_mirostat_v2 = ctypes.CFUNCTYPE(llama_sampler_p_ctypes, ctypes.c_uint32, ctypes.c_float, ctypes.c_float)
+
+llama_sampler_init_grammar = ctypes.CFUNCTYPE(llama_sampler_p_ctypes, llama_model_p_ctypes, ctypes.c_char_p
+                                              ,ctypes.c_char_p)
+
+
 def add_ctypes_declarations (_lib):
+
+    # new llama sampler methods
+    llama_sampler_sample = _lib.llama_sampler_sample
+    llama_sampler_sample.argtypes = [llama_sampler_p_ctypes, llama_context_p_ctypes, ctypes.c_int32]
+    llama_sampler_sample.restype = llama_token
+
+    llama_sampler_chain_init = _lib.llama_sampler_chain_init
+    llama_sampler_chain_init.argtypes = [llama_sampler_chain_params]
+    llama_sampler_chain_init.restype = llama_sampler_p_ctypes
+
+    llama_sampler_chain_add = _lib.llama_sampler_chain_add
+    llama_sampler_chain_add.argtypes = [llama_sampler_p_ctypes, llama_sampler_p_ctypes]
+    llama_sampler_chain_add.restype = None
+
+    llama_sampler_init_greedy = _lib.llama_sampler_init_greedy
+    llama_sampler_init_greedy.argtypes = []
+    llama_sampler_init_greedy.restype = llama_sampler_p
 
     # major interfaces
     llama_backend_init = _lib.llama_backend_init
@@ -288,10 +429,6 @@ def add_ctypes_declarations (_lib):
     llama_new_context_with_model = _lib.llama_new_context_with_model
     llama_new_context_with_model.argtypes = [llama_model_p_ctypes, llama_context_params]
     llama_new_context_with_model.restype = llama_context_p_ctypes
-
-    # llama_numa_init = _lib.llama_numa_init
-    # llama_numa_init.argtypes = [ctypes.c_int]
-    # llama_numa_init.restype = None
 
     llama_free = _lib.llama_free
     llama_free.argtypes = [llama_context_p_ctypes]
@@ -334,8 +471,13 @@ def add_ctypes_declarations (_lib):
     llama_vocab_type.restype = ctypes.c_int
 
     llama_n_vocab = _lib.llama_n_vocab
-    llama_n_vocab.argtypes = [llama_model_p_ctypes]
+    llama_n_vocab.argtypes = [ctypes.c_void_p] # [llama_model_p_ctypes]
     llama_n_vocab.restype = ctypes.c_int32
+
+    # new vocab methods
+    llama_model_get_vocab = _lib.llama_model_get_vocab
+    llama_model_get_vocab.argtypes = [llama_model_p_ctypes]
+    llama_model_get_vocab.restype = llama_vocab_p_ctypes
 
     llama_n_ctx_train = _lib.llama_n_ctx_train
     llama_n_ctx_train.argtypes = [llama_model_p_ctypes]
@@ -373,10 +515,6 @@ def add_ctypes_declarations (_lib):
     llama_model_n_params = _lib.llama_model_n_params
     llama_model_n_params.argtypes = [llama_model_p_ctypes]
     llama_model_n_params.restype = ctypes.c_uint64
-
-    llama_get_model_tensor = _lib.llama_get_model_tensor
-    llama_get_model_tensor.argtypes = [llama_model_p_ctypes, ctypes.c_char_p]
-    llama_get_model_tensor.restype = ctypes.c_void_p
 
     llama_kv_cache_view_init = _lib.llama_kv_cache_view_init
     llama_kv_cache_view_init.argtypes = [llama_context_p_ctypes, ctypes.c_int32]
@@ -431,12 +569,6 @@ def add_ctypes_declarations (_lib):
     llama_set_state_data.argtypes = [llama_context_p_ctypes, ctypes.POINTER(ctypes.c_uint8)]
     llama_set_state_data.restype = ctypes.c_size_t
 
-    """
-    llama_eval = _lib.llama_eval
-    llama_eval.argtypes = [llama_context_p_ctypes, llama_token_p, ctypes.c_int32, ctypes.c_int32]
-    llama_eval.restype = ctypes.c_int
-    """
-
     llama_batch_get_one = _lib.llama_batch_get_one
     llama_batch_get_one.argtypes = [llama_token_p, ctypes.c_int, llama_pos, llama_seq_id, ]
     llama_batch_get_one.restype = llama_batch
@@ -481,10 +613,6 @@ def add_ctypes_declarations (_lib):
     llama_token_get_score.argtypes = [llama_model_p_ctypes, llama_token]
     llama_token_get_score.restype = ctypes.c_float
 
-    llama_token_get_type = _lib.llama_token_get_type
-    llama_token_get_type.argtypes = [llama_model_p_ctypes, llama_token]
-    llama_token_get_type.restype = ctypes.c_int
-
     llama_token_bos = _lib.llama_token_bos
     llama_token_bos.argtypes = [llama_model_p_ctypes]
     llama_token_bos.restype = llama_token
@@ -505,18 +633,6 @@ def add_ctypes_declarations (_lib):
     llama_add_eos_token.argtypes = [llama_model_p_ctypes]
     llama_add_eos_token.restype = ctypes.c_int32
 
-    llama_token_prefix = _lib.llama_token_prefix
-    llama_token_prefix.argtypes = [llama_model_p_ctypes]
-    llama_token_prefix.restype = llama_token
-
-    llama_token_middle = _lib.llama_token_middle
-    llama_token_middle.argtypes = [llama_model_p_ctypes]
-    llama_token_middle.restype = llama_token
-
-    llama_token_suffix = _lib.llama_token_suffix
-    llama_token_suffix.argtypes = [llama_model_p_ctypes]
-    llama_token_suffix.restype = llama_token
-
     llama_token_eot = _lib.llama_token_eot
     llama_token_eot.argtypes = [llama_model_p_ctypes]
     llama_token_eot.restype = llama_token
@@ -530,130 +646,7 @@ def add_ctypes_declarations (_lib):
     llama_token_to_piece.argtypes = [llama_model_p_ctypes, llama_token, ctypes.c_char_p, ctypes.c_int32, ]
     llama_token_to_piece.restype = ctypes.c_int32
 
-    llama_grammar_element_p = ctypes.POINTER(llama_grammar_element)
-
-    llama_grammar_init = _lib.llama_grammar_init
-    llama_grammar_init.argtypes = [ctypes.POINTER(llama_grammar_element_p), ctypes.c_size_t, ctypes.c_size_t, ]
-    llama_grammar_init.restype = llama_grammar_p
-
-    llama_grammar_free = _lib.llama_grammar_free
-    llama_grammar_free.argtypes = [llama_grammar_p]
-    llama_grammar_free.restype = None
-
-    llama_grammar_copy = _lib.llama_grammar_copy
-    llama_grammar_copy.argtypes = [llama_grammar_p]
-    llama_grammar_copy.restype = llama_grammar_p
-
-    llama_set_rng_seed = _lib.llama_set_rng_seed
-    llama_set_rng_seed.argtypes = [llama_context_p_ctypes, ctypes.c_uint32]
-    llama_set_rng_seed.restype = None
-
-    llama_sample_repetition_penalties = _lib.llama_sample_repetition_penalties
-    llama_sample_repetition_penalties.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, llama_token_p,
-                                                  ctypes.c_size_t, ctypes.c_float, ctypes.c_float, ctypes.c_float]
-    llama_sample_repetition_penalties.restype = None
-
-    llama_sample_apply_guidance = _lib.llama_sample_apply_guidance
-    llama_sample_apply_guidance.argtypes = [llama_context_p_ctypes, ctypes.POINTER(ctypes.c_float),
-                                            ctypes.POINTER(ctypes.c_float), ctypes.c_float, ]
-    llama_sample_apply_guidance.restype = None
-
-    """
-    llama_sample_classifier_free_guidance = _lib.llama_sample_classifier_free_guidance
-    llama_sample_classifier_free_guidance.argtypes = [llama_context_p_ctypes, llama_token_data_array_p,
-                                                      llama_context_p_ctypes, ctypes.c_float, ]
-    llama_sample_classifier_free_guidance.restype = None
-    """
-
-    llama_sample_softmax = _lib.llama_sample_softmax
-    llama_sample_softmax.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, ]
-    llama_sample_softmax.restype = None
-
-    llama_sample_top_k = _lib.llama_sample_top_k
-    llama_sample_top_k.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, ctypes.c_int32, ctypes.c_size_t, ]
-    llama_sample_top_k.restype = None
-
-    llama_sample_top_p = _lib.llama_sample_top_p
-    llama_sample_top_p.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, ctypes.c_float, ctypes.c_size_t, ]
-    llama_sample_top_p.restype = None
-
-    llama_sample_min_p = _lib.llama_sample_min_p
-    llama_sample_min_p.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, ctypes.c_float, ctypes.c_size_t, ]
-    llama_sample_min_p.restype = None
-
-    llama_sample_tail_free = _lib.llama_sample_tail_free
-    llama_sample_tail_free.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, ctypes.c_float,
-                                       ctypes.c_size_t, ]
-    llama_sample_tail_free.restype = None
-
-    llama_sample_typical = _lib.llama_sample_typical
-    llama_sample_typical.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, ctypes.c_float,
-                                     ctypes.c_size_t, ]
-    llama_sample_typical.restype = None
-
-    llama_sample_entropy = _lib.llama_sample_entropy
-    llama_sample_entropy.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, ctypes.c_float, ctypes.c_float,
-                                     ctypes.c_float]
-    llama_sample_entropy.restype = None
-
-    llama_sample_temp = _lib.llama_sample_temp
-    llama_sample_temp.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, ctypes.c_float, ]
-    llama_sample_temp.restype = None
-
-    llama_sample_grammar = _lib.llama_sample_grammar
-    llama_sample_grammar.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, llama_grammar_p, ]
-    llama_sample_grammar.restype = None
-
-    llama_sample_token_mirostat = _lib.llama_sample_token_mirostat
-    llama_sample_token_mirostat.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, ctypes.c_float,
-                                            ctypes.c_float, ctypes.c_int32, ctypes.POINTER(ctypes.c_float), ]
-    llama_sample_token_mirostat.restype = llama_token
-
-    llama_sample_token_mirostat_v2 = _lib.llama_sample_token_mirostat_v2
-    llama_sample_token_mirostat_v2.argtypes = [llama_context_p_ctypes, llama_token_data_array_p, ctypes.c_float,
-                                               ctypes.c_float, ctypes.POINTER(ctypes.c_float), ]
-    llama_sample_token_mirostat_v2.restype = llama_token
-
-    llama_sample_token_greedy = _lib.llama_sample_token_greedy
-    llama_sample_token_greedy.argtypes = [
-        llama_context_p_ctypes,
-        llama_token_data_array_p,
-    ]
-    llama_sample_token_greedy.restype = llama_token
-
-    llama_sample_token = _lib.llama_sample_token
-    llama_sample_token.argtypes = [
-        llama_context_p_ctypes,
-        llama_token_data_array_p,
-    ]
-    llama_sample_token.restype = llama_token
-
-    llama_grammar_accept_token = _lib.llama_grammar_accept_token
-    llama_grammar_accept_token.argtypes = [
-        llama_context_p_ctypes,
-        llama_grammar_p,
-        llama_token,
-    ]
-    llama_grammar_accept_token.restype = None
-
-    llama_beam_search_callback_fn_t = ctypes.CFUNCTYPE(None, ctypes.c_void_p, llama_beams_state)
-
-    llama_beam_search = _lib.llama_beam_search
-    llama_beam_search.argtypes = [llama_context_p_ctypes, llama_beam_search_callback_fn_t, ctypes.c_void_p,
-                                  ctypes.c_size_t, ctypes.c_int32, ctypes.c_int32, ]
-    llama_beam_search.restype = None
-
-    llama_get_timings = _lib.llama_get_timings
-    llama_get_timings.argtypes = [llama_context_p_ctypes]
-    llama_get_timings.restype = llama_timings
-
-    llama_print_timings = _lib.llama_print_timings
-    llama_print_timings.argtypes = [llama_context_p_ctypes]
-    llama_print_timings.restype = None
-
-    llama_reset_timings = _lib.llama_reset_timings
-    llama_reset_timings.argtypes = [llama_context_p_ctypes]
-    llama_reset_timings.restype = None
+    # llama_grammar_element_p = ctypes.POINTER(llama_grammar_element)
 
     llama_print_system_info = _lib.llama_print_system_info
     llama_print_system_info.argtypes = []
@@ -662,10 +655,6 @@ def add_ctypes_declarations (_lib):
     llama_log_set = _lib.llama_log_set
     llama_log_set.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
     llama_log_set.restype = None
-
-    llama_dump_timing_info_yaml = _lib.llama_dump_timing_info_yaml
-    llama_dump_timing_info_yaml.argtypes = [ctypes.c_void_p, llama_context_p_ctypes]
-    llama_dump_timing_info_yaml.restype = None
 
     return _lib
 
@@ -688,7 +677,7 @@ class _LlamaModel:
         self.model = None
 
         if not os.path.exists(path_model):
-            raise FilePathDoesNotExistException(path_model)
+            raise LLMWareException(f"Path does not exist - {path_model}")
 
         #   main function call to _lib
         self.model = _lib.llama_load_model_from_file(self.path_model.encode("utf-8"), self.params)
@@ -841,6 +830,7 @@ def llama_log_callback(level, text, user_data):
         # no action taken if verbose is if OFF
         do_nothing = 0
 
+
 @whisper_log_callback
 def whisper_log_callback(level, text, user_data):
 
@@ -883,9 +873,10 @@ class GGUFConfigs:
 
                   # min cuda drivers for build of cuda libs
                   "cuda_linux_driver_min": [525, 60],
-                  "cuda_windows_driver_min": [528,33],
+                  "cuda_windows_driver_min": [528 ,33],
 
-                  "max_output_tokens": 256,
+                  # adjusted from 256 (default for a long time - too low)
+                  "max_output_tokens": 2048,
                   "temperature_default": 0.3,
 
                   "llama_cpp_verbose": "OFF",
@@ -898,13 +889,21 @@ class GGUFConfigs:
                   "get_first_token_speed": False,
 
                   # prebuilt shared libraries included in llmware
+                  "windows_x86_lib": "gguf_win_x86",
+                  "windows_cuda_lib": "gguf_win_cuda",
+                  "linux_x86_lib": "gguf_linux_x86",
+                  "linux_cuda_lib": "gguf_linux_cuda",
+                  "mac_metal_lib": "gguf_mac",
+                  "windows_arm64_lib": "gguf_arm64",
+
                   "windows": "libllama_win.dll",
-                  "windows_cuda": "libllama_win_cuda.dll",
-                  "mac_metal": "libllama_mac_metal.dylib",
-                  "mac_metal_no_acc": "libllama_mac_metal_no_acc.dylib",
-                  "mac_x86": "libllama_mac_x86.dylib",
-                  "linux_x86": "libllama_linux_x86.so",
-                  "linux_cuda": "libllama_linux_cuda.so",
+                  "windows_cuda": "libllama_win.dll",
+                  "windows_arm64": "libllama.dll",
+                  "mac_metal": "libllama.dylib",
+                  "linux_x86": "libllama.so",
+                  "linux_cuda": "libllama.so",
+                  # removed/deprecated support for older M-series Macs without Accelerate
+                  # "mac_metal_no_acc": "libllama.dylib",
 
                   "n_threads": max(multiprocessing.cpu_count() // 2, 1),
                   "n_threads_batch": max(multiprocessing.cpu_count() // 2, 1),
@@ -931,7 +930,7 @@ class GGUFConfigs:
                   "whisper_windows": "libwhisper_windows_155.dll",
                   "whisper_linux_x86": "libwhisper_linux_x86_155.so",
                   "whisper_linux_cuda": "libwhisper_linux_cuda_155.so"
-    }
+                  }
 
     #   note: with temperature used as primary attribute to adjust sampling,
     #   most of the params do not need to be adjusted
@@ -953,7 +952,7 @@ class GGUFConfigs:
                              "cfg_scale": 1.0,
                              "n_probs": 0,
                              "mirostat_mu": field(default_factory=ctypes.c_float)
-    }
+                             }
 
     _conf_context_params = {"seed": 0xFFFFFFFF,
                             "n_ctx": 2048,
@@ -966,19 +965,19 @@ class GGUFConfigs:
                             "yarn_ext_factor": -1.0,
                             "yarn_attn_factor": 1.0,
                             "yarn_beta_fast": 32.0,
-                            "yarn_beta_slow":1.0,
+                            "yarn_beta_slow" :1.0,
                             "yarn_orig_ctx": 0,
                             "mul_mat_q": True,
                             "logits_all": False,
                             "embedding": False,
                             "offload_kqv": True
-    }
+                            }
 
     @classmethod
     def get_config(cls, name):
         if name in cls._conf_libs:
             return cls._conf_libs[name]
-        raise ConfigKeyException(name)
+        raise LLMWareException(message=f"GGUF Configs config key not found - {name}.")
 
     @classmethod
     def set_config(cls, name, value):
@@ -990,6 +989,7 @@ class GGUFConfigs:
 
 
 #               *** WHISPER CPP CONFIGS START HERE ***
+
 
 class whisper_token_data(ctypes.Structure):
     _fields_ = [
@@ -1116,6 +1116,4 @@ class whisper_full_params(ctypes.Structure):
         ("grammar_penalty", ctypes.c_float)
 
     ]
-
-
 

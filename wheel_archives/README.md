@@ -21,6 +21,18 @@ All wheels are built and tested on:
 
 **Release Notes**  
 
+**0.4.0** - updated GGUF implementation and binaries with support for Windows x86, Windows CUDA, Windows ARM64, Linux x86, Linux CUDA, 
+and Mac Metal (with Accelerate) out of the box.   Also reduced the number of dependencies installed in pip package down to a core set of 
+only five (numpy, huggingface_hub, tokenizers, boto3 and colorama).  Other dependencies are in "extras" and available through configs 
+passed in the pip install process.   If not installed, then generally an exception will be thrown that shows the way to resolve, e.g., 
+'to use this function, please pip3 install ....'  
+   
+**0.3.9 and 0.3.10** - Enhanced Azure OpenAI configuration, including streaming generation; Removed deprecated parser binaries for Linux aarch64 and Mac x86 ; Added generator option for CustomTable insert rows to provide progress on larger table builds.    
+   
+-**0.3.7 and 0.3.8** - released in October 2024 - added implementations of OVGenerativeModel and ONNXGenerativeModel to integrate 
+OpenVino and ONNXRuntime formats, respectively, into llmware pipelines.   Launched collection of 100+ quantized models in these formats 
+in ModelDepot.  
+
 -**0.3.5 and 0.3.6** - released in Aug/Sept 2024 - streamlining pip package - removing older deprecated platform support for Linux aarch64 and Mac x86 - removing from the repository as well by early October.  If someone needs deprecated/limited support, then the binaries are available, and can either be provided by request, or through pulling older pip versions, e.g., Linux aarch64 (version before 0.2.7) and Mac x86 (version before 0.2.11).  
 
 --**0.3.3 and 0.3.4** - released in July 2024 - continued improvements in the model lifecycle architecture and configurations, providing more options around the BaseModel class as the foundation with the ability to manage key steps in the loading, instantiation and inferencing lifecycle across different model classes and types. 
