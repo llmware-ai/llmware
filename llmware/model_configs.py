@@ -500,6 +500,18 @@ global_model_repo_catalog_list = [
     {"model_name": "gpt-4o-mini-2024-07-18", "display_name": "gpt-4o-mini-2024-07-18", "model_family": "OpenAIGenModel",
     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
 
+    #gpt-o1
+    {"model_name": "o1", "display_name": "gpt-o1", "model_family": "OpenAIGenModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
+
+    #gpt-o1-pro
+    {"model_name": "o1-pro", "display_name": "gpt-o1-pro", "model_family": "OpenAIGenModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
+
+    #o3-mini-high
+    {"model_name": "o3-mini", "display_name": "gpt-o3-mini-high", "reasoning_effort": "high", "model_family": "OpenAIGenModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
+
+    # Google gemini 1.5 pro
+    {"model_name": "gemini-1.5-pro", "display_name": "Gemini 1.5 Pro", "model_family": "GoogleGenModel", "model_category": "generative-api", "model_location": "api", "context_window": 128000},
+
     # add api-based llmware custom model
     {"model_name": "llmware-inference-server", "display_name": "LLMWare-GPT", "model_family": "LLMWareModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 2048},
