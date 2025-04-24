@@ -5572,9 +5572,40 @@ class OpenAIGenModel(BaseModel):
 
         try:
 
-            if self.model_name in ["gpt-3.5-turbo","gpt-4","gpt-4-1106-preview","gpt-3.5-turbo-1106", 
+            if self.model_name in ["o1-pro", "o3-mini"]:
+
+                # PATH #1 - the new 'responses' endpoint
+
+                messages = self.prompt_engineer_chatgpt3(prompt_enriched, self.add_context, inference_dict)
+
+                # updated OpenAI client to >v1.0 API - create client, and returns pydantic objects
+
+                if not azure_client:
+                    client = OpenAI(api_key=self.api_key)
+                    model_name = self.model_name
+                else:
+                    logger.debug("OpenAIGenModel - applying custom OpenAI client from OpenAIConfig")
+
+                    client = azure_client
+
+                    # adapt model name for azure, e.g., replace(".", "")
+                    model_name = OpenAIConfig().get_azure_model_name(self.model_name)
+
+                response = client.responses.create(model=model_name,input=messages,)
+
+                text_out = response.output_text
+
+                usage = {"input": response.usage.input_tokens,
+                         "output": response.usage.output_tokens,
+                         "total": response.usage.total_tokens,
+                         "metric": "tokens",
+                         "processing_time": time.time() - time_start}
+
+            elif self.model_name in ["gpt-3.5-turbo","gpt-4","gpt-4-1106-preview","gpt-3.5-turbo-1106",
                                    "gpt-4-0125-preview", "gpt-3.5-turbo-0125", "gpt-4o", "gpt-4o-2024-05-13",
-                                   "gpt-4o-mini-2024-07-18","gpt-4o-mini","gpt-4o-2024-08-06"]:
+                                   "gpt-4o-mini-2024-07-18","gpt-4o-mini","gpt-4o-2024-08-06", "o1"]:
+
+                # PATH #2 - 'main' chatgpt-style chat completions endpoint
 
                 messages = self.prompt_engineer_chatgpt3(prompt_enriched, self.add_context, inference_dict)
 
@@ -5593,8 +5624,9 @@ class OpenAIGenModel(BaseModel):
                     # adapt model name for azure, e.g., replace(".", "")
                     model_name = OpenAIConfig().get_azure_model_name(self.model_name)
 
-                response = client.chat.completions.create(model=model_name,messages=messages,
-                                                          max_tokens=self.target_requested_output_tokens)
+                # note: max_tokens deprecated for max_output_tokens -> but not supported for 'o' models
+
+                response = client.chat.completions.create(model=model_name, messages=messages)
 
                 text_out = response.choices[0].message.content
 
@@ -5605,7 +5637,8 @@ class OpenAIGenModel(BaseModel):
                          "processing_time": time.time() - time_start}
 
             else:
-                # openai traditional 'instruct gpt' completion models
+
+                # PATH #3 - openai traditional 'instruct gpt' completion models
 
                 prompt_enriched = self.prompt_engineer(prompt_enriched, self.add_context, inference_dict=inference_dict)
 
@@ -5724,9 +5757,16 @@ class OpenAIGenModel(BaseModel):
 
         try:
 
-            if self.model_name in ["gpt-3.5-turbo","gpt-4","gpt-4-1106-preview","gpt-3.5-turbo-1106",
+            if self.model_name in ["o1-pro", "o3-mini"]:
+
+                # PATH #1 - the new 'responses' endpoint -> streaming not implemented yet
+
+                raise LLMWareException(message=f"Responses API streaming not implemented for this model.  To use "
+                                               f"{self.model_name}, please use the .inference method")
+
+            elif self.model_name in ["gpt-3.5-turbo","gpt-4","gpt-4-1106-preview","gpt-3.5-turbo-1106",
                                    "gpt-4-0125-preview", "gpt-3.5-turbo-0125", "gpt-4o", "gpt-4o-2024-05-13",
-                                   "gpt-4o-mini-2024-07-18","gpt-4o-mini","gpt-4o-2024-08-06"]:
+                                   "gpt-4o-mini-2024-07-18","gpt-4o-mini","gpt-4o-2024-08-06", "o1"]:
 
                 messages = self.prompt_engineer_chatgpt3(prompt_enriched, self.add_context, inference_dict)
 
@@ -5751,7 +5791,7 @@ class OpenAIGenModel(BaseModel):
                 total_tokens = 0
 
                 stream_response = client.chat.completions.create(model=model_name,messages=messages,
-                                                                 max_tokens=self.target_requested_output_tokens,
+                                                                 # max_tokens=self.target_requested_output_tokens,
                                                                  stream=True)
 
                 # implement streaming generator to yield chunk of tokens
