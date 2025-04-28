@@ -6033,7 +6033,7 @@ class ClaudeModel(BaseModel):
             # new Claude 3 models use the 'messages' API
             # please check that you have pip installed the latest anthropic python sdk
 
-            if self.model_name in ["claude-3-opus-20240229", "claude-3-sonnet-20240229"]:
+            if self.model_name in ["claude-3-opus-20240229", "claude-3-sonnet-20240229","claude-3-haiku-20240307", "claude-3-5-haiku-20241022", "claude-3-5-sonnet-20240620", "claude-3-7-sonnet-20250219"]:
 
                 # use messages API
                 message = client.messages.create(model=self.model_name, max_tokens=self.target_requested_output_tokens,
