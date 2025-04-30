@@ -1,0 +1,24 @@
+{
+  "name": "connect-mongo-example",
+  "version": "1.0.0",
+  "description": "connect-mongo example code",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start:js": "node index.js",
+    "start:mongoose": "node mongoose.js",
+    "start:ts": "tsc && node build/ts-example.js"
+  },
+  "resolutions": {
+    "mongodb": "3.6.3"
+  },
+  "dependencies": {
+    "connect-mongo": "^4.4.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "mongoose": "5.12.1"
+  },
+  "devDependencies": {
+    "typescript": "^4.2.3"
+  }
+}
