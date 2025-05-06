@@ -427,6 +427,14 @@ global_model_repo_catalog_list = [
     {"model_name": 'claude-2.0', "display_name": "Anthropic Claude-Claude2-.0",
     "model_family": "ClaudeModel", "model_category": "generative-api", "model_location": "api", "context_window": 8192},
 
+    {"model_name": 'claude-3-haiku-20240307', "display_name": "Anthropic Claude 3 Haiku", "model_family": "ClaudeModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
+
+    {"model_name": 'claude-3-5-haiku-20241022', "display_name": "Anthropic Claude 3.5 Haiku", "model_family": "ClaudeModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
+
+    {"model_name": 'claude-3-5-sonnet-20240620', "display_name": "Anthropic Claude 3.5 Sonnet", "model_family": "ClaudeModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
+
+    {"model_name": 'claude-3-7-sonnet-20250219', "display_name": "Anthropic Claude 3.7 Sonnet", "model_family": "ClaudeModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
+
     {"model_name": 'command-medium-nightly', "display_name": "Cohere Command Medium", "model_family": "CohereGenModel",
      "model_category": "generative-api","model_location": "api", "context_window": 2048},
 
