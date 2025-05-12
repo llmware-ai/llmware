@@ -1320,37 +1320,46 @@ class Query:
 
         return text_agg, meta_agg
 
-    def document_lookup(self, doc_id="", file_source=""):
-
-        """ Takes as an input either a doc_id or file_source (e.g., filename) that is in a Library, and
-        returns all of the non-image text and table blocks in the document. """
+    def document_lookup(self, doc_id="", file_source="", include_images=False):
+        """
+        Takes as an input either a doc_id or file_source (e.g., filename) that is in a Library, and
+        returns all of the text and table blocks in the document. Images can be optionally included.
+        
+        Parameters:
+            doc_id (str): Document ID.
+            file_source (str): Source file name.
+            include_images (bool): Whether to include images in the result. Defaults to False.
+            
+        Returns:
+            list: Filtered list of document blocks.
+        """
 
         if doc_id:
             kv_dict = {"doc_ID": doc_id}
         elif file_source:
             kv_dict = {"file_source": file_source}
         else:
-            raise RuntimeError("Query document_lookup method requires as input either a document ID or "
-                               "the name of a file already parsed in the library ")
+            raise RuntimeError(
+                "Query document_lookup method requires as input either a document ID or "
+                "the name of a file already parsed in the library"
+            )
 
         output = CollectionRetrieval(self.library_name, account_name=self.account_name).filter_by_key_dict(kv_dict)
 
         if len(output) == 0:
             logger.warning(f"update: Query - document_lookup  - nothing found - {doc_id} - {file_source}")
-            result = []
-
-            return result
+            return []
 
         output_final = []
 
-        # exclude images to avoid potential duplicate text
         for entries in output:
-            if entries["content_type"] != "image":
+            # Filter out images if include_images is False
+            if include_images or entries["content_type"] != "image":
                 entries.update({"matches": []})
                 entries.update({"page_num": entries["master_index"]})
                 output_final.append(entries)
 
-        output_final = sorted(output_final, key=lambda x:x["block_ID"], reverse=False)
+        output_final = sorted(output_final, key=lambda x: x["block_ID"], reverse=False)
 
         return output_final
 
