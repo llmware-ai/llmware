@@ -11240,6 +11240,115 @@ class LLMWareInferenceServer:
         return True
 
 
+class MultiModalModel:
+    """A class to handle multi-modal models, supporting text, image, and other data types."""
+
+    def __init__(self, model_name, model_type, preprocessors=None, postprocessors=None):
+        self.model_name = model_name
+        self.model_type = model_type
+        self.preprocessors = preprocessors or {}
+        self.postprocessors = postprocessors or {}
+
+    def add_preprocessor(self, data_type, preprocessor):
+        """Add a preprocessor for a specific data type."""
+        self.preprocessors[data_type] = preprocessor
+
+    def add_postprocessor(self, data_type, postprocessor):
+        """Add a postprocessor for a specific data type."""
+        self.postprocessors[data_type] = postprocessor
+
+    def preprocess(self, data_type, data):
+        """Preprocess data based on its type."""
+        if data_type in self.preprocessors:
+            return self.preprocessors[data_type](data)
+        return data
+
+    def postprocess(self, data_type, data):
+        """Postprocess data based on its type."""
+        if data_type in self.postprocessors:
+            return self.postprocessors[data_type](data)
+        return data
+
+    def inference(self, inputs):
+        """Perform inference on multi-modal inputs."""
+        processed_inputs = {
+            data_type: self.preprocess(data_type, data)
+            for data_type, data in inputs.items()
+        }
+        # Placeholder for model inference logic
+        raw_outputs = self._run_model(processed_inputs)
+        return {
+            data_type: self.postprocess(data_type, output)
+            for data_type, output in raw_outputs.items()
+        }
+
+    def _run_model(self, inputs):
+        """Run the model on preprocessed inputs based on the model type."""
+        if not hasattr(self, 'model') or self.model is None:
+            raise ValueError("Model is not loaded. Please load a model before running inference.")
+
+        if self.model_type == "pytorch":
+            # PyTorch inference
+            import torch
+            input_tensors = {
+                data_type: torch.tensor(data) if isinstance(data, list) else torch.from_numpy(data)
+                for data_type, data in inputs.items()
+            }
+            with torch.no_grad():
+                outputs = {
+                    data_type: self.model(input_tensor.unsqueeze(0))
+                    for data_type, input_tensor in input_tensors.items()
+                }
+            return {data_type: output.squeeze(0).numpy() for data_type, output in outputs.items()}
+
+        elif self.model_type == "onnx":
+            # ONNX inference
+            import onnxruntime as ort
+            session = ort.InferenceSession(self.model)
+            outputs = {
+                data_type: session.run(None, {session.get_inputs()[0].name: data})[0]
+                for data_type, data in inputs.items()
+            }
+            return outputs
+
+        elif self.model_type == "openvino":
+            # OpenVino inference
+            from openvino.runtime import Core
+            core = Core()
+            compiled_model = core.compile_model(self.model, "CPU")
+            outputs = {
+                data_type: compiled_model([data])[0]
+                for data_type, data in inputs.items()
+            }
+            return outputs
+
+        elif self.model_type == "gguf":
+            # GGUF inference (example placeholder)
+            # Assuming GGUF uses a specific library for inference
+            from llmware.gguf_configs import GGUFInference
+            gguf_inference = GGUFInference(self.model)
+            outputs = {
+                data_type: gguf_inference.run(data)
+                for data_type, data in inputs.items()
+            }
+            return outputs
+        
+        elif self.model_type == "tensorflow":
+            # TensorFlow inference
+            import tensorflow as tf
+            input_tensors = {
+                data_type: tf.convert_to_tensor(data) if isinstance(data, list) else tf.constant(data)
+                for data_type, data in inputs.items()
+            }
+            outputs = {
+                data_type: self.model(input_tensor[None, ...])
+                for data_type, input_tensor in input_tensors.items()
+            }
+            return {data_type: output.numpy() for data_type, output in outputs.items()}
+        
+        else:
+            raise ValueError(f"Unsupported model type: {self.model_type}")
+
 class PyTorchLoader:
 
     """ PyTorchLoader is a wrapper class that consolidates all of the PyTorch model loading functions
