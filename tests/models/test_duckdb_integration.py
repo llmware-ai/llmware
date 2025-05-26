@@ -1,4 +1,4 @@
-import pytest
+""" Test for DuckDB integration in llmware"""
 from llmware.duckdb_integration import DuckDBIntegration
 
 def test_duckdb_integration():
