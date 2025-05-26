@@ -437,10 +437,10 @@ global_model_repo_catalog_list = [
 
     {"model_name": 'command-medium-nightly', "display_name": "Cohere Command Medium", "model_family": "CohereGenModel",
      "model_category": "generative-api","model_location": "api", "context_window": 2048},
-
+    {"model_name": "command-r", "display_name": "Cohere Command R", "model_family": "CohereGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 2048},
     {"model_name": 'command-xlarge-nightly', "display_name": "Cohere Command XLarge", "model_family": "CohereGenModel",
      "model_category": "generative-api","model_location": "api", "context_window": 2048},
-
     {"model_name": 'summarize-xlarge', "display_name": "Cohere Summarize Xlarge", "model_family": "CohereGenModel",
      "model_category":"generative-api","model_location": "api", "context_window": 2048},
     {"model_name": 'summarize-medium', "display_name": "Cohere Summarize Medium", "model_family": "CohereGenModel",
