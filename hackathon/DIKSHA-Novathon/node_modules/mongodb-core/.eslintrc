@@ -1,0 +1,15 @@
+{
+  "extends": ["eslint:recommended"],
+  "env": {
+    "node": true,
+    "mocha": true
+   },
+   "ecmaFeatures": {
+    "es6": true,
+   },
+   "plugins": [
+   ],
+   "rules": {
+    "no-console":0
+   }
+}
