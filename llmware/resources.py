@@ -261,6 +261,7 @@ class CollectionWriter:
         return self._writer.destroy_collection(confirm_destroy=confirm_destroy)
 
     #TODO: may be able to remove - called only by Library.update_block
+    #suggest preserving: it is materially useful - and in use
     def update_block(self, doc_id, block_id, key, new_value, default_keys):
         """Updates specific row, based on doc_id and block_id"""
         return self._writer.update_block(doc_id, block_id, key, new_value, default_keys)
@@ -2776,6 +2777,8 @@ class SQLiteWriter:
             completed = True
             results = self.conn.cursor().execute(sql_instruction)
 
+            self.conn.commit() #added: otherwise it wouldn't write to the db!
+        
         self.conn.close()
 
         return completed
@@ -2786,7 +2789,7 @@ class SQLiteWriter:
 
         conditions_clause = ""
         for k, v in filter_dict.items():
-            conditions_clause += f"{k} = '{v}' AND"
+            conditions_clause += f" {k} = '{v}' AND" # added a space between start of quote and {k} otherwise broken
 
         if conditions_clause.endswith(" AND"):
             conditions_clause = conditions_clause[:-4]
