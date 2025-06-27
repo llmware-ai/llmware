@@ -3868,7 +3868,8 @@ class OVGenerativeModel(BaseModel):
     def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None, model_card=None,
                  prompt_wrapper=None, instruction_following=False, context_window=2048,
                  sample=False,max_output=100, temperature=0.0,
-                 get_logits=False, api_endpoint=None, device="GPU", **kwargs):
+                 get_logits=False, api_endpoint=None, device="GPU",
+                 pipeline="text2text", **kwargs):
 
         super().__init__()
 
@@ -3885,6 +3886,8 @@ class OVGenerativeModel(BaseModel):
         self.tokenizer = tokenizer
         self.sample=sample
         self.get_logits=get_logits
+
+        self.pipeline = pipeline
 
         if get_logits:
             logger.warning(f"OVGenerativeModel - current implementation does not support "
@@ -3920,6 +3923,9 @@ class OVGenerativeModel(BaseModel):
 
             if "cache_dir" in model_card:
                 self.cache_dir = model_card["cache_dir"]
+
+            if "pipeline" in model_card:
+                self.pipeline = model_card["pipeline"]
 
         # insert dynamic openvino load here
         if not api_endpoint:
@@ -4086,7 +4092,8 @@ class OVGenerativeModel(BaseModel):
 
         self.post_init()
 
-    def load_model_for_inference(self, loading_directions, model_card=None, **kwargs):
+    def load_model_for_inference (self, loading_directions,
+                                  model_card=None, pipeline=None,**kwargs):
 
         """ Loads OV Model from local path using loading directions. """
 
@@ -4095,10 +4102,16 @@ class OVGenerativeModel(BaseModel):
         self.model_repo_path = loading_directions
         if model_card:
             self.model_card = model_card
+            if "pipeline" in self.model_card:
+                self.pipeline = self.model_card["pipeline"]
+
+        if pipeline:
+            self.pipeline = pipeline
 
         self.validate()
 
-        if self.device == "GPU" or self.optimize_for_gpu_if_available:
+        if self.device == "GPU" or (self.device == "CPU" and self.optimize_for_gpu_if_available):
+
             device = self.device_resolver()
             if device != self.device:
                 # resets self.device to the resolved device
@@ -4123,45 +4136,16 @@ class OVGenerativeModel(BaseModel):
 
         #   default is to cache to optimize performance on subsequent loads
 
-        if self.cache:
-            if self.cache_with_model:
-                # will put the cache files co-located with the model assets
-                path_to_cache_dir = loading_directions
-            else:
-                path_to_cache_dir = self.cache_custom
-
-            if self.verbose_mode:
-                logger.info(f"OVGenerativeModel - creating pipeline - "
-                            f"{self.device} - {self.cache} - {path_to_cache_dir}")
-
-            try:
-                #TODO: need to test safety of path_to_cache_dir input in LLMPipeline constructor
-
-                self.pipe = ovg.LLMPipeline(loading_directions, self.device,
-                                            {"CACHE_DIR": path_to_cache_dir})
-
-            except:
-                raise LLMWareException(message=f"OVGenerativeModel - attempt to instantiate LLMPipeline failed - "
-                                               f"this could be for a number of reasons, including: "
-                                               f"\n1. openvino and openvino_genai installs are not supported "
-                                               f"on this os / hardware platform."
-                                               f"\n2. the model could not found at path: {loading_directions}, or "
-                                               f"\n3. the model may not a valid OpenVino format model.")
+        #   build pipeline based on type
+        if self.pipeline == "text2image":
+            self.ov_text_to_image_pipeline()
         else:
-
-            #TODO: confirm that empty plugin instructions with no caching will work on all platforms
-            try:
-                self.pipe = ovg.LLMPipeline(loading_directions, self.device, {})
-            except:
-                raise LLMWareException(message=f"OVGenerativeModel - attempt to instantiate LLMPipeline failed - "
-                                               f"this could be for a number of reasons, including: "
-                                               f"\n1. openvino and openvino_genai installs are not supported "
-                                               f"on this os / hardware platform."
-                                               f"\n2. the model could not found at path: {loading_directions}, or "
-                                               f"\n3. the model may not a valid OpenVino format model.")
+            # default: text2text
+            self.ov_text_to_text_pipeline()
 
         if self.verbose_mode:
-            logger.info("OVGenerativeModel - completed new pipe creation")
+            logger.info(f"OVGenerativeModel - completed new pipe creation - "
+                        f"{self.pipeline}")
 
         return self
 
@@ -4220,6 +4204,98 @@ class OVGenerativeModel(BaseModel):
         else:
             # if no tokenizer found, then falls back to default tokenizer for 'approximate' count
             self.tokenizer = Utilities().get_default_tokenizer()
+
+    def ov_text_to_text_pipeline(self):
+
+        """ Main entry point for instantiating models """
+
+        loading_directions = self.model_repo_path
+
+        global ovg
+
+        if self.cache:
+            if self.cache_with_model:
+                # will put the cache files co-located with the model assets
+                path_to_cache_dir = loading_directions
+            else:
+                path_to_cache_dir = self.cache_custom
+
+            if self.verbose_mode:
+                logger.info(f"OVGenerativeModel - creating pipeline - "
+                            f"{self.device} - {self.cache} - {path_to_cache_dir}")
+
+            try:
+                #TODO: need to test safety of path_to_cache_dir input in LLMPipeline constructor
+
+                self.pipe = ovg.LLMPipeline(loading_directions, self.device,
+                                            {"CACHE_DIR": path_to_cache_dir})
+
+            except:
+                raise LLMWareException(message=f"OVGenerativeModel - attempt to instantiate LLMPipeline failed - "
+                                               f"this could be for a number of reasons, including: "
+                                               f"\n1. openvino and openvino_genai installs are not supported "
+                                               f"on this os / hardware platform."
+                                               f"\n2. the model could not found at path: {loading_directions}, or "
+                                               f"\n3. the model may not a valid OpenVino format model.")
+        else:
+
+            #TODO: confirm that empty plugin instructions with no caching will work on all platforms
+            try:
+                self.pipe = ovg.LLMPipeline(loading_directions, self.device, {})
+            except:
+                raise LLMWareException(message=f"OVGenerativeModel - attempt to instantiate LLMPipeline failed - "
+                                               f"this could be for a number of reasons, including: "
+                                               f"\n1. openvino and openvino_genai installs are not supported "
+                                               f"on this os / hardware platform."
+                                               f"\n2. the model could not found at path: {loading_directions}, or "
+                                               f"\n3. the model may not a valid OpenVino format model.")
+
+        return True
+
+    def ov_text_to_image_pipeline(self):
+
+        """ Model loading entry point for new OpenVINO text_to_image
+        pipeline for multimedia models that generate images from text prompt. """
+
+        global ovg
+
+        text_encoder_device = "GPU"
+        unet_device = "GPU"
+        vae_decoder_device = "GPU"
+
+        width = 512
+        height = 512
+
+        self.pipe = ovg.Text2ImagePipeline(self.model_repo_path)
+
+        self.pipe.reshape(1, height, width, self.pipe.get_generation_config().guidance_scale)
+        properties = {"CACHE_DIR": self.model_repo_path}
+
+        self.pipe.compile(text_encoder_device, unet_device, vae_decoder_device, config=properties)
+
+        return True
+
+    def text_to_image_gen(self, prompt, image_name):
+
+        """ Specialized generation function for image generating models. """
+
+        from PIL import Image
+
+        # experiment with different step numbers
+        # will expose as parameter in future releases
+
+        number_of_inference_steps_per_image = 10
+
+        tmp_path = LLMWareConfig().get_tmp_path()
+        img_path = os.path.join(tmp_path, str(image_name) + ".bmp")
+
+        image_tensor = self.pipe.generate(prompt,
+                                          num_inference_steps=number_of_inference_steps_per_image)
+
+        image = Image.fromarray(image_tensor.data[0])
+        image.save(img_path)
+
+        return img_path
 
     def ov_token_counter(self, text):
 
