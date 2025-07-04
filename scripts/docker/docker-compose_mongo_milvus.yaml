@@ -52,6 +52,7 @@ services:
   milvus:
     container_name: milvus
     image: milvusdb/milvus:v2.3.0
+    read_only: true
     command: ["milvus", "run", "standalone"]
     environment:
       ETCD_ENDPOINTS: etcd:2379
