@@ -46,7 +46,7 @@ def multistep_analysis():
 
     if not os.path.exists(microsoft_folder):
         os.mkdir(microsoft_folder)
-        os.chmod(microsoft_folder, 0o777)
+        os.chmod(microsoft_folder, 0o644)
         shutil.copy(path_to_bill_gates_bio,os.path.join(microsoft_folder, bill_gates_bio))
 
     #   create library
