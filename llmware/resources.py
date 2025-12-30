@@ -1610,12 +1610,17 @@ class PGWriter:
         sql_string += " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
                       "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
 
+        # Convert list types to JSON strings for SQL compatibility
+        user_tags = rec["user_tags"]
+        if isinstance(user_tags, list):
+            user_tags = json.dumps(user_tags)
+
         # now unpack the new_record into parameters
         insert_arr = (rec["block_ID"], rec["doc_ID"],rec["content_type"], rec["file_type"], rec["master_index"],
                       rec["master_index2"], rec["coords_x"], rec["coords_y"], rec["coords_cx"], rec["coords_cy"],
                       rec["author_or_speaker"], rec["added_to_collection"], rec["file_source"], rec["table"],
                       rec["modified_date"], rec["created_date"], rec["creator_tool"], rec["external_files"],
-                      rec["text"], rec["header_text"], rec["text_search"], rec["user_tags"],
+                      rec["text"], rec["header_text"], rec["text_search"], user_tags,
                       rec["special_field1"], rec["special_field2"], rec["special_field3"], rec["graph_status"],
                       rec["dialog"], str(rec["embedding_flags"]))
 
@@ -2716,12 +2721,17 @@ class SQLiteWriter:
         sql_string += " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, " \
                       "$19, $20, $21, $22, $23, $24, $25, $26, $27, $28);"
 
+        # Convert list types to JSON strings for SQL compatibility
+        user_tags = rec["user_tags"]
+        if isinstance(user_tags, list):
+            user_tags = json.dumps(user_tags)
+
         # now unpack the new_record into parameters
         insert_arr = (rec["block_ID"], rec["doc_ID"],rec["content_type"], rec["file_type"], rec["master_index"],
                       rec["master_index2"], rec["coords_x"], rec["coords_y"], rec["coords_cx"], rec["coords_cy"],
                       rec["author_or_speaker"], rec["added_to_collection"], rec["file_source"], rec["table"],
                       rec["modified_date"], rec["created_date"], rec["creator_tool"], rec["external_files"],
-                      rec["text"], rec["header_text"], rec["text_search"], rec["user_tags"],
+                      rec["text"], rec["header_text"], rec["text_search"], user_tags,
                       rec["special_field1"], rec["special_field2"], rec["special_field3"], rec["graph_status"],
                       rec["dialog"], "")
 
