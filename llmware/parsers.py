@@ -3519,11 +3519,22 @@ class Parser:
         doc_update_list = {}
         new_text_created = 0
 
+        #   tesseract-supported image formats (excludes vector formats like .emf, .wmf, .svg)
+        supported_ocr_formats = {'.png', '.jpg', '.jpeg', '.gif', '.tiff', '.tif', '.bmp', '.ppm', '.pgm', '.pbm', '.webp'}
+
         #   iterate through the image blocks found
         for i, block in enumerate(image_blocks):
 
             #   "external_files" points to the image name that will be found in the image_path above for the library
             img_name = block["external_files"]
+
+            #   skip unsupported image formats (e.g., .emf, .wmf, .svg)
+            if img_name:
+                _, ext = os.path.splitext(img_name.lower())
+                if ext not in supported_ocr_formats:
+                    if realtime_progress:
+                        logger.info(f"Parser - ocr_images_in_library - skipping unsupported format: {img_name}")
+                    continue
 
             #   each doc_ID is unique for the library collection
             doc_id = block["doc_ID"]
