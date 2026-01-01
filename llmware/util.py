@@ -1,5 +1,5 @@
 
-# Copyright 2023-2025 llmware
+# Copyright 2023-2026 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -55,68 +55,6 @@ class Utilities:
     def __init__(self, library=None):
         self.start = 0
         self.library = library
-
-    def get_module_graph_functions(self):
-
-        """ Loads shared libraries for Graph module based on current platform/architecture. """
-
-        # Detect based on machine architecture
-        if platform.system() == "Windows":
-
-            system = "windows"
-            machine = "x86_64"
-            file_ext = ".dll"
-
-            if platform.machine().lower() == "arm64":
-                raise LLMWareException(message=f"Graph module is not implemented currently for Windows Arm64.  "
-                                               f"It is available on Windows x86, Linux x86 and Mac.")
-
-        else:
-            system = platform.system().lower()
-            machine = os.uname().machine.lower()
-            file_ext = ".so"
-
-        # Default to known architectures if we encounter an unknown one
-        if system == 'darwin' and machine not in ['arm64', 'x86_64']:
-            machine = 'arm64'
-        if system == 'linux' and machine not in ['aarch64', 'x86_64']:
-            machine = 'x86_64'
-
-        #   deprecation warning for aarch64 linux
-        if system == 'linux' and machine == 'aarch64':
-
-            error_msg = ("Linux Aarch64 detected as OS - this is not a supported platform.  Support "
-                         "was deprecated in llmware version 0.2.6 and removed in llmware version 0.3.9. "
-                         "Options - move to linux x86_64, back-level llmware to supported version, or "
-                         "if urgent requirement for aarch64, please raise ticket on github.")
-
-            raise LLMWareException(message=error_msg)
-
-        #   deprecation warning for darwin x86_64
-        if system == "darwin" and machine == "x86_64":
-
-            error_msg = ("Mac x86 detected as OS - this is not a supported platform.  Support "
-                         "was deprecated in llmware version 0.2.6 and removed in llmware version 0.3.9. "
-                         "Options - move to Mac Metal (M1+), back-level llmware to supported version, or "
-                         "if urgent requirement for Mac x86, please raise ticket on github.")
-
-            raise LLMWareException(message=error_msg)
-
-        machine_dependent_lib_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), system, machine)
-
-        _path_graph = os.path.join(machine_dependent_lib_path, "llmware", "libgraph_llmware" + file_ext)
-
-        _mod_utility = None
-
-        try:
-            _mod_utility = cdll.LoadLibrary(_path_graph)
-        except:
-            logger.warning(f"Module 'Graph Processor' could not be loaded from path - \n {_path_graph}.\n")
-
-        if not _mod_utility:
-            raise ModuleNotFoundException("Graph Processor")
-
-        return _mod_utility
 
     def get_module_pdf_parser(self):
 

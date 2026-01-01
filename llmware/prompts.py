@@ -1,4 +1,4 @@
-# Copyright 2023-2025 llmware
+# Copyright 2023-2026 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -30,7 +30,6 @@ import os
 
 from llmware.util import Utilities, CorpTokenizer, Sources
 from llmware.web_services import YFinance
-from llmware.graph import Graph
 from llmware.resources import PromptState
 from llmware.models import ModelCatalog, PromptCatalog, PyTorchLoader
 from llmware.parsers import Parser
@@ -463,41 +462,6 @@ class Prompt:
         # enables use of 'prompt_with_sources'
         if not sources["text_batch"]:
             logger.warning("No source added in .add_source_yahoo_finance.")
-
-        return sources
-
-    def add_source_knowledge_graph(self, library, query):
-
-        """ Attach a new source to a prompt object consisting of summary output elements from knowledge graph.  This is
-        a WIP / experimental method - and will likely evolve.  """
-
-        # need to check for library and for graph
-        if library:
-            self.library = library
-
-        if not self.library:
-            raise LibraryObjectNotFoundException
-
-        if self.library.get_knowledge_graph_status() == "yes":
-
-            kg_output = Graph(self.library).kg_query(query,th=10)
-            text_string_out = ""
-
-            for key, values in kg_output.items():
-                if key:
-                    text_string_out += key + " "
-                    for entries in values:
-                        text_string_out += entries + " "
-
-            source_output = [{"text": text_string_out, "page_num":0, "file_source": "knowledge_graph"}]
-
-            sources = Sources(self).package_source(source_output, aggregate_source=True)
-        else:
-            raise LibraryObjectNotFoundException
-
-        # enables use of 'prompt_with_sources'
-        if not sources["text_batch"]:
-            logger.warning("No source added in .add_source_knowledge_graph.")
 
         return sources
 
