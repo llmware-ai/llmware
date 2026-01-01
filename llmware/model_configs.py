@@ -369,7 +369,6 @@ global_model_repo_catalog_list = [
    "link": "https://huggingface.co/WhereIsAI/UAE-Large-V1", "custom_model_files": [], "custom_model_repo": "",
    "hf_repo": "WhereIsAI/UAE-Large-V1"},
 
-    # add open ai embeddings
     {"model_name": 'text-embedding-ada-002', "display_name": "OpenAI-Embedding", "model_family": "OpenAIEmbeddingModel",
      "model_category": "embedding", "model_location": "api", "context_window": 8191, "embedding_dims": 1536},
 
@@ -379,159 +378,64 @@ global_model_repo_catalog_list = [
     {"model_name": 'text-embedding-3-large', "display_name": "OpenAI-Embedding", "model_family": "OpenAIEmbeddingModel",
      "model_category": "embedding", "model_location": "api", "context_window": 8191, "embedding_dims": 3072},
 
-    # add cohere embeddings
-    {"model_name": 'medium', "display_name": "Cohere-Medium-Embedding", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 4096},
+    {"model_name": "gemini-3-pro-preview", "display_name": "Gemini-3-Pro",
+     "model_family": "GoogleGeminiModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 1000000, "parameters": 100.0},
 
-    {"model_name": 'xlarge', "display_name": "Cohere-XLarge-Embedding", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 4096},
+    {"model_name": "gemini-3-flash-preview", "display_name": "Gemini-3-Flash",
+     "model_family": "GoogleGeminiModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 1000000, "parameters": 100.0},
 
-    {"model_name": 'embed-english-v3.0', "display_name": "Cohere-English-v3", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api",  "context_window": 2048, "embedding_dims": 1024},
+    {"model_name": "gemini-2.5-pro", "display_name": "Gemini-2.5-Pro",
+     "model_family": "GoogleGeminiModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 1000000, "parameters": 100.0},
 
-    {"model_name": 'embed-multilingual-v3.0', "display_name": "Cohere-Multi-Lingual-v3", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 1024},
+    {"model_name": "gemini-2.5-flash", "display_name": "Gemini-2.5-Flash",
+     "model_family": "GoogleGeminiModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 1000000, "parameters": 100.0},
 
-    {"model_name": 'embed-english-light-v3.0', "display_name": "Cohere-English-v3", "model_family": "CohereEmbeddingModel",
-     "model_category": "embedding", "model_location": "api", "context_window": 2048, "embedding_dims": 384},
+    {"model_name": "gemini-2.5-flash-lite", "display_name": "Gemini-2.5-Flash-Lite",
+     "model_family": "GoogleGeminiModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 1000000, "parameters": 100.0},
 
-    {"model_name": 'embed-multilingual-light-v3.0', "display_name": "Cohere-English-v3",
-     "model_family": "CohereEmbeddingModel", "model_category": "embedding", "model_location": "api",
-     "context_window": 2048, "embedding_dims": 384},
+    {"model_name": "gpt-5.2-pro", "display_name": "GPT-5.2-Pro", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 400000, "parameters": 100.0},
 
-    {"model_name": 'embed-english-v2.0', "display_name": "Cohere-English-v3",
-     "model_family": "CohereEmbeddingModel", "model_category": "embedding", "model_location": "api",
-     "context_window": 2048, "embedding_dims": 4096},
+    {"model_name": "gpt-5.2", "display_name": "GPT-5.2", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 400000, "parameters": 100.0},
 
-    {"model_name": 'embed-english-light-v2.0', "display_name": "Cohere-English-v3",
-     "model_family": "CohereEmbeddingModel", "model_category": "embedding", "model_location": "api",
-     "context_window": 2048, "embedding_dims": 1024},
+    {"model_name": "gpt-5-mini", "display_name": "GPT-5-Mini", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 400000, "parameters": 100.0},
 
-    {"model_name": 'embed-multilingual-v2.0', "display_name": "Cohere-English-v3",
-     "model_family": "CohereEmbeddingModel", "model_category": "embedding", "model_location": "api",
-     "context_window": 2048, "embedding_dims": 768},
+    {"model_name": "gpt-5-nano", "display_name": "GPT-5-Nano", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 400000, "parameters": 100.0},
 
-    # add google embeddings - textembedding-gecko@001
-    {"model_name": 'textembedding-gecko@latest', "display_name": "Google-Embedding", "model_family": "GoogleEmbeddingModel",
-     "model_category": "embedding","model_location": "api", "context_window": 4000, "embedding_dims": 768},
+    {"model_name": "gpt-4.1", "display_name": "GPT-4.1", "model_family": "OpenAIGenModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 32768, "parameters": 100.0},
 
-    # generative-api models
-    {"model_name": 'claude-v1', "display_name": "Anthropic Claude-v1", "model_family": "ClaudeModel",
-     "model_category": "generative-api", "model_location": "api",  "context_window": 8000},
-    {"model_name": 'claude-instant-v1', "display_name": "claude-instant-1.2", "model_family": "ClaudeModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 8000},
+    {"model_name": 'claude-opus-4-5', "display_name": "Anthropic-Claude-4.5-Opus", "model_family": "ClaudeModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 200000},
 
-    # new Anthropic v3 models
+    {"model_name": 'claude-haiku-4-5', "display_name": "Anthropic-Claude-4.5-Haiku", "model_family": "ClaudeModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 200000},
 
-    # please note: we have kept Claude-3 window in model_configs at 8192 - but actual model window is 200K
-    #  if you pass a single passage of up to 200K, the model should work OK
-    # --the shorter context window of 8192 will be applied as default in Prompt when batching up evidence chunks
-    # --this can be configured and over-ridden if you prefer to use the full 200K window
+    {"model_name": 'claude-sonnet-4-5', "display_name": "Anthropic-Claude-4.5-Sonnet", "model_family": "ClaudeModel",
+     "model_category": "generative-api", "model_location": "api", "context_window": 200000},
 
-    {"model_name": 'claude-3-opus-20240229', "display_name": "Anthropic-Claude-3-Opus", "model_family": "ClaudeModel",
+    {"model_name": 'claude-sonnet-4-20250514', "display_name": "Anthropic-Claude-4-Sonnet", "model_family": "ClaudeModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 8192},
 
-    {"model_name": 'claude-3-sonnet-20240229', "display_name": "Anthropic-Claude-3-Sonnet", "model_family": "ClaudeModel",
+    {"model_name": 'claude-opus-4-20250514', "display_name": "Anthropic-Claude-4-Opus",
+     "model_family": "ClaudeModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 8192},
 
-    {"model_name": 'claude-2.1', "display_name": "Anthropic Claude-2.1", "model_family": "ClaudeModel",
-    "model_category": "generative-api", "model_location": "api", "context_window": 8192},
-
-    {"model_name": 'claude-2.0', "display_name": "Anthropic Claude-Claude2-.0",
-    "model_family": "ClaudeModel", "model_category": "generative-api", "model_location": "api", "context_window": 8192},
-
-    {"model_name": 'claude-3-haiku-20240307', "display_name": "Anthropic Claude 3 Haiku", "model_family": "ClaudeModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
-
-    {"model_name": 'claude-3-5-haiku-20241022', "display_name": "Anthropic Claude 3.5 Haiku", "model_family": "ClaudeModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
-
-    {"model_name": 'claude-3-5-sonnet-20240620', "display_name": "Anthropic Claude 3.5 Sonnet", "model_family": "ClaudeModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
-
-    {"model_name": 'claude-3-7-sonnet-20250219', "display_name": "Anthropic Claude 3.7 Sonnet", "model_family": "ClaudeModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
-
-    {"model_name": 'command-medium-nightly', "display_name": "Cohere Command Medium", "model_family": "CohereGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": "command-r", "display_name": "Cohere Command R", "model_family": "CohereGenModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 2048},
-    {"model_name": 'command-xlarge-nightly', "display_name": "Cohere Command XLarge", "model_family": "CohereGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": 'summarize-xlarge', "display_name": "Cohere Summarize Xlarge", "model_family": "CohereGenModel",
-     "model_category":"generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": 'summarize-medium', "display_name": "Cohere Summarize Medium", "model_family": "CohereGenModel",
-     "model_category":"generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": 'j2-jumbo-instruct', "display_name": "Jurassic-2-Jumbo-Instruct", "model_family": "JurassicModel",
-     "model_category":"generative-api", "model_location": "api", "context_window": 2048},
-    {"model_name": 'j2-grande-instruct', "display_name": "Jurassic-2-Grande-Instruct", "model_family": "JurassicModel",
-     "model_category":"generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": 'text-bison@001', "display_name": "Google Palm", "model_family": "GoogleGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 8192},
-    {"model_name": 'chat-bison@001', "display_name": "Google Chat", "model_family": "GoogleGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 8192},
-    {"model_name": 'text-davinci-003', "display_name": "GPT3-Davinci", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 4096},
-    {"model_name": 'text-curie-001', "display_name": "GPT3-Curie", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": 'text-babbage-001', "display_name": "GPT3-Babbage", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": 'text-ada-001', "display_name": "GPT3-Ada", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 2048},
-    {"model_name": "gpt-3.5-turbo", "display_name": "ChatGPT", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api","model_location": "api", "context_window": 4000},
-
-    # gpt-4
-    {"model_name": "gpt-4", "display_name": "GPT-4", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 8000},
-
-    # gpt-3.5-turbo-instruct
-    {"model_name": "gpt-3.5-turbo-instruct", "display_name": "GPT-3.5-Instruct", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 4000},
-
-    # gpt-4 model announced in November 2023
-    {"model_name": "gpt-4-1106-preview", "display_name": "GPT-4-Turbo-1106", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
-
-    # gpt-3.5 model announced in November 2023
-    {"model_name": "gpt-3.5-turbo-1106", "display_name": "GPT-3.5-Turbo-1106", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 16385},
-
-    # gpt-4 model announced in January 2024
-    {"model_name": "gpt-4-0125-preview", "display_name": "GPT-4-Turbo-0125", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
-  
-    # gpt-3.5 model announced in January 2024
-    {"model_name": "gpt-3.5-turbo-0125", "display_name": "GPT-3.5-Turbo-0125", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 16385},
-
-    # gpt-4o model announced in May 2024
+    # deprecated - will be removing soon
     {"model_name": "gpt-4o", "display_name": "GPT-4o", "model_family": "OpenAIGenModel",
      "model_category": "generative-api", "model_location": "api", "context_window": 128000},
 
-    # gpt-4o-2024-0513 model announced in May 2024
-    {"model_name": "gpt-4o-2024-05-13", "display_name": "gpt-4o-2024-05-13", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
-
-    # gpt-4o-2024-08-06
-    {"model_name": "gpt-4o-2024-08-06", "display_name": "gpt-4o-2024-08-06", "model_family": "OpenAIGenModel",
-     "model_category": "generative-api", "model_location": "api", "context_window": 128000},
-
-    # gpt-4o-mini
-    {"model_name": "gpt-4o-mini", "display_name": "gpt-4o-mini", "model_family": "OpenAIGenModel",
-    "model_category": "generative-api", "model_location": "api", "context_window": 128000},
-
-    # gpt-4o-mini-2024-07-18
-    {"model_name": "gpt-4o-mini-2024-07-18", "display_name": "gpt-4o-mini-2024-07-18", "model_family": "OpenAIGenModel",
-    "model_category": "generative-api", "model_location": "api", "context_window": 128000},
-
-    #gpt-o1
-    {"model_name": "o1", "display_name": "gpt-o1", "model_family": "OpenAIGenModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
-
-    #gpt-o1-pro
-    {"model_name": "o1-pro", "display_name": "gpt-o1-pro", "model_family": "OpenAIGenModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
-
-    #o3-mini-high
-    {"model_name": "o3-mini", "display_name": "gpt-o3-mini-high", "reasoning_effort": "high", "model_family": "OpenAIGenModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
-
-    # Google gemini 1.5 pro
-    {"model_name": "gemini-1.5-pro", "display_name": "Gemini 1.5 Pro", "model_family": "GoogleGenModel", "model_category": "generative-api", "model_location": "api", "context_window": 128000},
+    # deprecated - will be removing soon
+    {"model_name": "o4-mini", "display_name": "gpt-o4-mini",
+     "model_family": "OpenAIGenModel", "model_category": "generative-api", "model_location": "api", "context_window": 200000},
 
     # add api-based llmware custom model
     {"model_name": "llmware-inference-server", "display_name": "LLMWare-GPT", "model_family": "LLMWareModel",
@@ -1308,8 +1212,6 @@ global_model_repo_catalog_list = [
     "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
     "validation_files": ["slim-category.gguf"]},
 
-    # pytorch slim models start here
-
     {"model_name": "llmware/slim-intent", "display_name": "slim-intent-1b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -1457,7 +1359,6 @@ global_model_repo_catalog_list = [
     "fc_output_values": [],
     "function": ["classify"]},
 
-    # sql pytorch model
     {"model_name": "llmware/slim-sql-1b-v0", "display_name": "slim-sql-1b",
      "model_family": "HFGenerativeModel", "model_category": "generative_local", "model_location": "hf_repo",
      "context_window": 2048, "instruction_following": False, "prompt_wrapper": "human_bot",
@@ -3091,8 +2992,6 @@ global_model_repo_catalog_list = [
              "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
              "validation_files": [],
              "custom_model_files": [], "custom_model_repo": ""},
-
-          # adding new models in llmware v0.4.0 starts here
 
           {"model_name": "qwen2-7B-instruct-gguf", "display_name": "qwen-2-7b",
            "model_family": "GGUFGenerativeModel", "model_category": "generative_local", "model_location": "llmware_repo",

@@ -30,7 +30,6 @@ import numpy as np
 import sys
 import ctypes
 
-
 from llmware.util import Utilities, AgentWriter, LocalTokenizer
 from llmware.configs import LLMWareConfig
 from llmware.exceptions import (DependencyNotInstalledException, ModuleNotFoundException,
@@ -91,12 +90,8 @@ class _ModelRegistry:
                      "OllamaModel":{"module": "llmware.models", "open_source": True},
                      "OpenAIGenModel":{"module": "llmware.models", "open_source": False},
                      "ClaudeModel":{"module": "llmware.models", "open_source": False},
-                     "GoogleGenModel":{"module": "llmware.models", "open_source": False},
-                     "CohereGenModel":{"module": "llmware.models", "open_source": False},
-                     "JurassicModel":{"module": "llmware.models", "open_source": False},
+                     "GoogleGeminiModel":{"module": "llmware.models", "open_source": False},
                      "OpenAIEmbeddingModel":{"module": "llmware.models", "open_source": False},
-                     "CohereEmbeddingModel":{"module": "llmware.models", "open_source": False},
-                     "GoogleEmbeddingModel":{"module": "llmware.models", "open_source": False}
                      }
 
     model_catalog_state_attributes = ["selected_model", "loaded_model_name", "loaded_model_class", "temperature",
@@ -2432,7 +2427,7 @@ class PromptCatalog:
             else:
                 updated_instruction += t + " "
 
-        logger.debug(f"prompt catalog - constructed dynamic instruction - {updated_instruction}")
+        logger.debug(f"PromptCatalog - constructed dynamic instruction - {updated_instruction}")
 
         return updated_instruction.strip()
 
@@ -2446,14 +2441,14 @@ class PromptCatalog:
 
         if not prompt_card and not prompt_name:
             # error - returning query
-            logger.warning("prompt catalog - no prompt selected in PromptCatalog().build_core_prompt")
+            logger.warning("PromptCatalog - no prompt selected in PromptCatalog().build_core_prompt")
             prompt_dict = {"core_prompt": context + "\n" + query, "prompt_card": {}}
             return prompt_dict
 
         if not prompt_card:
             prompt_card = PromptCatalog().lookup_prompt(prompt_name)
 
-        logger.debug(f"prompt catalog - prompt_card - {prompt_card}")
+        logger.debug(f"PromptCatalog - prompt_card - {prompt_card}")
 
         core_prompt = ""
 
@@ -2474,6 +2469,7 @@ class PromptCatalog:
                             core_prompt += context + separator
 
         # update instruction, if user_vars accepted in instruction
+
         """
         if "instruction" in prompt_card:
             prompt_card["instruction"] = self.parse_instruction_for_user_vars(prompt_card,inference_dict=inference_dict)
@@ -2482,7 +2478,7 @@ class PromptCatalog:
 
         prompt_dict = {"core_prompt": core_prompt, "prompt_card": prompt_card}
 
-        logger.debug(f"prompt catalog - prompt created - {prompt_dict}")
+        logger.debug(f"PromptCatalog - prompt created - {prompt_dict}")
 
         return prompt_dict
 
@@ -2502,14 +2498,17 @@ class PromptCatalog:
 
         return new_prompt_card
 
-    def apply_prompt_wrapper(self, text, prompt_wrapper, separator="\n", instruction=None):
+    def apply_prompt_wrapper(self, text, prompt_wrapper,
+                             separator="\n",
+                             instruction=None,
+                             chat_history=None):
 
         """ Applies the selected prompt_wrapper to the prompt. """
 
         output_text = text
 
         if prompt_wrapper not in self.prompt_wrappers:
-            logger.info(f"apply_prompt_wrapper - selected wrapper - {prompt_wrapper} - could not be identified - "
+            logger.info(f"PromptCatalog - apply_prompt_wrapper - selected wrapper - {prompt_wrapper} - could not be identified - "
                         f"returning text prompt without any special format wrapping")
 
             return output_text
@@ -2518,25 +2517,20 @@ class PromptCatalog:
             return self.wrap_chatgpt_sample(text, instruction)
 
         else:
-            wrapped_prompt = self.wrap_custom(text, prompt_wrapper, instruction=instruction)
+            wrapped_prompt = self.wrap_custom(text, prompt_wrapper,
+                                              instruction=instruction,
+                                              chat_history=chat_history)
+
             return wrapped_prompt
 
-    def wrap_chat_ml_sample(self, text, separator, instruction):
+    def wrap_custom(self, text, wrapper_type, chat_history=None,
+                    instruction=None):
 
-        """ Deprecated - custom handler for wrap_chat_ml_sample. Replaced by general method. """
+        """ Provides option for chat history, packaged as a list of 'turns'
+        with each turn consisting of two dictionary entries -
+        'user' and 'assistant' """
 
-        if not instruction:
-            instruction = "You are a helpful assistant."
-
-        output_text = "<|im_start|>system\n" + instruction + "<|im_end|>\n" + \
-                      "<|im_start|>user" + text + "<|im_end|>\n" + \
-                      "<|im_start|>assistant"
-
-        return output_text
-
-    def wrap_custom(self, text, wrapper_type, instruction=None):
-
-        """ Builds wrapper on Prompt based on the selected wrapper_type. """
+        #TODO: apply safeguards to max output
 
         prompt_out = ""
 
@@ -2549,6 +2543,7 @@ class PromptCatalog:
                 if prompt_template["system_start"] != "":
 
                     prompt_out += prompt_template["system_start"]
+
                     if instruction:
                         prompt_out += instruction
                     else:
@@ -2556,6 +2551,25 @@ class PromptCatalog:
 
                     if "system_stop" in prompt_template:
                         prompt_out += prompt_template["system_stop"]
+
+            if chat_history:
+
+                for turn in chat_history:
+
+                    # user part of turn
+                    if "main_start" in prompt_template:
+                        prompt_out += prompt_template["main_start"]
+
+                    prompt_out += turn["user"]
+
+                    if "main_stop" in prompt_template:
+                        prompt_out += prompt_template["main_stop"]
+
+                    # assistant part of turn
+                    if "start_llm_response" in prompt_template:
+                        prompt_out += prompt_template["start_llm_response"]
+
+                    prompt_out += turn["assistant"]
 
             if "main_start" in prompt_template:
 
@@ -2584,48 +2598,6 @@ class PromptCatalog:
                       {"role": "user", "content": text}]
 
         return new_sample
-
-    def wrap_human_bot_sample(self, text, user_separator="<human>: ", response_separator="<bot>:"):
-
-        """ Applies 'human-bot' wrapper to a prompt.  Deprecated and replaced by general method.  """
-
-        content = user_separator + text + "\n" + response_separator
-
-        return content
-
-    def wrap_llama2_chat_sample(self, text, separator):
-
-        """ Applies 'llama2 - INST' wrapper to a prompt.  Deprecated and replaced by general method.  """
-
-        content = "<INST> " + text + "</INST>"
-
-        return content
-
-    def wrap_alpaca_sample(self, text, separator="\n"):
-
-        """ Applies 'Alpaca style' wrapper to a prompt.  Deprecated and replaced by general method.  """
-
-        content = "### Instruction: " + text + separator + "### Response: "
-
-        return content
-
-    def wrap_openchat_sample(self, text, separator="\n"):
-
-        """ Applies 'openchat style' wrapper to a prompt.  Deprecated and replaced by general method.  """
-
-        content = "GPT4 User: " + text + "<|endofturn|>" + "GPT4 Assistant:"
-
-        return content
-
-    def wrap_hf_chat_zephyr_sample(self, text, separator="\n"):
-
-        """ Applies 'HF Chat - Zephyr style' wrapper to a prompt.  Deprecated and replaced by general method.  """
-
-        content = "<|system|>You are a helpful assistant.\n</s>" + \
-                  "<|user|>" + text + "\n</s>" + \
-                  "<|assistant|>"
-
-        return content
 
 
 class InferenceHistory:
@@ -2772,11 +2744,24 @@ class BaseModel:
         self.time_stamp = None
         self.model_class = None
         self.model_category = None
+        self.model_card = {}
+
+        self.tokenizer = None
+
+        self.URL_BASE = None
+        self.api_endpoint = None
+        self.unlock_on_completion = None
+
+        # parameters moved to base model
+        self.separator = "\n"
+        self.instruction_following = False
+        self.prompt_wrapper = None
+        self.add_prompt_engineering = True
 
         # output inference parameters
         for keys in self.base_model_keys:
             if keys in kwargs:
-                setattr(self,keys,kwargs[keys])
+                setattr(self, keys, kwargs[keys])
             else:
                 setattr(self, keys, None)
 
@@ -2786,10 +2771,14 @@ class BaseModel:
 
         state_dict = {}
         for keys in self.base_model_keys:
-            if hasattr(self,keys):
-                state_dict.update({keys: getattr(self,keys)})
+            if hasattr(self, keys):
+                state_dict.update({keys: getattr(self, keys)})
 
         return state_dict
+
+    def load_model_for_inference(self, loading_instructions):
+        # not implemented in base model
+        pass
 
     def method_resolver(self, config_name):
 
@@ -2830,7 +2819,7 @@ class BaseModel:
             if isinstance(success, dict):
                 #   write attributes, if any, to the Model instance state
                 for k, v in success.items():
-                    setattr(self,k,v)
+                    setattr(self, k, v)
 
         return True
 
@@ -2838,6 +2827,10 @@ class BaseModel:
         return self.method_resolver("model_post_init")
 
     def register(self):
+
+        if self.unlock_on_completion:
+            ModelResources().unlock(self.unlock_on_completion)
+
         return self.method_resolver("model_register")
 
     def validate(self):
@@ -2845,6 +2838,128 @@ class BaseModel:
 
     def preview(self):
         return self.method_resolver("model_preview")
+
+    def _lookup_endpoint(self, api_name, api_catalog):
+
+        """ Internal lookup utility to pull api card. """
+
+        for entries in api_catalog:
+            if entries["api_name"] == api_name:
+                return entries
+
+        return {}
+
+    def prune_context(self, ctx, front=100,back=100):
+
+        # apply pruning of stop words
+        pruned_ctx = Utilities().prune_stop_words(ctx,front=front,back=back)
+
+        # test len
+        pruned_tokens = self.count_tokens(pruned_ctx)
+
+        logger.info(f"BaseModel - prune_context - token count - {pruned_tokens}")
+
+        # extra pruning for very large contexts
+        # need to reduce for 14B parameter models
+        if pruned_tokens > 16000:
+            start = pruned_ctx[0:1000]
+            end = pruned_ctx[pruned_tokens-5000:]
+            super_pruned = start + end
+            pruned_tokens = self.count_tokens(super_pruned)
+            logger.info(f"BaseModel - prune_context - token count - {pruned_tokens}")
+            pruned_ctx = super_pruned
+
+        return pruned_ctx
+
+    def count_tokens(self, ctx, tokenizer=None):
+
+        if not tokenizer:
+            tokenizer = self.tokenizer
+
+        toks = tokenizer.encode(ctx)
+        tok_len = len(toks.ids)
+        return tok_len
+
+    def prompt_engineer(self, query, context, inference_dict):
+
+        """ Applies prompt and templating preparation. """
+
+        # adding chat history to inference_dict handler
+
+        chat_history = None
+        system_instruction = None
+
+        if inference_dict:
+            if "system_instruction" in inference_dict:
+                system_instruction = inference_dict["system_instruction"]
+
+            if "chat_history" in inference_dict:
+                chat_history = inference_dict["chat_history"]
+
+        if self.instruction_following:
+            logger.info(f"BaseModel - prompt_engineer - found deprecated setting - "
+                        f"instruction_following set to True - may cause unpredictable results.")
+
+        # self.instruction_following = False
+
+        # if loaded model was not pretrained on instruction_following, then skip any instructions
+        if not self.instruction_following:
+
+            if context:
+                output = context + "\n" + query
+            else:
+                output = query
+
+            # unlikely that there would be an 'instruct wrapping' on text, but allow for possibility
+            if self.prompt_wrapper:
+                output = PromptCatalog().apply_prompt_wrapper(output,
+                                                              self.prompt_wrapper,
+                                                              chat_history=chat_history,
+                                                              instruction=system_instruction)
+
+            return output
+
+        # move ahead to add instructions and prompt engineering
+
+        if not self.add_prompt_engineering:
+            if context:
+                selected_prompt = "default_with_context"
+            else:
+                selected_prompt = "default_no_context"
+        else:
+            selected_prompt = self.add_prompt_engineering
+
+        prompt_dict = PromptCatalog().build_core_prompt(prompt_name=selected_prompt,
+                                                        separator=self.separator,
+                                                        query=query,
+                                                        context=context,
+                                                        inference_dict=inference_dict)
+
+        if prompt_dict:
+            prompt_engineered = prompt_dict["core_prompt"]
+        else:
+            # default case
+            prompt_engineered = "Please read the following text: " + context + self.separator
+            prompt_engineered += "Based on this text, please answer the question: " + query + self.separator
+            prompt_engineered += "Please answer the question only with facts provided in the materials.  " \
+                                 "If the question can not be answered in the materials, then please " \
+                                 "respond 'Not Found.'"
+
+        #   final wrapping, based on model-specific instruct training format
+        #   --provides a final 'wrapper' around the core prompt text, based on model expectations
+
+        if self.prompt_wrapper:
+            prompt_engineered = PromptCatalog().apply_prompt_wrapper(prompt_engineered, self.prompt_wrapper,
+                                                                     instruction=None)
+
+        return prompt_engineered
+
+    def close(self):
+
+        """ General purpose 'close' method with any special wind-down
+        procedures at the time of closing out an inferencing session. """
+
+        pass
 
 
 class ONNXGenerativeModel(BaseModel):
@@ -5458,7 +5573,8 @@ class OpenAIGenModel(BaseModel):
 
     """ OpenAIGenModel class implements the OpenAI API for its generative decoder models. """
 
-    def __init__(self, model_name=None, api_key=None, context_window=4000, max_output=100,temperature=0.7, **kwargs):
+    def __init__(self, model_name=None, api_key=None, context_window=32768,
+                 max_output=1000,temperature=0.0, **kwargs):
 
         super().__init__(**kwargs)
 
@@ -5486,7 +5602,7 @@ class OpenAIGenModel(BaseModel):
         if temperature >= 0.0:
             self.temperature = temperature
         else:
-            self.temperature = 0.7
+            self.temperature = 0.0
 
         self.target_requested_output_tokens = max_output
         self.add_prompt_engineering = False
@@ -5504,24 +5620,25 @@ class OpenAIGenModel(BaseModel):
 
         self.post_init()
 
-    def set_api_key (self, api_key, env_var="USER_MANAGED_OPENAI_API_KEY"):
+    def set_api_key (self, api_key, env_var="OPENAI_API_KEY"):
 
         """ Utility method to set the API key in os.environ variable. """
 
         # set api_key
         os.environ[env_var] = api_key
-        logger.info("update: added and stored OpenAI api_key in environmental variable- %s", env_var)
+        logger.info(f"OpenAIGenModel - added and stored OpenAI api_key in environmental variable- {env_var}")
 
         return self
 
-    def _get_api_key (self, env_var="USER_MANAGED_OPENAI_API_KEY"):
+    def _get_api_key (self, env_var="OPENAI_API_KEY"):
 
         """ Utility method to get the API key from os.environ variable. """
 
         self.api_key = os.environ.get(env_var)
 
         if not self.api_key:
-            logger.error("error: _get_api_key could not successfully retrieve value from: %s ", env_var)
+            logger.error(f"OpenAIGenModel - _get_api_key could not successfully retrieve "
+                         f"value from: {env_var}")
 
         return self.api_key
 
@@ -5629,7 +5746,8 @@ class OpenAIGenModel(BaseModel):
                 self.api_key = self._get_api_key()
 
         if not self.api_key and not azure_client:
-            logger.error("OpenAIGenModel: invoking OpenAI Generative model with no api_key.")
+            raise LLMWareException(message="OpenAIGenModel: no api_key found for OpenAI. This can be set as "
+                                           "an environment variable with: os.environ['OPENAI_API_KEY'] = '...'")
 
         #   call to preview hook (not implemented by default)
         self.preview()
@@ -5637,7 +5755,6 @@ class OpenAIGenModel(BaseModel):
         # default case - pass the prompt received without change
         prompt_enriched = self.prompt
 
-        # new - change with openai v1 api
         try:
             from openai import OpenAI
         except ImportError:
@@ -5648,7 +5765,7 @@ class OpenAIGenModel(BaseModel):
 
         try:
 
-            if self.model_name in ["o1-pro", "o3-mini"]:
+            if self.model_name in ["gpt-4o", "o4-mini"]:
 
                 # PATH #1 - the new 'responses' endpoint
 
@@ -5677,9 +5794,7 @@ class OpenAIGenModel(BaseModel):
                          "metric": "tokens",
                          "processing_time": time.time() - time_start}
 
-            elif self.model_name in ["gpt-3.5-turbo","gpt-4","gpt-4-1106-preview","gpt-3.5-turbo-1106",
-                                   "gpt-4-0125-preview", "gpt-3.5-turbo-0125", "gpt-4o", "gpt-4o-2024-05-13",
-                                   "gpt-4o-mini-2024-07-18","gpt-4o-mini","gpt-4o-2024-08-06", "o1"]:
+            elif self.model_name in ["gpt-5.2-pro", "gpt-5.2", "gpt-5-mini", "gpt-5-nano", "gpt-4.1"]:
 
                 # PATH #2 - 'main' chatgpt-style chat completions endpoint
 
@@ -5753,7 +5868,7 @@ class OpenAIGenModel(BaseModel):
             usage = {"input":0, "output":0, "total":0, "metric": "tokens",
                      "processing_time": time.time() - time_start}
 
-            logger.error("OpenAIGenModel - inference produced error - %s ", e)
+            logger.error(f"OpenAIGenModel - inference produced error - {e}")
 
         output_response = {"llm_response": text_out, "usage": usage}
 
@@ -5814,7 +5929,8 @@ class OpenAIGenModel(BaseModel):
                 self.api_key = self._get_api_key()
 
         if not self.api_key and not azure_client:
-            logger.error("OpenAIGenModel - invoking OpenAI Generative model with no api_key.")
+            raise LLMWareException(message="OpenAIGenModel: no api_key found for OpenAI. This can be set as "
+                                           "an environment variable with: os.environ['OPENAI_API_KEY'] = '...'")
 
         #   call to preview hook (not implemented by default)
         self.preview()
@@ -5822,7 +5938,6 @@ class OpenAIGenModel(BaseModel):
         # default case - pass the prompt received without change
         prompt_enriched = self.prompt
 
-        # new - change with openai v1 api
         try:
             from openai import OpenAI
         except ImportError:
@@ -5840,9 +5955,7 @@ class OpenAIGenModel(BaseModel):
                 raise LLMWareException(message=f"Responses API streaming not implemented for this model.  To use "
                                                f"{self.model_name}, please use the .inference method")
 
-            elif self.model_name in ["gpt-3.5-turbo","gpt-4","gpt-4-1106-preview","gpt-3.5-turbo-1106",
-                                   "gpt-4-0125-preview", "gpt-3.5-turbo-0125", "gpt-4o", "gpt-4o-2024-05-13",
-                                   "gpt-4o-mini-2024-07-18","gpt-4o-mini","gpt-4o-2024-08-06", "o1"]:
+            elif self.model_name in ["gpt-5.2-pro", "gpt-5.2", "gpt-5-mini", "gpt-5-nano", "gpt-4.1"]:
 
                 messages = self.prompt_engineer_chatgpt3(prompt_enriched, self.add_context, inference_dict)
 
@@ -5934,7 +6047,7 @@ class OpenAIGenModel(BaseModel):
             usage = {"input":0, "output":0, "total":0, "metric": "tokens",
                      "processing_time": time.time() - time_start}
 
-            logger.error("OpenAIGenModel - OpenAI model inference produced error - %s ", e)
+            logger.error(f"OpenAIGenModel - OpenAI model inference produced error - {e}")
 
         output_response = {"llm_response": text_out, "usage": usage}
 
@@ -5954,7 +6067,8 @@ class ClaudeModel(BaseModel):
 
     """ ClaudeModel class implements the Anthropic Claude API for calling Anthropic models. """
 
-    def __init__(self, model_name=None, api_key=None, context_window=8000, max_output=100, temperature=0.7, **kwargs):
+    def __init__(self, model_name=None, api_key=None, context_window=32768,
+                 max_output=1000, temperature=0.0, **kwargs):
 
         super().__init__(**kwargs)
 
@@ -5967,6 +6081,10 @@ class ClaudeModel(BaseModel):
         self.final_prompt = None
 
         self.api_key = api_key
+
+        if not api_key:
+            self.api_key = api_key
+
         self.model_name = model_name
 
         self.error_message = "\nUnable to connect to Anthropic/Claude. Please try again later."
@@ -5982,32 +6100,39 @@ class ClaudeModel(BaseModel):
         if temperature >= 0.0:
             self.temperature = temperature
         else:
-            self.temperature = 0.7
+            self.temperature = 0.0
 
         self.target_requested_output_tokens = max_output
         self.add_prompt_engineering = False
         self.add_context = ""
         self.prompt = ""
+        self.instruction_following = False
+        self.prompt_wrapper = None
+
+        if "model_card" in kwargs:
+            self.model_card = kwargs["model_card"]
+        else:
+            self.model_card = {}
 
         self.post_init()
 
-    def set_api_key(self, api_key, env_var="USER_MANAGED_ANTHROPIC_API_KEY"):
+    def set_api_key(self, api_key, env_var="ANTHROPIC_API_KEY"):
 
         """ Utility method to set the API key in os.environ variable. """
 
         os.environ[env_var] = api_key
-        logger.info("update: added and stored ANTHROPIC api_key in environmental variable- %s", env_var)
+        logger.info(f"ClaudeModel - added and stored ANTHROPIC api_key in environmental variable- {env_var}")
 
         return self
 
-    def _get_api_key(self, env_var="USER_MANAGED_ANTHROPIC_API_KEY"):
+    def _get_api_key(self, env_var="ANTHROPIC_API_KEY"):
 
         """ Utility method to get api_key from os.environ variable. """
 
         self.api_key = os.environ.get(env_var)
 
         if not self.api_key:
-            logger.error("error: _get_api_key could not successfully retrieve value from: %s ", env_var)
+            logger.error(f"ClaudeModel - _get_api_key could not successfully retrieve value from: {env_var}")
 
         return self.api_key
 
@@ -6019,13 +6144,34 @@ class ClaudeModel(BaseModel):
         toks = tokenizer.encode(text_sample).ids
         return len(toks)
 
-    def prompt_engineer (self, query, context, inference_dict=None):
+    def prompt_engineer(self, query, context, inference_dict=None):
 
-        """ Builds prompt by assembling query, context and applying prompt style. """
+        self.instruction_following = False
+        self.prompt_wrapper = False
 
-        # default case -> prompt = input query
+        # new
+        system_instruction = None
+        if inference_dict:
+            if "system_instruction" in inference_dict:
+                system_instruction = inference_dict["system_instruction"]
+        # end - new
 
-        prompt_engineered = ""
+        # if loaded model was not pretrained on instruction_following, then skip any instructions
+        if not self.instruction_following:
+
+            if context:
+                output = context + "\n" + query
+            else:
+                output = query
+
+            # unlikely that there would be an 'instruct wrapping' on text, but allow for possibility
+            if self.prompt_wrapper:
+                output = PromptCatalog().apply_prompt_wrapper(output, self.prompt_wrapper,
+                                                              instruction=system_instruction)
+
+            return output
+
+        # move ahead to add instructions and prompt engineering
 
         if not self.add_prompt_engineering:
             if context:
@@ -6037,18 +6183,26 @@ class ClaudeModel(BaseModel):
 
         prompt_dict = PromptCatalog().build_core_prompt(prompt_name=selected_prompt,
                                                         separator=self.separator,
-                                                        query=query,context=context,
+                                                        query=query,
+                                                        context=context,
                                                         inference_dict=inference_dict)
 
         if prompt_dict:
+            prompt_engineered = prompt_dict["core_prompt"]
+        else:
+            # default case
+            prompt_engineered = "Please read the following text: " + context + self.separator
+            prompt_engineered += "Based on this text, please answer the question: " + query + self.separator
+            prompt_engineered += "Please answer the question only with facts provided in the materials.  " \
+                                 "If the question can not be answered in the materials, then please " \
+                                 "respond 'Not Found.'"
 
-            core_prompt = prompt_dict["core_prompt"]
+        #   final wrapping, based on model-specific instruct training format
+        #   --provides a final 'wrapper' around the core prompt text, based on model expectations
 
-            # prototype prompt for Anthropic:
-            # "\n\nHuman:" + {text} + "\n\nAssistant:"
-            # per Anthropic docs, usually best to include the query at the END, rather than the Beginning
-
-            prompt_engineered = "\n\nHuman: " + core_prompt + "\n\nAssistant:"
+        if self.prompt_wrapper:
+            prompt_engineered = PromptCatalog().apply_prompt_wrapper(prompt_engineered, self.prompt_wrapper,
+                                                                     instruction=None)
 
         return prompt_engineered
 
@@ -6083,7 +6237,8 @@ class ClaudeModel(BaseModel):
             self.api_key = self._get_api_key()
 
         if not self.api_key:
-            logger.error("error: invoking Anthropic Claude Generative model with no api_key")
+            raise LLMWareException(message=f"ClaudeModel - no api key found - you can set with: "
+                                           f"os.environ['ANTHROPIC_API_KEY'] = '...'")
 
         #   call to preview hook (not implemented by default)
         self.preview()
@@ -6095,46 +6250,20 @@ class ClaudeModel(BaseModel):
 
         client = anthropic.Client(api_key=self.api_key)
 
-        # prototype prompt sample:   prompt_enriched = "\n\nHuman:" + " please read the following- " +
-        # self.add_context + " Based on these materials, " + prompt["prompt"] + "\n\nAssistant:"
-
         prompt_enriched = self.prompt_engineer(self.prompt,self.add_context, inference_dict=inference_dict)
-
-        # preferred model = "claude-instant-v1"
 
         time_start = time.time()
 
         try:
 
-            # new Claude 3 models use the 'messages' API
-            # please check that you have pip installed the latest anthropic python sdk
+            # use messages API - older completion api is deprecated (and removed from ClaudeModel)
 
-            if self.model_name in ["claude-3-opus-20240229", "claude-3-sonnet-20240229","claude-3-haiku-20240307", "claude-3-5-haiku-20241022", "claude-3-5-sonnet-20240620", "claude-3-7-sonnet-20250219"]:
+            message = client.messages.create(model=self.model_name, max_tokens=self.target_requested_output_tokens,
+                                             messages=[{"role": "user", "content": prompt_enriched}] )
 
-                # use messages API
-                message = client.messages.create(model=self.model_name, max_tokens=self.target_requested_output_tokens,
-                                                 messages=[{"role": "user", "content": prompt_enriched}] )
-
-                text_out = message.content[0].text
-                input_count = message.usage.input_tokens
-                output_count = message.usage.output_tokens
-
-            else:
-
-                # use completion api for 'original' Claude models
-
-                response = client.completions.create(prompt=prompt_enriched,
-                                                    stop_sequences=[anthropic.HUMAN_PROMPT],
-                                                    max_tokens_to_sample=self.target_requested_output_tokens,
-                                                    model=self.model_name,
-                                                    stream=False,
-                                                    temperature=self.temperature)
-
-                #text_out = list(response)[-1].completion
-                text_out = response.completion
-
-                input_count = client.count_tokens(prompt_enriched)
-                output_count = client.count_tokens(text_out)
+            text_out = message.content[0].text
+            input_count = message.usage.input_tokens
+            output_count = message.usage.output_tokens
 
             usage = {"input": input_count, "output": output_count, "total": input_count + output_count,
                      "metric": "tokens", "processing_time": time.time() - time_start}
@@ -6145,15 +6274,14 @@ class ClaudeModel(BaseModel):
             usage = {"input":0, "output":0, "total":0, "metric": "tokens",
                      "processing_time": time.time() - time_start}
 
-            # raise LLMInferenceResponseException(e)
-            logger.error("error: Anthropic model inference produced error - %s ", e)
+            logger.error(f"ClaudeModel - inference produced error - {e}")
 
-        output_response = {"llm_response": text_out, "usage": usage}
+        output_response = {"llm_response": str(text_out), "usage": usage}
 
-        logger.debug(f"update: output_response - anthropic: {output_response}")
+        logger.debug(f"ClaudeModel - output_response - {output_response}")
 
         # output inference parameters
-        self.llm_response = text_out
+        self.llm_response = str(text_out)
         self.usage = usage
         self.logits = None
         self.output_tokens = None
@@ -6163,111 +6291,13 @@ class ClaudeModel(BaseModel):
 
         return output_response
 
+    def stream(self, prompt, add_context=None, add_prompt_engineering=None, inference_dict=None,
+               api_key=None):
 
-class GoogleGenModel(BaseModel):
-
-    """ GoogleGenModel class implements the Google Vertex API for Google's generative models.
-    Note: to use GoogleModels does require a separate import of Google SDKs - vertexai and google.cloud.platform """
-
-    def __init__(self, model_name=None, api_key=None, context_window=8192, max_output=100, temperature=0.7, **kwargs):
-
-        super().__init__(**kwargs)
-
-        self.model_class = "GoogleGenModel"
-        self.model_category = "generative"
-        self.llm_response = None
-        self.usage = None
-        self.logits = None
-        self.output_tokens = None
-        self.final_prompt = None
-
-        self.api_key = api_key
-        self.model_name = model_name
-        self.model = None
-        self.error_message = "\nUnable to connect to Google/PALM Model. Please try again later."
-        self.separator = "\n"
-
-        # need to confirm max input and output
-        #   set max_total_len -> adjust input and output based on use case
-        self.max_total_len = context_window
-        self.max_input_len = int(context_window*0.5)
-
-        # need to check max output for Google - may be asymmetrical cap
-        self.llm_max_output_len = 1024
-
-        # inference settings
-        if temperature >= 0.0:
-            self.temperature = temperature
-        else:
-            self.temperature = 0.7
-
-        self.target_requested_output_tokens = max_output
-        self.add_prompt_engineering = False
-        self.add_context = ""
-        self.prompt = ""
-
-        self.post_init()
-
-    def set_api_key(self, api_key, env_var="USER_MANAGED_GOOGLE_API_KEY"):
-
-        """ Utility method to set the API key in os.environ variable. """
-
-        os.environ[env_var] = api_key
-        logger.info("update: added and stored GOOGLE api_key in environmental variable- %s", env_var)
-
-        return self
-
-    def _get_api_key(self, env_var="USER_MANAGED_GOOGLE_API_KEY"):
-
-        """ Utility method to get api_key from os.environ variable. """
-
-        self.api_key = os.environ.get(env_var)
-        return self.api_key
-
-    def token_counter(self, text_sample):
-
-        """ Gets GPT2 tokenizer for fast approximate token counting. """
-
-        tokenizer = Utilities().get_default_tokenizer()
-        toks = tokenizer.encode(text_sample).ids
-
-        return len(toks)
-
-    def prompt_engineer (self, query, context, inference_dict=None):
-
-        """ Builds Prompt by assembling query, context and applying the selected prompt engineering style. """
-
-        if not self.add_prompt_engineering:
-            if context:
-                selected_prompt = "default_with_context"
-            else:
-                selected_prompt = "default_no_context"
-        else:
-            selected_prompt = self.add_prompt_engineering
-
-        prompt_dict = PromptCatalog().build_core_prompt(prompt_name=selected_prompt,
-                                                        separator=self.separator,
-                                                        query=query,
-                                                        context=context,
-                                                        inference_dict=inference_dict)
-
-        if prompt_dict:
-            prompt_engineered = prompt_dict["core_prompt"]
-
-        else:
-            # default case -> prompt = input query
-            prompt_engineered = "Please read the following text: " + context + \
-                                " and answer the question: " + query
-
-        return prompt_engineered
-
-    def inference(self, prompt, add_context=None, add_prompt_engineering=None, inference_dict=None,
-                  api_key=None):
-
-        """ Executes inference on Google Model.  Only required input is text-based prompt, with optional
-        parameters to "add_context" passage that will be assembled using the prompt style in the
-        "add_prompt_engineering" parameter.  Optional inference_dict for temperature and max_tokens configuration,
-        and optional passing of api_key at time of inference. """
+        """ Executes streaming inference on Anthropic Model. Only required input is text-based prompt,
+        with optional parameters to "add_context" passage that will be assembled using the prompt style in the
+        "add_prompt_engineering" parameter.  Optional inference_dict for temperature and max_tokens
+        configuration, and optional passing of api_key at time of inference. """
 
         self.prompt = prompt
 
@@ -6285,17 +6315,6 @@ class GoogleGenModel(BaseModel):
             if "max_tokens" in inference_dict:
                 self.target_requested_output_tokens = inference_dict["max_tokens"]
 
-        #   call to preview hook (not implemented by default)
-        self.preview()
-
-        try:
-            from vertexai.preview.language_models import TextGenerationModel, TextEmbeddingModel
-            from vertexai import init
-            import google.cloud.aiplatform as aiplatform
-        except ImportError:
-            raise DependencyNotInstalledException("google-cloud-aiplatform")
-
-        # api_key
         if api_key:
             self.api_key = api_key
 
@@ -6303,55 +6322,61 @@ class GoogleGenModel(BaseModel):
             self.api_key = self._get_api_key()
 
         if not self.api_key:
-            logger.error("error: invoking Google Generative model with no api_key")
+            raise LLMWareException(message=f"ClaudeModel - no api key found - you can set with: "
+                                           f"os.environ['ANTHROPIC_API_KEY'] = '...'")
+
+        #   call to preview hook (not implemented by default)
+        self.preview()
+
+        try:
+            import anthropic
+        except ImportError:
+            raise DependencyNotInstalledException("anthropic")
+
+        client = anthropic.Client(api_key=self.api_key)
 
         prompt_enriched = self.prompt_engineer(self.prompt,self.add_context, inference_dict=inference_dict)
 
-        self.target_requested_output_tokens= 2000
-        # note: google api is not well-documented
-
         time_start = time.time()
 
         try:
 
-            # Important: Before calling the model, we need to ensure the contents of the
-            # api_key (the json dict string) have been persisted to a file
-            # and the environment variable GOOGLE_APPLICATION_CREDENTIALS points to that file path
+            # use messages API
+            message = client.messages.create(model=self.model_name, max_tokens=self.target_requested_output_tokens,
+                                             messages=[{"role": "user", "content": prompt_enriched}])
 
-            google_json_credentials = self.api_key_to_json()
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_json_credentials
+            text_out = message.content[0].text
+            input_count = message.usage.input_tokens
+            output_count = message.usage.output_tokens
 
-            self.model = TextGenerationModel.from_pretrained("text-bison@001")
-            response = self.model.predict(prompt=prompt_enriched,
-                                          temperature=0.7)
+            text_out = ""
+            prompt_tokens = 0
+            completion_tokens = 0
 
-            logger.debug(f"google model response: {response.text}")
-         
-            text_out = response.text
+            with client.messages.stream(
+                max_tokens=self.target_requested_output_tokens,
+                messages=[{"role": "user", "content": prompt_enriched}],
+                model=self.model_name) as stream:
 
-            input_count = len(prompt_enriched)
-            output_count = len(text_out)
+                for text in stream.text_stream:
+                    # print(text, end="", flush=True)
+                    text_out += text
+                    yield text
 
             usage = {"input": input_count, "output": output_count, "total": input_count + output_count,
-                     "metric": "characters","processing_time": time.time() - time_start}
+                     "metric": "tokens", "processing_time": time.time() - time_start}
 
         except Exception as e:
-
-            # this is special error code that will be picked and handled in AIModels().inference handler
+            # this is special error code that will be picked and handled by calling function
             text_out = "/***ERROR***/"
-            usage = {"input":0, "output":0, "total":0, "metric": "characters",
+            usage = {"input": 0, "output": 0, "total": 0, "metric": "tokens",
                      "processing_time": time.time() - time_start}
 
-            # raise LLMInferenceResponseException(e)
-            logger.error("error: Google model inference produced error:  %s", e)
+            logger.error(f"ClaudeModel inference produced error - {e}")
 
-        finally:
-            # Close the credentials json which automatically deletes it (since it is a NamedTemporaryFile)
-            os.remove(google_json_credentials)
-        
         output_response = {"llm_response": text_out, "usage": usage}
 
-        logger.debug("update: output_response - google: %s ", output_response)
+        logger.debug(f"ClaudeModel - output_response - {output_response}")
 
         # output inference parameters
         self.llm_response = text_out
@@ -6363,30 +6388,19 @@ class GoogleGenModel(BaseModel):
         self.register()
 
         return output_response
-    
-    def api_key_to_json(self):
-
-        # Google authentication key is an entire json dictionary which we have the user pass in as an env var
-        # We write out the json and we need to escape newlines which seem to be always present in
-        # google auth json files
-
-        temp_json_path = tempfile.NamedTemporaryFile(prefix="googlecreds", delete=False).name
-
-        with open(temp_json_path, "w", encoding='utf-8') as f:
-            f.write(self.api_key.replace("\n", "\\n"))
-
-        return temp_json_path
 
 
-class JurassicModel(BaseModel):
+class GoogleGeminiModel(BaseModel):
 
-    """ JurassicModel class implements the AI21 Jurassic API. """
+    """ GoogleGeminiModel class implements the current Google Gemini Model
+     API for calling Google Gemini models. """
 
-    def __init__(self, model_name=None, api_key=None, context_window=2048, max_output=100,temperature=0.7, **kwargs):
+    def __init__(self, model_name=None, api_key=None, context_window=32768,
+                 max_output=1000, temperature=0.0, **kwargs):
 
         super().__init__(**kwargs)
 
-        self.model_class = "JurassicModel"
+        self.model_class = "GoogleGeminiModel"
         self.model_category = "generative"
         self.llm_response = None
         self.usage = None
@@ -6395,268 +6409,84 @@ class JurassicModel(BaseModel):
         self.final_prompt = None
 
         self.api_key = api_key
-        self.model_name = model_name
 
-        self.error_message = "\nUnable to connect to Jurassic. Please try again later."
-
-        self.separator = " -- "
-
-        #   set max_total_len -> adjust input and output based on use case
-        self.max_total_len = context_window
-        self.max_input_len = int(context_window * 0.5)
-
-        self.llm_max_output_len = int(context_window * 0.5)
-
-        # inference settings
-        if temperature >= 0.0:
-            self.temperature = temperature
-        else:
-            self.temperature = 0.7
-
-        self.target_requested_output_tokens = max_output
-        self.add_prompt_engineering = False
-        self.add_context = ""
-        self.prompt = ""
-
-        # 'j2-jumbo-instruct', 'j2-grande-instruct','j2-jumbo','j2-grande', 'j2-large'
-
-        self.post_init()
-
-    def set_api_key(self, api_key, env_var="USER_MANAGED_AI21_API_KEY"):
-
-        """ Utility method to set the API key in os.environ variable. """
-
-        os.environ[env_var] = api_key
-        logger.info("update: added and stored AI21 api_key in environmental variable- %s", env_var)
-
-        return self
-
-    def _get_api_key(self, env_var="USER_MANAGED_AI21_API_KEY"):
-
-        """ Utility method to get api_key from os.environ variable. """
-
-        self.api_key = os.environ.get(env_var)
-
-        return self.api_key
-
-    def token_counter(self, text_sample):
-
-        """ Gets GPT2 tokenizer for fast approximate token counting. """
-
-        tokenizer = Utilities().get_default_tokenizer()
-        toks = tokenizer.encode(text_sample).ids
-
-        return len(toks)
-
-    def prompt_engineer (self, query, context, inference_dict=None):
-
-        """ Builds prompt by assembling query, context and applying the selected prompt style. """
-
-        if not self.add_prompt_engineering:
-            if context:
-                selected_prompt = "default_with_context"
-            else:
-                selected_prompt = "default_no_context"
-        else:
-            selected_prompt = self.add_prompt_engineering
-
-        prompt_dict = PromptCatalog().build_core_prompt(prompt_name=selected_prompt,
-                                                        separator=self.separator,
-                                                        query=query,
-                                                        context=context,
-                                                        inference_dict=inference_dict)
-
-        if prompt_dict:
-            prompt_engineered = prompt_dict["core_prompt"]
-        else:
-
-            # default case
-            prompt_engineered = "Please read the following text: " + context + " -- "
-            prompt_engineered += " ## "
-            prompt_engineered += "Please answer the following question based on the text: " + query
-            prompt_engineered += " ## "
-
-        return prompt_engineered
-
-    def inference(self, prompt, add_context=None, add_prompt_engineering=None, inference_dict=None,
-                  api_key=None):
-
-        """ Executes inference on Jurassic Model.  Only required input is text-based prompt, with optional
-        parameters to "add_context" passage that will be assembled using the prompt style in the
-        "add_prompt_engineering" parameter.  Optional inference_dict for temperature and max_tokens configuration,
-        and optional passing of api_key at time of inference. """
-
-        self.prompt = prompt
-
-        if add_context:
-            self.add_context = add_context
-
-        if add_prompt_engineering:
-            self.add_prompt_engineering = add_prompt_engineering
-
-        if inference_dict:
-
-            if "temperature" in inference_dict:
-                self.temperature = inference_dict["temperature"]
-
-            if "max_tokens" in inference_dict:
-                self.target_requested_output_tokens = inference_dict["max_tokens"]
-
-        if api_key:
+        if not api_key:
             self.api_key = api_key
 
-        if not self.api_key:
-            self.api_key = self._get_api_key()
-
-        if not self.api_key:
-            logger.error("error: invoking AI21 Jurassic model with no api_key")
-
-        #   call to preview hook (not implemented by default)
-        self.preview()
-
-        try:
-            import ai21
-        except ImportError:
-            raise DependencyNotInstalledException("ai21")
-
-        prompt_enriched = self.prompt
-
-        prompt_enriched = self.prompt_engineer(prompt_enriched,self.add_context, inference_dict=inference_dict)
-
-        time_start = time.time()
-
-        try:
-            ai21.api_key = self.api_key
-
-            response = ai21.Completion.execute(
-                model=self.model_name,
-                prompt=prompt_enriched,
-                numResults=1,
-                maxTokens=self.target_requested_output_tokens,
-                temperature=0.7,
-                topKReturn=0,
-                topP=1,
-                stopSequences=["##"]
-                )
-
-            # api parameters: {"prompt", "numResults", "maxTokens", "minTokens", "temperature", "topP",
-            #   "stopSequences" = list of sequences that when generated will cause the model to stop
-            #   "topKReturn" = number of top scoring tokens to consider in each generation step
-            #   "frequencyPenalty" = penalty applied to frequently generated tokens
-            #   "presencePenalty" =  penalty applied to tokens already present in the prompt.
-            #   "countPenalty" = penalty applied to tokens based on frequency in the generated responses.
-
-            text_out = response["completions"][0]["data"]["text"]
-
-            usage = {"input": len(prompt_enriched), "output": len(text_out),
-                     "total": len(prompt_enriched) + len(text_out), "metric": "chars",
-                     "processing_time": time.time() - time_start}
-
-        except Exception as e:
-
-            # this is special error code that will be picked and handled in inference handler
-
-            text_out = "/***ERROR***/"
-
-            usage = {"input": 0, "output": 0, "total": 0, "metric": "chars",
-                     "processing_time": time.time() - time_start}
-
-            # raise LLMInferenceResponseException(e)
-            logger.error("error: Jurassic model inference produced error - %s ", e)
-
-        # will look to capture usage metadata
-
-        output_response = {"llm_response": text_out, "usage": usage}
-
-        # output inference parameters
-        self.llm_response = text_out
-        self.usage = usage
-        self.logits = None
-        self.output_tokens = None
-        self.final_prompt = prompt_enriched
-
-        self.register()
-
-        return output_response
-
-
-class CohereGenModel(BaseModel):
-
-    """ CohereGenModel class implements the API for Cohere's generative models. """
-
-    def __init__(self, model_name=None, api_key=None, context_window=2048, max_output=100,temperature=0.7, **kwargs):
-
-        super().__init__(**kwargs)
-
-        self.model_class = "CohereGenModel"
-        self.model_category = "generative"
-        self.llm_response = None
-        self.usage = None
-        self.logits = None
-        self.output_tokens = None
-        self.final_prompt = None
-
-        self.api_key = api_key
         self.model_name = model_name
 
-        self.error_message = "\nUnable to connect to Cohere. Please try again later."
+        self.error_message = "\nUnable to connect to Google Gemini. Please try again later."
 
-        self.separator = " -- "
+        self.separator = "\n"
 
-        #   set max_total_len -> adjust input and output based on use case
-        #   confirmed - Cohere generation models - 2048 max context window
+        #   Google Gemini model - 8000 max token context window
         self.max_total_len = context_window
         self.max_input_len = int(context_window * 0.5)
-
         self.llm_max_output_len = int(context_window * 0.5)
 
         # inference settings
         if temperature >= 0.0:
             self.temperature = temperature
         else:
-            self.temperature = 0.7
+            self.temperature = 0.0
 
         self.target_requested_output_tokens = max_output
         self.add_prompt_engineering = False
         self.add_context = ""
         self.prompt = ""
-
-        # cohere generative models - 'command-medium-nightly',
-        # 'command-xlarge-nightly','xlarge','medium', "summarize-xlarge", "summarize-medium"
+        self.instruction_following = False
+        self.prompt_wrapper = None
 
         self.post_init()
 
-    def set_api_key(self, api_key, env_var="USER_MANAGED_COHERE_API_KEY"):
+    def set_api_key(self, api_key, env_var="GEMINI_API_KEY"):
 
         """ Utility method to set the API key in os.environ variable. """
 
         os.environ[env_var] = api_key
-        logger.info("update: added and stored COHERE api_key in environmental variable- %s", env_var)
+        logger.info(f"GoogleGeminiModel - added and stored GOOGLE GEMINI api_key in "
+                    f"environmental variable - {env_var}")
 
         return self
 
-    def _get_api_key(self, env_var="USER_MANAGED_COHERE_API_KEY"):
+    def _get_api_key(self, env_var="GEMINI_API_KEY"):
 
         """ Utility method to get api_key from os.environ variable. """
 
         self.api_key = os.environ.get(env_var)
 
+        if not self.api_key:
+            logger.error(f"GoogleGeminiModel - _get_api_key could not successfully "
+                         f"retrieve value from: {env_var}")
+
         return self.api_key
 
-    def token_counter(self, text_sample):
+    def prompt_engineer(self, query, context, inference_dict=None):
 
-        """ Gets GPT2 tokenizer for fast approximate token counting. """
+        self.instruction_following = False
+        self.prompt_wrapper = False
 
-        tokenizer = Utilities().get_default_tokenizer()
-        toks = tokenizer.encode(text_sample).ids
+        system_instruction = None
+        if inference_dict:
+            if "system_instruction" in inference_dict:
+                system_instruction = inference_dict["system_instruction"]
 
-        return len(toks)
+        # if loaded model was not pretrained on instruction_following, then skip any instructions
+        if not self.instruction_following:
 
-    def prompt_engineer (self, query, context, inference_dict=None):
+            if context:
+                output = context + "\n" + query
+            else:
+                output = query
 
-        """ Builds prompt by assembling query, context and applying the selected prompt style. """
+            # unlikely that there would be an 'instruct wrapping' on text, but allow for possibility
+            if self.prompt_wrapper:
+                output = PromptCatalog().apply_prompt_wrapper(output, self.prompt_wrapper,
+                                                              instruction=system_instruction)
 
-        # Cohere prompt prototype - very simple - uses " -- " as separators - does not like " " at the end
+            return output
+
+        # move ahead to add instructions and prompt engineering
 
         if not self.add_prompt_engineering:
             if context:
@@ -6676,18 +6506,25 @@ class CohereGenModel(BaseModel):
             prompt_engineered = prompt_dict["core_prompt"]
         else:
             # default case
-            prompt_engineered = "Please read the following materials: " + context + self.separator
-            prompt_engineered += "Please answer the following question: " + query + self.separator
+            prompt_engineered = "Please read the following text: " + context + self.separator
+            prompt_engineered += "Based on this text, please answer the question: " + query + self.separator
             prompt_engineered += "Please answer the question only with facts provided in the materials.  " \
                                  "If the question can not be answered in the materials, then please " \
                                  "respond 'Not Found.'"
 
+        #   final wrapping, based on model-specific instruct training format
+        #   --provides a final 'wrapper' around the core prompt text, based on model expectations
+
+        if self.prompt_wrapper:
+            prompt_engineered = PromptCatalog().apply_prompt_wrapper(prompt_engineered, self.prompt_wrapper,
+                                                                     instruction=None)
+
         return prompt_engineered
 
     def inference(self, prompt, add_context=None, add_prompt_engineering=None, inference_dict=None,
                   api_key=None):
 
-        """ Executes inference on Cohere Model.  Only required input is text-based prompt, with optional
+        """ Executes inference on Google Gemini Model.  Only required input is text-based prompt, with optional
         parameters to "add_context" passage that will be assembled using the prompt style in the
         "add_prompt_engineering" parameter.  Optional inference_dict for temperature and max_tokens configuration,
         and optional passing of api_key at time of inference. """
@@ -6708,17 +6545,119 @@ class CohereGenModel(BaseModel):
             if "max_tokens" in inference_dict:
                 self.target_requested_output_tokens = inference_dict["max_tokens"]
 
+        if api_key:
+            self.api_key = api_key
+
+        if not self.api_key:
+            self.api_key = self._get_api_key()
+
+        if not self.api_key:
+            logger.warning("GoogleGeminiModel - inference - invoking "
+                           "Google Gemini Generative model with no api_key")
+            return False
+
         #   call to preview hook (not implemented by default)
         self.preview()
 
-        #tokens_in_prompt = self.token_counter(prompt)
-        #tokens_in_context = self.token_counter(self.add_context)
+        try:
+            from google import genai
+            from google.genai import types
 
-        prompt_enriched = self.prompt
+        except ImportError:
+            raise DependencyNotInstalledException("google")
 
-        logger.debug(f"Cohere Model - inference - {prompt_enriched} - {self.add_prompt_engineering}")
+        client = genai.Client(
+            api_key=self.api_key,
+            http_options=types.HttpOptions(api_version='v1alpha')
+        )
 
-        prompt_enriched = self.prompt_engineer(prompt_enriched,self.add_context, inference_dict=inference_dict)
+        prompt_enriched = self.prompt_engineer(self.prompt,self.add_context, inference_dict=inference_dict)
+
+        time_start = time.time()
+
+        try:
+
+            response = client.models.generate_content(
+                model=self.model_name, contents=prompt_enriched)
+
+            text_out = response.text
+
+            input_count = response.usage_metadata.prompt_token_count
+            output_count = response.usage_metadata.total_token_count
+
+            usage = {"input": input_count, "output": output_count,
+                     "total": input_count + output_count,
+                     "metric": "tokens",
+                     "processing_time": time.time() - time_start}
+
+        except Exception as e:
+            # this is special error code that will be picked and handled by calling function
+            text_out = "/***ERROR***/"
+            usage = {"input":0, "output":0, "total":0, "metric": "tokens",
+                     "processing_time": time.time() - time_start}
+
+            logger.warning(f"GoogleGeminiModel - inference produced error - {e}")
+
+        output_response = {"llm_response": str(text_out), "usage": usage}
+
+        # output inference parameters
+        self.llm_response = str(text_out)
+        self.usage = usage
+        self.logits = None
+        self.output_tokens = None
+        self.final_prompt = prompt_enriched
+
+        self.register()
+
+        return output_response
+
+    def _prep_gemini_img_file(self, image_fp):
+
+        """ Utility function to prepare image for processing by Gemini """
+
+        try:
+            from google import genai
+            from google.genai import types
+
+        except ImportError:
+            raise DependencyNotInstalledException("google")
+
+        img = open(image_fp, "rb").read()
+        ext = image_fp.split(".")[-1]
+        if ext in ["jpg", "jpeg"]:
+            mime_type = "image/jpeg"
+        elif ext in ["png"]:
+            mime_type = "image/png"
+        else:
+            mime_type = "image/jpeg"
+
+        img_content = types.Part.from_bytes(data=img, mime_type=mime_type)
+
+        return img_content
+
+    def stream(self, prompt, add_context=None, add_prompt_engineering=None, inference_dict=None,
+               api_key=None, image_files=None, doc_files=None):
+
+        """ Executes streaming inference on Gemini Model. Only required input is text-based prompt,
+        with optional parameters to "add_context" passage that will be assembled using the prompt style in the
+        "add_prompt_engineering" parameter.  Optional inference_dict for temperature and max_tokens
+        configuration, and optional passing of api_key at time of inference. """
+
+        self.prompt = prompt
+
+        if add_context:
+            self.add_context = add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
 
         if api_key:
             self.api_key = api_key
@@ -6727,56 +6666,61 @@ class CohereGenModel(BaseModel):
             self.api_key = self._get_api_key()
 
         if not self.api_key:
-            logger.error(f"Cohere Model - invoking Cohere Generative model with no api_key")
+            raise LLMWareException("GoogleGeminiModel - no api_key found - you can set with: "
+                                   "os.environ['GEMINI_API_KEY'] = '...'")
+
+        #   call to preview hook (not implemented by default)
+        self.preview()
 
         try:
-            import cohere
-        except ImportError:
-            raise DependencyNotInstalledException("cohere")
+            from google import genai
+            from google.genai import types
 
-        co = cohere.Client(self.api_key)
+        except ImportError:
+            raise DependencyNotInstalledException("google")
+
+        client = genai.Client(
+            api_key=self.api_key,
+            http_options=types.HttpOptions(api_version='v1alpha')
+        )
+
+        prompt_enriched = self.prompt_engineer(self.prompt,self.add_context, inference_dict=inference_dict)
 
         time_start = time.time()
 
+        content = []
+        content.append(prompt_enriched)
+
+        if image_files:
+            for img_fp in image_files:
+                img_content = self._prep_gemini_img_file(img_fp)
+                content.append(img_content)
+
         try:
 
-            if self.model_name in ["summarize-xlarge", "summarize-medium"]:
-                # alternate - summarize api
-                response = co.summarize(text=self.add_context, model=self.model_name, length='short', temperature=0.7,
-                                        format="bullets", extractiveness='medium', additional_command=self.prompt)
+            for chunk in client.models.generate_content_stream(model=self.model_name,
+                                                               contents=content):
+                yield chunk.text
 
-                text_out = response.summary
+            text_out = ""
+            prompt_tokens = 0
+            completion_tokens = 0
 
-                usage = {"input": len(prompt_enriched), "output": len(text_out),
-                         "total": len(prompt_enriched) + len(text_out), "metric": "chars",
-                         "processing_time": time.time() - time_start}
-
-            else:
-                # generate api
-                response = co.generate(model=self.model_name, prompt=prompt_enriched,
-                                       max_tokens=self.target_requested_output_tokens, temperature=0.6,
-                                       stop_sequences=["--"])
-
-                text_out = response.generations[0].text
-
-                usage = {"input": len(prompt_enriched), "output": len(text_out),
-                         "total": len(prompt_enriched) + len(text_out), "metric": "chars",
-                         "processing_time": time.time() - time_start}
+            usage = {"input": prompt_tokens, "output": completion_tokens,
+                     "total": prompt_tokens + completion_tokens,
+                     "metric": "tokens", "processing_time": time.time() - time_start}
 
         except Exception as e:
-
+            # this is special error code that will be picked and handled by calling function
             text_out = "/***ERROR***/"
-
-            usage = {"input": 0, "output": 0, "total": 0, "metric": "chars",
+            usage = {"input": 0, "output": 0, "total": 0, "metric": "tokens",
                      "processing_time": time.time() - time_start}
 
-            logger.error("error: Cohere model inference produced error - %s - ", e)
-
-        # will look to capture usage metadata
+            logger.warning(f"GoogleGeminiModel - streaming inference produced error - {e}")
 
         output_response = {"llm_response": text_out, "usage": usage}
 
-        logger.debug("update:  output response - cohere : %s ", output_response)
+        logger.debug(f"GoogleGeminiModel - output_response - {output_response}")
 
         # output inference parameters
         self.llm_response = text_out
@@ -7137,257 +7081,6 @@ class OpenAIEmbeddingModel(BaseModel):
         self.register()
 
         return embedding
-
-
-class CohereEmbeddingModel(BaseModel):
-
-    """ CohereEmbeddingModel implements the Cohere API for embedding models. """
-
-    def __init__(self, model_name = None, api_key=None, embedding_dims=None, model_card=None,max_len=None, **kwargs):
-
-        super().__init__(**kwargs)
-
-        self.model_class = "CohereEmbeddingModel"
-        self.model_category = "embedding"
-
-        self.api_key = api_key
-        self.model_name = model_name
-        self.model_card = model_card
-
-        if not embedding_dims:
-            self.embedding_dims = 4096
-        else:
-            self.embedding_dims = embedding_dims
-
-        self.max_total_len = 2048
-        self.error_message = "\nUnable to connect to Cohere. Please try again later."
-
-        self.max_len = self.max_total_len
-        if max_len:
-            if max_len < self.max_total_len:
-                self.max_len = max_len
-
-        self.text_sample = None
-
-        self.post_init()
-
-    def set_api_key(self, api_key, env_var="USER_MANAGED_COHERE_API_KEY"):
-
-        """ Utility method to set the API key in os.environ variable. """
-
-        os.environ[env_var] = api_key
-        logger.info("update: added and stored COHERE api_key in environmental variable- %s", env_var)
-
-        return self
-
-    def _get_api_key(self, env_var="USER_MANAGED_COHERE_API_KEY"):
-
-        """ Utility method to get api_key from os.environ variable. """
-
-        self.api_key = os.environ.get(env_var)
-
-        return self.api_key
-
-    def token_counter(self, text_sample):
-
-        """ Gets GPT2 tokenizer for fast approximate token counting. """
-
-        tokenizer = Utilities().get_default_tokenizer()
-        toks = tokenizer.encode(text_sample).ids
-        return len(toks)
-
-    def embedding(self,text_sample):
-
-        self.text_sample = text_sample
-
-        #   call to preview (not implemented by default)
-        self.preview()
-
-        if not self.api_key:
-            self.api_key = self._get_api_key()
-
-        if not self.api_key:
-            logger.error("error: invoking Cohere embedding model with no api_key")
-
-        try:
-            import cohere
-        except ImportError:
-            raise DependencyNotInstalledException("cohere")
-
-        co = cohere.Client(self.api_key)
-
-        # need safety check on length of text_sample
-
-        # need to prepare for batches
-        if isinstance(self.text_sample, list):
-            text_prompt = self.text_sample
-            input_len = len(self.text_sample)
-        else:
-            text_prompt = [self.text_sample]
-            input_len = 1
-
-        # adding model name as parameter passed to the Cohere embedding API
-        response = co.embed(text_prompt,model=self.model_name)
-
-        output = []
-        for i, emb in enumerate(response.embeddings):
-
-            logger.debug(f"Cohere embedding - {i} - {emb}")
-
-            # normalization of the Cohere embedding vector improves performance
-            emb_vec = np.array(emb) / np.linalg.norm(emb)
-
-            output.append(emb_vec)
-
-        self.register()
-
-        return output
-
-
-class GoogleEmbeddingModel(BaseModel):
-
-    """ GoogleEmbeddingModel implements the Google API for text embedding models.  Note: to use Google models
-    requires a separate install of the Google SDKs, e.g., vertexai and google.cloud.platform """
-
-    def __init__(self, model_name=None, api_key=None, embedding_dims=None, model_card=None, max_len=None, **kwargs):
-
-        super().__init__(**kwargs)
-
-        self.model_class = "GoogleEmbeddingModel"
-        self.model_category = "embedding"
-
-        self.api_key = api_key
-        self.model_name = model_name
-        self.model_card = model_card
-
-        self.max_total_len = 3072
-
-        # supports context window up to 3072 tokens for embedding
-
-        if not embedding_dims:
-            self.embedding_dims = 768   # Google text-embedding-gecko-001 has 768 dims
-        else:
-            self.embedding_dims = embedding_dims
-
-        self.error_message = "\nUnable to connect to Google/Text Embedding Model. Please try again later."
-
-        self.max_len = self.max_total_len
-        if max_len:
-            if max_len < self.max_total_len:
-                self.max_len = max_len
-
-        self.text_sample = None
-
-        self.post_init()
-
-    def set_api_key(self, api_key, env_var="USER_MANAGED_GOOGLE_API_KEY"):
-
-        """ Utility method to set the API key in os.environ variable. """
-
-        os.environ[env_var] = api_key
-        logger.info("update: added and stored GOOGLE api_key in environmental variable- %s", env_var)
-
-        return self
-
-    def _get_api_key(self, env_var="USER_MANAGED_GOOGLE_API_KEY"):
-
-        """ Utility method to get api_key from os.environ variable. """
-
-        self.api_key = os.environ.get(env_var)
-        return self.api_key
-
-    def token_counter(self, text_sample):
-
-        """ Gets GPT2 tokenizer for fast approximate token counting. """
-
-        tokenizer = Utilities().get_default_tokenizer()
-        toks = tokenizer.encode(text_sample).ids
-        return len(toks)
-
-    def embedding(self,text_sample, api_key= None):
-
-        """ Executes Embedding inference on Model. """
-
-        self.text_sample = text_sample
-
-        #   call to preview (not implemented by default)
-        self.preview()
-
-        if api_key:
-            self.api_key = api_key
-
-        if not self.api_key:
-            self.api_key = self._get_api_key()
-
-        if not self.api_key:
-            logger.error("error: invoking Google Embedding model with no api_key")
-
-        # Important: Before calling the model, we need to ensure the contents of the api_key
-        # (the json dict string) have been persisted to a file
-        # and the environment variable GOOGLE_APPLICATION_CREDENTIALS points to that file path
-
-        google_json_credentials = self.api_key_to_json()
-        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_json_credentials
-
-        embeddings_output = []
-
-        try:
-            from vertexai.preview.language_models import TextGenerationModel, TextEmbeddingModel
-            from vertexai import init
-            import google.cloud.aiplatform as aiplatform
-        except ImportError:
-            raise DependencyNotInstalledException("google-cloud-aiplatform")
-
-        try:
-
-            model = TextEmbeddingModel.from_pretrained("textembedding-gecko@001")
-
-            if isinstance(self.text_sample,list):
-                text_list = self.text_sample
-            else:
-                text_list = [self.text_sample]
-
-            # need to batch the text list
-            # Google appears to set a cap of 5 text samples per embedding inference call
-
-            google_max_samples_per_inference = 5
-
-            batch_count = len(text_list) // google_max_samples_per_inference
-            if batch_count * google_max_samples_per_inference < len(text_list):
-                batch_count += 1
-
-            for x in range(0, batch_count):
-                new_batch = text_list[x*google_max_samples_per_inference:
-                                      min((x+1)*google_max_samples_per_inference, len(text_list))]
-
-                logger.debug("update: new batch - %s - %s ", x, len(new_batch))
-
-                embeddings_from_google = model.get_embeddings(new_batch)
-
-                for i, embedding in enumerate(embeddings_from_google):
-                    embeddings_output.append(np.array(embedding.values))
-
-        except Exception as e:
-            # raise LLMInferenceResponseException(e)
-            logger.error("error: Google model inference produced error - %s ", e)
-
-        finally:
-            os.remove(google_json_credentials)
-
-        self.register()
-
-        return embeddings_output
-
-    def api_key_to_json(self):
-
-        # Google authentication key is an entire json dictionary which we have the user pass in as an env var
-        # We write out the json and we need to escape newlines which seem to be always present in
-        # google auth json files
-
-        temp_json_path = tempfile.NamedTemporaryFile(prefix="googlecreds", delete=False).name
-        with open(temp_json_path, "w", encoding='utf-8') as f:
-            f.write(self.api_key.replace("\n", "\\n"))
-        return temp_json_path
 
 
 class HFReRankerModel(BaseModel):
