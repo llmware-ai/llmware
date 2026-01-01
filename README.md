@@ -876,6 +876,37 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
 
+**Thursday, January 1 - v0.5 - WIP**  
+ - Updated BaseModel and PromptCatalog classes 
+ - Updated cloud model versions and support for OpenAI, Gemini and Anthropic latest models   
+ - Removed deprecated model classes 
+ - Removed deprecated modules (Dataset Builder and Graph)  
+ - Work-in-Progress for other Model Class and Card updates  
+ - Repo is up-to-date, but not in pip install release - targeted week of January 5, 2026  
+   
+For complete history of release notes, please open the Change log tab.  
+
+**Supported Operating Systems**: MacOS (Metal - M1/M2/M3), Linux (x86), and Windows  
+- Linux - support Ubuntu 20+  (glibc 2.31+)   
+- If you need support for another Linux version, please raise an issue - we will prioritize testing and ensure support.  
+
+**Supported Vector Databases**: Milvus, Postgres (PGVector), Neo4j, Redis, LanceDB, ChromaDB, Qdrant, FAISS, Pinecone, Mongo Atlas Vector Search
+
+**Supported Text Index Databases**: MongoDB, Postgres, SQLite  
+
+
+<details>
+<summary><b>Optional</b></summary>
+
+- [Docker](https://docs.docker.com/get-docker/)
+  
+- To enable the OCR parsing capabilities, install [Tesseract v5.3.3](https://tesseract-ocr.github.io/tessdoc/Installation.html) and [Poppler v23.10.0](https://poppler.freedesktop.org/) native packages.
+
+</details>
+
+<details>
+  <summary><b>🚧 Change Log</b></summary>
+
 **Monday, March 3 - v0.4.0**  
  - Updates in GGUF implementation, configs and libs  
  - Updates in ONNXRuntime implementation and configs  
@@ -915,29 +946,6 @@ See also [additional deployment/install release notes in wheel_archives](https:/
 - Improved GGUF Configs to expand context window  
 - Added model benchmark performance data to model configs 
 - Enhanced Utilities hashing functions  
-  
-For complete history of release notes, please open the Change log tab.  
-
-**Supported Operating Systems**: MacOS (Metal - M1/M2/M3), Linux (x86), and Windows  
-- Linux - support Ubuntu 20+  (glibc 2.31+)   
-- If you need support for another Linux version, please raise an issue - we will prioritize testing and ensure support.  
-
-**Supported Vector Databases**: Milvus, Postgres (PGVector), Neo4j, Redis, LanceDB, ChromaDB, Qdrant, FAISS, Pinecone, Mongo Atlas Vector Search
-
-**Supported Text Index Databases**: MongoDB, Postgres, SQLite  
-
-
-<details>
-<summary><b>Optional</b></summary>
-
-- [Docker](https://docs.docker.com/get-docker/)
-  
-- To enable the OCR parsing capabilities, install [Tesseract v5.3.3](https://tesseract-ocr.github.io/tessdoc/Installation.html) and [Poppler v23.10.0](https://poppler.freedesktop.org/) native packages.
-
-</details>
-
-<details>
-  <summary><b>🚧 Change Log</b></summary>
 
 **Monday, July 29 - v03.4**  
 - Enhanced safety protections for text2sql db reads for LLMfx agents   
