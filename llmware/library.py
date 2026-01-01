@@ -1,4 +1,4 @@
-# Copyright 2023-2025 llmware
+# Copyright 2023-2026 llmware
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you
 # may not use this file except in compliance with the License.  You
@@ -27,7 +27,6 @@ import logging
 
 from llmware.configs import LLMWareConfig, LLMWareTableSchema
 from llmware.util import Utilities
-from llmware.graph import Graph
 from llmware.parsers import Parser
 from llmware.models import ModelCatalog
 from llmware.resources import CollectionRetrieval, CollectionWriter, CloudBucketManager
@@ -806,20 +805,6 @@ class Library:
                                                                        bucket_name, LLMWareConfig.get_input_path())
 
         return files_copied
-
-    def generate_knowledge_graph(self):
-        """Builds a statistical co-occurrence matrix for a library.
-        
-            Returns
-            -------
-            int
-                Returns 0 after successfully generating the knowledge graph and updating the status.
-        """
-
-        kg = Graph(library=self).build_graph()
-        self.set_knowledge_graph_status("yes")
-
-        return 0
 
     def install_new_embedding (self, embedding_model_name=None, vector_db=None,
                                from_hf= False, from_sentence_transformer=False, model=None, tokenizer=None, model_api_key=None,
