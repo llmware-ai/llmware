@@ -1679,7 +1679,26 @@ class LocalTokenizer:
                                            "pad_id": [1], "pad_token": "<pad>"},
 
             #   gpt2 tokenizer
-            "tokenizer_gpt2.json": {"bos_id": [50256], "bos_token": "", "eos_id": [50256], "eos_token": ""}
+            "tokenizer_gpt2.json": {"bos_id": [50256], "bos_token": "", "eos_id": [50256], "eos_token": ""},
+
+            #   granite tokenizer
+            "tokenizer_granite.json": {"bos_id": 100257, "bos_token": "<|end_of_text|>",
+                                       "eos_id": [100257], "eos_token": "<|end_of_text|>"},
+
+            "tokenizer_phi4.json": {"bos_id": 100257, "bos_token": "<|endoftext|>",
+                                    "eos_id": [100257, 100265], "eos_token": "<|endoftext|>"},
+
+            "tokenizer_phi4_mini.json": {"bos_id": 199999, "bos_token": "<|endoftext|>",
+                                         "eos_id": [199999, 200020], "eos_token": "<|endoftext|>"},
+
+            "tokenizer_stablelm_1_6.json": {"bos_id": 100257, "bos_token": "<|endoftext|>",
+                                            "eos_id": [100257], "eos_token": "<|endoftext|>"},
+
+            "tokenizer_gemma.json": {"bos_id": 2, "bos_token": "<bos>",
+                                     "eos_id": [1], "eos_token": "<eos>"},
+
+            "tokenizer_mistral_chat.json": {"bos_id": 1, "bos_token": "<s>",
+                                            "eos_id": [2, 32000, 32768], "eos_token": ["</s>", "<|im_end|>"]},
 
         }
 
