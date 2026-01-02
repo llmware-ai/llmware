@@ -105,7 +105,8 @@ class _ModelRegistry:
     #   we are treating these "prompt_wrappers" as core attributes of the model
     prompt_wrappers = ["alpaca", "human_bot", "chatgpt", "<INST>", "open_chat", "hf_chat", "chat_ml", "phi_3",
                        "llama_3_chat","tiny_llama_chat","stablelm_zephyr_chat", "google_gemma_chat",
-                       "vicuna_chat", "phi_4", "deepseek_chat"]
+                       "vicuna_chat", "phi_4", "deepseek_chat", "phi-4-mini",
+                       "granite_chat", "lfm2_chat", "olmo_chat", "oss_chat"]
 
     registered_wrappers = global_model_finetuning_prompt_wrappers_lookup
 
