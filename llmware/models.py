@@ -80,6 +80,7 @@ class _ModelRegistry:
     model_classes = {"ONNXGenerativeModel": {"module": "llmware.models", "open_source": True},
                      "OVGenerativeModel": {"module": "llmware.models", "open_source": True},
                      "GGUFGenerativeModel": {"module": "llmware.models", "open_source":True},
+                     "ONNXQNNGenerativeModel": {"module": "llmware.models", "open_source":True},
                      "WhisperCPPModel": {"module": "llmware.models", "open_source": True},
                      "HFGenerativeModel": {"module": "llmware.models", "open_source":True},
                      "HFReRankerModel": {"module": "llmware.models", "open_source": True},
@@ -6733,6 +6734,528 @@ class GoogleGeminiModel(BaseModel):
         self.register()
 
         return output_response
+
+
+class ONNXQNNGenerativeModel(BaseModel):
+
+    """ONNXQNNGenerativeModel class implements the ONNX generative model API in conjunction
+    with QNN execution provider to access NPU on Windows Arm 64.
+
+    note: this code and associated prepackaged models are pinned to the
+        following specific versions:
+
+        -- pip install onnxruntime-qnn==1.22.2
+        -- pip install onnxruntime-genai==0.9.0
+
+        ... built with qnn sdk 2.36.1
+        ... running on Windows Arm 64 Qualcomm Snapdragon NPU
+        ... does not currently support Android - but is on the roadmap
+
+    """
+
+    def __init__(self, model_name=None, api_key=None, model_card=None,
+                 prompt_wrapper=None, instruction_following=False, context_window=2048,
+                 use_gpu_if_available=True, trust_remote_code=True, sample=True, max_output=100, temperature=0.3,
+                 get_logits=False, api_endpoint=None, **kwargs):
+
+        super().__init__()
+
+        self.model_class = "ONNXQNNGenerativeModel"
+        self.model_category = "generative"
+        self.llm_response = None
+        self.usage = None
+        self.logits = None
+        self.output_tokens = None
+        self.final_prompt = None
+
+        logger.info(f"ONNXQNNGenerativeModel - starting constructor with model - {model_name}")
+
+        #   pull in expected hf input
+        self.model_name = model_name
+        self.hf_tokenizer_name = model_name
+        self.model = None
+        self.tokenizer = None
+        self.generator = None
+
+        self.sample = sample
+        self.get_logits = get_logits
+        self.auto_remediate_function_call_output = True
+
+        # Function Call parameters
+        self.model_card = model_card
+        self.logits_record = []
+        self.output_tokens = []
+        self.top_logit_count = 10
+        self.primary_keys = None
+        self.function = None
+        self.fc_supported = False
+        self.tool_type = None
+        self.npu_optimized = False
+
+        if model_card:
+
+            if "primary_keys" in model_card:
+                self.primary_keys = model_card["primary_keys"]
+
+            if "function" in model_card:
+                self.function = model_card["function"]
+
+            if "function_call" in model_card:
+                self.fc_supported = model_card["function_call"]
+
+            if "npu_optimized" in model_card:
+                self.npu_optimized = True
+
+        # instantiate if model_name passed without actual model and tokenizer
+        if model_name and not api_endpoint:
+
+            hf_repo_name = self.model_name
+
+            if not self.model_card:
+                self.model_card = ModelCatalog().lookup_model_card(self.model_name)
+
+            if self.model_card:
+                if "hf_repo" in self.model_card:
+                    hf_repo_name = self.model_card["hf_repo"]
+                    self.hf_tokenizer_name = hf_repo_name
+
+            self.model = None
+            self.tokenizer = None
+            self.tokenizer_stream = None
+
+            # set to defaults for HF models in Model Catalog
+            # this can be over-ridden post initiation if needed for custom models
+            self.prompt_wrapper = "human_bot"
+            self.instruction_following = False
+
+        self.params = None
+
+        # set specific parameters associated with custom models
+        # note - these two parameters will control how prompts are handled - model-specific
+        self.prompt_wrapper = "human_bot"
+        self.instruction_following = instruction_following
+
+        if not model_card:
+            # safety - empty iterable rather than 'None'
+            model_card = []
+
+        # deprecated attribute - will be removed in future releases
+        if "instruction_following" in model_card:
+            self.instruction_following = model_card["instruction_following"]
+        else:
+            self.instruction_following = False
+
+        if "prompt_wrapper" in model_card:
+            self.prompt_wrapper = model_card["prompt_wrapper"]
+        else:
+            self.prompt_wrapper = "human_bot"
+
+        # loads onnxruntime_genai, which in turn will look for backend qnn implementation
+        # please ensure that onnxruntime_qnn has been imported into the project
+        # onnxruntime_qnn==1.22.2
+
+        global GLOBAL_ONNX_GENAI_RUNTIME
+
+        if not GLOBAL_ONNX_GENAI_RUNTIME:
+
+            if util.find_spec("onnxruntime_genai"):
+
+                try:
+                    global og
+                    og = importlib.import_module("onnxruntime_genai")
+                    GLOBAL_ONNX_GENAI_RUNTIME = True
+                except:
+                    raise LLMWareException(message="ONNXQNNGenerativeModel: could not load onnxruntime_genai module. "
+                                                   "To fix: please check the following:\n"
+                                                   "1. pip install onnxruntime_qnn==1.22.2\n"
+                                                   "2. pip install onnxruntime_genai==0.9.0\n"
+                                                   "3. confirm Windows Arm64 with Snapdragon NPU")
+
+        #   sets trailing space default when constructing the prompt
+        #   in most cases, this is * no trailing space * but for some models, a trailing space or "\n" improves
+        #   performance
+
+        self.trailing_space = ""
+
+        if "trailing_space" in model_card:
+            self.trailing_space = model_card["trailing_space"]
+
+        self.model_type = None
+        self.config = None
+
+        # parameters on context len + output generation
+        self.max_total_len = context_window
+        self.max_input_len = int(0.5 * context_window)
+        self.llm_max_output_len = int(0.5 * context_window)
+
+        # key output parameters
+        self.max_output = max_output
+        self.target_requested_output_tokens = self.max_output
+
+        self.model_architecture = None
+        self.separator = "\n"
+
+        # use 0 as eos token id by default in generation -> but try to pull from model config
+        self.eos_token_id = 0
+
+        self.use_gpu = False
+
+        # coming soon
+        self.windows_local_foundry_active = False
+
+        # no api key expected or required
+        self.api_key = api_key
+
+        self.error_message = "\nUnable to identify and load HuggingFace model."
+
+        # temperature settings
+
+        # if temperature set at time of loading the model, then use that setting
+        if temperature != -99:
+            self.temperature = temperature
+        elif "temperature" in model_card:
+            # if not set, then pull the default temperature from the model card
+            self.temperature = model_card["temperature"]
+        else:
+            # if no guidance from model loading or model card, then set at default of 0.3
+            self.temperature = 0.3
+
+        self.add_prompt_engineering = False
+        self.add_context = ""
+        self.context = ""
+        self.prompt = ""
+
+        # not currently implemented for this model class
+        self.api_endpoint = api_endpoint
+
+        self.model_repo_path = None
+
+        # confirm platform check
+        import sys
+        import platform
+        plat = sys.platform
+        mach = platform.machine().lower()
+        logger.info(f"ONNXQNNGenerativeModel - platform - {plat} - machine - {mach}")
+
+        if not (plat == "win32" and mach == "arm64"):
+            logger.warning(f"ONNXQNNGenerativeModel is designed for Windows Arm64.")
+
+        self.post_init()
+
+    def load_model_for_inference(self, loading_directions, model_card=None):
+
+        """ Loads ONNX Model from local path using loading directions. """
+
+        self.model_repo_path = loading_directions
+
+        if model_card:
+            self.model_card = model_card
+
+        self.validate()
+
+        onnx_model_path = os.path.join(LLMWareConfig().get_model_repo_path(),
+                                       self.model_name)
+
+        if self.npu_optimized:
+            # get npu optimized onnxruntime with qnn
+            set_for_npu_qnn = True
+
+        # uses global onnxruntime_genai - constructing model from config
+        config = og.Config(onnx_model_path)
+        self.model = og.Model(config)
+
+        self.tokenizer = og.Tokenizer(self.model)
+        self.tokenizer_stream = self.tokenizer.create_stream()
+
+        search_options = {}
+        search_options['max_length'] = 2048
+        search_options['batch_size'] = 1
+        self.params = og.GeneratorParams(self.model)
+        self.params.set_search_options(**search_options)
+
+        logger.info(f"ONNXQNNGenerativeModel - constructed model - {self.model_name}.")
+
+        return self
+
+    def unload_model(self):
+        """ Not implemented. """
+        return True
+
+    def set_api_key(self, api_key, env_var=""):
+        """ Not implemented for ONNXQNNGenerativeModel """
+        return True
+
+    def _get_api_key(self, env_var=""):
+        """ Not implemented for ONNXQNNGenerativeModel """
+        return True
+
+    def inference(self, prompt, add_context=None, add_prompt_engineering=None, api_key=None,
+                  inference_dict=None):
+
+        """ Executes generation inference on model. """
+
+        # first prepare the prompt
+        t0 = time.time()
+
+        self.prompt = prompt
+
+        if add_context:
+            self.add_context = add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        #   add defaults if add_prompt_engineering not set
+        if not self.add_prompt_engineering:
+
+            if self.add_context:
+                self.add_prompt_engineering = "default_with_context"
+            else:
+                self.add_prompt_engineering = "default_no_context"
+
+        #   end - defaults update
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        self.preview()
+
+        text_prompt = self.prompt
+
+        if self.add_prompt_engineering:
+            prompt_enriched = self.prompt_engineer(self.prompt, self.add_context, inference_dict=inference_dict)
+            prompt_final = prompt_enriched
+            text_prompt = prompt_final + self.trailing_space
+
+        input_tokens = self.tokenizer.encode(text_prompt)
+
+        token_count = 0
+        output = ""
+
+        generator = og.Generator(self.model, self.params)
+
+        # note: onnxruntime_genai library makes a lot of small breaking changes
+        # in their generation loops -> this should be OK with versions >0.9.0
+        # if you see error, then check the documentation for onnxruntime_genai
+        # which is pretty good at explaining/documenting the change and how to fix
+
+        generator.append_tokens(input_tokens)
+
+        try:
+
+            while not generator.is_done():
+
+                token_count += 1
+
+                # change in v0.6 api - explicit compute logits call not required
+                # generator.compute_logits()
+
+                generator.generate_next_token()
+
+                # not activated currently
+                self.get_logits = False
+                # to get logit value
+                if self.get_logits:
+                    logit = generator.get_output("logits")
+                    self.register_top_logits(logit)
+
+                new_token = generator.get_next_tokens()[0]
+
+                if self.get_logits:
+                    self.output_tokens.append(new_token)
+
+                output += self.tokenizer_stream.decode(new_token)
+
+                if token_count > self.max_output:
+                    break
+
+        except Exception as e:
+            logger.warning(f"ONNXQNNGenerativeModel inference produced error - {e}")
+            pass
+
+        del generator
+
+        usage = {"input": len(input_tokens),
+                 "output": token_count,
+                 "total": len(input_tokens) + token_count,
+                 "metric": "tokens",
+                 "processing_time": time.time() - t0}
+
+        output_response = {"llm_response": output, "usage": usage}
+
+        if self.get_logits:
+            output_response.update({"logits": self.logits_record})
+            output_response.update({"output_tokens": self.output_tokens})
+            self.logits = self.logits_record
+
+        # output inference parameters
+        self.llm_response = output
+        self.usage = usage
+        self.final_prompt = text_prompt
+
+        self.register()
+
+        return output_response
+
+    def stream(self, prompt, add_context=None, add_prompt_engineering=None, api_key=None,
+               inference_dict=None, skip_pe_override=False):
+
+        """ Executes stream generation inference on model. """
+
+        # first prepare the prompt
+        t0 = time.time()
+
+        self.prompt = prompt
+
+        if add_context:
+            self.add_context = add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        #   add defaults if add_prompt_engineering not set
+        if not self.add_prompt_engineering:
+
+            if self.add_context:
+                self.add_prompt_engineering = "default_with_context"
+            else:
+                self.add_prompt_engineering = "default_no_context"
+
+        #   end - defaults update
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        self.preview()
+
+        text_prompt = self.prompt
+
+        if self.add_prompt_engineering and not skip_pe_override:
+            prompt_enriched = self.prompt_engineer(self.prompt, self.add_context, inference_dict=inference_dict)
+            prompt_final = prompt_enriched
+            text_prompt = prompt_final + self.trailing_space
+
+        logger.debug("ONNXQNNGenerative Model - onnx stream starting.")
+
+        input_tokens = self.tokenizer.encode(text_prompt)
+
+        token_count = 0
+        output = ""
+
+        # note: onnxruntime_genai library makes a lot of small breaking changes
+        # in their generation loops -> this should be OK with versions > 0.9.0
+        # if you see error, then check the documentation for onnxruntime_genai
+        # which is pretty good at explaining/documenting the change and how to fix
+
+        self.generator = og.Generator(self.model, self.params)
+
+        self.generator.append_tokens(input_tokens)
+
+        while True:
+
+            token_count += 1
+
+            # change in v0.6 api - no explicit compute logits call
+            # self.generator.compute_logits()
+
+            self.generator.generate_next_token()
+
+            if self.generator.is_done():
+                break
+
+            self.get_logits = False
+            # to get logit value
+            if self.get_logits:
+                logit = self.generator.get_output("logits")
+                self.register_top_logits(logit)
+
+            new_token = self.generator.get_next_tokens()[0]
+
+            if self.get_logits:
+                self.output_tokens.append(new_token)
+
+            output += self.tokenizer_stream.decode(new_token)
+
+            if token_count > self.max_output:
+                break
+
+            yield self.tokenizer_stream.decode(new_token)
+
+        self.generator = None
+
+        usage = {"input": len(input_tokens),
+                 "output": token_count,
+                 "total": len(input_tokens) + token_count,
+                 "metric": "tokens",
+                 "processing_time": time.time() - t0}
+
+        output_response = {"llm_response": output, "usage": usage}
+
+        if self.get_logits:
+            output_response.update({"logits": self.logits_record})
+            output_response.update({"output_tokens": self.output_tokens})
+            self.logits = self.logits_record
+
+        # output inference parameters
+        self.llm_response = output
+        self.usage = usage
+        self.final_prompt = text_prompt
+
+        self.register()
+
+        logger.debug("ONNXQNNGenerativeModel - completed stream generation.")
+
+        return output_response
+
+    def cleanup_stream_gen_on_early_stop(self):
+
+        self.generator = None
+        return True
+
+    def register_top_logits(self, logit):
+
+        """ Gets the top logits and keeps a running log for output analysis. """
+
+        # logit will be in form of (1,1,vocab_len), for all but the first logit
+        # if first logit (will have shape of context len - add [-1])
+
+        if logit.shape[1] > 1:
+            # used for first logit with shape, e.g., (1,input_token_len,vocab_size)
+            logit_array = logit.squeeze()[-1]
+        else:
+            # all other logits after the first token
+            logit_array = logit.squeeze()
+
+        logit_size = logit.shape[-1]
+
+        # useful check on shape of logit_array
+        logit_array_size = logit_array.shape
+
+        sm = np.exp(logit_array) / sum(np.exp(logit_array))
+
+        sm_sorted = np.sort(sm)
+        sm_args_sorted = np.argsort(sm)
+
+        top_logits = []
+
+        for x in range(0, self.top_logit_count):
+            # round the float number to 3 digits
+            pair = (sm_args_sorted[logit_size - x - 1], round(sm_sorted[logit_size - x - 1], 3))
+            top_logits.append(pair)
+
+        self.logits_record.append(top_logits)
+
+        return top_logits
 
 
 class LLMWareModel(BaseModel):
