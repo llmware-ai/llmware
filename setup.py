@@ -57,6 +57,7 @@ setup(
     install_requires=[
         'huggingface-hub>=0.19.4',
         'numpy>=1.23.2',
+        'requests>=2.32.0',
         'tokenizers>=0.15.0',
         'boto3>=1.24.53',
         'colorama==0.4.6'
