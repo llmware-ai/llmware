@@ -81,6 +81,7 @@ class _ModelRegistry:
                      "OVGenerativeModel": {"module": "llmware.models", "open_source": True},
                      "GGUFGenerativeModel": {"module": "llmware.models", "open_source":True},
                      "ONNXQNNGenerativeModel": {"module": "llmware.models", "open_source":True},
+                     "WindowsLocalFoundryModel": {"module": "llmware.models", "open_source":True},
                      "WhisperCPPModel": {"module": "llmware.models", "open_source": True},
                      "HFGenerativeModel": {"module": "llmware.models", "open_source":True},
                      "HFReRankerModel": {"module": "llmware.models", "open_source": True},
@@ -140,6 +141,8 @@ class _ModelRegistry:
                         "q_gen": "slim-q-gen-tiny-tool",
                         "qa_gen": "slim-qa-gen-tiny-tool"
                         }
+
+    _foundry_manager = None
 
     @classmethod
     def get_model_list(cls):
@@ -274,7 +277,6 @@ class _ModelRegistry:
             #   go ahead and add model to the catalog
 
             cls.registered_models.append(model_card_dict)
-
         else:
             raise ModelCardNotRegisteredException("New-Model-Card-Missing-Keys")
 
@@ -345,6 +347,27 @@ class _ModelRegistry:
     @classmethod
     def reset_to_default_catalog(cls):
         cls.registered_models = global_model_repo_catalog_list
+
+
+    @classmethod
+    def get_foundry_manager(cls):
+        return cls._foundry_manager
+
+    @classmethod
+    def reset_foundry_manager(cls):
+        cls._foundry_manager = None
+        return True
+
+    @classmethod
+    def set_foundry_manager(cls, mgr):
+        cls._foundry_manager = mgr
+        return mgr
+
+    @classmethod
+    def create_new_foundry_manager(cls):
+        from foundry_local import FoundryLocalManager
+        cls._foundry_manager = FoundryLocalManager()
+        return cls._foundry_manager
 
 
 def pull_model_from_hf(model_card, local_model_repo_path, api_key=None, **kwargs):
@@ -496,6 +519,7 @@ class ModelCatalog:
         #   Builds on standard model classes with standard inference
 
         self.model_classes = _ModelRegistry().get_model_classes()
+
         self.global_model_list = _ModelRegistry().get_model_list()
 
         self.base_attributes = _ModelRegistry().get_model_catalog_vars()
@@ -912,6 +936,7 @@ class ModelCatalog:
 
         # first check in the global_model_repo + confirm location
         for models in self.global_model_list:
+
             # add option to match with display_name as alternative alias for model
             if models["model_name"] == selected_model_name or models["display_name"] == selected_model_name:
                 model_card = models
@@ -1371,6 +1396,18 @@ class ModelCatalog:
                 open_source_models.append(x)
 
         return open_source_models
+
+    def list_models_by_type(self, model_family):
+
+        model_list = []
+
+        model_family = "WindowsLocalFoundryModel"
+        for model in self.global_model_list:
+
+            if model["model_family"].lower() == model_family.lower():
+                model_list.append(model)
+
+        return model_list
 
     def list_embedding_models(self):
 
@@ -11922,4 +11959,783 @@ class CustomPTLoader:
         tokenizer=None
         return tokenizer
 
+
+class WindowsLocalFoundryHandler:
+
+    """ Main handler for interface with Windows Local Foundry integration.
+    Model inferencing handled by implementation of WindowsLocalFoundryModel,
+    which subclasses BaseModel and mirrors closely the OpenAIModel class. """
+
+    def __init__(self):
+
+        self.model_id = ""
+        self.api_key = ""
+        self.base_url = None
+
+    def get_manager(self):
+
+        """ Checks if manager instance already created, and if not, creates new one.
+            This is the single entry point to get access to low level manager. """
+
+        foundry_mgr = _ModelRegistry().get_foundry_manager()
+
+        if not foundry_mgr:
+
+            try:
+                from foundry_local import FoundryLocalManager
+            except:
+                logger.warning(f"WindowsLocalFoundryHandler - could not "
+                               f"load FoundryLocalManager SDK")
+                return None
+
+            # optional - check local uri
+            # from foundry_local.service import get_service_uri
+            # uri = get_service_uri()
+
+            # create new manager and save in ModelHQ state
+            foundry_mgr = _ModelRegistry().set_foundry_manager(FoundryLocalManager())
+
+            if foundry_mgr:
+                if hasattr(foundry_mgr, "endpoint"):
+                    self.base_url = foundry_mgr.endpoint
+
+        return foundry_mgr
+
+    def activate_catalog(self, activate_status):
+
+        """ Connect with Windows Local Foundry, poll for latest model list
+        and activate in the LLMWare Model Catalog. """
+
+        result = True
+
+        mgr = self.get_manager()
+        if not mgr:
+            logger.info(f"Service not available - can not activate catalog")
+            activate_status = False
+            result = False
+
+        if activate_status:
+
+            if not self.is_server_started():
+                self.start_server()
+
+            # get available models + create ext catalog
+            model_list = self.create_model_catalog_extension()
+
+            for model in model_list:
+                _ModelRegistry().add_model(model)
+                mn = model.get("model_name", "")
+                logger.info(f"WindowsLocalFoundryManager - adding foundry model - {mn}")
+
+        else:
+
+            # remove instance from state
+            _ModelRegistry().reset_foundry_manager()
+
+        return result
+
+    def test_foundry(self):
+
+        """ Confirm that server has started and is running. """
+
+        mgr = self.get_manager()
+
+        if not mgr:
+            explanation = ("LocalFoundry Manager could not be created - "
+                           "service does not appear to be available.")
+            return False, explanation
+
+        started = self.is_server_started()
+
+        if started:
+            return True, "Server has started"
+
+        else:
+            # not started
+            pass
+
+        if mgr:
+            if hasattr(mgr, "endpoint"):
+                self.base_url = mgr.endpoint
+            if hasattr(mgr, "api_key"):
+                self.api_key = mgr.api_key
+
+        return True, "Server Available but not Started"
+
+    def start_server_if_needed(self):
+
+        """ Start Windows Local Foundry server, if needed. """
+
+        if not self.is_server_started():
+            self.start_server()
+
+        return True
+
+    def is_server_started(self):
+
+        """ Check if Windows Local Foundry server has been started. """
+
+        mgr = self.get_manager()
+        started = False
+        if mgr:
+            started = mgr.is_service_running()
+        return started
+
+    def start_server(self):
+
+        """ Start Windows Local Foundry server. """
+
+        mgr = self.get_manager()
+        x = mgr.start_service()
+        return True
+
+    def stop_server(self):
+
+        """ Stop Windows Local Foundry server. """
+
+        import subprocess
+        cmd_args = "foundry service stop"
+
+        try:
+            subprocess.Popen(cmd_args, shell=True)
+            logger.info(f"WindowsLocalFoundryModel - server "
+                        f"stopped successfully")
+
+        except:
+            logger.info(f"WindowsLocalFoundryModel - tried to stop server - "
+                        f"unsuccessful - skipping")
+
+        return True
+
+    def check_if_cached(self, model_name):
+
+        """ Check if model is cached in .foundry locally """
+
+        is_cached = False
+
+        if model_name.endswith("-foundry"):
+            model_name = model_name[0:-len("-foundry")]
+
+        mgr = self.get_manager()
+
+        if not mgr:
+            return False
+
+        cached_models = mgr.list_cached_models()
+
+        # check if selected model in cache
+        for model in cached_models:
+
+            # model_id = model.id
+            # model_alias = model.alias
+            if model_name in [model.id, model.alias]:
+
+                is_cached = True
+                break
+
+        return is_cached
+
+    def download_if_needed(self, model_name):
+
+        """ Download local foundry manager, if not cached """
+
+        is_cached = self.check_if_cached(model_name)
+        if not is_cached:
+            confirmation = self.download_model(model_name)
+
+        return True
+
+    def download_model(self, model_name):
+
+        """ Download model through Windows Local Foundry """
+
+        # Download and load a model
+        mgr = self.get_manager()
+        model_info = mgr.download_model(model_name)
+
+        return model_info
+
+    def load_model(self, model_name,auto_unload=True):
+
+        """ Load model from local .foundry cache """
+
+        mgr = self.get_manager()
+        mgr.load_model(model_name)
+
+        return True
+
+    def unload_model(self, model_name):
+
+        """ Unload model from Windows Local Foundry """
+
+        mgr = self.get_manager()
+        mgr.unload_model(model_name)
+        return True
+
+    def list_all_models(self):
+
+        """ List all models available in Foundry Local repository """
+
+        # List available models in the catalog
+        mgr = self.get_manager()
+        catalog = mgr.list_catalog_models()
+
+        # alias | id | version | device_type | runtime | uri | file_size prompt_template | prompt
+        # device_type - CPU | GPU | NPU
+
+        return catalog
+
+    def release_all_models(self):
+
+        """ Release all models from Windows Local Foundry """
+
+        # safety check for Windows Local Foundry
+
+        response = False
+
+        if self.is_server_started():
+            response = True
+            mgr = self.get_manager()
+            list_loaded_models = mgr.list_loaded_models()
+            if list_loaded_models:
+                for model in list_loaded_models:
+
+                    mgr.unload_model(model.id, force=True)
+                    logger.info(f"release_all_models - unloading model - {model.id}")
+
+                    list_loaded_models = mgr.list_loaded_models()
+                    logger.info(f"release_all_models - updated loaded models - "
+                                f"{list_loaded_models}")
+
+        return response
+
+    def _estimate_params(self, file_size_mb):
+
+        """ Quick estimation of the parameter count based on
+        binary file size of .foundry asset. """
+
+        # if no indicator found
+        default_params = 3
+
+        if file_size_mb >= 7000:
+            params = 14
+            return params
+
+        elif 3000 <= file_size_mb < 7000:
+            params = 7
+            return params
+
+        elif 1000 <= file_size_mb < 3000:
+            params = 3
+            return params
+
+        elif 100 <= file_size_mb < 1000:
+            params = 1
+            return params
+
+        else:
+            # default - unexpected
+            return default_params
+
+    def create_model_catalog_extension(self):
+
+        """ Create model catalog entry """
+
+        mc_ext = []
+        models = self.list_all_models()
+        names_only = []
+
+        for m in models:
+
+            new_card = {}
+            ctx = 8192
+
+            model_mb = m.file_size_mb
+            params = self._estimate_params(model_mb)
+
+            device_type = ""
+            if hasattr(m, "device_type"):
+                device_type = m.device_type
+
+            if device_type not in ["CPU", "GPU", "NPU"]:
+                if "npu" in m.id:
+                    device_type = "NPU"
+                elif "gpu" in m.id:
+                    device_type = "GPU"
+                elif "cpu" in m.id:
+                    device_type = "CPU"
+                else:
+                    device_type = "CPU"
+
+            if m.id not in names_only:
+
+                new_card.update({"model_name": m.id + "-foundry"})
+
+                # keep m.id for uniqueness (rather than m.alias)
+                new_card.update({"display_name": m.id + "-foundry"})
+
+                new_card.update({"model_family": "WindowsLocalFoundryModel"})
+                new_card.update({"model_category": "generative-api"})
+                new_card.update({"device_type": device_type})
+                new_card.update({"parameters": params})
+                new_card.update({"model_location": "api"})
+                new_card.update({"context_window": ctx})
+                new_card.update({"tags": ["llmware-chat", f"p{params}",
+                                          "windows_local_foundry",
+                                          "green", "emerald", "api"]})
+
+                mc_ext.append(new_card)
+                names_only.append(m.id)
+
+        return mc_ext
+
+    def list_all_cached_models(self):
+
+        """ List all locally cached models in .foundry """
+
+        model_list = []
+        # List models in cache
+        mgr = self.get_manager()
+        local_models = mgr.list_cached_models()
+        logger.info(f"Models in cache - {local_models}")
+        return model_list
+
+
+class WindowsLocalFoundryModel(BaseModel):
+
+    """ WindowsLocalFoundryModel class implements the Windows Local Foundry API. """
+
+    def __init__(self, model_name=None, api_key=None, context_window=8192,
+                 max_output=1000, temperature=0.0, **kwargs):
+
+        super().__init__(**kwargs)
+
+        logger.info(f"WindowsLocalFoundryModel - constructing model - {model_name}")
+
+        self.model_class = "WindowsLocalFoundryModel"
+        self.model_category = "generative"
+        self.llm_response = None
+        self.usage = None
+        self.logits = None
+        self.output_tokens = None
+        self.final_prompt = None
+
+        # strip "-foundry" identifier
+        if model_name.endswith("-foundry"):
+            model_name = model_name[0:-len("-foundry")]
+
+        self.model_name = model_name
+
+        if api_key:
+            self.api_key = api_key
+
+        self.error_message = ("\nUnable to connect to WindowsLocalFoundry Model. "
+                              "Please try again later.")
+
+        self.separator = "\n"
+
+        # assume input (50%) + output (50%)
+        self.max_total_len = context_window
+        self.max_input_len = int(context_window * 0.5)
+        self.llm_max_output_len = int(context_window * 0.5)
+
+        # inference settings
+        if temperature >= 0.0:
+            self.temperature = temperature
+        else:
+            self.temperature = 0.0
+
+        self.target_requested_output_tokens = max_output
+        self.add_prompt_engineering = False
+        self.add_context = ""
+        self.prompt = ""
+        self.context = ""
+
+        self.instruction_following = False
+        self.prompt_wrapper = None
+
+        # provides option to pass custom openai_client to
+        # model class at inference time
+        self.openai_client = None
+
+        if "model_card" in kwargs:
+            self.model_card = kwargs["model_card"]
+        else:
+            self.model_card = {}
+
+        self.available = True
+
+        self.manager = None
+        self.base_url = ""
+        self.api_key = ""
+        self.model_id = ""
+
+        self.prepare_foundry_manager_and_model()
+
+        self.post_init()
+
+        logger.info(f"WindowsLocalFoundryModel - constructed successfully")
+
+    def prepare_foundry_manager_and_model(self):
+
+        """ Consolidates all init steps around the foundry manager and model """
+
+        foundry_handler = WindowsLocalFoundryHandler()
+
+        mgr = foundry_handler.get_manager()
+        list_loaded_models = mgr.list_loaded_models()
+
+        loaded_model = None
+
+        if list_loaded_models:
+            for model in list_loaded_models:
+                mgr.unload_model(model.id, force=True)
+
+                logger.info(f"prepare_foundry_manager_and_model - unloading model - {model.id}")
+
+                list_loaded_models = mgr.list_loaded_models()
+
+                logger.info(f"prepare_foundry_manager_and_model - "
+                            f"unloading model - {list_loaded_models}")
+
+        if loaded_model:
+            if loaded_model != self.model_name:
+                if mgr:
+                    foundry_handler.unload_model(loaded_model)
+
+        if mgr:
+            self.available = True
+            foundry_handler.start_server_if_needed()
+            confirmation = foundry_handler.download_if_needed(self.model_name)
+
+            mgr.load_model(self.model_name)
+
+            self.manager = mgr
+            self.base_url = self.manager.endpoint
+            self.api_key = self.manager.api_key
+            self.model_id = self.manager.get_model_info(self.model_name).id
+
+        return True
+
+    def prompt_engineer_chatgpt3(self, query, context, inference_dict=None):
+
+        """ Builds prompt in ChatGPT format.  """
+
+        if not self.add_prompt_engineering:
+            if context:
+                selected_prompt = "default_with_context"
+            else:
+                selected_prompt = "default_no_context"
+        else:
+            if context:
+                selected_prompt = "default_with_context"
+            else:
+                selected_prompt = "default_no_context"
+
+        prompt_dict = PromptCatalog().build_core_prompt(prompt_name=selected_prompt,
+                                                        separator=self.separator,
+                                                        query=query, context=context,
+                                                        inference_dict=inference_dict)
+
+        system_message = prompt_dict["prompt_card"]["system_message"]
+        if not system_message:
+            system_message = "You are a helpful assistant."
+
+        system_instruction = None
+        if inference_dict:
+            if "system_instruction" in inference_dict:
+                system_instruction = inference_dict["system_instruction"]
+        if not system_instruction:
+            system_instruction = system_message
+
+        core_prompt = prompt_dict["core_prompt"]
+
+        messages = [
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": core_prompt}
+        ]
+
+        return messages
+
+    def prompt_engineer(self, query, context,inference_dict=None):
+
+        # unpack system instruction and chat history
+        messages = []
+
+        # this is the core message = context + query
+        if context:
+            output = context + "\n" + query
+        else:
+            output = query
+
+        chat_history = []
+        system_instruction = ""
+        if inference_dict:
+            if "chat_history" in inference_dict:
+                chat_history = inference_dict["chat_history"]
+            if "system_instruction" in inference_dict:
+                system_instruction = inference_dict["system_instruction"]
+
+        if not system_instruction:
+            system_instruction = "You are a helpful assistant."
+
+        # start with system message
+        messages.append({"role": "system", "content": system_instruction})
+
+        if chat_history:
+            for turn in chat_history:
+                messages.append({"role": "user", "content": turn["user"]})
+                messages.append({"role": "assistant",
+                                 "content": turn["assistant"]})
+
+        messages.append({"role": "user", "content": output})
+
+        return messages
+
+    def load_model_for_inference(self):
+
+        """ Check if model available, and if not load """
+
+        confirmation = WindowsLocalFoundryHandler().download_if_needed(self.model_name)
+
+        return True
+
+    def unload_model(self, model_name):
+
+        foundry_name = model_name
+
+        if model_name.endswith("-foundry"):
+            foundry_name = model_name[0:-len("-foundry")]
+
+        try:
+            from foundry_local import FoundryLocalManager
+            response = FoundryLocalManager().unload_model(foundry_name, force=True)
+            logger.info(f"WindowsLocalFoundryModel - "
+                        f"successful unload model")
+
+        except:
+            logger.info(f"WindowsLocalFoundryModel - unload not successful - "
+                        f"skipping")
+
+        return True
+
+    def close(self):
+
+        logger.info(f"WindowsLocalFoundryModel close model - {self.model_name}")
+
+        foundry_name = self.model_name
+
+        if self.model_name.endswith("-foundry"):
+            foundry_name = self.model_name[0:-len("-foundry")]
+
+        try:
+            response = self.manager.unload_model(foundry_name, force=True)
+            logger.info(f"WindowsLocalFoundryModel - "
+                        f"successful unload model")
+        except:
+            logger.info(f"WindowsLocalFoundryModel - unload not successful - "
+                        f"skipping")
+
+        return True
+
+    def inference(self, prompt, add_context=None, add_prompt_engineering=None, inference_dict=None,
+                  api_key=None):
+
+        """ Executes inference on OpenAI Model.  Only required input is text-based prompt, with optional
+        parameters to "add_context" passage that will be assembled using the prompt style in the
+        "add_prompt_engineering" parameter.  Optional inference_dict for temperature and max_tokens configuration,
+        and optional passing of api_key at time of inference. """
+
+        self.prompt = prompt
+
+        if add_context:
+            self.add_context = add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+            if "openai_client" in inference_dict:
+                self.openai_client = inference_dict["openai_client"]
+
+        from llmware.configs import OpenAIConfig
+
+        #   call to preview hook (not implemented by default)
+        self.preview()
+
+        # start change here
+
+        prompt_enriched = self.prompt_engineer(prompt,add_context,
+                                               inference_dict=inference_dict)
+
+        # new - change with openai v1 api
+        try:
+            from openai import OpenAI
+        except ImportError:
+            raise DependencyNotInstalledException("openai >= 1.0")
+
+        usage = {}
+        time_start = time.time()
+
+        # Configure the client to use the local Foundry service
+        client = OpenAI(base_url=self.base_url, api_key=self.api_key)
+
+        if self.model_name.endswith("-foundry"):
+            model_name = self.model_name[0:-(len("-foundry"))]
+        else:
+            model_name = self.model_name
+
+        # start here
+
+        # Set the model to use and generate a streaming response
+        stream = client.chat.completions.create(
+            model=self.model_id,
+            # messages=[{"role": "user", "content": prompt_enriched}],
+            messages=prompt_enriched,
+            stream=True,
+            max_tokens=self.target_requested_output_tokens
+        )
+
+        text_out = ""
+        prompt_tokens = 0
+        completion_tokens = 0
+
+        # Print the streaming response
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                token = chunk.choices[0].delta.content or ""
+                # print(chunk.choices[0].delta.content, end="", flush=True)
+                text_out += token
+                # yield token
+
+        output_response = {"llm_response": text_out, "usage": usage}
+
+        # output inference parameters
+        self.llm_response = text_out
+        self.usage = usage
+        self.logits = None
+        self.output_tokens = None
+        self.final_prompt = prompt_enriched
+
+        self.register()
+
+        return output_response
+
+    def stream(self, prompt, add_context=None, add_prompt_engineering=None, inference_dict=None,
+                  api_key=None):
+
+        """ Executes stream inference on Windows Local Foundry Model with
+        OpenAI-compatible API.
+
+        Only required input is text-based prompt, with optional
+        parameters to "add_context" passage that will be assembled using the prompt style in the
+        "add_prompt_engineering" parameter.  Optional inference_dict for temperature and max_tokens configuration,
+        and optional passing of api_key at time of inference.
+        """
+
+        self.available = True
+
+        if not self.available:
+            logger.warning(f"WindowsLocalFoundryModel - could not connect to service - "
+                           f"unfortunately, model is not available.")
+
+            usage = {"input": 0, "output": 0, "total": 0, "metric": "tokens",
+                     "processing_time": 0.0}
+
+            output_response = {"llm_response": "Service Not Available",
+                               "usage": usage}
+
+            return output_response
+
+        self.prompt = prompt
+
+        if add_context:
+            self.add_context = add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+            if "openai_client" in inference_dict:
+                self.openai_client = inference_dict["openai_client"]
+
+        from llmware.configs import OpenAIConfig
+
+        #   call to preview hook (not implemented by default)
+        self.preview()
+
+        # default case - pass the prompt received without change
+        # prompt_enriched = self.prompt
+
+        prompt_enriched = self.prompt_engineer(prompt,add_context,
+                                               inference_dict=inference_dict)
+
+        logger.info(f"WindowsLocalFoundryModel - stream - created prompt - "
+                    f"starting stream")
+
+        # new - change with openai v1 api
+        try:
+            from openai import OpenAI
+        except ImportError:
+            raise DependencyNotInstalledException("openai >= 1.0")
+
+        usage = {}
+        time_start = time.time()
+
+        # Configure the client to use the local Foundry service
+        client = OpenAI(base_url=self.base_url, api_key=self.api_key)
+
+        # Set the model to use and generate a streaming response
+        stream = client.chat.completions.create(
+            model=self.model_id,
+            # messages=[{"role": "user", "content": prompt_enriched}],
+            messages=prompt_enriched,
+            stream=True,
+            max_tokens=self.target_requested_output_tokens
+        )
+
+        text_out = ""
+        prompt_tokens = 0
+        completion_tokens = 0
+
+        # Print the streaming response
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                token = chunk.choices[0].delta.content or ""
+                # print(chunk.choices[0].delta.content, end="", flush=True)
+                text_out += token
+                yield token
+
+        usage = {"input": prompt_tokens,
+                 "output": completion_tokens,
+                 "total": prompt_tokens + completion_tokens,
+                 "metric": "tokens",
+                 "processing_time": time.time() - time_start}
+
+        output_response = {"llm_response": text_out, "usage": usage}
+
+        # output inference parameters
+        self.llm_response = text_out
+        self.usage = usage
+        self.logits = None
+        self.output_tokens = None
+        self.final_prompt = prompt_enriched
+
+        self.register()
+
+        return output_response
 
