@@ -3525,7 +3525,47 @@ global_model_repo_catalog_list = [
          "fetch": {"snapshot": True, "module": "llmware.models",
                "method": "pull_snapshot_from_hf"},
          "validation_files": [],
-         "link": "https://huggingface.co/llmware/phi-3.5-mini-instruct-onnx-qnn"}
+         "link": "https://huggingface.co/llmware/phi-3.5-mini-instruct-onnx-qnn"},
+
+        {"model_name": "jina-reranker-tiny-onnx",
+         "model_family": "ONNXEmbeddingModel",
+         "model_category": "embedding",
+         "display_name": "jina-reranker-tiny-onnx",
+         "model_location": "llmware_repo", "embedding_dims": 384,
+         "context_window": 8192, "use_case": "ranker",
+         "hf_repo": "llmware/jina-reranker-tiny-onnx",
+         "custom_model_files": [], "custom_model_repo": "",
+         "link": "https://huggingface.co/llmware/jina-reranker-tiny-onnx"},
+
+        {"model_name": "jina-reranker-turbo-onnx",
+         "model_family": "ONNXEmbeddingModel",
+         "model_category": "embedding",
+         "display_name": "jina-reranker-turbo-onnx",
+         "model_location": "llmware_repo", "embedding_dims": 384,
+         "context_window": 8192, "use_case": "ranker",
+         "hf_repo": "llmware/jina-reranker-turbo-onnx",
+         "custom_model_files": [], "custom_model_repo": "",
+         "link": "https://huggingface.co/llmware/jina-reranker-turbo-onnx"},
+
+        {"model_name": "protectai-prompt-injection-onnx",
+         "display_name": "protectai-prompt-injection-onnx",
+         "model_family": "ONNXEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 768, "context_window": 512, "link": "https://none",
+         "hf_repo": "llmware/protectai-prompt-injection-onnx", "use_case": "classifier",
+         "custom_model_repo": "", "pytorch_model_repo": "protectai/deberta-v3-base-prompt-injection"},
+
+        {"model_name": "valurank-bias-onnx", "display_name": "valurank-bias-onnx",
+         "model_family": "ONNXEmbeddingModel", "model_category": "embedding",
+         "model_location": "llmware_repo", "use_case": "classifier",
+         "embedding_dims": 768, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "pytorch_model_repo": "valurank/distilroberta-bias",
+         "hf_repo": "llmware/valurank-distilroberta-bias-onnx"},
+
+        {"model_name": "unitary-toxic-roberta-onnx", "display_name": "unitary-toxic-roberta-onnx",
+         "model_family": "ONNXEmbeddingModel", "model_category": "embedding",
+         "model_location": "llmware_repo", "use_case": "classifier",
+         "embedding_dims": 768, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/unitary-unbiased-toxic-roberta-onnx"}
 
 
 ]
