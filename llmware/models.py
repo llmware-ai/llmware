@@ -60,6 +60,12 @@ openvino = None
 GLOBAL_ONNX_GENAI_RUNTIME = False
 og = None
 
+#   onnxruntime - import only if needed
+#   -- onnxruntime is dependency of ONNXEmbeddingModel
+#   -- it is called implicitly by ONNXGenerativeModel
+GLOBAL_ONNX_CORE_RUNTIME = False
+ort = None
+
 logger = logging.getLogger(__name__)
 logger.setLevel(level=LLMWareConfig().get_logging_level_by_module(__name__))
 
@@ -81,6 +87,7 @@ class _ModelRegistry:
                      "OVGenerativeModel": {"module": "llmware.models", "open_source": True},
                      "GGUFGenerativeModel": {"module": "llmware.models", "open_source":True},
                      "ONNXQNNGenerativeModel": {"module": "llmware.models", "open_source":True},
+                     "ONNXEmbeddingModel": {"module": "llmware.models", "open_source": True},
                      "WindowsLocalFoundryModel": {"module": "llmware.models", "open_source":True},
                      "WhisperCPPModel": {"module": "llmware.models", "open_source": True},
                      "HFGenerativeModel": {"module": "llmware.models", "open_source":True},
@@ -1401,7 +1408,8 @@ class ModelCatalog:
 
         model_list = []
 
-        model_family = "WindowsLocalFoundryModel"
+        # e.g., model_family = "WindowsLocalFoundryModel"
+
         for model in self.global_model_list:
 
             if model["model_family"].lower() == model_family.lower():
@@ -12739,3 +12747,310 @@ class WindowsLocalFoundryModel(BaseModel):
 
         return output_response
 
+
+class ONNXEmbeddingModel(BaseModel):
+
+    """ ONNXEmbeddingModel class implements support for onnxruntime reranking,
+    and classifier models. Despite the name, true batch 'embedding' method is
+    not yet implemented but is on roadmap.
+
+    This is intended to be a simple interface to use encoder-based models in ONNX,
+    especially for on-device use. """
+
+    def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None,
+                 model_card=None, embedding_dims=None, max_len=None,
+                 device="CPU", **kwargs):
+
+        super().__init__(**kwargs)
+
+        self.model_class = "ONNXEmbeddingModel"
+        self.model_category = "embedding"
+        self.model_name = model_name
+        self.model = model
+        self.tokenizer = tokenizer
+        self.embedding_dims = embedding_dims
+        self.model_type = None
+        self.max_total_len = 512
+        self.model_architecture = None
+        self.model_card = model_card
+        self.safe_buffer = 12
+        self.device = device
+        self.context_window = 512
+
+        # main handler for model inference session
+        self.ort_session = None
+
+        if self.model_card:
+            if "embedding_dims" in self.model_card:
+                self.embedding_dims = self.model_card["embedding_dims"]
+
+            if "context_window" in self.model_card:
+                self.context_window = self.model_card["context_window"]
+
+        self.use_gpu = False
+        self.api_key = api_key
+
+        if self.context_window > self.safe_buffer:
+            self.max_len = self.context_window - self.safe_buffer
+        else:
+            self.max_len = self.context_window
+
+        if max_len:
+            if max_len:
+                if max_len < self.context_window:
+                    self.max_len = max_len
+
+        self.text_sample = None
+        self.model_folder_path = None
+
+        global GLOBAL_ONNX_CORE_RUNTIME
+
+        if not GLOBAL_ONNX_CORE_RUNTIME:
+
+            if util.find_spec("onnxruntime"):
+
+                # note: we import the pybind11 c++ wrapper interface directly
+
+                try:
+                    global ort
+                    ort = importlib.import_module("onnxruntime.capi.onnxruntime_pybind11_state")
+                    GLOBAL_ONNX_CORE_RUNTIME = True
+                except:
+                    raise LLMWareException(message="ONNXEmbeddingModel: could not load onnxruntime module. "
+                                                   "If you have pip installed the library, then please check "
+                                                   "that your platform is supported by onnxruntime.")
+
+            else:
+
+                raise LLMWareException(message="ONNXEmbeddingModel: need to import "
+                                               "onnxruntime to use this class, e.g., 'pip3 install "
+                                               "onnxruntime`")
+
+        # end dynamic import here
+
+        # self.post_init()
+
+    def load_model_for_inference(self, loading_directions, model_card=None):
+
+        """ Instantiates and loads model from local cache. """
+
+        if model_card:
+            self.model_card = model_card
+
+        # onnx expects a string path
+        self.model_folder_path = loading_directions
+
+        # instantiate the tokenizer from tokenizer.json file
+        # using hf tokenizers library
+        from tokenizers import Tokenizer
+        tokenizer_fn = "tokenizer.json"
+        self.tokenizer = Tokenizer.from_file(os.path.join(loading_directions, tokenizer_fn))
+
+        # currently hard-coded - adjust settings to increase size of text
+        self.tokenizer.enable_padding(length=150)
+        self.tokenizer.enable_truncation(150)
+
+        # currently hard-coded - load model.onnx file
+        model_fn = "model.onnx"
+        onnx_model_path = os.path.join(loading_directions, model_fn)
+
+        # create and initialize InferenceSession in onnxruntime
+        # -- calling methods directly in the pybind c++ .pyd file
+
+        session_options = ort.get_default_session_options()
+        self.ort_session = ort.InferenceSession(session_options, onnx_model_path, True, False)
+
+        # TODO: add more options and configs around providers and provider options
+        providers = []
+        provider_options = [dict()]
+        disabled_optimizers = set()
+
+        self.ort_session.initialize_session(providers, provider_options, disabled_optimizers)
+
+        # end - created and initialized onnxruntime session
+
+        return self
+
+    @staticmethod
+    def sigmoid(x):
+
+        """ Utility function to return sigmoid """
+
+        return 1.0 / (1.0 + np.exp(-x))
+
+    def rank(self, query, text_results, api_key=None, text_index="text",
+             top_n=20, relevance_threshold=None, min_return=3):
+
+        """ Executes reranking inference. """
+
+        #   call to preview (not implemented by default)
+        # self.preview()
+
+        batches = []
+        if len(text_results) <= 32:
+            # need to package in chunks
+            batches.append(text_results)
+        else:
+            batch_count = len(text_results) // 32
+            if len(text_results) > batch_count * 32:
+                batch_count += 1
+            for x in range(0, batch_count):
+                stopper = min(len(text_results), (x + 1) * 32)
+                new_batch = text_results[x * 32:stopper]
+                batches.append(new_batch)
+
+        output = []
+
+        for batch in batches:
+            documents = []
+            for i, chunks in enumerate(batch):
+                documents.append(chunks[text_index])
+
+            # runs the inference to get similarity score
+            scores = self.compute_score(query, documents)
+
+            if not isinstance(scores, list):
+                scores = [scores]
+
+            for i, score in enumerate(scores):
+                batch[i].update({"rerank_score": score})
+                output.append(batch[i])
+
+        ranked_output = sorted(output, key=lambda x: x["rerank_score"], reverse=True)
+
+        #   will return top_n if no relevance threshold set
+        if not relevance_threshold:
+            if top_n < len(ranked_output):
+                final_output = ranked_output[0:top_n]
+            else:
+                final_output = ranked_output
+        else:
+            final_output = []
+            #   if relevance threshold, will return all results above threshold
+            for entries in ranked_output:
+                if entries["rerank_score"] >= relevance_threshold:
+                    final_output.append(entries)
+
+            #   fallback, if no result above threshold, then will return the min number of results
+            if len(final_output) == 0:
+                final_output = ranked_output[0:min_return]
+
+        self.register()
+
+        return final_output
+
+    def compute_score(self, query, documents, batch_size: int = 32):
+
+        """ Runs the core ranking inference to determine semantic similarity -
+        called by rank method """
+
+        sentence_pairs = [[query, doc] for doc in documents]
+
+        if isinstance(sentence_pairs[0], str):
+            sentence_pairs = [sentence_pairs]
+
+        self.tokenizer.enable_truncation(100)
+        self.tokenizer.enable_padding(pad_token="<pad>")
+
+        all_scores = []
+        for start_index in range(0, len(sentence_pairs), batch_size):
+            sentence_batch = sentence_pairs[start_index: start_index + batch_size]
+
+            input_ids = []
+            attn_mask = []
+
+            tokenizer_output = self.tokenizer.encode_batch(sentence_batch)
+
+            for sequence in tokenizer_output:
+                input_ids.append(sequence.ids)
+                attn_mask.append(sequence.attention_mask)
+
+            input_ids = np.array(input_ids, dtype=np.int64)
+            attn_mask = np.array(attn_mask, dtype=np.int64)
+
+            # onnxruntime - run inference session
+
+            output_names = [output.name for output in self.ort_session.outputs_meta]
+
+            # replace None with output_names
+            run_options = None
+
+            output = self.ort_session.run(output_names, {"input_ids": input_ids,
+                                                         "attention_mask": attn_mask}, run_options)
+
+            # onnxruntime - end run inference session
+
+            scores = self.sigmoid(output[0])
+
+            if len(documents) == 1:
+                scores = [scores]
+            else:
+                score_float = []
+
+                # note: convert to 'float' -> safety for json conversion
+                for score in scores:
+                    if isinstance(score, np.ndarray):
+                        score_float.append(float(score[0]))
+                    else:
+                        score_float.append(float(score))
+
+                scores = score_float
+
+            all_scores.extend(scores)
+
+        return all_scores
+
+    def classify(self, text, **kwargs):
+
+        """ Executes a classifier inference with ONNX model """
+
+        config_path = os.path.join(self.model_folder_path, "config.json")
+        config = None
+
+        if os.path.exists:
+            try:
+                config = json.load(open(config_path, "r", errors="ignore"))
+            except:
+                logger.warning("onnx classifier config could not be loaded from file")
+                pass
+
+        if not config:
+            logger.warning("onnx classifier config - will not be able to convert outputs to keys - no config found.")
+
+        self.tokenizer.enable_truncation(300)
+        self.tokenizer.enable_padding(pad_token="<pad>")
+        tokenizer_output = self.tokenizer.encode(text)
+        input_ids = []
+        attn_mask = []
+
+        # for sequence in tokenizer_output:
+
+        input_ids.append(tokenizer_output.ids)
+        attn_mask.append(tokenizer_output.attention_mask)
+
+        input_ids = np.array(input_ids, dtype=np.int64)
+        attn_mask = np.array(attn_mask, dtype=np.int64)
+
+        # start here
+
+        output_names = [output.name for output in self.ort_session.outputs_meta]
+
+        # replace None with output_names
+        run_options = None
+
+        output = self.ort_session.run(output_names, {"input_ids": input_ids,
+                                                     "attention_mask": attn_mask}, run_options)
+
+        scores = self.sigmoid(output[0])
+
+        dict_scores = {}
+
+        if config:
+            dict_scores = [{"label": config["id2label"][str(i)],
+                            "score": score.item()} for i, score in enumerate(scores[0])]
+
+            dict_scores.sort(key=lambda x: x["score"], reverse=True)
+
+        self.register()
+
+        return dict_scores
