@@ -3578,7 +3578,121 @@ global_model_repo_catalog_list = [
          "validation_files": ["phi-3-v-128k-instruct-text.onnx.data",
                               "phi-3-v-128k-instruct-vision.onnx.data",
                               "phi-3-v-128k-instruct-embedding.onnx.data"],
-         "custom_model_files": [], "custom_model_repo": "", "parameters": 3.8}
+         "custom_model_files": [], "custom_model_repo": "", "parameters": 3.8},
+
+        {"model_name": "jina-reranker-v1-tiny-en-ov", "display_name": "jina-reranker-v1-tiny-en-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 384, "context_window": 8192, "use_case": "ranker",
+         "link": "https://www.huggingface.com/llmware/jina-reranker-v1-tiny-en-ov",
+         "custom_model_repo": "", "hf_repo": "llmware/jina-reranker-v1-tiny-en-ov"},
+
+        {"model_name": "jina-reranker-v1-turbo-en-ov", "display_name": "jina-reranker-v1-turbo-en-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 384, "context_window": 8192, "use_case": "ranker",
+         "link": "https://www.huggingface.com/llmware/jina-reranker-v1-turbo-en-ov",
+         "custom_model_repo": "", "hf_repo": "llmware/jina-reranker-v1-turbo-en-ov"},
+
+        {"model_name": "industry-bert-contracts-ov", "display_name": "industry-bert-contracts-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 768, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/industry-bert-contracts-ov"},
+
+        {"model_name": "industry-bert-insurance-ov", "display_name": "industry-bert-insurance-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 768, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/industry-bert-insurance-ov"},
+
+        {"model_name": "industry-bert-asset-management-ov", "display_name": "industry-bert-asset-management-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 768, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/industry-bert-asset-management-ov"},
+
+        {"model_name": "industry-bert-sec-ov", "display_name": "industry-bert-sec-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 768, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/industry-bert-sec-ov"},
+
+        {"model_name": "industry-bert-loans-ov", "display_name": "industry-bert-loans-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 768, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/industry-bert-loans-ov"},
+
+        {"model_name": "all-mini-lm-l6-v2-ov", "display_name": "all-mini-lm-l6-v2-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 384, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/all-mini-lm-l6-v2-ov"},
+
+        {"model_name": "all-mpnet-base-v2-ov", "display_name": "all-mpnet-base-v2-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 768, "context_window": 514, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/all-mpnet-base-v2-ov"},
+
+        {"model_name": "paraphrase-multilingual-MiniLM-L12-v2-ov",
+         "display_name": "paraphrase-multilingual-MiniLM-L12-v2-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 384, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/paraphrase-multilingual-MiniLM-L12-v2-ov"},
+
+        {"model_name": "gte-small-ov", "display_name": "gte-small-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 384, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/gte-small-ov"},
+
+        {"model_name": "gte-base-ov", "display_name": "gte-base-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 768, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/gte-base-ov"},
+
+        {"model_name": "gte-large-ov",
+         "display_name": "gte-large-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 1024, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/gte-large-ov"},
+
+        {"model_name": "bge-small-en-v1.5-ov",
+         "display_name": "bge-small-en-v1.5-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 384, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/bge-small-en-v1.5-ov"},
+
+        {"model_name": "bge-base-en-v1.5-ov",
+         "display_name": "bge-base-en-v1.5-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 768, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/bge-base-en-v1.5-ov"},
+
+        {"model_name": "bge-large-en-v1.5-ov",
+         "display_name": "bge-large-en-v1.5-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 1024, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/bge-large-en-v1.5-ov"},
+
+        {"model_name": "protectai-prompt-injection-ov", "display_name": "protectai-prompt-injection-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding", "model_location": "llmware_repo",
+         "embedding_dims": 768, "context_window": 512, "link": "https://none",
+         "hf_repo": "llmware/protectai-prompt-injection-ov", "use_case": "classifier",
+         "custom_model_repo": "", "pytorch_model_repo": "protectai/deberta-v3-base-prompt-injection"},
+
+        {"model_name": "xlm-roberta-language-detector-ov",
+         "display_name": "xlm-roberta-language-detector-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding",
+         "model_location": "llmware_repo", "use_case": "classifier",
+         "embedding_dims": 768, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "pytorch_repo": "papluca/xlm-roberta-base-language-detection",
+         "hf_repo": "llmware/xlm-roberta-language-detector-ov"},
+
+        {"model_name": "valurank-bias-ov", "display_name": "valurank-bias-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding",
+         "model_location": "llmware_repo", "use_case": "classifier",
+         "embedding_dims": 768, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "pytorch_model_repo": "valurank/distilroberta-bias",
+         "hf_repo": "llmware/valurank-bias-ov"},
+
+        {"model_name": "unitary-toxic-roberta-ov", "display_name": "unitary-toxic-roberta-ov",
+         "model_family": "OVEmbeddingModel", "model_category": "embedding",
+         "model_location": "llmware_repo", "use_case": "classifier",
+         "embedding_dims": 768, "context_window": 512, "link": "https://none",
+         "custom_model_repo": "", "hf_repo": "llmware/unitary-toxic-roberta-ov"}
 
 ]
 

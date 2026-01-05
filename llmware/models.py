@@ -15,20 +15,12 @@
 """The models module implements the model registry, the catalog for models and prompts, and classes that
 implement the interface for each of the supported models. """
 
-import os
-import logging
-import json
-import requests
-import tempfile
-import ast
-import time
+import os, logging, json, requests, tempfile, ast, time, shutil, importlib, sys, ctypes
+
 from collections import deque
-import shutil
-import importlib
 from importlib import util
-import numpy as np
-import sys
-import ctypes
+from typing import Mapping, Any
+from pathlib import Path
 
 from llmware.util import Utilities, AgentWriter, LocalTokenizer
 from llmware.configs import LLMWareConfig
@@ -54,6 +46,7 @@ GLOBAL_OVG_IMPORT = False
 GLOBAL_OPENVINO_IMPORT = False
 ovg = None
 openvino = None
+ovc = None
 
 #   onnxruntime_genai - import only if needed
 #   -- onnxruntime_genai is dependency of ONNXGenerativeModel
@@ -89,6 +82,7 @@ class _ModelRegistry:
                      "ONNXQNNGenerativeModel": {"module": "llmware.models", "open_source":True},
                      "ONNXEmbeddingModel": {"module": "llmware.models", "open_source": True},
                      "ONNXVisionGenerativeModel": {"module": "llmware.models", "open_source":True},
+                     "OVEmbeddingModel": {"module": "llmware.models", "open_source": True},
                      "WindowsLocalFoundryModel": {"module": "llmware.models", "open_source":True},
                      "WhisperCPPModel": {"module": "llmware.models", "open_source": True},
                      "HFGenerativeModel": {"module": "llmware.models", "open_source":True},
@@ -4373,6 +4367,8 @@ class OVGenerativeModel(BaseModel):
         """ Main entry point for instantiating models """
 
         loading_directions = self.model_repo_path
+
+        # self._device = "NPU"
 
         global ovg
 
@@ -13436,3 +13432,888 @@ class ONNXVisionGenerativeModel(BaseModel):
         self.logits_record.append(top_logits)
 
         return top_logits
+
+
+class _OVInfer:
+
+    """ Wrapper to package inputs and outputs in connection with executing a
+    forward pass on OpenVINO model (e.g., infer_request) - derived closely from
+    utilities provided in OpenVINO, e.g.:
+
+    https://github.com/openvinotoolkit/openvino/blob/master/src/bindings/python/src/openvino/utils/data_helpers/data_dispatcher.py
+
+    Not intended to be called directly, but is used as utility within other
+    OV model classes.
+    """
+
+    def __init__(self, _infer_request=None):
+        self._infer_request = _infer_request
+
+    def ov_core_inference(self, inputs,
+                          _infer_request,
+                          share_outputs=False,
+                          decode_strings=True):
+
+        """ Primary entrypoint into _OVInfer - takes the 'raw' inputs and
+        infer_request instance, and wraps both the inputs, calls the
+        forward pass on the infer request, and then wraps the outputs. """
+
+        self._infer_request = _infer_request
+
+        if inputs is None:
+            inputs = {}
+
+        # by default
+        is_shared = True
+
+        # prepare model inputs
+        if is_shared:
+            model_inputs = self._create_shared(inputs, _infer_request)
+        else:
+            model_inputs = self._create_copied(inputs, _infer_request)
+
+        # run inference
+        response = _infer_request.infer(model_inputs,
+                                        share_outputs=share_outputs,
+                                        decode_strings=decode_strings)
+
+        # package up response
+        ov_dict = OVDict(response)
+
+        return ov_dict
+
+    def _create_shared(self, inputs, request):
+
+        if isinstance(inputs, dict) or isinstance(inputs, tuple) or isinstance(inputs, OVDict):
+            inp_n = self.normalize_arrays(inputs, is_shared=True)
+            return {k: self.value_to_tensor(v, request=request, is_shared=True, key=k) for k, v in inp_n.items()}
+
+        elif isinstance(inputs, list):
+            if len(request.input_tensors) == 1:
+                is_single_input = True
+            else:
+                is_single_input = False
+
+            inputs_x = self.normalize_arrays(
+                [inputs] if is_single_input and self.is_list_simple_type(inputs) else inputs, is_shared=True)
+
+            return {k: self.value_to_tensor(v, request=request, is_shared=True, key=k) for k, v in inputs_x.items()}
+
+        elif isinstance(inputs, np.ndarray):
+            inp = self.normalize_arrays(inputs, is_shared=True)
+            return self.value_to_tensor(inp, request=request, is_shared=True)
+
+        elif isinstance(inputs, int) or isinstance(inputs, float) or isinstance(inputs, str) \
+                or isinstance(inputs, bytes) or isinstance(inputs, ovc.Tensor) or isinstance(inputs, np.number):
+            return self.value_to_tensor(inputs, request=request, is_shared=True)
+
+        # Check the special case of the array-interface
+        if hasattr(inputs, "__array__"):
+            request._inputs_data = self.normalize_arrays(inputs, is_shared=True)
+            return self.value_to_tensor(request._inputs_data, request=request, is_shared=True)
+
+        # raise error if incompatible type
+        raise LLMWareException(message=f"_OVInfer - _created_share - "
+                                       f"incompatible inputs of type: {type(inputs)}")
+
+    def _create_copied(self, inputs, request):
+
+        if isinstance(inputs, dict) or isinstance(inputs, tuple) or isinstance(OVDict):
+            return self.update_inputs(self.normalize_arrays(inputs, is_shared=False), request)
+
+        elif isinstance(inputs, list):
+            return self.update_inputs(
+                self.normalize_arrays([inputs] if request._is_single_input() and self.is_list_simple_type(inputs) else inputs,
+                                 is_shared=False), request)
+
+        elif isinstance(inputs, np.ndarray):
+            self.update_tensor(self.normalize_arrays(inputs, is_shared=False), request, key=None)
+            return {}
+
+        elif isinstance(inputs, ovc.Tensor) or isinstance(inputs, np.number) or isinstance(inputs, int) or \
+                isinstance(inputs, float) or isinstance(inputs, str) or isinstance(inputs, bytes):
+            return self.value_to_tensor(inputs, request=request, is_shared=False)
+
+        # Check the special case of the array-interface
+        if hasattr(inputs, "__array__"):
+            self.update_tensor(self.normalize_arrays(inputs, is_shared=False), request, key=None)
+            return {}
+
+        # raise error if incompatible type
+        raise LLMWareException(message=f"_OVInfer - _created_copied - "
+                                       f"incompatible inputs of type: {type(inputs)}")
+
+    def get_request_tensor(self, request, key=None):
+
+        """ Retrieves the input tensor from a request instance. """
+
+        if key is None:
+            return request.get_input_tensor()
+        elif isinstance(key, int):
+            return request.get_input_tensor(key)
+        elif isinstance(key, (str, ovc.ConstOutput)):
+            return request.get_tensor(key)
+        else:
+            raise LLMWareException(message=f"_OVInfer - get_request_tensor - "
+                                           f"key type {type(key)} is not "
+                                           f"supported for Tensor key: {key}")
+
+    def value_to_tensor(self, value, request=None, is_shared: bool = False, key=None) -> None:
+
+        """ Converts value to OV tensor """
+
+        if isinstance(value, ovc.Tensor):
+            return value
+
+        elif isinstance(value, np.ndarray):
+            tensor = self.get_request_tensor(request, key)
+            tensor_type = tensor.get_element_type()
+            tensor_dtype = tensor_type.to_dtype()
+            # String edge-case, always copy.
+            # Scalars are also handled by C++.
+            if tensor_type == ovc.Type.string:
+                return ovc.Tensor(value, shared_memory=False)
+            # Scalars edge-case:
+            if value.ndim == 0:
+                tensor_shape = tuple(tensor.shape)
+                if tensor_dtype == value.dtype and tensor_shape == value.shape:
+                    return ovc.Tensor(value, shared_memory=is_shared)
+                elif tensor.size == 0:
+                    # the first infer request for dynamic input cannot reshape to 0 shape
+                    return ovc.Tensor(value.astype(tensor_dtype).reshape((1)), shared_memory=False)
+                else:
+                    return ovc.Tensor(value.astype(tensor_dtype).reshape(tensor_shape), shared_memory=False)
+            # WA for FP16-->BF16 edge-case, always copy.
+            if tensor_type == ovc.Type.bf16:
+                tensor = ovc.Tensor(tensor_type, value.shape)
+                tensor.data[:] = value.view(tensor_dtype)
+                return tensor
+
+            # WA for "not writeable" edge-case, always copy.
+            if value.flags["WRITEABLE"] is False:
+                tensor = ovc.Tensor(tensor_type, value.shape)
+                tensor.data[:] = value.astype(tensor_dtype) if tensor_dtype != value.dtype else value
+                return tensor
+            # If types are mismatched, convert and always copy.
+            if tensor_dtype != value.dtype:
+                return ovc.Tensor(value.astype(tensor_dtype), shared_memory=False)
+            # Otherwise, use mode defined in the call.
+            return ovc.Tensor(value, shared_memory=is_shared)
+
+        elif isinstance(value, list):
+            return ovc.Tensor(value)
+
+        elif isinstance(value, int) or isinstance(value, float) or isinstance(value, str) or \
+                isinstance(value, bytes) or isinstance(value, np.number):
+            # np.number/int/float/str/bytes edge-case, copy will occur in both scenarios.
+            tensor_type = self.get_request_tensor(request, key).get_element_type()
+            tensor_dtype = tensor_type.to_dtype()
+            tmp = np.array(value)
+            # String edge-case -- it converts the data inside of Tensor class.
+            # If types are mismatched, convert.
+            if tensor_type != ovc.Type.string and tensor_dtype != tmp.dtype:
+                return ovc.Tensor(tmp.astype(tensor_dtype), shared_memory=False)
+            return ovc.Tensor(tmp, shared_memory=False)
+
+        # raise error if incompatible type
+        raise LLMWareException(message=f"_OVInfer - value_to_tensor - "
+                                       f"incompatible inputs of type: {type(value)}")
+
+    def to_c_style(self, value: Any, is_shared: bool = False) -> Any:
+
+        if not isinstance(value, np.ndarray):
+            if hasattr(value, "__array__"):
+                return self.to_c_style(np.array(value, copy=False), is_shared) if is_shared else np.array(value, copy=True)
+            return value
+        return value if value.flags["C_CONTIGUOUS"] else np.ascontiguousarray(value)
+
+    def normalize_arrays(self, inputs: Any, is_shared: bool = False) -> Any:
+
+        if isinstance(inputs, dict):
+            return {k: self.to_c_style(v, is_shared) if is_shared else v for k, v in inputs.items()}
+
+        if isinstance(inputs, OVDict):
+            return {i: self.to_c_style(v, is_shared) if is_shared else v for i, (_, v) in enumerate(inputs.items())}
+
+        if isinstance(inputs, list) or isinstance(inputs, tuple):
+            return {i: self.to_c_style(v, is_shared) if is_shared else v for i, v in enumerate(inputs)}
+
+        if isinstance(inputs, np.ndarray):
+            return self.to_c_style(inputs, is_shared) if is_shared else inputs
+
+        # Check the special case of the array-interface
+        if hasattr(inputs, "__array__"):
+            return self.to_c_style(np.array(inputs, copy=False), is_shared) if is_shared else np.array(inputs, copy=True)
+
+        # raise error if incompatible type
+        raise LLMWareException(message=f"_OVInfer - normalize_arrays - "
+                                       f"incompatible inputs of type: {type(inputs)}")
+
+    def set_request_tensor(self, request, tensor, key=None) -> None:
+
+        if key is None:
+            request.set_input_tensor(tensor)
+        elif isinstance(key, int):
+            request.set_input_tensor(key, tensor)
+        elif isinstance(key, (str, ovc.ConstOutput)):
+            request.set_tensor(key, tensor)
+        else:
+            # raise error if incompatible type
+            raise LLMWareException(message=f"_OVInfer - set_request_tensor - "
+                                           f"unsupported key type: {type(key)} for "
+                                           f"tensor under key: {key}")
+
+    def update_tensor(self, inputs: Any, request, key=None) -> None:
+
+        if isinstance(inputs, np.ndarray):
+            if inputs.ndim != 0:
+                tensor = self.get_request_tensor(request, key)
+                # Update shape if there is a mismatch
+                if tuple(tensor.shape) != inputs.shape:
+                    tensor.shape = inputs.shape
+                # When copying, type should be up/down-casted automatically.
+                if tensor.element_type == ovc.Type.string:
+                    tensor.bytes_data = inputs
+                else:
+                    tensor.data[:] = inputs[:]
+            else:
+                # If shape is "empty", assume this is a scalar value
+                self.set_request_tensor(
+                    request,
+                    self.value_to_tensor(inputs, request=request, is_shared=False, key=key),
+                    key,
+                )
+
+            # TODO: what to return
+
+        elif isinstance(inputs, np.number) or isinstance(inputs, float) or isinstance(inputs, int) or \
+                isinstance(inputs, str):
+            self.set_request_tensor(
+                request,
+                self.value_to_tensor(inputs, request=request, is_shared=False, key=key),
+                key,
+            )
+
+        if hasattr(inputs, "__array__"):
+            self.update_tensor(self.normalize_arrays(inputs, is_shared=False), request, key)
+            return None
+
+        # raise error if unsupported key type
+        raise LLMWareException(message=f"_OVInfer - update_tensor - "
+                                       f"unsupported key type: {type(inputs)} for "
+                                       f"tensor under key: {key}")
+
+    def update_inputs(self, inputs: dict, request):
+
+        # Create new temporary dictionary.
+        # new_inputs will be used to transfer data to inference calls,
+        # ensuring that original inputs are not overwritten with Tensors.
+        new_inputs = {}
+
+        for key, value in inputs.items():
+            if not isinstance(key, (str, int, ovc.ConstOutput)):
+                raise TypeError(f"Incompatible key type for input: {key}")
+            # Copy numpy arrays to already allocated Tensors.
+            # If value object has __array__ attribute, load it to Tensor using np.array
+            if isinstance(value, (np.ndarray, np.number, int, float, str)) or hasattr(value, "__array__"):
+                self.update_tensor(value, request, key)
+            elif isinstance(value, list):
+                new_inputs[key] = ovc.Tensor(value)
+            # If value is of Tensor type, put it into temporary dictionary.
+            elif isinstance(value, ovc.Tensor):
+                new_inputs[key] = value
+            # Throw error otherwise.
+            else:
+
+                # raise error if unsupported type
+                raise LLMWareException(message=f"_OVInfer - update_inputs - "
+                                               f"unsupported key type: {type(value)} for "
+                                               f"tensor under key: {key}")
+
+        return new_inputs
+
+    def is_list_simple_type(self, input_list: list) -> bool:
+
+        for sublist in input_list:
+            if isinstance(sublist, list):
+                for element in sublist:
+                    if not isinstance(element, (str, float, int, bytes)):
+                        return False
+            else:
+                if not isinstance(sublist, (str, float, int, bytes)):
+                    return False
+        return True
+
+
+class OVDict(Mapping):
+
+    """ Output handler for OV infer request forward pass, used for
+    downstream processing in OVEmbeddingModel class - mirrors
+    OpenVINO OVDict definition. """
+
+    def __init__(self, _dict):
+        self._dict = _dict
+        self._names = None
+
+    def __iter__(self):
+        return self._dict.__iter__()
+
+    def __len__(self) -> int:
+        return len(self._dict)
+
+    def __repr__(self) -> str:
+        return self._dict.__repr__()
+
+    def __get_names(self):
+        return {key: key.get_names() for key in self._dict.keys()}
+
+    def __get_key(self, index: int):
+        return list(self._dict.keys())[index]
+
+    def __getitem__(self, key) -> np.ndarray:
+
+        if isinstance(key, str):
+            if self._names is None:
+                self._names = self.__get_names()
+            for port, port_names in self._names.items():
+                if key in port_names:
+                    return self._dict[port]
+            raise KeyError(key)
+
+        elif isinstance(key, int):
+            try:
+                return self._dict[self.__get_key(key)]
+            except IndexError:
+                raise KeyError(key)
+        else:
+            try:
+                return self._dict[key]
+            except:
+                raise LLMWareException(message=f"OVDict - unknown key type - {type(key)}")
+
+    def keys(self):
+        return self._dict.keys()
+
+    def values(self):
+        return self._dict.values()
+
+    def items(self):
+        return self._dict.items()
+
+    def names(self):
+
+        if self._names is None:
+            self._names = self.__get_names()
+        return tuple(self._names.values())
+
+    def to_dict(self):
+        return self._dict
+
+    def to_tuple(self):
+        return tuple(self._dict.values())
+
+
+class OVEmbeddingModel(BaseModel):
+
+    """ OVEmbeddingModel class implements a high-level interface to use
+    OpenVINO encoder-based models, supporting three different modalities currently:
+
+        -- Embedding - for use with vector databases
+        -- Reranker  - for in-memory semantic similarity comparisons
+        -- Classify  - for classifier based models
+
+    """
+
+    def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None, model_card=None,
+                 embedding_dims=None, use_gpu_if_available=True, max_len=None, device="CPU", **kwargs):
+
+        super().__init__(**kwargs)
+
+        self.model_class = "OVEmbeddingModel"
+        self.model_category = "embedding"
+
+        self.model_name = model_name
+        self.model = model
+        self.tokenizer= tokenizer
+        self.embedding_dims = embedding_dims
+        self.model_type = None
+        self.max_total_len = 512
+        self.model_architecture = None
+        self.model_card = model_card
+        self.safe_buffer = 12
+        self.device = device
+
+        # default for HF embedding model -> will be over-ridden by model card / configs, if available
+        self.context_window = 512
+
+        if self.model_card:
+            if "embedding_dims" in self.model_card:
+                self.embedding_dims = self.model_card["embedding_dims"]
+
+            if "context_window" in self.model_card:
+                self.context_window = self.model_card["context_window"]
+
+            if "model_name" in self.model_card:
+                self.model_name = self.model_card["model_name"]
+
+        global ovc
+        global GLOBAL_OPENVINO_IMPORT
+        if not GLOBAL_OPENVINO_IMPORT:
+
+            if not util.find_spec("openvino"):
+                raise LLMWareException(message="OVEmbeddingModel: to use OVEmbeddingModel requires "
+                                               "install of 'openvino' library.  "
+                                               "Please try: `pip3 install openvino` "
+                                               "and confirm that your "
+                                               "hardware platform is supported.")
+
+            if util.find_spec("openvino"):
+
+                # loads/accesses the openvino pybind pyd methods directly
+
+                try:
+                    ovc = importlib.import_module("openvino._pyopenvino")
+                    GLOBAL_OPENVINO_IMPORT = True
+                except:
+                    raise LLMWareException(message="OVEmbeddingModel: could not load openvino module.")
+
+            if not ovc:
+                raise LLMWareException(message="OVEmbeddingModel: could not load required openvino dependency.")
+
+        # end dynamic import here
+
+        self.use_gpu = False
+
+        # no api key expected or required
+        self.api_key = api_key
+
+        # set max len for tokenizer truncation with 'safe_buffer' below context_window size
+        if self.context_window > self.safe_buffer:
+            self.max_len = self.context_window - self.safe_buffer
+        else:
+            self.max_len = self.context_window
+
+        # option to set smaller size than model context window
+        if max_len:
+            if max_len < self.context_window:
+                self.max_len = max_len
+
+        self.text_sample = None
+
+        self.model_folder_path = None
+        self._device = self.device
+        self.is_dynamic = True
+        self.read_model_xml_path = None
+        self.model = None
+        self.request = None
+        self._infer_request = None
+        self.input_names = None
+        self.output_names = None
+        self.config = None
+
+        # post init not implemented for this model class currently
+        # self.post_init()
+
+    def load_model_for_inference(self, loading_directions, model_card=None):
+
+        """ Loads OV Embedding Model from local path using loading directions. """
+
+        if model_card:
+            self.model_card = model_card
+
+        self.model_folder_path = Path(loading_directions)
+
+        # load the tokenizer from tokenizer.json in model repo
+        from tokenizers import Tokenizer
+
+        tokenizer_fn = "tokenizer.json"
+        self.tokenizer = Tokenizer.from_file(os.path.join(loading_directions, tokenizer_fn))
+
+        # hard-coded at 150 tokens -> adjust to increase/decrease
+        self.tokenizer.enable_padding(length=150)
+        self.tokenizer.enable_truncation(150)
+
+        if not ovc:
+            logger.warning("OVEmbeddingModel - could not find backend module")
+            return False
+
+        #   need to get config.json file
+        self.config = self.get_config_from_file()
+
+        self.read_model_xml_path = Path(os.path.join(loading_directions, "openvino_model.xml"))
+
+        core = ovc.Core()
+        self.model = core.read_model(self.read_model_xml_path.resolve(),
+                                     self.read_model_xml_path.with_suffix(".bin").resolve())
+
+        if self.is_dynamic:
+            height = None
+            width = None
+            self.model = self._reshape(self.model, -1, -1, height, width)
+
+        input_names = {}
+        for idx, key in enumerate(self.model.inputs):
+            names = tuple(key.get_names())
+            input_names[next((name for name in names if "/" not in name), names[0])] = idx
+        self.input_names = input_names
+
+        output_names = {}
+        for idx, key in enumerate(self.model.outputs):
+            names = tuple(key.get_names())
+            output_names[next((name for name in names if "/" not in name), names[0])] = idx
+        self.output_names = output_names
+
+        self.request = None
+
+        if self.request is None:
+
+            # try to load on GPU first, and fallback to CPU, if GPU fails
+
+            try:
+                gpu_device_name = core.get_property("GPU", "FULL_DEVICE_NAME")
+                logger.info(f"OVGenerativeModel - found gpu device - name: {gpu_device_name}.")
+                device = "GPU"
+                logger.info(f"OVEmbeddingModel - successful finding GPU")
+
+            except:
+                logger.debug("OVGenerativeModel - loading - could not find gpu - setting device for CPU")
+                device = "CPU"
+
+            self._device = device
+            logger.info(f"OVEmbeddingModel - device - {device}")
+
+            ov_config = {}
+            self.request = core.compile_model(self.model, self._device, ov_config)
+
+        logger.info(f"OVEmbedding - completed model compile - {self.model_name} "
+                    f"on device - {self._device}")
+
+        return self
+
+    def get_config_from_file(self):
+
+        """ Loads config information from config.json file """
+
+        config_file = os.path.join(self.model_folder_path, "config.json")
+
+        try:
+            config = json.load(open(config_file, "r"))
+        except:
+            config = {}
+
+        return config
+
+    def _inference(self, inputs):
+
+        """ Internal inference method implements forward pass on the model """
+
+        if not self._infer_request:
+            self._infer_request = self.request.create_infer_request()
+
+        try:
+            outputs = _OVInfer().ov_core_inference(inputs,
+                                               self._infer_request,
+                                               share_outputs=False,
+                                               decode_strings=True)
+
+        except Exception as e:
+            raise LLMWareException(message=f"OVEmbeddingModel - _inference - "
+                                           f"unsuccessful - generated error code - "
+                                           f"{e}")
+
+        return outputs
+
+    def set_api_key(self, api_key, env_var=""):
+        """ Not implemented """
+        return True
+
+    def _get_api_key(self, env_var=""):
+        """ Not implemented """
+        return True
+
+    def token_counter(self, text_sample):
+
+        """ Counts tokens in text sample. """
+
+        toks = self.tokenizer.encode(text_sample).ids
+        return len(toks)
+
+    @staticmethod
+    def sigmoid(x):
+        """Simple sigmoid function. Not numerically stable!"""
+        return 1.0 / (1.0 + np.exp(-x))
+
+    def _reshape(self, model, batch_size, sequence_length, height=None, width=None):
+
+        """ Internal implementation method to reshape the input """
+
+        shapes = {}
+        for inputs in model.inputs:
+            shapes[inputs] = inputs.get_partial_shape()
+            shapes[inputs][0] = batch_size
+            shapes[inputs][1] = sequence_length
+            if height is not None:
+                shapes[inputs][2] = height
+            if width is not None:
+                shapes[inputs][3] = width
+        model.reshape(shapes)
+        return model
+
+    def reshape(self, batch_size, sequence_length, height=None, width= None):
+
+        """ Reshape input """
+
+        self.is_dynamic = True if batch_size == -1 and sequence_length == -1 else False
+        self.model = self._reshape(self.model, batch_size, sequence_length, height, width)
+        self.request = None
+        return self
+
+    def forward(self, input_ids, attention_mask, token_type_ids = None, **kwargs):
+
+        """ Forward pass on model """
+
+        np_inputs = isinstance(input_ids, np.ndarray)
+        if not np_inputs:
+            input_ids = np.array(input_ids)
+            attention_mask = np.array(attention_mask)
+            token_type_ids = np.array(token_type_ids) if token_type_ids is not None else token_type_ids
+
+        inputs = {
+            "input_ids": input_ids,
+            "attention_mask": attention_mask,
+        }
+
+        # Add the token_type_ids when needed
+        if "token_type_ids" in self.input_names:
+            inputs["token_type_ids"] = token_type_ids if token_type_ids is not None else np.zeros_like(input_ids)
+
+        outputs = self._inference(inputs)
+
+        last_hidden_state = outputs["last_hidden_state"]
+
+        embedding = last_hidden_state[:,0]
+
+        return embedding
+
+    def classify(self, text,**kwargs):
+
+        """ Implements a classify inference for classifier-based models that
+        have been fine-tuned with a classifier head"""
+
+        self.text_sample = text
+
+        if not isinstance(self.text_sample, list):
+            self.text_sample = [self.text_sample]
+
+        input_ids = []
+        attn_mask = []
+
+        tokenizer_output = self.tokenizer.encode_batch(self.text_sample)
+
+        for sequence in tokenizer_output:
+            input_ids.append(sequence.ids)
+            attn_mask.append(sequence.attention_mask)
+
+        input_ids = np.array(input_ids)
+        attn_mask = np.array(attn_mask)
+
+        np_inputs = isinstance(input_ids, np.ndarray)
+        if not np_inputs:
+            input_ids = np.array(input_ids)
+            attn_mask = np.array(attn_mask)
+
+        inputs = {
+            "input_ids": input_ids,
+            "attention_mask": attn_mask,
+        }
+
+        # Add the token_type_ids when needed
+        if "token_type_ids" in self.input_names:
+            # may require customization for some model types
+            inputs["token_type_ids"] = np.zeros_like(input_ids)
+
+        outputs = self._inference(inputs)
+
+        logits = outputs["logits"]
+
+        max_value = np.max(logits, axis=-1, keepdims=True)
+        shifted_exp = np.exp(logits - max_value)
+        scores = shifted_exp / shifted_exp.sum(axis=-1, keepdims=True)
+
+        if "id2label" in self.config:
+            try:
+                dict_scores = [{"label": self.config["id2label"][str(i)],
+                                "score": score.item()} for i, score in enumerate(scores[0])]
+            except:
+                dict_scores = [{"label": "NA", "score": 0.0}]
+                logger.info(f"OVEmbeddingModel - classify configs not resolved - {self.config} - "
+                            f"{scores[0]}")
+        else:
+            # report scores without label if not available (e.g, missing config)
+            dict_scores = []
+            for i, score in enumerate(scores[0]):
+                new_entry = {"label": f"score_{i+1}", "score": score.item()}
+                dict_scores.append(new_entry)
+
+        dict_scores.sort(key=lambda x: x["score"], reverse=True)
+
+        self.register()
+
+        return dict_scores
+
+    def embedding (self, text_sample, api_key=None):
+
+        """ Executes embedding inference. """
+
+        self.text_sample = text_sample
+
+        #   call to preview (not implemented by default)
+        # self.preview()
+
+        # return embeddings only
+        if not isinstance(self.text_sample,list):
+            self.text_sample = [self.text_sample]
+
+        input_ids = []
+        attn_mask = []
+
+        tokenizer_output = self.tokenizer.encode_batch(self.text_sample)
+
+        for sequence in tokenizer_output:
+            input_ids.append(sequence.ids)
+            attn_mask.append(sequence.attention_mask)
+
+        input_ids = np.array(input_ids)
+        attn_mask = np.array(attn_mask)
+
+        model_input = {"input_ids": input_ids, "attention_mask": attn_mask}
+
+        # Add the token_type_ids when needed
+        if "token_type_ids" in self.input_names:
+            model_input["token_type_ids"] = np.zeros_like(input_ids)
+
+        outputs = self._inference(model_input)
+
+        last_hidden_state = outputs["last_hidden_state"]
+
+        embedding = last_hidden_state[:,0]
+
+        #   l2 normalization with numpy
+        embeddings_normalized = embedding / np.linalg.norm(embedding,2,axis=1,keepdims=True)
+
+        self.register()
+
+        return embeddings_normalized
+
+    def rank (self, query, text_results, text_index="text",
+              api_key=None, top_n=20, relevance_threshold=None, min_return=3):
+
+        """ Executes reranking inference. """
+
+        #   call to preview (not implemented by default)
+        # self.preview()
+
+        batches = []
+        if len(text_results) <= 32:
+            # need to package in chunks
+            batches.append(text_results)
+        else:
+            batch_count = len(text_results) // 32
+            if len(text_results) > batch_count * 32:
+                batch_count += 1
+            for x in range(0,batch_count):
+                stopper = min(len(text_results), (x+1)*32)
+                new_batch = text_results[x*32:stopper]
+                batches.append(new_batch)
+
+        output = []
+
+        for batch in batches:
+            documents = []
+            for i, chunks in enumerate(batch):
+                documents.append(chunks[text_index])
+
+            scores = self.compute_score(query, documents)
+
+            if not isinstance(scores,list):
+                scores = [scores]
+
+            for i, score in enumerate(scores):
+                batch[i].update({"rerank_score": score})
+                output.append(batch[i])
+
+        ranked_output = sorted(output, key=lambda x: x["rerank_score"], reverse=True)
+
+        #   will return top_n if no relevance threshold set
+        if not relevance_threshold:
+            if top_n < len(ranked_output):
+                final_output = ranked_output[0:top_n]
+            else:
+                final_output = ranked_output
+        else:
+            final_output = []
+            #   if relevance threshold, will return all results above threshold
+            for entries in ranked_output:
+                if entries["rerank_score"] >= relevance_threshold:
+                    final_output.append(entries)
+
+            #   fallback, if no result above threshold, then will return the min number of results
+            if len(final_output) == 0:
+                final_output = ranked_output[0:min_return]
+
+        self.register()
+
+        return final_output
+
+    def compute_score(self, query, documents, batch_size: int = 32):
+
+        """ Applies semantic similarity ranker to query and a set of text chunks. """
+
+        sentence_pairs = [[query, doc] for doc in documents]
+
+        # if empty query, then return [] for empty scores
+        if len(sentence_pairs) == 0:
+            return []
+
+        assert isinstance(sentence_pairs, list)
+        if isinstance(sentence_pairs[0], str):
+            sentence_pairs = [sentence_pairs]
+
+        #TODO: look at truncation settings
+        self.tokenizer.enable_truncation(100)
+        self.tokenizer.enable_padding(pad_token="<pad>")
+
+        all_scores = []
+        for start_index in range(0, len(sentence_pairs), batch_size):
+            sentences_batch = sentence_pairs[start_index: start_index + batch_size]
+
+            input_ids = []
+            attn_mask = []
+
+            tokenizer_output = self.tokenizer.encode_batch(sentences_batch)
+
+            for sequence in tokenizer_output:
+                input_ids.append(sequence.ids)
+                attn_mask.append(sequence.attention_mask)
+
+            input_ids = np.array(input_ids)
+            attn_mask = np.array(attn_mask)
+
+            #   note: last element is the 'position_type_ids'
+            model_input = (input_ids, attn_mask, np.zeros_like(input_ids))
+
+            scores = self._inference(model_input)
+            scores = self.sigmoid(scores["logits"].squeeze())
+
+            # safety check if single value, e.g., if input is only one document
+            if len(documents) == 1:
+                scores = [scores]
+            else:
+                scores = scores.tolist()
+            all_scores.extend(scores)
+
+        if len(all_scores) == 1:
+            all_scores = all_scores[0]
+
+        return all_scores
+
