@@ -3565,20 +3565,8 @@ global_model_repo_catalog_list = [
          "model_family": "ONNXEmbeddingModel", "model_category": "embedding",
          "model_location": "llmware_repo", "use_case": "classifier",
          "embedding_dims": 768, "context_window": 512, "link": "https://none",
-         "custom_model_repo": "", "hf_repo": "llmware/unitary-unbiased-toxic-roberta-onnx"},
+         "custom_model_repo": "", "hf_repo": "llmware/unitary-unbiased-toxic-roberta-onnx"}
 
-        {"model_name": "phi-3-vision-onnx", "display_name": "phi-3-vision-3b",
-         "model_family": "ONNXVisionGenerativeModel", "model_category": "generative_local",
-         "model_location": "llmware_repo", "context_window": 4096,  "instruction_following": False,
-         "prompt_wrapper": "phi_3_vision", "temperature": 0.0, "trailing_space": "",
-         "hf_repo": "llmware/phi-3-vision-onnx",
-         "link": "https://huggingface.co/llmware/phi-3-vision-onnx",
-         "tokenizer_local": "tokenizer_phi3.json",
-         "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
-         "validation_files": ["phi-3-v-128k-instruct-text.onnx.data",
-                              "phi-3-v-128k-instruct-vision.onnx.data",
-                              "phi-3-v-128k-instruct-embedding.onnx.data"],
-         "custom_model_files": [], "custom_model_repo": "", "parameters": 3.8}
 
 ]
 
@@ -3641,12 +3629,6 @@ global_model_finetuning_prompt_wrappers_lookup = {
 
         "phi_3": {"system_start": "<|system|>\n", "system_stop": "<|end|>\n",
                   "main_start": "<|user|>\n", "main_stop": "<|end|>\n", "start_llm_response": "<|assistant|>"},
-
-        # intended for embedding one image only currently
-        "phi_3_vision": {"system_start": "", "system_stop": "",
-                         "main_start": "<|user|>\n<|image_1|>\n",
-                         "main_stop": "<|end|>\n",
-                         "start_llm_response": "<|assistant|>\n"},
 
         "phi_4": {"system_start": "<|im_start|>system<|im_sep|>\n",
                   "system_stop": "<|im_end|>\n",
