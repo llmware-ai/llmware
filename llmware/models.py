@@ -4368,8 +4368,6 @@ class OVGenerativeModel(BaseModel):
 
         loading_directions = self.model_repo_path
 
-        # self._device = "NPU"
-
         global ovg
 
         if self.cache:
@@ -4531,7 +4529,7 @@ class OVGenerativeModel(BaseModel):
 
         return prompt_engineered
 
-    def _generate_ov_genai(self, prompt):
+    def _generate_ov_genai(self, prompt, streamer=None):
 
         """ Core generation script provided by generation loop exposed in the OpenVino_GenAI library. """
 
@@ -4554,9 +4552,22 @@ class OVGenerativeModel(BaseModel):
         config.do_sample = self.sample
 
         #   core generation step - runs generation loop on pipe with prompt and config
-        output = self.pipe.generate(prompt, config)
+        if streamer:
+            output = self.pipe.generate(prompt, config, streamer=streamer)
+        else:
+            output = self.pipe.generate(prompt, config)
 
         return output
+
+    @staticmethod
+    def ov_default_streamer(x):
+
+        """ Stream to console - used by default in stream method -
+        can be over-ridden by passing a custom streaming function to
+        the stream generate call. """
+
+        print(x, end="", flush=True)
+        return ovg.StreamingStatus.RUNNING
 
     def inference(self, prompt, add_context=None, add_prompt_engineering=None, api_key=None,
                   inference_dict=None):
@@ -4926,14 +4937,140 @@ class OVGenerativeModel(BaseModel):
         return output
 
     def stream(self, prompt, add_context=None, add_prompt_engineering=None, api_key=None,
-               inference_dict=None):
+                  inference_dict=None, streamer=None):
 
-        """ Not currently implemented. """
+        """ Executes stream generation inference on model.
 
-        logger.warning(f"OVGenerativeModel - streaming option not provided by current implementation. "
-                       f"Use .inference or .function_call methods for generation.")
+        NOTE: operates differently than other stream methods in LLMWare -
+        the method is not a generator, but rather the streaming update is
+        provided through passing a streamer function to the OpenVINO
+        backend - which will be called at each step of the generation
+        cycle.
 
-        return ""
+        Sample call:
+
+            # will automatically use default streamer to print to console
+            response = model.stream('Where is Paris?')
+
+            # pass a custom streaming function
+            response = model.stream('Where is Rome?', streamer=my_streamer)
+
+        Streamer function example: .ov_default_streamer in this model class
+
+        """
+
+        # first prepare the prompt
+        self.prompt = prompt
+
+        if add_context:
+            self.add_context = add_context
+
+        self.context = self.add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        #   add defaults if add_prompt_engineering not set
+        if not self.add_prompt_engineering:
+
+            if self.add_context:
+                self.add_prompt_engineering = "default_with_context"
+            else:
+                self.add_prompt_engineering = "default_no_context"
+
+        #   end - defaults update
+
+        #   show warning if function calling model
+        if self.fc_supported:
+            logger.warning("OVGenerativeModel - this is a function calling model - using .inference may lead "
+                           "to unexpected results.  Recommended to use the .function_call method to ensure "
+                           "correct prompt template packaging.")
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        self.preview()
+
+        #   START - route to api endpoint
+        if self.api_endpoint:
+            return self.inference_over_api_endpoint(self.prompt, context=self.add_context,
+                                                    inference_dict=inference_dict)
+        #   END - route to api endpoint
+
+        text_prompt = self.prompt
+
+        if self.add_prompt_engineering:
+            prompt_enriched = self.prompt_engineer(self.prompt, self.add_context, inference_dict=inference_dict)
+            prompt_final = prompt_enriched
+            text_prompt = prompt_final + self.trailing_space
+
+        #   counts the input tokens
+        if self.get_token_counts:
+            self.input_token_count = self.ov_token_counter(text_prompt)
+        else:
+            self.input_token_count = 0
+
+        time_start = time.time()
+
+        #   main call to inner generate function
+        if not streamer:
+            streamer = self.ov_default_streamer
+
+        output = self._generate_ov_genai(text_prompt, streamer=streamer)
+
+        output_str = output
+
+        # post-processing clean-up - stop at endoftext
+        eot = output_str.find("<|endoftext|>")
+        if eot > -1:
+            output_str = output_str[:eot]
+
+        # new post-processing clean-up - stop at </s>
+        eots = output_str.find("</s>")
+        if eots > -1:
+            output_str = output_str[:eots]
+
+        # post-processing clean-up - start after bot wrapper
+        bot = output_str.find("<bot>:")
+        if bot > -1:
+            output_str = output_str[bot + len("<bot>:"):]
+
+        # new post-processing cleanup - skip repeating starting <s>
+        boss = output_str.find("<s>")
+        if boss > -1:
+            output_str = output_str[boss + len("<s>"):]
+
+        # end - post-processing
+
+        # counts the output tokens
+        if self.get_token_counts:
+            self.output_token_count = self.ov_token_counter(output_str)
+        else:
+            self.output_token_count = 0
+
+        usage = {"input": self.input_token_count,
+                 "output": self.output_token_count,
+                 "total": self.input_token_count + self.output_token_count,
+                 "metric": "tokens",
+                 "processing_time": time.time() - time_start}
+
+        output_response = {"llm_response": output_str, "usage": usage}
+
+        self.get_logits = False
+
+        # output inference parameters
+        self.llm_response = output_str
+        self.usage = usage
+        self.final_prompt = text_prompt
+
+        self.register()
+
+        return output_response
 
     def function_call_over_api_endpoint(self, context="", tool_type="", model_name="", params="", prompt="",
                                         function=None, endpoint_base=None, api_key=None, get_logits=False):
