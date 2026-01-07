@@ -608,9 +608,15 @@ if __name__ == "__main__":
 
 - [using_local_foundry_model](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_local_foundry_models.py)  
 
-New to Agents?  [Check out the Agent Fast Start series](https://github.com/llmware-ai/llmware/tree/main/fast_start/agents)  
+### Model Depot - largest out-of-the-box collection of OpenVINO-based LLMs (95+)   
 
-New to RAG?  [Check out the Fast Start video series](https://www.youtube.com/playlist?list=PL1-dn33KwsmD7SB9iSO6vx4ZLRAWea1DB)  
+- [Model Depot on Huggingface](https://huggingface.co/collections/llmware/model-depot)   
+- [using_stream_generation_with_openvino](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_streamer.py)     
+- [getting_started_with_openvino](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_models.py)  
+
+### Image Generation - Multimedia Bot  
+
+- [multimedia-bot example](https://github.com/llmware-ai/llmware/blob/main/examples/UI/multimedia_bot.py)  
 
 🔥🔥🔥 [**Multi-Model Agents with SLIM Models**](examples/SLIM-Agents/) - [**Intro-Video**](https://www.youtube.com/watch?v=cQfdaTcmBpY) 🔥🔥🔥   
 
@@ -663,6 +669,8 @@ New to RAG?  [Check out the Fast Start video series](https://www.youtube.com/pla
 - **Optimizing Accuracy of RAG Prompts**  
   Tutorials for tuning RAG prompt settings for increased accuracy.
   - [Settings example](examples/Models/adjusting_sampling_settings.py) | Videos: [Part I](https://youtu.be/7oMTGhSKuNY?si=14mS2pftk7NoKQbC), [Part II](https://youtu.be/iXp1tj-pPjM?si=T4teUAISnSWgtThu)  
+  
+New to RAG?  [Check out the Fast Start video series](https://www.youtube.com/playlist?list=PL1-dn33KwsmD7SB9iSO6vx4ZLRAWea1DB)  
 
 [Intro to SLIM Function Call Models](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_function_calls.py)  
 Can't wait?  Get SLIMs right away:  
