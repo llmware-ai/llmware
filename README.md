@@ -4,14 +4,27 @@
 [![members](https://discord-live-members-count-badge.vercel.app/api/discord-members?guildId=1179245642770559067&label=discord%20members&color=5865F2)](https://discord.gg/bphreFK4NJ)
 [![Documentation](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml/badge.svg)](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml)  
 
-🆕Check out [Model Depot](https://medium.com/@darrenoberst/model-depot-9e6625c5fc55)  
-Are you using a Windows/Linux x86 machine?  
-- Getting started with [OpenVino example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_models.py)  
-- Getting started with [ONNX example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_onnx_models.py)  
+## 🧰🛠️🔩Unified framework for building knowledge-based local, private, secure LLM-based applications       
+
+`llmware` is optimized for AI PC and local laptop, edge and self-hosted deployment across a wide range of Windows, Mac and Linux platforms, with support for GGUF, OpenVINO, ONNXRuntime, ONNXRuntime-QNN (Qualcomm), WindowsLocalFoundry, and Pytorch, providing a high-level interface that makes it easy to leverage the right inferencing technology optimized for the target platform.  
+
+ `llmware` has two main components:  
+
+ 1.  **Model catalog with 300+ models** - models prepackaged in quantized, optimized formats, to leverage on device GPU and NPU capabilities, with support for major open source model families and 50+ llmware finetuned SLIM, Bling, Dragon and Industry-Bert models specialized for key tasks in enterprise process automation.  Also supports leading cloud models from OpenAI, Anthropic and Google.  
+ 
+ 2.  **RAG Pipeline** - integrated components for the full lifecycle of connecting knowledge sources to generative AI models with wide range of document parsing and ingestion capabilities, and the ability to create scalable knowledge bases.
+
+By bringing together both of these components,  `llmware` offers a comprehensive set of tools to rapidly build knowledge-based enterprise LLM applications.  
+
+Our vision is that AI should be sustainable, accurate, and cost-effective, using the smallest possible compute footprint to get the job done.  
+
+Virtually all of our examples and models can be run on device - get started right away on your laptop.   
+
+[Join us on Discord](https://discord.gg/MhZn5Nc39h)   |  [Watch Youtube Tutorials](https://www.youtube.com/@llmware)  | [Explore our Model Families on Huggingface](https://www.huggingface.co/llmware)   
+
 
 ## Table of Contents
 
-- [Building Enterprise RAG Pipelines with Small, Specialized Models](%EF%B8%8Fbuilding-enterprise-rag-pipelines-with-small-specialized-models)
 - [Key Features](#--key-features)
 - [What's New](#️-whats-new)
 - [Getting Started](#-getting-started)
@@ -21,37 +34,6 @@ Are you using a Windows/Linux x86 machine?
 - [Using LLMs and setting-up API keys & secrets](#using-llms-and-setting-up-api-keys--secrets)
 - [Release notes and Change Log](#--release-notes-and-change-log)
 
-## 🧰🛠️🔩Building Enterprise RAG Pipelines with Small, Specialized Models  
-
-`llmware` provides a unified framework for building LLM-based applications (e.g., RAG, Agents), using small, specialized models that can be deployed privately, integrated with enterprise knowledge sources safely and securely, and cost-effectively tuned and adapted for any business process.  
-
- `llmware` has two main components:  
- 
- 1.  **RAG Pipeline** - integrated components for the full lifecycle of connecting knowledge sources to generative AI models; and 
-
- 2.  **50+ small, specialized models** fine-tuned for key tasks in enterprise process automation, including fact-based question-answering, classification, summarization, and extraction.  
-
-By bringing together both of these components, along with integrating leading open source models and underlying technologies, `llmware` offers a comprehensive set of tools to rapidly build knowledge-based enterprise LLM applications.  
-
-Most of our examples can be run without a GPU server - get started right away on your laptop.   
-
-[Join us on Discord](https://discord.gg/MhZn5Nc39h)   |  [Watch Youtube Tutorials](https://www.youtube.com/@llmware)  | [Explore our Model Families on Huggingface](https://www.huggingface.co/llmware)   
-
-New to Agents?  [Check out the Agent Fast Start series](https://github.com/llmware-ai/llmware/tree/main/fast_start/agents)  
-
-New to RAG?  [Check out the Fast Start video series](https://www.youtube.com/playlist?list=PL1-dn33KwsmD7SB9iSO6vx4ZLRAWea1DB)  
-
-🔥🔥🔥 [**Multi-Model Agents with SLIM Models**](examples/SLIM-Agents/) - [**Intro-Video**](https://www.youtube.com/watch?v=cQfdaTcmBpY) 🔥🔥🔥   
-
-[Intro to SLIM Function Call Models](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_function_calls.py)  
-Can't wait?  Get SLIMs right away:  
-
-```python 
-from llmware.models import ModelCatalog
-
-ModelCatalog().get_llm_toolkit()  # get all SLIM models, delivered as small, fast quantized tools 
-ModelCatalog().tool_test_run("slim-sentiment-tool") # see the model in action with test script included  
-```
 
 ## 🎯  Key features 
 Writing code with`llmware` is based on a few main concepts:
@@ -62,7 +44,7 @@ Writing code with`llmware` is based on a few main concepts:
 
 
 ```python
-#   150+ Models in Catalog with 50+ RAG-optimized BLING, DRAGON and Industry BERT models
+#   300+ Models in Catalog with 50+ RAG-optimized BLING, DRAGON and Industry BERT models
 #   Full support for GGUF, HuggingFace, Sentence Transformers and major API-based models
 #   Easy to extend to add custom models - see examples
 
@@ -619,24 +601,32 @@ if __name__ == "__main__":
 
 ## 🔥 Latest Enhancements and Features 🔥  
 
-### Model Capabilities & Benchmarks
+### ONNXRuntime-QNN - run models on Snapdragon NPU (Windows Arm64) 
 
-- **Benchmarking Small Model Capabilities**  
-  Explore the latest benchmark results for small language models focusing on accuracy and enterprise use cases.  
-  - [Read benchmark results](https://medium.com/@darrenoberst/best-small-language-models-for-accuracy-and-enterprise-use-cases-benchmark-results-cf71964759c8)
-  - [Example code for model ranking](fast_start/agents/agents-15-get_model_benchmarks.py)
+- 7 NPU-optimized models 'ready to run' in Model Catalog - see [using-qnn-npu-models example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-qnn-npu-models.py)  
 
-### New Models and Functionality
+### OpenVINO Encoders - new examples (Windows Intel x86)  
 
-- **Qwen2 Models for RAG, Function Calling, and Chat**  
-  Start using Qwen2 models quickly with resources for Retrieval-Augmented Generation (RAG), function calling, and chat functionalities.
-  - [Quickstart example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-qwen2-models.py)
+- 20 OV-optimized encoding models with OVEmbeddingModel class - supports wide of embedding, reranker and classifers, e.g.,  
+- [using_openvino_embedding_model](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_embedding_model.py)  
+- [using_openvino_reranker_model](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_reranker_model.py)  
+- [using_openvino_classifier_model](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_classifier_model.py)  
 
-- **Phi-3 Function Calling Models**  
-  Get started in minutes with Phi-3 models designed for function calling.
-  - [Quickstart example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-phi-3-function-calls.py)
+### ONNXRuntime Reranker - use rerankers optimized for Onnxruntime deployment   
 
-### New Use Cases & Applications
+- [using_onnx_reranker_model](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_onnx_reranker_models.py)   
+  
+### WindowsLocalFoundry integration - use WindowsLocalFoundry models in llmware  
+
+- [using_local_foundry_model](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_local_foundry_models.py)  
+
+New to Agents?  [Check out the Agent Fast Start series](https://github.com/llmware-ai/llmware/tree/main/fast_start/agents)  
+
+New to RAG?  [Check out the Fast Start video series](https://www.youtube.com/playlist?list=PL1-dn33KwsmD7SB9iSO6vx4ZLRAWea1DB)  
+
+🔥🔥🔥 [**Multi-Model Agents with SLIM Models**](examples/SLIM-Agents/) - [**Intro-Video**](https://www.youtube.com/watch?v=cQfdaTcmBpY) 🔥🔥🔥   
+
+### New Use Cases & Applications  
 
 - **BizBot: RAG + SQL Local Chatbot**  
   Implement a local chatbot for business intelligence using RAG and SQL.
@@ -684,15 +674,24 @@ if __name__ == "__main__":
 
 - **Optimizing Accuracy of RAG Prompts**  
   Tutorials for tuning RAG prompt settings for increased accuracy.
-  - [Settings example](examples/Models/adjusting_sampling_settings.py) | Videos: [Part I](https://youtu.be/7oMTGhSKuNY?si=14mS2pftk7NoKQbC), [Part II](https://youtu.be/iXp1tj-pPjM?si=T4teUAISnSWgtThu)
+  - [Settings example](examples/Models/adjusting_sampling_settings.py) | Videos: [Part I](https://youtu.be/7oMTGhSKuNY?si=14mS2pftk7NoKQbC), [Part II](https://youtu.be/iXp1tj-pPjM?si=T4teUAISnSWgtThu)  
 
+[Intro to SLIM Function Call Models](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_function_calls.py)  
+Can't wait?  Get SLIMs right away:  
 
+```python 
+from llmware.models import ModelCatalog
+
+ModelCatalog().get_llm_toolkit()  # get all SLIM models, delivered as small, fast quantized tools 
+ModelCatalog().tool_test_run("slim-sentiment-tool") # see the model in action with test script included  
+```
 
 ## 🌱 Getting Started
 
 **Step 1 - Install llmware** -  `pip3 install llmware` or `pip3 install 'llmware[full]'`  
 
-- note: starting with v0.3.0, we provide options for a [core install](https://github.com/llmware-ai/llmware/blob/main/llmware/requirements.txt) (minimal set of dependencies) or [full install](https://github.com/llmware-ai/llmware/blob/main/llmware/requirements_extras.txt) (adds to the core with wider set of related python libraries).  
+- [core install](https://github.com/llmware-ai/llmware/blob/main/llmware/requirements.txt) (minimal set of dependencies)  
+- [full install](https://github.com/llmware-ai/llmware/blob/main/llmware/requirements_extras.txt) (adds to the core with wider set of related python libraries).  
 
 <details>
 <summary><b>Step 2- Go to Examples</b> - Get Started Fast with 100+ 'Cut-and-Paste' Recipes </summary>
@@ -886,9 +885,9 @@ See also [additional deployment/install release notes in wheel_archives](https:/
    
 For complete history of release notes, please open the Change log tab.  
 
-**Supported Operating Systems**: MacOS (Metal - M1/M2/M3), Linux (x86), and Windows  
+**Supported Operating Systems**: Windows (x86 and Arm64), MacOS (Metal - M1-M5), Linux (x86)    
 - Linux - support Ubuntu 20+  (glibc 2.31+)   
-- If you need support for another Linux version, please raise an issue - we will prioritize testing and ensure support.  
+- If you need support for another Linux version, please raise an issue - we will prioritize testing and ensure support.    
 
 **Supported Vector Databases**: Milvus, Postgres (PGVector), Neo4j, Redis, LanceDB, ChromaDB, Qdrant, FAISS, Pinecone, Mongo Atlas Vector Search
 
