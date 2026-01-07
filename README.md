@@ -23,18 +23,6 @@ Virtually all of our examples and models can be run on device - get started righ
 [Join us on Discord](https://discord.gg/MhZn5Nc39h)   |  [Watch Youtube Tutorials](https://www.youtube.com/@llmware)  | [Explore our Model Families on Huggingface](https://www.huggingface.co/llmware)   
 
 
-## Table of Contents
-
-- [Key Features](#--key-features)
-- [What's New](#️-whats-new)
-- [Getting Started](#-getting-started)
-- [Working with the llmware Github repository](#%EF%B8%8F-working-with-the-llmware-github-repository)
-- [Data Store Options](#data-store-options)
-- [Meet our Models](#meet-our-models)
-- [Using LLMs and setting-up API keys & secrets](#using-llms-and-setting-up-api-keys--secrets)
-- [Release notes and Change Log](#--release-notes-and-change-log)
-
-
 ## 🎯  Key features 
 Writing code with`llmware` is based on a few main concepts:
 
@@ -844,28 +832,6 @@ curl -o docker-compose.yaml https://raw.githubusercontent.com/llmware-ai/llmware
 - **Industry BERT models:**  out-of-the-box custom trained sentence transformer embedding models fine-tuned for the following industries:  Insurance, Contracts, Asset Management, SEC.  
 - **GGUF Quantization:** we provide 'gguf' and 'tool' versions of many SLIM, DRAGON and BLING models, optimized for CPU deployment.  
 
-## Using LLMs and setting-up API keys & secrets
-
-LLMWare is an open platform and supports a wide range of open source and proprietary models.  To use LLMWare, you do not need to use any proprietary LLM - we would encourage you to experiment with [SLIM](https://www.huggingface.co/llmware/), [BLING](https://huggingface.co/llmware), [DRAGON](https://huggingface.co/llmware), [Industry-BERT](https://huggingface.co/llmware), the GGUF examples, along with bringing in your favorite models from HuggingFace and Sentence Transformers. 
-
-If you would like to use a proprietary model, you will need to provide your own API Keys.   API keys and secrets for models, aws, and pinecone can be set-up for use in environment variables or passed directly to method calls.  
-
-<details>  
-    
-<summary> ✨  <b>Roadmap - Where are we going ... </b>  </summary>
-
-- 💡 Making it easy to deploy fine-tuned open source models to build state-of-the-art RAG workflows  
-- 💡 Private cloud - keeping documents, data pipelines, data stores, and models safe and secure  
-- 💡 Model quantization, especially GGUF, and democratizing the game-changing use of 1-9B CPU-based LLMs  
-- 💡 Developing small specialized RAG optimized LLMs between 1B-9B parameters  
-- 💡 Industry-specific LLMs, embedding models and processes to support core knowledge-based use cases  
-- 💡 Enterprise scalability - containerization, worker deployments and Kubernetes  
-- 💡 Integration of SQL and other scale enterprise data sources  
-- 💡 Multi-step, multi-model Agent-based workflows with small, specialized function-calling models  
-
-Like our models, we aspire for llmware to be "small, but mighty" - easy to use and get started, but packing a powerful punch!  
-
-</details>
 
 Interested in contributing to llmware? Information on ways to participate can be found in our [Contributors Guide](https://github.com/llmware-ai/llmware/blob/main/repo_docs/CONTRIBUTING.md#contributing-to-llmware).  As with all aspects of this project, contributing is governed by our [Code of Conduct](https://github.com/llmware-ai/llmware/blob/main/repo_docs/CODE_OF_CONDUCT.md).
 
@@ -881,7 +847,7 @@ See also [additional deployment/install release notes in wheel_archives](https:/
  - Removed deprecated model classes 
  - Removed deprecated modules (Dataset Builder and Graph)  
  - Work-in-Progress for other Model Class and Card updates  
- - Repo is up-to-date, but not in pip install release - targeted week of January 5, 2026  
+ - Repo is up-to-date, but not in pip install release - targeted week of January 12, 2026  
    
 For complete history of release notes, please open the Change log tab.  
 
