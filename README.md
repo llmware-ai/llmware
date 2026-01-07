@@ -33,7 +33,7 @@ Writing code with`llmware` is based on a few main concepts:
 
 ```python
 #   300+ Models in Catalog with 50+ RAG-optimized BLING, DRAGON and Industry BERT models
-#   Full support for GGUF, HuggingFace, Sentence Transformers and major API-based models
+#   Full support for GGUF, OpenVINO, Onnxruntime, HuggingFace, Sentence Transformers and major API-based models
 #   Easy to extend to add custom models - see examples
 
 from llmware.models import ModelCatalog
@@ -44,7 +44,13 @@ models = ModelCatalog().list_all_models()
 
 #   to use any model in the ModelCatalog - "load_model" method and pass the model_name parameter
 my_model = ModelCatalog().load_model("llmware/bling-phi-3-gguf")
+
+#   call model with: inference 
 output = my_model.inference("what is the future of AI?", add_context="Here is the article to read")
+
+#   call model with: stream
+for token in my_model.stream("What is the future of AI?"):
+    print(token, end="")
 
 #   to integrate model into a Prompt
 prompter = Prompt().load_model("llmware/bling-tiny-llama-v0")
