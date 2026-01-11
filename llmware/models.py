@@ -79,6 +79,7 @@ class _ModelRegistry:
     model_classes = {"ONNXGenerativeModel": {"module": "llmware.models", "open_source": True},
                      "OVGenerativeModel": {"module": "llmware.models", "open_source": True},
                      "GGUFGenerativeModel": {"module": "llmware.models", "open_source":True},
+                     "OVVisionGenerativeModel": {"module": "llmware.models", "open_source": True},
                      "ONNXQNNGenerativeModel": {"module": "llmware.models", "open_source":True},
                      "ONNXEmbeddingModel": {"module": "llmware.models", "open_source": True},
                      "ONNXVisionGenerativeModel": {"module": "llmware.models", "open_source":True},
@@ -2865,6 +2866,27 @@ class BaseModel:
 
         return True
 
+    def set_api_key(self, api_key, env_var="USER_MANAGED_API_KEY"):
+
+        """ Sets the API key - generally not needed for self-hosted models. """
+
+        os.environ[env_var] = api_key
+        logger.info("BaseModel - added and stored api_key in environmental "
+                    "variable- %s", env_var)
+
+        return self
+
+    def _get_api_key(self, env_var="USER_MANAGED_API_KEY"):
+
+        """ Gets API key from os.environ variable. """
+        self.api_key = os.environ.get(env_var)
+
+        if not self.api_key:
+            logger.error("BaseModel - _get_api_key could not successfully "
+                         "retrieve value from: %s ", env_var)
+
+        return self.api_key
+
     def post_init(self):
         return self.method_resolver("model_post_init")
 
@@ -2995,6 +3017,37 @@ class BaseModel:
                                                                      instruction=None)
 
         return prompt_engineered
+
+    def function_call(self, context, function=None, params=None, get_logits=False,
+                      temperature=-99, max_output=None):
+
+        """ This is the key inference method for SLIM models - takes a context passage and a key list
+        which is packaged in the prompt as the keys for the dictionary output"""
+
+        output_response = {}
+
+        return output_response
+
+    def fc_prompt_engineer(self, context, params=None, function=None,
+                           trailing_space= ""):
+
+        """ Prompt engineering for Function Call prompts. """
+
+        # prepare SLIM prompt
+        class_str = ""
+        for key in params:
+            class_str += str(key) + ", "
+        if class_str.endswith(", "):
+            class_str = class_str[:-2]
+
+        f = str(function)
+
+        # key templating format for SLIM function calls
+        full_prompt = "<human>: " + context + "\n" + "<{}> {} </{}>".format(f, class_str, f) + "\n<bot>:"
+
+        full_prompt = full_prompt + trailing_space
+
+        return full_prompt
 
     def close(self):
 
@@ -5147,6 +5200,500 @@ class OVGenerativeModel(BaseModel):
         self.register()
 
         return output
+
+
+class OVVisionGenerativeModel(BaseModel):
+
+    """ OVVisionGenerativeModel class implements the OpenVino generative model interface for fast inference
+    performance on x86 Intel architectures, including both Intel CPU and GPU.  """
+
+    def __init__(self, model=None, tokenizer=None, model_name=None, api_key=None, model_card=None,
+                 prompt_wrapper=None, instruction_following=False, context_window=2048,
+                 sample=False,max_output=100, temperature=0.0,
+                 get_logits=False, api_endpoint=None, device="GPU",
+                 pipeline="image2text", **kwargs):
+
+        super().__init__()
+
+        self.model_class = "OVVisionGenerativeModel"
+        self.model_category = "generative"
+        self.llm_response = None
+        self.usage = None
+        self.logits = None
+        self.output_tokens = None
+        self.final_prompt = None
+        self.model_name = model_name
+        self.hf_tokenizer_name = model_name
+        self.model = model
+        self.tokenizer = tokenizer
+        self.sample=sample
+        self.get_logits=get_logits
+
+        self.pipeline = pipeline
+
+        if get_logits:
+            logger.warning(f"OVGenerativeModel - current implementation does not support "
+                           f"get_logits option.")
+            self.get_logits = False
+
+        self.auto_remediate_function_call_output = True
+
+        # Function Call parameters
+        self.model_card = model_card
+        self.logits_record = []
+        self.output_tokens = []
+        self.top_logit_count = 10
+        self.primary_keys = None
+        self.function = None
+        self.fc_supported = False
+
+        self.cache_dir = None
+
+        if model_card:
+
+            if "primary_keys" in model_card:
+                self.primary_keys = model_card["primary_keys"]
+
+            if "function" in model_card:
+                self.function = model_card["function"]
+
+            if "function_call" in model_card:
+                self.fc_supported = model_card["function_call"]
+
+            #   will look for special cache_dir set in the model card
+            #   can be over-ridden if passed as kwarg in loading model
+
+            if "cache_dir" in model_card:
+                self.cache_dir = model_card["cache_dir"]
+
+            if "pipeline" in model_card:
+                self.pipeline = model_card["pipeline"]
+
+        # insert dynamic openvino load here
+        if not api_endpoint:
+
+            global openvino
+            global ovg
+            global GLOBAL_OVG_IMPORT
+            global GLOBAL_OPENVINO_IMPORT
+
+            if not GLOBAL_OPENVINO_IMPORT or not GLOBAL_OVG_IMPORT:
+
+                if not util.find_spec("openvino") or not util.find_spec("openvino_genai"):
+                    raise LLMWareException(message="OVGenerativeModel: to use OVGenerativeModel requires "
+                                                   "install of 'openvino' and 'openvino_genai' libraries.  "
+                                                   "Please try: `pip3 install openvino` and "
+                                                   "`pip3 install openvino_genai` and confirm that your "
+                                                   "hardware platform is supported.")
+
+                if util.find_spec("openvino"):
+                    try:
+                        openvino = importlib.import_module("openvino")
+                        GLOBAL_OPENVINO_IMPORT = True
+                    except:
+                        raise LLMWareException(message="OVGenerativeModel: could not load openvino module.")
+
+                if openvino:
+                    if util.find_spec("openvino_genai"):
+                        try:
+                            ovg = importlib.import_module("openvino_genai")
+                            GLOBAL_OVG_IMPORT = True
+                        except:
+                            raise LLMWareException(message="OVGenerativeModel: could not load openvino_genai module.")
+
+                if not openvino or not ovg:
+                    raise LLMWareException(message="OVGenerativeModel: could not load required openvino dependencies.")
+
+        # end dynamic import here
+
+        # set specific parameters associated with custom models
+        # note - these two parameters will control how prompts are handled - model-specific
+        self.prompt_wrapper = prompt_wrapper
+        self.instruction_following = instruction_following
+
+        if not model_card:
+            # safety - empty iterable rather than 'None'
+            model_card = {}
+
+        if "instruction_following" in model_card:
+            self.instruction_following = model_card["instruction_following"]
+        else:
+            self.instruction_following = False
+
+        if "prompt_wrapper" in model_card:
+            self.prompt_wrapper = model_card["prompt_wrapper"]
+        else:
+            self.prompt_wrapper = "human_bot"
+
+        #   sets trailing space default when constructing the prompt
+        #   in most cases, this is * no trailing space * but for some models, a trailing space or "\n" improves
+        #   performance
+
+        self.trailing_space = ""
+
+        if "trailing_space" in model_card:
+            self.trailing_space = model_card["trailing_space"]
+
+        self.model_type = None
+        self.config = None
+
+        # parameters on context len + output generation
+        self.max_total_len = context_window
+        self.max_input_len = int(0.5 * context_window)
+        self.llm_max_output_len = int(0.5 * context_window)
+
+        # key output parameters
+        self.max_output=max_output
+        self.target_requested_output_tokens = self.max_output
+
+        self.model_architecture = None
+        self.separator = "\n"
+
+        # eos_token_id set as list to allow for more than one id
+        self.eos_token_id = []
+
+        #   use_gpu parameter not used - deprecated
+        self.use_gpu = False
+
+        self.device = device
+
+        if "device" in kwargs:
+            self.device = kwargs["device"]
+
+        if "cache_dir" in kwargs:
+            self.cache_dir = kwargs["cache_dir"]
+
+        # no api key expected or required
+        self.api_key = api_key
+
+        self.error_message = "\nUnable to identify and load model."
+
+        # temperature settings
+
+        # if temperature set at time of loading the model, then use that setting
+        if temperature != -99:
+            self.temperature = temperature
+        elif "temperature" in model_card:
+            # if not set, then pull the default temperature from the model card
+            self.temperature = model_card["temperature"]
+        else:
+            # if no guidance from model loading or model card, then set at default of 0.3
+            self.temperature = 0.3
+
+        self.add_prompt_engineering = False
+        self.add_context = ""
+        self.context = ""
+        self.prompt = ""
+        self.tool_type = ""
+
+        self.api_endpoint = api_endpoint
+        self.pipe = None
+
+        self.input_token_count = 0
+        self.output_token_count = 0
+        self.params = None
+        self.model_repo_path = None
+
+        self.tokenizer_fn = ""
+
+        from llmware.configs import OVConfig
+
+        #   OVConfig object provided in llmware.configs - in most cases, will not be touched, but
+        #   exposes more options for configuration of the underlying OpenVino implementation
+
+        #   if config set to CPU - then ensure CPU execution
+        if OVConfig().get_config("device") == "CPU":
+            self.device = "CPU"
+            self.optimize_for_gpu_if_available = False
+        else:
+            self.optimize_for_gpu_if_available = OVConfig().optimize_for_gpu()
+
+        self.generation_version = OVConfig().generation_version()
+        self.cache = OVConfig().get_config("cache")
+        self.cache_with_model = OVConfig().get_config("cache_with_model")
+        self.cache_custom = OVConfig().get_config("cache_custom_path")
+        self.apply_performance_hints = OVConfig().get_config("apply_performance_hints")
+        self.use_ov_tokenizer = OVConfig().get_config("use_ov_tokenizer")
+        self.verbose_mode = OVConfig().get_config("verbose_mode")
+
+        self.get_token_counts = OVConfig().get_config("get_token_counts")
+
+        #   check for llmware path & create if not already set up
+        if not os.path.exists(LLMWareConfig.get_llmware_path()):
+            # if not explicitly set up by user, then create folder directory structure
+            LLMWareConfig.setup_llmware_workspace()
+
+        if not os.path.exists(LLMWareConfig.get_model_repo_path()):
+            os.mkdir(LLMWareConfig.get_model_repo_path())
+
+        # please note that the external tokenizer is used solely for producing
+        # input and output token counts - and can be switched off in OVConfig
+        if self.get_token_counts:
+            self.load_ov_external_tokenizer()
+
+        self.performance_hints = OVConfig().get_gpu_hints()
+
+        self.post_init()
+
+    def load_model_for_inference (self, loading_directions,
+                                  model_card=None, pipeline=None,**kwargs):
+
+        """ Loads OV Model from local path using loading directions. """
+
+        global ovg
+
+        self.model_repo_path = loading_directions
+        if model_card:
+            self.model_card = model_card
+
+        self.validate()
+
+        if self.device == "GPU" or (self.device == "CPU" and self.optimize_for_gpu_if_available):
+
+            device = self.device_resolver()
+            if device != self.device:
+                # resets self.device to the resolved device
+                # if changed, then warning provided by resolver method
+                self.device = device
+
+        if self.device == "GPU" and self.apply_performance_hints:
+
+            for k,v in self.performance_hints.items():
+
+                try:
+                    # sets GPU performance hints thru openvino core
+                    core = openvino.Core()
+                    core.set_property("GPU", {k:v})
+
+                    if self.verbose_mode:
+                        logger.info(f"OVVisionGenerativeModel - setting performance hint - {k} - {v}")
+                except:
+                    logger.warning(f"OVVisionGenerativeModel - unsuccessful setting performance hint - {k} - {v}")
+
+        #   default is to cache to optimize performance on subsequent loads
+
+        properties = {"CACHE_DIR": self.model_repo_path}
+
+        self.pipe = ovg.VLMPipeline(self.model_repo_path, self.device,**properties)
+
+        if self.verbose_mode:
+            logger.info(f"OVVisionGenerativeModel - completed new pipe creation - "
+                        f"{self.model_name} - on device {self.device}")
+
+        return self
+
+    def device_resolver(self):
+
+        """ By default, will look for 'GPU' and if device found, then will select - if no GPU,
+        then falls back to 'CPU'. """
+
+        global ovg
+
+        try:
+
+            # check if GPU device can be found successfully - if not, auto fallback to CPU device
+
+            core = openvino.Core()
+            gpu_device_name = core.get_property("GPU", "FULL_DEVICE_NAME")
+            logger.info(f"OVVisionGenerativeModel - loading - confirmed GPU device name: "
+                           f"{gpu_device_name}")
+            device = "GPU"
+
+        except:
+
+            logger.info("OVVisionGenerativeModel - loading - could not find GPU - setting device for CPU")
+            device = "CPU"
+
+        return device
+
+    def load_ov_external_tokenizer(self):
+
+        """ Called in class constructor if OVConfig flag set to 'get_output_counts',
+        and will create a local instance of the tokenizer used to get the counts. """
+
+        if "tokenizer_local" in self.model_card:
+            tok_local_name = self.model_card["tokenizer_local"]
+            self.tokenizer = LocalTokenizer(tokenizer_fn=tok_local_name)
+        else:
+            # if no tokenizer found, then falls back to default tokenizer for 'approximate' count
+            self.tokenizer = Utilities().get_default_tokenizer()
+
+    def inference(self, prompt, image_path, inference_dict=None):
+        """ Implemented as stream without a streamer function. """
+
+        return self.stream(prompt,image_path, inference_dict=inference_dict,
+                           streamer=None, no_stream=True)
+
+    def stream(self, prompt, image_path, add_context=None, add_prompt_engineering=None, api_key=None,
+                  inference_dict=None, streamer=None,no_stream=False):
+
+        """ Executes stream generation inference on model.
+
+        NOTE: operates differently than other stream methods in LLMWare -
+        the method is not a generator, but rather the streaming update is
+        provided through passing a streamer function to the OpenVINO
+        backend - which will be called at each step of the generation
+        cycle.
+
+        Sample call:
+
+            # will automatically use default streamer to print to console
+            response = model.stream('Describe this image', 'C:\\Users\\...')
+
+            # pass a custom streaming function
+            response = model.stream('Describe this image' 'C:\\Users\\...', streamer=my_streamer)
+
+        Streamer function example: .ov_default_streamer in this model class
+
+        """
+
+        # first prepare the prompt
+        self.prompt = prompt
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        self.preview()
+
+        text_prompt = self.prompt
+
+        #   counts the input tokens
+        if self.get_token_counts:
+            self.input_token_count = self.ov_token_counter(text_prompt)
+        else:
+            self.input_token_count = 0
+
+        time_start = time.time()
+
+        # prepares the image as tensor
+        from PIL import Image
+        pic = Image.open(image_path).convert("RGB")
+        image_data = np.array(pic)[None]
+        images = [openvino.Tensor(image_data)]
+
+        #   main call to inner generate function
+        if not streamer and not no_stream:
+            streamer = self.ov_default_streamer
+
+        output = self._generate_ov_genai(text_prompt,
+                                         image=images,
+                                         streamer=streamer)
+
+        output_str = output
+
+        self.output_token_count = 0
+
+        usage = {"input": self.input_token_count,
+                 "output": self.output_token_count,
+                 "total": self.input_token_count + self.output_token_count,
+                 "metric": "tokens",
+                 "processing_time": time.time() - time_start}
+
+        output_response = {"llm_response": output_str, "usage": usage}
+
+        self.get_logits = False
+
+        # output inference parameters
+        self.llm_response = output_str
+        self.usage = usage
+        self.final_prompt = text_prompt
+
+        self.register()
+
+        return output_response
+
+    def ov_token_counter(self, text):
+
+        """ Called twice in inference generation loop to get the input_token_count and
+        output_token_count.   This step can be skipped by setting the OVConfig as follows:
+
+        `from llmware.configs import OVConfig
+        OVConfig().set_config("get_token_counts", False)`
+
+        In our testing, the performance impact is negligible, but may be different in your
+        environment and use case.
+
+        If this is set to False, then no token counts will be provided in the usage totals.
+        """
+
+        if self.tokenizer:
+            toks = len(self.tokenizer.encode(text))
+        else:
+            toks = 0
+
+        return toks
+
+    def prompt_engineer(self, query, context, inference_dict):
+        """ Implemented by openvino_genai module """
+        pass
+
+    def _generate_ov_genai(self, prompt, image=None, streamer=None):
+
+        """ Core generation script provided by generation loop exposed in the OpenVino_GenAI library. """
+
+        global ovg
+
+        config = ovg.GenerationConfig()
+        config.max_new_tokens = self.max_output
+
+        self.sample=False
+        self.temperature =0.0
+
+        #   prevent error in generation if sampling True and temperature is set to 0.0
+        if self.sample and self.temperature == 0.0:
+            self.temperature = 0.2
+            logger.warning(f"OVVisionGenerativeModel - since sample is set to True, adjusting "
+                           f"temperature from 0.0 to small value - 0.2 - to avoid error "
+                           f"in the generation loop.")
+
+        config.temperature = self.temperature
+        config.do_sample = self.sample
+
+        logger.info("OVVisionGenerativeModel - _generate_ov_genai - "
+                    f"do_sample is {self.sample} with temperature - {self.temperature}")
+
+        #   core generation step - runs generation loop on pipe with prompt and config
+
+        if image:
+            output = self.pipe.generate(prompt,image,config, streamer=streamer)
+        else:
+            if streamer:
+                output = self.pipe.generate(prompt, config, streamer=streamer)
+            else:
+                output = self.pipe.generate(prompt, config)
+
+        # need to unpack the output
+        text_output = ""
+
+        if output:
+            if hasattr(output, "texts"):
+                text_output = output.texts
+
+        return text_output
+
+    @staticmethod
+    def ov_default_streamer(x):
+
+        """ Stream to console - used by default in stream method -
+        can be over-ridden by passing a custom streaming function to
+        the stream generate call. """
+
+        print(x, end="", flush=True)
+        return ovg.StreamingStatus.RUNNING
+
+    def unload_model(self):
+
+        """ Resetting the pipe removes pointer to pipeline in Python, and generally triggers a (safe) release of
+        the memory.   WIP - will continue to evaluate effectiveness across use patterns and platforms. """
+
+        self.pipe = None
+
+        return True
 
 
 class OpenChatModel(BaseModel):
