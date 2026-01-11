@@ -3692,7 +3692,56 @@ global_model_repo_catalog_list = [
          "model_family": "OVEmbeddingModel", "model_category": "embedding",
          "model_location": "llmware_repo", "use_case": "classifier",
          "embedding_dims": 768, "context_window": 512, "link": "https://none",
-         "custom_model_repo": "", "hf_repo": "llmware/unitary-toxic-roberta-ov"}
+         "custom_model_repo": "", "hf_repo": "llmware/unitary-toxic-roberta-ov"},
+
+        {"model_name": "qwen2.5-vl-3b-ov", "model_family": "OVVisionGenerativeModel",
+         "model_category": "generative_local", "display_name": "qwen-2.5-vl-3b",
+         "model_location": "llmware_repo", "context_window": 4096, "instruction_following": False,
+         "prompt_wrapper": "", "tokenizer_local": "tokenizer_qw.json",
+         "hf_repo": "llmware/qwen2.5-vl-3b-ov", "custom_model_files": [], "custom_model_repo": "",
+         "fetch": {"snapshot": True, "module": "llmware.models", "method": "pull_snapshot_from_hf"},
+         "validation_files": ["openvino_language_model.bin",
+                              "openvino_text_embeddings_model.bin",
+                              "openvino_vision_embeddings_merger_model.bin"],
+         "parameters": 3.0,
+         "link": "https://huggingface.co/llmware/qwen2.5-vl-3b-ov"
+         },
+
+        {"model_name": "phi-3.5-vision-ov", "model_family": "OVVisionGenerativeModel",
+         "model_category": "generative_local", "display_name": "phi-3.5-vision-3b",
+         "model_location": "llmware_repo", "context_window": 4096, "instruction_following": False,
+         "prompt_wrapper": "", "tokenizer_local": "tokenizer_phi3.json",
+         "hf_repo": "llmware/phi-3.5-vision-ov", "custom_model_files": [], "custom_model_repo": "",
+         "fetch": {"snapshot": True, "module": "llmware.models",
+                   "method": "pull_snapshot_from_hf"},
+         "validation_files": [],
+         "parameters": 3.0,
+         "link": "https://huggingface.co/llmware/phi-3.5-vision-ov"
+         },
+
+        {"model_name": "phi-4-mm-ov", "model_family": "OVVisionGenerativeModel",
+         "model_category": "generative_local", "display_name": "phi-4-mm-ov",
+         "model_location": "llmware_repo", "context_window": 4096, "instruction_following": False,
+         "prompt_wrapper": "", "tokenizer_local": "tokenizer_phi4.json",
+         "hf_repo": "llmware/phi-4-mm-ov", "custom_model_files": [], "custom_model_repo": "",
+         "fetch": {"snapshot": True, "module": "llmware.models",
+                   "method": "pull_snapshot_from_hf"},
+         "validation_files": [],
+         "parameters": 6.0,
+         "link": "https://huggingface.co/llmware/phi-4-mm-ov"
+         },
+
+        {"model_name": "gemma-3-4b-ov", "model_family": "OVVisionGenerativeModel",
+         "model_category": "generative_local", "display_name": "gemma-3-4b",
+         "model_location": "llmware_repo", "context_window": 4096, "instruction_following": False,
+         "prompt_wrapper": "", "tokenizer_local": "tokenizer_gemma.json",
+         "hf_repo": "llmware/gemma-3-4b-ov", "custom_model_files": [], "custom_model_repo": "",
+         "fetch": {"snapshot": True, "module": "llmware.models",
+                   "method": "pull_snapshot_from_hf"},
+         "validation_files": [],
+         "parameters": 4.0,
+         "link": "https://huggingface.co/llmware/gemma-3-4b-ov"
+         }
 
 ]
 
