@@ -131,13 +131,28 @@ class Library:
 
         # note: default behavior - if library with same name already exists, then it loads existing library
 
-        self.library_name = library_name
         self.account_name = account_name
 
         # apply safety check to library_name path
         library_name = Utilities().secure_filename(library_name)
 
-        library_exists = self.check_if_library_exists(library_name,account_name)
+        # safety check for name based on db - do this early to ensure consistent name usage
+        safe_name = CollectionRetrieval(library_name, account_name=account_name).safe_name(library_name)
+
+        if safe_name != library_name:
+            logger.warning(f"warning: selected library name is being changed for safety on selected resource - "
+                           f"{safe_name}")
+
+            if isinstance(safe_name, str):
+                library_name = safe_name
+            else:
+                raise InvalidNameException(library_name)
+
+        # assign self.library_name to the final safe library_name
+        self.library_name = library_name
+
+        # check existence using the final safe name
+        library_exists = self.check_if_library_exists(library_name, account_name)
 
         if library_exists:
             # do not create
@@ -145,28 +160,10 @@ class Library:
 
             return self.load_library(library_name, account_name)
 
-        # assign self.library_name to the 'safe' library_name
-        self.library_name = library_name
-
         # allow 'dynamic' creation of a new account path
         account_path = os.path.join(LLMWareConfig.get_library_path(), account_name)
         if not os.path.exists(account_path):
-            os.makedirs(account_path,exist_ok=True)
-
-        # safety check for name based on db
-        safe_name = CollectionRetrieval(library_name,account_name=self.account_name).safe_name(library_name)
-
-        if safe_name != library_name:
-
-            logger.warning(f"warning: selected library name is being changed for safety on selected resource - "
-                           f"{safe_name}")
-
-            if isinstance(safe_name,str):
-                library_name = safe_name
-                self.library_name = safe_name
-
-            else:
-                raise InvalidNameException(library_name)
+            os.makedirs(account_path, exist_ok=True)
 
         self.library_main_path = os.path.join(LLMWareConfig.get_library_path(), account_name, library_name)
 
