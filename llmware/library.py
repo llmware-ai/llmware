@@ -138,8 +138,9 @@ class Library:
         library_exists = self.check_if_library_exists(library_name,account_name)
 
         if library_exists:
+
             # do not create
-            logger.info(f"update: library already exists - returning library - {library_name} - {account_name}")
+            logger.info(f"Library - create_new_library - library already exists - returning library - {library_name} - {account_name}")
 
             return self.load_library(library_name, account_name)
 
@@ -156,7 +157,7 @@ class Library:
 
         if safe_name != library_name:
 
-            logger.warning(f"warning: selected library name is being changed for safety on selected resource - "
+            logger.warning(f"Library - create_new_library - selected library name is being changed for safety on selected resource - "
                            f"{safe_name}")
 
             if isinstance(safe_name,str):
@@ -205,6 +206,7 @@ class Library:
                                             "embedded_blocks":0, "embedding_dims":0, "time_stamp": "NA"}],
 
                              # knowledge graph
+                             # deprecated in 0.5.0 -> will be removed in upcoming releases
                              "knowledge_graph": "no",
 
                              # doc trackers
@@ -228,6 +230,7 @@ class Library:
         return self
 
     def load_library(self, library_name, account_name="llmware"):
+
         """Load an existing library by invoking the library string name.
 
             Parameters
@@ -276,6 +279,7 @@ class Library:
         return self
 
     def get_library_card(self, library_name=None, account_name="llmware"):
+
         """Retrieves the library card dictionary with key attributes of library.
 
             Parameters
@@ -305,11 +309,12 @@ class Library:
             library_card= LibraryCatalog().get_library_card(lib_lookup_name, account_name=acct_lookup_name)
 
         if not library_card:
-            logger.warning(f"warning:  error retrieving library card - not found - {library_name} - {account_name}")
+            logger.warning(f"Library - get_library_card - library card not found - {library_name} - {account_name}")
 
         return library_card
 
     def check_if_library_exists(self, library_name, account_name="llmware"):
+
         """Check if library exists by library string name.
         
             Parameters
@@ -352,6 +357,7 @@ class Library:
 
     def update_embedding_status (self, status_message, embedding_model, embedding_db,
                                  embedded_blocks=0, embedding_dims=0,time_stamp="NA",delete_record=False):
+
         """Invoked at the end of the embedding job to update the library card and embedding record -- generally,
         this method does not need to be invoked directly.
         
@@ -403,6 +409,7 @@ class Library:
         return True
 
     def get_embedding_status (self):
+
         """Pulls the embedding record for the current library from the library card.
         
             Returns
@@ -420,56 +427,18 @@ class Library:
                                            f"library_name = {self.library_name} with account_name = {self.account_name}")
 
         # embedding record will be a list of {"embedding_status" | "embedding_model" | "embedding_db"}
-        logger.info(f"update: library_card - {library_card}")
+        logger.info(f"Library - get_embedding_status - library_card - {library_card}")
 
         if "embedding" in library_card:
             embedding_record = library_card["embedding"]
         else:
-            logger.warning(f"warning: could not identify embedding record in library card - {library_card}")
+            logger.warning(f"Library - get_embedding_status - could not identify embedding record in library card - {library_card}")
             embedding_record = None
 
         return embedding_record
 
-    def get_knowledge_graph_status (self):
-        """Gets the status of creating the knowledge graph for the current library from the library card.
-
-            Returns
-            -------
-            status_message : str
-                The status of the knowledge graph creation for the current library.
-        """
-
-        library_card = LibraryCatalog(self).get_library_card(self.library_name, self.account_name)
-
-        if not library_card:
-
-            raise LLMWareException(message=f"Library - get_embedding_status - library not found -"
-                                           f"library_name = {self.library_name} with account_name = {self.account_name}")
-
-        status_message = library_card["knowledge_graph"]
-
-        return status_message
-
-    def set_knowledge_graph_status (self, status_message):
-        """Updates the knowledge graph status on the library card after creating a knowledge graph.
-        
-            Parameters
-            ----------
-            status_message : str
-                The status message to set for the knowledge graph.
-
-            Returns
-            -------
-            bool
-                True if the knowledge graph status was successfully updated.
-        """
-
-        update_dict = {"knowledge_graph": status_message}
-        updater = LibraryCatalog(self).update_library_card(self.library_name,update_dict, account_name=self.account_name)
-
-        return True
-
     def get_and_increment_doc_id(self):
+
         """Convenience method in library class - mirrors method in LibraryCatalog - increments, tracks and provides a
         unique doc id for the library.
         
@@ -484,6 +453,7 @@ class Library:
 
     def set_incremental_docs_blocks_images(self, added_docs=0, added_blocks=0, added_images=0, added_pages=0,
                                            added_tables=0):
+
         """Updates the library card with incremental counters after completing a parsing job.
         
             Parameters
@@ -519,6 +489,7 @@ class Library:
         return True
 
     def add_file(self, file_path):
+
         """Ingests, parses, text chunks and indexes a single selected file to a library -
         provide the full path to file.
         
@@ -627,7 +598,7 @@ class Library:
                                  set_custom_logging=set_custom_logging,
                                  use_logging_file=use_logging_file).ingest(input_folder_path,dupe_check=True)
 
-        logger.debug(f"update: parsing results - {parsing_results}")
+        logger.debug(f"Library - add_files - parsing results - {parsing_results}")
 
         # post-processing:  get the updated lib_counters
         lib_counters_after = self.get_library_card()
@@ -643,9 +614,9 @@ class Library:
                               "tables_added": lib_counters_after["tables"] - lib_counters_before["tables"],
                               "rejected_files": parsing_results["rejected_files"]}
         else:
-            logger.error("error: unexpected - could not identify the library_card correctly")
+            logger.error("Library - add_files - unexpected - could not identify the library_card correctly")
 
-        logger.info(f"update: output_results - {output_results}")
+        logger.info(f"Library - add_files - output_results - {output_results}")
 
         # update collection text index in collection after adding documents
         # LibraryCollection(self).create_index()
@@ -655,6 +626,7 @@ class Library:
 
     def export_library_to_txt_file(self, output_fp=None, output_fn=None, include_text=True, include_tables=True,
                                    include_images=False):
+
         """Exports library collection of indexed text chunks to a txt file.
         
             Parameters
@@ -711,6 +683,7 @@ class Library:
 
     def export_library_to_jsonl_file(self, output_fp, output_fn, include_text=True, include_tables=True,
                                      include_images=False, dict_keys=None):
+
         """Exports collection of text chunks to a jsonl file.
         
             Parameters
@@ -782,6 +755,7 @@ class Library:
         return file_location
 
     def pull_files_from_cloud_bucket (self, aws_access_key=None, aws_secret_key=None, bucket_name=None):
+
         """Pull files from private S3 bucket into local cache for further processing.
         
             Parameters
@@ -809,6 +783,7 @@ class Library:
     def install_new_embedding (self, embedding_model_name=None, vector_db=None,
                                from_hf= False, from_sentence_transformer=False, model=None, tokenizer=None, model_api_key=None,
                                vector_db_api_key=None, batch_size=500, max_len=None, use_gpu=True):
+
         """Main method for installing a new embedding on a library.
         
             Parameters
@@ -860,12 +835,12 @@ class Library:
         # check if instantiated model and tokenizer -> load as HuggingFace model
         if model:
             if from_hf:
-                logger.info("update: loading hf model")
+                logger.info("Library - install_new_embedding - loading hf model")
                 my_model = ModelCatalog().load_hf_embedding_model(model, tokenizer)
                 batch_size = 50
 
             if from_sentence_transformer:
-                logger.info("update: loading sentence transformer model")
+                logger.info("library - install_new_embedding - loading sentence transformer model")
                 if not embedding_model_name:
                     raise LLMWareException(message=f"Library - install_new_embedding - to use "
                                                    f"sentence_transformer model requires providing the model name.")
@@ -877,7 +852,7 @@ class Library:
                 my_model = ModelCatalog().load_model(selected_model=embedding_model_name, api_key=model_api_key)
 
         if not my_model:
-            logger.error("error: install_new_embedding - can not identify a selected model")
+            logger.error("Library - install_new_embedding - can not identify a selected model")
             return -1
 
         # new - insert - handle no vector_db passed
@@ -896,7 +871,7 @@ class Library:
         embeddings = EmbeddingHandler(self).create_new_embedding(vector_db, my_model, batch_size=batch_size)
 
         if not embeddings:
-            logger.warning("warning: no embeddings created")
+            logger.warning("Library - install_new_embedding - no embeddings created")
 
         return embeddings
 
@@ -940,15 +915,16 @@ class Library:
                 # 3rd - remove record in LibraryCatalog
                 LibraryCatalog(self).delete_library_card(self.library_name)
 
-                logger.info("update:  deleted all library file artifacts + folders")
+                logger.info("Library - delete_library - deleted all library file artifacts + folders")
 
         except:
-            logger.exception("Error destroying library")
+            logger.exception("Library - delete_library - error destroying library")
             success_code = -1
 
         return success_code
 
     def update_block (self, doc_id, block_id, key, new_value):
+
         """Convenience method to update the record of a specific block - identified by doc_ID and block_ID
         in text collection database.
         
@@ -978,6 +954,7 @@ class Library:
         return completed
 
     def add_website (self, url, get_links=True, max_links=5):
+
         """Main method to ingest a website into a library.
         
             Parameters
@@ -1003,6 +980,7 @@ class Library:
         return self
 
     def add_wiki(self, topic_list,target_results=10):
+
         """Main method to add a wikipedia article to a library - enter a list of topics.
         
             Parameters
@@ -1025,6 +1003,7 @@ class Library:
         return self
 
     def add_dialogs(self, input_folder=None):
+
         """Main method to add an AWS dialog transcript into a library.
         
             Parameters
@@ -1046,6 +1025,7 @@ class Library:
         return self
 
     def add_image(self, input_folder=None):
+
         """Main method to add image and scanned OCR content into a library.
         
             Parameters
@@ -1067,6 +1047,7 @@ class Library:
         return self
 
     def add_pdf_by_ocr(self, input_folder=None):
+
         """Alternative method to ingest PDFs that are scanned, or can not be otherwise parsed.
         
             Parameters
@@ -1088,6 +1069,7 @@ class Library:
         return self
 
     def add_pdf(self, input_folder=None):
+
         """Convenience method to directly add PDFs only - note, in most cases, 'add_files' is the better option.
         
             Parameters
@@ -1109,6 +1091,7 @@ class Library:
         return self
 
     def add_office(self, input_folder=None):
+
         """Convenience method to directly add PDFs only -  note, in most cases, 'add_files' is the better option.
         
             Parameters
@@ -1130,6 +1113,7 @@ class Library:
         return self
 
     def get_all_library_cards(self, account_name='llmware'):
+
         """Get all library cards for all libraries on account.
         
             Parameters
@@ -1147,6 +1131,7 @@ class Library:
         return library_cards
 
     def delete_installed_embedding(self, embedding_model_name, vector_db, vector_db_api_key=None):
+
         """Deletes an installed embedding on specific combination of vector_db + embedding_model_name.
         
             Parameters
@@ -1177,7 +1162,7 @@ class Library:
                 found_match = True
                 embedding_dims = entries["embedding_dims"]
 
-                logger.info(f"update: library - delete_installed_embedding request - found matching"
+                logger.info(f"Library - delete_installed_embedding - found matching"
                             f"embedding record - {entries}")
                 break
 
@@ -1185,12 +1170,13 @@ class Library:
             EmbeddingHandler(self).delete_index(vector_db,embedding_model_name, embedding_dims)
         else:
             # update exception
-            raise LLMWareException(message=f"Library - get_embedding_status - library not found -"
+            raise LLMWareException(message=f"Library - delete_installed_embedding - library not found -"
                                            f"library_name = {self.library_name} with account_name = {self.account_name}")
 
         return 1
 
     def run_ocr_on_images(self, add_to_library=False,chunk_size=400,min_size=10, realtime_progress=True):
+
         """Convenience method in Library class to pass Library to Parser to run OCR on all of the images
         found in the Library, and OCR-extracted text from the images directly into the Library as additional
         blocks. 
@@ -1279,7 +1265,7 @@ class Library:
         output = CollectionRetrieval(self.library_name, account_name=self.account_name).filter_by_key_dict(kv_dict)
 
         if len(output) == 0:
-            logger.info(f"update: Query - Library - block_lookup - block not found: {block_id}")
+            logger.info(f"Library - block_lookup - block not found: {block_id}")
             result = None
 
             return result
@@ -1298,6 +1284,7 @@ class Library:
 
 
 class LibraryCatalog:
+
     """Implements the management of tracking details for libraries via the library card, which is stored
     in the `library` table of the text collection database. It is used by the ``Library`` class.
 
@@ -1322,6 +1309,7 @@ class LibraryCatalog:
     library_catalog : LibraryCatalog
         A new ``LibraryCatalog`` object.
     """
+
     def __init__(self, library=None, library_path=None, account_name="llmware"):
 
         self.library = library
@@ -1364,10 +1352,11 @@ class LibraryCatalog:
         return library_card
 
     def all_library_cards(self):
+
+        """ Get all library cards """
+
         all_library_cards_cursor = CollectionRetrieval("library",
                                                        account_name=self.account_name).get_whole_collection()
-
-        """ Gets all library cards """
 
         all_library_cards = all_library_cards_cursor.pull_all()
 
@@ -1379,8 +1368,7 @@ class LibraryCatalog:
 
         new_lib_name = new_library_card["library_name"]
 
-        logger.debug(f"update: LibraryCatalog - create_new_library_card - {new_lib_name} - "
-                     f"{new_library_card}")
+        logger.debug(f"LibraryCatalog - create_new_library_card - {new_lib_name} - {new_library_card}")
 
         CollectionWriter("library", account_name=self.account_name).write_new_record(new_library_card)
 
@@ -1446,11 +1434,3 @@ class LibraryCatalog:
                                               added_tables=added_tables)
         return 0
 
-    def bulk_update_graph_status(self):
-
-        """ Updates graph status on library card """
-
-        update_dict = {"graph_status": "true"}
-        self.update_library_card(self.library_name,update_dict, account_name=self.account_name )
-
-        return 0
