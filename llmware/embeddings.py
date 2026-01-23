@@ -19,13 +19,8 @@ creating a new embedding, as well as searching and deleting the vector index. Th
 _EmbeddingUtils class, which provides a set of functions used by all vector database classes.
 """
 
-import os
-import logging
+import os, logging, re, time, uuid, itertools
 import numpy as np
-import re
-import time
-import uuid
-import itertools
 from importlib import util
 import importlib
 
@@ -33,8 +28,7 @@ from llmware.configs import (LLMWareConfig, MongoConfig, MilvusConfig, PostgresC
                              PineconeConfig, QdrantConfig, Neo4jConfig, LanceDBConfig, ChromaDBConfig, VectorDBRegistry,
                              LLMWareException, DependencyNotInstalledException, ModelNotFoundException)
 
-from llmware.resources import CollectionRetrieval, CollectionWriter
-from llmware.status import Status
+from llmware.resources import CollectionRetrieval, CollectionWriter, Status
 from llmware.util import Utilities
 
 """ By default, no vector db drivers are loaded into global program space unless and until they are invoked.  Within 
