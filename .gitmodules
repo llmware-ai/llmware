@@ -1,0 +1,6 @@
+[submodule "hackathon/Team-hireflex/hac"]
+	path = hackathon/Team-hireflex/hac
+	url = https://github.com/N1RMAL/novathon_frontend.git
+[submodule "hackathon/Team-hireflex/hackathon/Team-Hireflex-backend"]
+	path = hackathon/Team-hireflex/hackathon/Team-Hireflex-backend
+	url = https://github.com/sukruth17/Team-HireFlex.git
