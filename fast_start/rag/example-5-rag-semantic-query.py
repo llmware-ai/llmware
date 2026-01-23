@@ -33,7 +33,7 @@ import os
 from llmware.library import Library
 from llmware.retrieval import Query
 from llmware.setup import Setup
-from llmware.status import Status
+from llmware.resources import Status
 from llmware.prompts import Prompt
 from llmware.configs import LLMWareConfig, MilvusConfig
 from importlib import util
