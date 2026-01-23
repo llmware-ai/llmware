@@ -34,9 +34,9 @@ import shutil
 import logging
 
 from llmware.resources import CloudBucketManager
-from llmware.configs import LLMWareConfig
-from llmware.exceptions import (ModelNotFoundException, LLMWareException,
-                                DependencyNotInstalledException, ModuleNotFoundException)
+from llmware.configs import (LLMWareConfig, LLMWareException, ModuleNotFoundException,
+                             DependencyNotInstalledException, ModelNotFoundException)
+
 
 try:
     from tokenizers import Tokenizer
@@ -2247,3 +2247,4 @@ class Sources:
             chunks.append(new_dict)
 
         return chunks
+

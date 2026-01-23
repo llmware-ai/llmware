@@ -28,7 +28,7 @@ import numpy as np
 import sys
 import time
 import multiprocessing
-from llmware.exceptions import LLMWareException, ModelNotFoundException, ModuleNotFoundException, GGUFLibNotLoadedException
+from llmware.configs import LLMWareException, ModelNotFoundException
 logger = logging.getLogger(__name__)
 import ctypes
 from dataclasses import field

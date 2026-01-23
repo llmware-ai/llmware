@@ -33,10 +33,8 @@ import json
 
 from llmware.models import ModelCatalog, _ModelRegistry
 from llmware.util import CorpTokenizer, AgentWriter
-from llmware.configs import SQLiteConfig
-from llmware.exceptions import ModelNotFoundException
 from llmware.resources import CustomTable
-from llmware.configs import LLMWareConfig
+from llmware.configs import LLMWareConfig, SQLiteConfig, ModelNotFoundException
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=LLMWareConfig().get_logging_level_by_module(__name__))

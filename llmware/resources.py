@@ -51,9 +51,8 @@ try:
 except ImportError:
     pass
 
-from llmware.configs import LLMWareConfig, PostgresConfig, LLMWareTableSchema, SQLiteConfig, AWSS3Config
-
-from llmware.exceptions import LLMWareException, UnsupportedCollectionDatabaseException, InvalidNameException
+from llmware.configs import (LLMWareConfig, PostgresConfig, LLMWareTableSchema,
+                             SQLiteConfig, AWSS3Config, LLMWareException)
 
 # new imports
 try:
@@ -105,7 +104,8 @@ class CollectionRetrieval:
                                                   custom_table=custom_table, custom_schema=custom_schema)
 
         else:
-            raise UnsupportedCollectionDatabaseException(self.active_db)
+            raise LLMWareException(message=f"CollectionRetrieval - collection database "
+                                           f"is not supported - {self.active_db}")
 
     def test_connection(self):
         """Pings database and confirms valid connection"""
@@ -229,7 +229,8 @@ class CollectionWriter:
                                             custom_schema=custom_schema)
 
         else:
-            raise UnsupportedCollectionDatabaseException(self.active_db)
+            raise LLMWareException(message=f"CollectionWriter - collection database "
+                                           f"is not supported - {self.active_db}")
 
     def build_text_index(self):
         """Builds text index using db-specific methods"""
@@ -585,7 +586,8 @@ class MongoRetrieval:
         if input_name not in self.reserved_tables:
             output_name = input_name
         else:
-            raise InvalidNameException(input_name)
+            raise LLMWareException(message=f"MongoRetrieval - selected name is not "
+                                           f"valid on database - {input_name}")
 
         return output_name
 
@@ -935,7 +937,8 @@ class PGRetrieval:
         if input_name not in self.reserved_tables:
             output_name = re.sub("-","_", input_name)
         else:
-            raise InvalidNameException(input_name)
+            raise LLMWareException(message=f"PGRetrieval - selected name is not "
+                                           f"valid on database - {input_name}")
 
         return output_name
 
@@ -1988,7 +1991,8 @@ class SQLiteRetrieval:
         if input_name not in self.reserved_tables:
             output_name = re.sub("-", "_", input_name)
         else:
-            raise InvalidNameException(input_name)
+            raise LLMWareException(message=f"SQLiteRetrieval - selected name is not "
+                                           f"valid on database - {input_name}")
 
         return output_name
 
