@@ -1,0 +1,134 @@
+.nav-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 60px;
+  background-color: #ffffffab;
+  backdrop-filter: blur(5px);
+  z-index: 100;
+  position: relative;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ui-brand-color);
+  font-family: var(--poppins);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -2px;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  list-style: none;
+
+  a {
+    text-decoration: none;
+    font-size: 14px;
+    color: var(--ui-secondary-txt);
+    font-weight: 400;
+  }
+}
+
+.login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 16px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  background: var(--ui-dark-bg);
+  color: #fff;
+  text-decoration: none;
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  .nav-container {
+    padding: 20px;
+  }
+  .links a {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 560px) {
+  .logo {
+    font-size: 20px;
+  }
+  .links {
+    gap: 20px;
+  }
+  .links a {
+    font-size: 12px;
+  }
+  .login-btn {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 560px) {
+  .logo {
+    font-size: 20px;
+  }
+  .links {
+    gap: 20px;
+  }
+  .links a {
+    font-size: 12px;
+  }
+  .login-btn {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .logo {
+    font-size: 20px;
+  }
+  .links {
+    display: none;
+  }
+  .login-btn {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+}
+
+
+.wallets{
+  position: fixed;
+  top: 80px;
+  right: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  // border: 2px solid #ececec;
+  box-shadow: -1px -2px 37px 0px rgba(207, 207, 207, 0.76);
+  border-radius: 10px;
+  padding: 10px;
+  z-index: 10000;
+}
+
+.wallet-btn{
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  z-index: 10000;
+}
+.wallet-btn img{
+  width: 140px;
+  height: 30px;
+  cursor: pointer;
+
+}

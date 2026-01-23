@@ -1,0 +1,26 @@
+.uploader-wrapper{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.pre-img{
+    width: fit-content;
+    height: fit-content;
+    padding: 15px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--ui-background);
+    box-shadow: -1px -2px 37px 0px rgba(207,207,207,1);
+    border-radius: 12px;
+    margin-top: 40px;
+}
+
+.pre-img img{
+    min-width: 400px;
+    min-height: 300px;
+    border-radius: 12px;
+}
