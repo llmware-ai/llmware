@@ -53,7 +53,6 @@ class Utilities:
     """ Utility functions used throughout LLMWare """
 
     def __init__(self, library=None):
-        self.start = 0
         self.library = library
 
     def get_module_pdf_parser(self):
@@ -436,6 +435,36 @@ class Utilities:
         except TypeError:
             logger.error(f"Error encoding string - {string}")
             return ""
+
+    def prune_stop_words(self, text,front=100,back=100):
+
+        """ Utility function that strips stop words from context text, with
+        the goal of reducing context size, while keeping semantic meaning in
+        place - intended for use in large contexts run in smaller memory space. """
+
+        stripped_text = ""
+        stop_words = Utilities().get_stop_words_master_list()
+        tokens = text.split(" ")
+        front_reserve = front
+        back_reserve = len(tokens) - back
+        word_reduction = 0
+
+        for i, tok in enumerate(tokens):
+
+            if front_reserve < i < back_reserve:
+                if tok.lower() in stop_words:
+                    word_reduction += 1
+                    pass
+                else:
+                    stripped_text += tok + " "
+            else:
+                stripped_text += tok + " "
+
+        logger.info(f"Utilities - prune_stop_words - {stripped_text}")
+        logger.info(f"Utilities - prune_stop_words - "
+                    f"word reduction - {word_reduction}")
+
+        return stripped_text
 
     @staticmethod
     def get_stop_words_master_list():
