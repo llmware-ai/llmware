@@ -1,0 +1,16 @@
+Instruction / Operand / Region Errors:
+
+/-------------------------------------------!!!KERNEL HEADER ERRORS FOUND!!!-------------------------------------------\
+Error in CISA routine with name: igc_check
+                  Error Message: Input V38 = [256, 260) intersects with V37 = [256, 260)
+\----------------------------------------------------------------------------------------------------------------------/
+
+
+/-------------------------------------------!!!KERNEL HEADER ERRORS FOUND!!!-------------------------------------------\
+Error in CISA routine with name: igc_check
+                  Error Message: Explicit input 2 must not follow an implicit input 0
+\----------------------------------------------------------------------------------------------------------------------/
+
+
+
+

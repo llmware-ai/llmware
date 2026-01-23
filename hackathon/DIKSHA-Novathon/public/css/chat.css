@@ -1,0 +1,104 @@
+:root {
+    --primary: #32a852; /* Green */
+    --secondary: #f9a825; /* Light Orange */
+    --light: #fffaf0; /* Very Light Orange */
+    --dark: #2c2c2c; /* Darker Text Color */
+}
+
+body {
+    background: var(--light);
+    font-family: Arial, sans-serif;
+    color: var(--dark);
+    margin: 0;
+    padding: 0;
+}
+
+.chat-container {
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #fff;
+    border: 2px solid var(--secondary);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.chat-header {
+    text-align: center;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--secondary);
+    margin-bottom: 20px;
+}
+
+.chat-header h2 {
+    margin: 0;
+    color: var(--primary);
+    font-size: 20px;
+}
+
+.chatbox {
+    height: 300px;
+    overflow-y: auto;
+    border: 2px solid var(--secondary);
+    border-radius: 8px;
+    padding: 10px;
+    background: #fff;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.input-container {
+    display: flex;
+    gap: 10px;
+}
+
+.user-input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid var(--secondary);
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.user-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 5px var(--primary);
+}
+
+.send-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.send-btn:hover {
+    background: #258b41; /* Darker Green */
+}
+
+.message {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.message.user {
+    background: var(--secondary);
+    color: #fff;
+    text-align: right;
+}
+
+.message.chatbot {
+    background: var(--primary);
+    color: #fff;
+    text-align: left;
+}
