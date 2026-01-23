@@ -23,10 +23,8 @@ from typing import Mapping, Any
 from pathlib import Path
 
 from llmware.util import Utilities, AgentWriter, LocalTokenizer
-from llmware.configs import LLMWareConfig
-from llmware.exceptions import (DependencyNotInstalledException, ModuleNotFoundException,
-                                ModelCardNotRegisteredException, GGUFLibNotLoadedException, LLMWareException,
-                                ModelNotFoundException)
+from llmware.configs import (LLMWareConfig, LLMWareException, ModelNotFoundException,
+                             GGUFLibNotLoadedException,DependencyNotInstalledException)
 
 from llmware.model_configs import (global_model_repo_catalog_list, global_model_finetuning_prompt_wrappers_lookup,
                                    global_default_prompt_catalog, model_benchmark_data, global_tokenizer_bos_eos_lookup)
@@ -280,8 +278,9 @@ class _ModelRegistry:
             #   go ahead and add model to the catalog
 
             cls.registered_models.append(model_card_dict)
+
         else:
-            raise ModelCardNotRegisteredException("New-Model-Card-Missing-Keys")
+            raise LLMWareException(message="New Model Card is Missing Keys")
 
         return model_card_dict
 
@@ -291,7 +290,7 @@ class _ModelRegistry:
         """ Updates model in the registry """
 
         if not cls.validate(new_model_card_dict):
-            raise ModelCardNotRegisteredException("New-Model-Card-Missing-Keys")
+            raise LLMWareException(message="New Model Card is missing keys.")
 
         updated=False
 
@@ -10213,7 +10212,7 @@ class GGUFGenerativeModel(BaseModel):
                                                    GGUFConfigs().get_config("windows")))
 
             else:
-                raise ModuleNotFoundException(f"No Matching Llama.CPP binary for platform - {system_platform}")
+                raise LLMWareException(message=f"No matching llama.cpp binary for platform - {system_platform}")
 
             # Add the library directory to the DLL search path on Windows (if needed)
             if sys.platform == "win32" and sys.version_info >= (3, 8):
@@ -10263,7 +10262,8 @@ class GGUFGenerativeModel(BaseModel):
                                                         self.use_gpu, _lib_path, custom_path)
 
         # if not loaded
-        raise ModuleNotFoundException("llama_cpp_backend")
+        raise LLMWareException(message=f"GGUFGenerativeModel - attempting to load llama cpp backend lib - "
+                                       f"Llama cpp backend not found.")
 
     def _init_sampler(self):
 
@@ -11347,8 +11347,8 @@ class WhisperCPPModel(BaseModel):
             if os.path.exists(custom_path):
                 _lib_paths = [custom_path]
             else:
-                raise ModuleNotFoundException("custom-whisper-cpp-lib")
-
+                raise LLMWareException(message=f"WhisperCPPModel - attempted to load whisper cpp backend lib - "
+                                               f"could not find path to custom lib - {custom_path}")
         else:
 
             # general case - will look for llama.cpp dynamic library included with llmware

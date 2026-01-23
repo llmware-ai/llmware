@@ -31,13 +31,11 @@ try:
 except:
     pass
 
-from llmware.configs import LLMWareConfig
+from llmware.configs import LLMWareConfig, LLMWareException, ModelNotFoundException
 from llmware.embeddings import EmbeddingHandler
 from llmware.resources import CollectionRetrieval, QueryState
 from llmware.util import Utilities, CorpTokenizer
 from llmware.models import ModelCatalog
-from llmware.exceptions import LibraryObjectNotFoundException,UnsupportedEmbeddingDatabaseException,\
-    ImportingSentenceTransformerRequiresModelNameException, EmbeddingModelNotFoundException
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +126,7 @@ class Query:
             self.account_name = library.account_name
         else:
             # throw error if library object does not have library_name and account_name attributes
-            raise LibraryObjectNotFoundException(library)
+            raise LLMWareException(message= f"Query - init - library object not found - {library}")
 
         # explicitly pass name of embedding model, if multiple embeddings on library
         self.embedding_model_name = embedding_model_name
@@ -141,7 +139,8 @@ class Query:
 
         # edge case - if a user tries to load a sentence_transformer model but does not pass a model name
         if from_sentence_transformer and not embedding_model_name:
-            raise ImportingSentenceTransformerRequiresModelNameException
+            raise LLMWareException(message=f"Query - init - to use sentence_transformers, please "
+                                           f"provide the model name directly to load")
 
         # load default configs
         # embedding initialization parameters
@@ -717,7 +716,7 @@ class Query:
         if self.embedding_model:
             self.query_embedding = self.embedding_model.embedding(query)
         else:
-            raise EmbeddingModelNotFoundException(self.library_name)
+            raise ModelNotFoundException(self.library_name)
 
         if self.embedding_db and self.embedding_model:
 
@@ -730,7 +729,8 @@ class Query:
             logger.error(f"error: Query - embedding record does not indicate embedding db - "
                          f"{self.embedding_db} and/or embedding model - {self.embedding_model}")
 
-            raise UnsupportedEmbeddingDatabaseException(self.embedding_db)
+            raise LLMWareException(message=f"Query - semantic query - selected "
+                                           f"embedding database is not supported - {self.embedding_db}")
 
         qr_raw = []
 
@@ -779,7 +779,7 @@ class Query:
         if self.embedding_model:
             self.query_embedding = self.embedding_model.embedding(query)
         else:
-            raise EmbeddingModelNotFoundException(self.library_name)
+            raise ModelNotFoundException(self.library_name)
 
         if self.embedding_db and self.embedding_model:
             semantic_block_results = self.embeddings.search_index(self.query_embedding,
@@ -791,7 +791,8 @@ class Query:
             logger.error(f"error: Query - embedding record does not indicate embedding db- {self.embedding_db} "
                          f"and/or an embedding_model - {self.embedding_model}")
 
-            raise UnsupportedEmbeddingDatabaseException(self.embedding_db)
+            raise LLMWareException(message=f"Query - semantic query with document filter - selected "
+                                           f"embedding database is not supported - {self.embedding_db}")
 
         qr_raw = []
 
@@ -825,7 +826,7 @@ class Query:
         if self.embedding_model:
             self.query_embedding = self.embedding_model.embedding(block["text"])
         else:
-            raise EmbeddingModelNotFoundException(self.library_name)
+            raise ModelNotFoundException(self.library_name)
 
         if self.embedding_model and self.embedding_db:
             semantic_block_results = self.embeddings.search_index(self.query_embedding,
@@ -837,7 +838,8 @@ class Query:
             logger.error(f"error: Query - embedding record does not indicate embedding db- "
                          f"{self.embedding_db} and/or embedding model - {self.embedding_model}")
 
-            raise UnsupportedEmbeddingDatabaseException(self.embedding_db)
+            raise LLMWareException(message=f"Query - similar blocks embedding - selected "
+                                           f"embedding database is not supported - {self.embedding_db}")
 
         qr_raw = []
 

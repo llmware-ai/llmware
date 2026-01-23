@@ -25,14 +25,12 @@ import os
 import json
 import logging
 
-from llmware.configs import LLMWareConfig, LLMWareTableSchema
+from llmware.configs import LLMWareConfig, LLMWareTableSchema, LLMWareException
 from llmware.util import Utilities
 from llmware.parsers import Parser
 from llmware.models import ModelCatalog
 from llmware.resources import CollectionRetrieval, CollectionWriter, CloudBucketManager
 from llmware.embeddings import EmbeddingHandler
-from llmware.exceptions import LibraryNotFoundException, ImportingSentenceTransformerRequiresModelNameException, \
-    UnsupportedEmbeddingDatabaseException, InvalidNameException
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +164,8 @@ class Library:
                 self.library_name = safe_name
 
             else:
-                raise InvalidNameException(library_name)
+                raise LLMWareException(message=f"Library - create_new_library - selected name is not "
+                                               f"valid library name - {library_name}")
 
         self.library_main_path = os.path.join(LLMWareConfig.get_library_path(), account_name, library_name)
 
@@ -249,8 +248,8 @@ class Library:
         library_exists = self.check_if_library_exists(library_name, account_name=account_name)
 
         if not library_exists:
-            logger.error(f"error: library/account not found - {library_name} - {account_name}")
-            raise LibraryNotFoundException(library_name, account_name)
+            raise LLMWareException(message=f"Library - load_library - library not found -"
+                                           f"library_name = {library_name} with account_name = {account_name}")
 
         self.library_name = library_name
         self.account_name = account_name
@@ -417,8 +416,8 @@ class Library:
 
         if not library_card:
 
-            logger.error(f"error: library/account not found - {self.library_name} - {self.account_name}")
-            raise LibraryNotFoundException(self.library_name, self.account_name)
+            raise LLMWareException(message=f"Library - get_embedding_status - library not found -"
+                                           f"library_name = {self.library_name} with account_name = {self.account_name}")
 
         # embedding record will be a list of {"embedding_status" | "embedding_model" | "embedding_db"}
         logger.info(f"update: library_card - {library_card}")
@@ -433,7 +432,7 @@ class Library:
 
     def get_knowledge_graph_status (self):
         """Gets the status of creating the knowledge graph for the current library from the library card.
-        
+
             Returns
             -------
             status_message : str
@@ -443,8 +442,9 @@ class Library:
         library_card = LibraryCatalog(self).get_library_card(self.library_name, self.account_name)
 
         if not library_card:
-            logger.error(f"error: library/account not found - {self.library_name} - {self.account_name}")
-            raise LibraryNotFoundException(self.library_name, self.account_name)
+
+            raise LLMWareException(message=f"Library - get_embedding_status - library not found -"
+                                           f"library_name = {self.library_name} with account_name = {self.account_name}")
 
         status_message = library_card["knowledge_graph"]
 
@@ -867,7 +867,8 @@ class Library:
             if from_sentence_transformer:
                 logger.info("update: loading sentence transformer model")
                 if not embedding_model_name:
-                    raise ImportingSentenceTransformerRequiresModelNameException
+                    raise LLMWareException(message=f"Library - install_new_embedding - to use "
+                                                   f"sentence_transformer model requires providing the model name.")
 
                 my_model = ModelCatalog().load_sentence_transformer_model(model,embedding_model_name)
         else:
@@ -885,7 +886,8 @@ class Library:
         # end - new insert
 
         if vector_db not in LLMWareConfig().get_supported_vector_db():
-            raise UnsupportedEmbeddingDatabaseException(vector_db)
+            raise LLMWareException(message=f"Library - install_new_embedding - selected "
+                                           f"vector db is not supported - {vector_db}")
 
         if my_model and max_len:
             my_model.max_len = max_len
@@ -1183,7 +1185,8 @@ class Library:
             EmbeddingHandler(self).delete_index(vector_db,embedding_model_name, embedding_dims)
         else:
             # update exception
-            raise LibraryNotFoundException(embedding_model_name, vector_db)
+            raise LLMWareException(message=f"Library - get_embedding_status - library not found -"
+                                           f"library_name = {self.library_name} with account_name = {self.account_name}")
 
         return 1
 

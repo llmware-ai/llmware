@@ -22,9 +22,7 @@ import logging
 import os
 import shutil
 
-
-from llmware.exceptions import LLMWareException
-from llmware.configs import LLMWareConfig
+from llmware.configs import LLMWareConfig, LLMWareException
 
 logger = logging.getLogger(__name__)
 

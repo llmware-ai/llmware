@@ -48,13 +48,10 @@ import random
 from ctypes import *
 import platform
 
-from llmware.configs import LLMWareConfig, LLMWareTableSchema
+from llmware.configs import LLMWareConfig, LLMWareTableSchema, LLMWareException, DependencyNotInstalledException
 from llmware.util import Utilities, TextChunker
 from llmware.web_services import WikiKnowledgeBase, WebSiteParser
 from llmware.resources import CollectionRetrieval, CollectionWriter, ParserState
-
-from llmware.exceptions import DependencyNotInstalledException, FilePathDoesNotExistException, \
-    OCRDependenciesNotFoundException, LLMWareException
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=LLMWareConfig().get_logging_level_by_module(__name__))
@@ -2330,7 +2327,8 @@ class Parser:
 
         # check that path exists
         if not os.path.exists(os.path.join(fp, fn)):
-            raise FilePathDoesNotExistException(os.path.join(fp,fn))
+            raise LLMWareException(message=f"Parser - could not find path - "
+                                           f"{os.path.join(fp,fn)}")
 
         output = []
 
@@ -2368,7 +2366,8 @@ class Parser:
 
         # check that path exists
         if not os.path.exists(os.path.join(fp, fn)):
-            raise FilePathDoesNotExistException(os.path.join(fp,fn))
+            raise LLMWareException(message=f"Parser - could not find path - "
+                                           f"{os.path.join(fp, fn)}")
 
         # deprecation warning for aarch64 linux and mac x86
 
@@ -2574,7 +2573,8 @@ class Parser:
 
         # check that path exists
         if not os.path.exists(os.path.join(fp,fn)):
-            raise FilePathDoesNotExistException(os.path.join(fp,fn))
+            raise LLMWareException(message=f"Parser - could not find path - "
+                                           f"{os.path.join(fp, fn)}")
 
         # deprecation warning for aarch64 linux and mac x86
 
@@ -2767,7 +2767,8 @@ class Parser:
 
         # check that path exists
         if not os.path.exists(os.path.join(input_fp, input_fn)):
-            raise FilePathDoesNotExistException(os.path.join(input_fp,input_fn))
+            raise LLMWareException(message=f"Parser - could not find path - "
+                                           f"{os.path.join(input_fp, input_fn)}")
 
         #   Designed for parse of a single PDF_BY_OCR - no storage, no link into Library
         #   --output returned as in-memory list of Dicts
@@ -2817,7 +2818,8 @@ class Parser:
 
         # check that path exists
         if not os.path.exists(os.path.join(input_fp, input_fn)):
-            raise FilePathDoesNotExistException(os.path.join(input_fp,input_fn))
+            raise LLMWareException(message=f"Parser - could not find path - "
+                                           f"{os.path.join(input_fp, input_fn)}")
 
         # set counters
         output= []
@@ -2857,7 +2859,8 @@ class Parser:
 
         # check that path exists
         if not os.path.exists(os.path.join(input_fp, input_fn)):
-            raise FilePathDoesNotExistException(os.path.join(input_fp,input_fn))
+            raise LLMWareException(message=f"Parser - could not find path - "
+                                           f"{os.path.join(input_fp, input_fn)}")
 
         # set counters
         output = []
@@ -2948,7 +2951,8 @@ class Parser:
 
         # check that path exists
         if not os.path.exists(os.path.join(input_fp, input_fn)):
-            raise FilePathDoesNotExistException(os.path.join(input_fp, input_fn))
+            raise LLMWareException(message=f"Parser - could not find path - "
+                                           f"{os.path.join(input_fp, input_fn)}")
 
         # set counters
         counter = 0
@@ -3005,7 +3009,8 @@ class Parser:
 
         # check that path exists
         if not os.path.exists(os.path.join(input_fp, input_fn)):
-            raise FilePathDoesNotExistException(os.path.join(input_fp,input_fn))
+            raise LLMWareException(message=f"Parser - could not find path - "
+                                           f"{os.path.join(input_fp, input_fn)}")
 
         # set counters
         counter = 0
@@ -3625,7 +3630,7 @@ class ImageParser:
         try:
             text_out = pytesseract.image_to_string(os.path.join(dir_fp,fn))
         except TesseractNotFoundError as e:
-            raise OCRDependenciesNotFoundException("tesseract")
+            raise DependencyNotInstalledException("tesseract")
 
         if not preserve_spacing:
             text_out = text_out.replace("\n", " ")
@@ -3658,7 +3663,8 @@ class ImageParser:
             try:
                 text_out = pytesseract.image_to_string(os.path.join(fp,docs))
             except TesseractNotFoundError as e:
-                raise OCRDependenciesNotFoundException("tesseract")
+                raise DependencyNotInstalledException("tesseract")
+
             text_out = text_out.replace("\n", " ")
             logger.info(f"ImageParser - ocr_to_single_file - ocr text_out: {text_out}")
             text_list_out.append(text_out)
@@ -3687,14 +3693,15 @@ class ImageParser:
         try:
             images = convert_from_path(os.path.join(input_fp,file))
         except PDFInfoNotInstalledError as e:
-            raise OCRDependenciesNotFoundException("poppler")
+            raise DependencyNotInstalledException("popper")
         for j, image in enumerate(images):
 
             # run ocr over page image
             try:
                 text = pytesseract.image_to_string(image)
             except TesseractNotFoundError as e:
-                raise OCRDependenciesNotFoundException("tesseract")
+                raise DependencyNotInstalledException("tesseract")
+
             # will chop up the long text into individual blocks
             text_chunks = TextChunker(text_chunk=text,
                                       max_char_size=self.text_chunk_size,
@@ -3792,7 +3799,8 @@ class ImageParser:
                     try:
                         images = convert_from_path(os.path.join(input_fp,files))
                     except PDFInfoNotInstalledError as e:
-                        raise OCRDependenciesNotFoundException("poppler")
+                        raise DependencyNotInstalledException("poppler")
+
                     for j, image in enumerate(images):
 
                         # saves .png images in target output folder
@@ -3801,7 +3809,8 @@ class ImageParser:
                         try:
                             text = pytesseract.image_to_string(image)
                         except TesseractNotFoundError as e:
-                            raise OCRDependenciesNotFoundException("tesseract")
+                            raise DependencyNotInstalledException("tesseract")
+
                         all_text += text
                         # all_text += re.sub("[\n\r]"," ", text)
                         logger.info(f"update: ocr text out - {text}")

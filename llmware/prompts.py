@@ -35,8 +35,7 @@ from llmware.models import ModelCatalog, PromptCatalog, PyTorchLoader
 from llmware.parsers import Parser
 from llmware.retrieval import Query
 from llmware.library import Library
-from llmware.exceptions import LibraryObjectNotFoundException, PromptNotInCatalogException
-from llmware.configs import LLMWareConfig
+from llmware.configs import LLMWareConfig, LLMWareException
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=LLMWareConfig().get_logging_level_by_module(__name__))
@@ -671,8 +670,9 @@ class Prompt:
         if prompt_name in self.pc.list_all_prompts():
             self.prompt_type = prompt_name
         else:
-            raise PromptNotInCatalogException(prompt_name)
-
+            raise LLMWareException(message=f"Prompt - select_prompt_from_catalog - "
+                                           f"unable to find selected prompt in "
+                                           f"catalog - {prompt_name}")
         return self
 
     def prompt_from_catalog(self, prompt, context=None, prompt_name=None, inference_dict=None):
@@ -680,7 +680,9 @@ class Prompt:
         """ Inference method - runs a prompt by loading a specific prompt style from the catalog. """
 
         if prompt_name not in self.pc.list_all_prompts():
-            raise PromptNotInCatalogException(prompt_name)
+            raise LLMWareException(message=f"Prompt - prompt_from_catalog - could "
+                                           f"not find selected prompt in catalog - "
+                                           f"{prompt_name}")
 
         # self.llm_model.add_prompt_engineering= prompt_name
         response = self.prompt_main(prompt,context=context, prompt_name=prompt_name,inference_dict=inference_dict)
