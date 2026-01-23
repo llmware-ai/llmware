@@ -195,6 +195,21 @@ ModelCatalog().register_open_chat_model("my_open_chat_model2",
                                         model_type="chat")
 ```
 
+## DuckDB Integration
+
+DuckDB is an in-process SQL OLAP database management system designed for analytical workloads. It now supports similarity search using vectors, making it a great fit for Retrieval-Augmented Generation (RAG) workflows.
+
+### Features
+- Lightweight and efficient, even on local machines.
+- Supports vectorized execution for analytical queries.
+- Enables similarity search for RAG workflows.
+
+### Example Usage
+Refer to the example script `examples/Models/duckdb_rag_example.py` for a demonstration of how to use DuckDB with `llmware`.
+
+### Testing
+Tests for DuckDB integration can be found in `tests/models/test_duckdb_integration.py`.
+
 
 Need help or have questions?
 ============================
