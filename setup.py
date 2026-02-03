@@ -76,7 +76,7 @@ setup(
         'neo4j': ['neo4j==5.16.0'],
         'full': ['pymongo>=4.7.0', 'torch>=1.13.1', 'transformers>=4.36.0', 'einops>=0.7.0',
                  'Wikipedia-API>=0.6.0','openai>=1.0', 'datasets>=2.15.0', 'yfinance>=0.2.38', 'pymilvus<=2.5.1',
-                 'chromadb>=0.4.22', 'streamlit', 'Flask', 'psycopg-binary==3.1.17', 'psycopg==3.1.17',
+                 'chromadb>=0.4.22', 'streamlit', 'psycopg-binary==3.1.17', 'psycopg==3.1.17',
                  'pgvector==0.2.4', 'soundfile>=0.12.0', 'soxr>=0.5.0']
     },
 )
