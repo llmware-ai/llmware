@@ -28,4 +28,4 @@ datasets>=2.15.0
 yfinance>=0.2.38
 chromadb>=0.4.22
 streamlit
-Flask
+
