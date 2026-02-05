@@ -28,12 +28,14 @@ import numpy as np
 import sys
 import time
 import multiprocessing
+from typing import NewType
 from llmware.configs import LLMWareException, ModelNotFoundException
+
 logger = logging.getLogger(__name__)
 import ctypes
 from dataclasses import field
 
-# Constants
+
 LLAMA_ROPE_SCALING_TYPE_UNSPECIFIED = -1
 LLAMA_ROPE_SCALING_TYPE_NONE = 0
 LLAMA_ROPE_SCALING_TYPE_LINEAR = 1
@@ -69,6 +71,7 @@ llama_log_callback = ctypes.CFUNCTYPE(None, ctypes.c_int, ctypes.c_char_p, ctype
 llama_grammar_p = ctypes.c_void_p
 llama_progress_callback = ctypes.CFUNCTYPE(ctypes.c_bool, ctypes.c_float, ctypes.c_void_p)
 
+llama_memory_t_ctypes = ctypes.c_void_p
 llama_vocab_p_ctypes = ctypes.c_void_p
 
 # whisper_log_callback mirrors llama_log_callback
@@ -91,9 +94,12 @@ class llama_token_data_array(ctypes.Structure):
         ("data", llama_token_data_p),
         ("size", ctypes.c_size_t),
         ("sorted", ctypes.c_bool),
+        #TODO: new
+        ("selected", ctypes.c_int64)
     ]
 
 llama_token_data_array_p = ctypes.POINTER(llama_token_data_array)
+
 
 class llama_batch(ctypes.Structure):
 
@@ -106,22 +112,21 @@ class llama_batch(ctypes.Structure):
         ("seq_id", ctypes.POINTER(ctypes.POINTER(llama_seq_id))),
         ("logits", ctypes.POINTER(ctypes.c_int8)),
 
-        # deprecated/removed
-        # ("all_pos_0", llama_pos),
-        # ("all_pos_1", llama_pos),
-        # ("all_seq_id", llama_seq_id),
     ]
 
 
 class llama_model_kv_override_value(ctypes.Union):
+
     _fields_ = [
-        ("int_value", ctypes.c_int64),
-        ("float_value", ctypes.c_double),
-        ("bool_value", ctypes.c_bool),
+        ("val_i64", ctypes.c_int64),
+        ("val_f64", ctypes.c_double),
+        ("val_bool", ctypes.c_bool),
+        ("val_str", ctypes.c_char * 128),
     ]
 
 
 class llama_model_kv_override(ctypes.Structure):
+
     _fields_ = [
         ("key", ctypes.c_char * 128),
         ("tag", ctypes.c_int),
@@ -133,25 +138,18 @@ class llama_model_params(ctypes.Structure):
 
     _fields_ = [
 
-        # NEW
         ("devices", ctypes.c_void_p),
-
+        ("tensor_buft_overrides", ctypes.c_void_p),
         ("n_gpu_layers", ctypes.c_int32),
         ("split_mode", ctypes.c_int),
         ("main_gpu", ctypes.c_int32),
         ("tensor_split", ctypes.POINTER(ctypes.c_float)),
-
-        # NEW
-        ("rpc_servers", ctypes.c_char_p),
-
         ("progress_callback", llama_progress_callback),
         ("progress_callback_user_data", ctypes.c_void_p),
         ("kv_overrides", ctypes.POINTER(llama_model_kv_override)),
         ("vocab_only", ctypes.c_bool),
         ("use_mmap", ctypes.c_bool),
         ("use_mlock", ctypes.c_bool),
-
-        # NEW
         ("check_tensors", ctypes.c_bool)
     ]
 
@@ -162,23 +160,16 @@ ggml_abort_callback = ctypes.CFUNCTYPE(ctypes.c_bool, ctypes.c_void_p)
 class llama_context_params(ctypes.Structure):
 
     _fields_ = [
-        # ("seed", ctypes.c_uint32),
+
         ("n_ctx", ctypes.c_uint32),
         ("n_batch", ctypes.c_uint32),
-
-        # NEW
         ("n_ubatch", ctypes.c_uint32),
         ("n_seq_max", ctypes.c_uint32),
-
-        # ("n_parallel", ctypes.c_uint32),
         ("n_threads", ctypes.c_uint32),
         ("n_threads_batch", ctypes.c_uint32),
         ("rope_scaling_type", ctypes.c_int),
         ("pooling_type", ctypes.c_int),
-
-        # NEW
         ("attention_type", ctypes.c_int),
-
         ("rope_freq_base", ctypes.c_float),
         ("rope_freq_scale", ctypes.c_float),
         ("yarn_ext_factor", ctypes.c_float),
@@ -191,15 +182,19 @@ class llama_context_params(ctypes.Structure):
         ("cb_eval_user_data", ctypes.c_void_p),
         ("type_k", ctypes.c_int),
         ("type_v", ctypes.c_int),
-        ("logits_all", ctypes.c_bool),
-        ("embeddings", ctypes.c_bool),
-        ("offload_kqv", ctypes.c_bool),
-
-        # NEW
-        ("flash_attn", ctypes.c_bool),
-
         ("abort_callback", ggml_abort_callback),
         ("abort_callback_data", ctypes.c_void_p),
+        ("embeddings", ctypes.c_bool),
+        ("offload_kqv", ctypes.c_bool),
+        ("flash_attn", ctypes.c_bool),
+        ("no_perf", ctypes.c_bool),
+        ("op_offload", ctypes.c_bool),
+        ("swa_full", ctypes.c_bool),
+        ("kv_unified", ctypes.c_bool),
+        ("sampler", ctypes.c_void_p),
+        ("n_sampler", ctypes.c_int),
+        ("flash_attn_type", ctypes.c_int), # -1 LLAMA_FLASH_ATTN_TYPE_AUTO),
+
     ]
 
 
@@ -208,21 +203,28 @@ class llama_model_quantize_params(ctypes.Structure):
     _fields_ = [
         ("nthread", ctypes.c_int32),
         ("ftype", ctypes.c_int),
-
-        # NEW
         ("output_tensor_type", ctypes.c_int),
         ("token_embedding_type", ctypes.c_int),
-
         ("allow_requantize", ctypes.c_bool),
         ("quantize_output_tensor", ctypes.c_bool),
         ("only_copy", ctypes.c_bool),
         ("pure", ctypes.c_bool),
+        ("keep_split", ctypes.c_bool),
         ("imatrix", ctypes.c_void_p),
-
-        # NEW
-        ("kv_overrides", ctypes.c_void_p)
+        ("kv_overrides", ctypes.c_void_p),
+        ("tensor_types", ctypes.c_void_p),
+        ("prune_layers", ctypes.c_void_p)
     ]
 
+
+class llama_logit_bias(ctypes.Structure):
+
+    _fields_ = [
+        ("token", llama_token),
+        ("bias", ctypes.c_float),
+    ]
+
+llama_logit_bias_p = ctypes.POINTER(llama_logit_bias)
 
 
 class llama_grammar_element(ctypes.Structure):
@@ -245,19 +247,17 @@ class llama_timings(ctypes.Structure):
         ("n_eval", ctypes.c_int32),
     ]
 
-
 class llama_chat_message(ctypes.Structure):
     _fields_ = [
         ("role", ctypes.c_char_p),
         ("content", ctypes.c_char_p),
     ]
 
-
 class llama_kv_cache_view_cell(ctypes.Structure):
     _fields_ = [("pos", llama_pos)]
 
-
 class llama_kv_cache_view(ctypes.Structure):
+
     _fields_ = [
         ("n_cells", ctypes.c_int32),
         ("n_max_seq", ctypes.c_int32),
@@ -269,9 +269,7 @@ class llama_kv_cache_view(ctypes.Structure):
         ("cells_sequences", ctypes.POINTER(llama_seq_id)),
     ]
 
-
 llama_kv_cache_view_p = ctypes.POINTER(llama_kv_cache_view)
-
 
 class llama_beam_view(ctypes.Structure):
     _fields_ = [
@@ -291,8 +289,6 @@ class llama_beams_state(ctypes.Structure):
     ]
 
 
-# TODO: NEW SAMPLER_CHAIN_PARAMS
-
 llama_sampler_context_t = ctypes.c_void_p
 
 
@@ -301,14 +297,6 @@ class llama_sampler_i(ctypes.Structure):
 
 
 class llama_sampler_chain_params(ctypes.Structure):
-
-    """Parameters for llama_sampler_chain
-
-    Attributes:
-        no_perf (bool): whether to measure performance timings"""
-
-    # if TYPE_CHECKING:
-    #    no_perf: bool
 
     _fields_ = [
         ("no_perf", ctypes.c_bool),
@@ -375,13 +363,21 @@ llama_sampler_init_mirostat = ctypes.CFUNCTYPE(llama_sampler_p_ctypes, ctypes.c_
 
 llama_sampler_init_mirostat_v2 = ctypes.CFUNCTYPE(llama_sampler_p_ctypes, ctypes.c_uint32, ctypes.c_float, ctypes.c_float)
 
-llama_sampler_init_grammar = ctypes.CFUNCTYPE(llama_sampler_p_ctypes, llama_model_p_ctypes, ctypes.c_char_p
-                                              ,ctypes.c_char_p)
+llama_sampler_init_grammar = ctypes.CFUNCTYPE(llama_sampler_p_ctypes, llama_model_p_ctypes, ctypes.c_char_p,ctypes.c_char_p)
 
 
 def add_ctypes_declarations (_lib):
 
-    # new llama sampler methods
+    """ Exposed methods on llama cpp binary as of January 2026 - roughly aligning to releases up to ~7900 """
+
+    llama_memory_clear = _lib.llama_memory_clear
+    llama_memory_clear.argtypes = [llama_memory_t_ctypes, ctypes.c_bool]
+    llama_memory_clear.restype = None
+
+    llama_state_get_size = _lib.llama_state_get_size
+    llama_state_get_size.argtypes = [llama_context_p_ctypes]
+    llama_state_get_size.restype = ctypes.c_size_t
+
     llama_sampler_sample = _lib.llama_sampler_sample
     llama_sampler_sample.argtypes = [llama_sampler_p_ctypes, llama_context_p_ctypes, ctypes.c_int32]
     llama_sampler_sample.restype = llama_token
@@ -391,6 +387,12 @@ def add_ctypes_declarations (_lib):
     llama_sampler_chain_init.restype = llama_sampler_p_ctypes
 
     llama_sampler_chain_add = _lib.llama_sampler_chain_add
+
+    # below is key fix for Mac - correcting the ctypes declaration for the arg types
+    # -- previously, alt/incorrect:  [llama_sampler_p_ctypes] - only one arg
+    # -- incorrect declaration was OK on Windows and Linux
+    # -- correct declaration is two args both with same llama_sampler_p_ctypes
+
     llama_sampler_chain_add.argtypes = [llama_sampler_p_ctypes, llama_sampler_p_ctypes]
     llama_sampler_chain_add.restype = None
 
@@ -399,6 +401,7 @@ def add_ctypes_declarations (_lib):
     llama_sampler_init_greedy.restype = llama_sampler_p
 
     # major interfaces
+
     llama_backend_init = _lib.llama_backend_init
     llama_backend_init.argtypes = []
     llama_backend_init.restype = None
@@ -426,6 +429,11 @@ def add_ctypes_declarations (_lib):
     llama_free_model.argtypes = [llama_model_p_ctypes]
     llama_free_model.restype = None
 
+    llama_init_from_model = _lib.llama_init_from_model
+    llama_init_from_model.argtypes = [llama_model_p_ctypes, llama_context_params]
+    llama_init_from_model.restype = llama_context_p_ctypes
+
+    # deprecated in favor of llama_init_from_model
     llama_new_context_with_model = _lib.llama_new_context_with_model
     llama_new_context_with_model.argtypes = [llama_model_p_ctypes, llama_context_params]
     llama_new_context_with_model.restype = llama_context_p_ctypes
@@ -474,7 +482,6 @@ def add_ctypes_declarations (_lib):
     llama_n_vocab.argtypes = [ctypes.c_void_p] # [llama_model_p_ctypes]
     llama_n_vocab.restype = ctypes.c_int32
 
-    # new vocab methods
     llama_model_get_vocab = _lib.llama_model_get_vocab
     llama_model_get_vocab.argtypes = [llama_model_p_ctypes]
     llama_model_get_vocab.restype = llama_vocab_p_ctypes
@@ -516,62 +523,13 @@ def add_ctypes_declarations (_lib):
     llama_model_n_params.argtypes = [llama_model_p_ctypes]
     llama_model_n_params.restype = ctypes.c_uint64
 
-    llama_kv_cache_view_init = _lib.llama_kv_cache_view_init
-    llama_kv_cache_view_init.argtypes = [llama_context_p_ctypes, ctypes.c_int32]
-    llama_kv_cache_view_init.restype = llama_kv_cache_view
+    llama_memory_seq_rm = _lib.llama_memory_seq_rm
+    llama_memory_seq_rm.argtypes = [llama_memory_t_ctypes, llama_seq_id, llama_pos, llama_pos,]
+    llama_memory_seq_rm.restype = ctypes.c_bool
 
-    llama_kv_cache_view_free = _lib.llama_kv_cache_view_free
-    llama_kv_cache_view_free.argtypes = [llama_kv_cache_view_p]
-    llama_kv_cache_view_free.restype = None
-
-    llama_kv_cache_view_update = _lib.llama_kv_cache_view_update
-    llama_kv_cache_view_update.argtypes = [llama_context_p_ctypes, llama_kv_cache_view_p]
-    llama_kv_cache_view_update.restype = None
-
-    llama_get_kv_cache_token_count = _lib.llama_get_kv_cache_token_count
-    llama_get_kv_cache_token_count.argtypes = [llama_context_p_ctypes]
-    llama_get_kv_cache_token_count.restype = ctypes.c_int32
-
-    llama_get_kv_cache_used_cells = _lib.llama_get_kv_cache_used_cells
-    llama_get_kv_cache_used_cells.argtypes = [llama_context_p_ctypes]
-    llama_get_kv_cache_used_cells.restype = ctypes.c_int32
-
-    llama_kv_cache_clear = _lib.llama_kv_cache_clear
-    llama_kv_cache_clear.argtypes = [llama_context_p_ctypes]
-    llama_kv_cache_clear.restype = None
-
-    llama_kv_cache_seq_rm = _lib.llama_kv_cache_seq_rm
-    llama_kv_cache_seq_rm.argtypes = [llama_context_p_ctypes, llama_seq_id, llama_pos, llama_pos, ]
-    llama_kv_cache_seq_rm.restype = None
-
-    llama_kv_cache_seq_cp = _lib.llama_kv_cache_seq_cp
-    llama_kv_cache_seq_cp.argtypes = [llama_context_p_ctypes, llama_seq_id, llama_seq_id, llama_pos, llama_pos, ]
-
-    llama_kv_cache_seq_cp.restype = None
-
-    llama_kv_cache_seq_keep = _lib.llama_kv_cache_seq_keep
-    llama_kv_cache_seq_keep.argtypes = [llama_context_p_ctypes, llama_seq_id]
-    llama_kv_cache_seq_keep.restype = None
-
-    llama_kv_cache_seq_div = _lib.llama_kv_cache_seq_div
-    llama_kv_cache_seq_div.argtypes = [llama_context_p_ctypes, llama_seq_id, llama_pos, llama_pos, ctypes.c_int, ]
-    llama_kv_cache_seq_div.restype = None
-
-    llama_get_state_size = _lib.llama_get_state_size
-    llama_get_state_size.argtypes = [llama_context_p_ctypes]
-    llama_get_state_size.restype = ctypes.c_size_t
-
-    llama_copy_state_data = _lib.llama_copy_state_data
-    llama_copy_state_data.argtypes = [llama_context_p_ctypes, ctypes.POINTER(ctypes.c_uint8)]
-    llama_copy_state_data.restype = ctypes.c_size_t
-
-    llama_set_state_data = _lib.llama_set_state_data
-    llama_set_state_data.argtypes = [llama_context_p_ctypes, ctypes.POINTER(ctypes.c_uint8)]
-    llama_set_state_data.restype = ctypes.c_size_t
-
-    llama_batch_get_one = _lib.llama_batch_get_one
-    llama_batch_get_one.argtypes = [llama_token_p, ctypes.c_int, llama_pos, llama_seq_id, ]
-    llama_batch_get_one.restype = llama_batch
+    llama_get_memory = _lib.llama_get_memory
+    llama_get_memory.argtypes = [llama_context_p_ctypes]
+    llama_get_memory.restype = ctypes.c_void_p
 
     llama_batch_init = _lib.llama_batch_init
     llama_batch_init.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.c_int32]
@@ -646,7 +604,7 @@ def add_ctypes_declarations (_lib):
     llama_token_to_piece.argtypes = [llama_model_p_ctypes, llama_token, ctypes.c_char_p, ctypes.c_int32, ]
     llama_token_to_piece.restype = ctypes.c_int32
 
-    # llama_grammar_element_p = ctypes.POINTER(llama_grammar_element)
+    llama_grammar_element_p = ctypes.POINTER(llama_grammar_element)
 
     llama_print_system_info = _lib.llama_print_system_info
     llama_print_system_info.argtypes = []
@@ -675,15 +633,16 @@ class _LlamaModel:
         self._llama_free_model = _lib.llama_free_model
 
         self.model = None
+        self.sampler = None
 
         if not os.path.exists(path_model):
-            raise LLMWareException(f"Path does not exist - {path_model}")
+            pass
 
         #   main function call to _lib
         self.model = _lib.llama_load_model_from_file(self.path_model.encode("utf-8"), self.params)
 
         if self.model is None:
-            raise ModelNotFoundException(path_model)
+            pass
 
     def __del__(self):
         if self.model is not None and self._llama_free_model is not None:
@@ -704,17 +663,19 @@ class _LlamaContext:
         self.model = model
         self.params = params
 
+        self.verbose = True
+        self.sampler = None
+
         self._llama_free = _lib.llama_free
-        self.ctx = None
 
         assert self.model.model is not None
 
-        self.ctx = _lib.llama_new_context_with_model(
-            self.model.model, self.params
-        )
+        self.ctx = _lib.llama_init_from_model(self.model.model, self.params)
+
+        self.memory = _lib.llama_get_memory(self.ctx)
 
         if self.ctx is None:
-            raise ModelNotFoundException("Llama-context-not-created-check-if-model-correctly-loaded")
+            pass
 
     def __del__(self):
         if self.ctx is not None and self._llama_free is not None:
@@ -830,7 +791,6 @@ def llama_log_callback(level, text, user_data):
         # no action taken if verbose is if OFF
         do_nothing = 0
 
-
 @whisper_log_callback
 def whisper_log_callback(level, text, user_data):
 
@@ -873,7 +833,7 @@ class GGUFConfigs:
 
                   # min cuda drivers for build of cuda libs
                   "cuda_linux_driver_min": [525, 60],
-                  "cuda_windows_driver_min": [528 ,33],
+                  "cuda_windows_driver_min": [528,33],
 
                   # adjusted from 256 (default for a long time - too low)
                   "max_output_tokens": 2048,
@@ -896,22 +856,34 @@ class GGUFConfigs:
                   "mac_metal_lib": "gguf_mac",
                   "windows_arm64_lib": "gguf_arm64",
 
+                  # prebuilt binaries packaged with llmware - evolving over time
+
                   "windows": "libllama_win.dll",
                   "windows_cuda": "libllama_win.dll",
-                  "windows_arm64": "libllama.dll",
+                  "windows_arm64": "libllama_win.dll",
                   "mac_metal": "libllama.dylib",
                   "linux_x86": "libllama.so",
                   "linux_cuda": "libllama.so",
+
                   # removed/deprecated support for older M-series Macs without Accelerate
                   # "mac_metal_no_acc": "libllama.dylib",
 
-                  "n_threads": max(multiprocessing.cpu_count() // 2, 1),
-                  "n_threads_batch": max(multiprocessing.cpu_count() // 2, 1),
+                  "windows_mtmd": "libmtmd.dll",
+                  "mac_metal_mtmd": "libmtmd.dylib",
+                  "linux_x86_mtmd": "libmtmd.so",
+                  "linux_cuda_mtmd": "libmtmd.so",
+                  "windows_arm64_mtmd": "libmtmd.dll",
+                  "windows_cuda_mtmd": "libmtmd.dll",
+
+                  "n_threads": 6, # max(multiprocessing.cpu_count() // 2, 1),
+                  "n_threads_batch": 6, #  max(multiprocessing.cpu_count() // 2, 1),
 
                   # whisper cpp configs
                   "whisper_cpp_lib_path": None,
                   "whisper_cpp_verbose": "OFF",
-                  "whisper_cpp_realtime_display": True,
+
+                  # turn on for testing/debugging
+                  "whisper_cpp_realtime_display": False,
                   "whisper_language": "en",
                   "whisper_sr": 16000,
                   "whisper_strategy": 0,
@@ -924,13 +896,14 @@ class GGUFConfigs:
                   "whisper_output_format": "text",
                   "whisper_default_model": "whisper-cpp-base-english",
 
-                  # prebuilt shared libraries included in llmware
+                  # prebuilt shared libraries included in llmware - evolving over time
                   "whisper_mac_metal": "libwhisper_mac_metal_155.dylib",
                   "whisper_mac_metal_no_acc": "libwhisper_mac_metal_no_acc_155.dylib",
                   "whisper_windows": "libwhisper_windows_155.dll",
+                  "whisper_windows_arm64": "libwhisper_windows_155.dll",
                   "whisper_linux_x86": "libwhisper_linux_x86_155.so",
                   "whisper_linux_cuda": "libwhisper_linux_cuda_155.so"
-                  }
+    }
 
     #   note: with temperature used as primary attribute to adjust sampling,
     #   most of the params do not need to be adjusted
@@ -952,7 +925,7 @@ class GGUFConfigs:
                              "cfg_scale": 1.0,
                              "n_probs": 0,
                              "mirostat_mu": field(default_factory=ctypes.c_float)
-                             }
+    }
 
     _conf_context_params = {"seed": 0xFFFFFFFF,
                             "n_ctx": 2048,
@@ -965,19 +938,18 @@ class GGUFConfigs:
                             "yarn_ext_factor": -1.0,
                             "yarn_attn_factor": 1.0,
                             "yarn_beta_fast": 32.0,
-                            "yarn_beta_slow" :1.0,
+                            "yarn_beta_slow":1.0,
                             "yarn_orig_ctx": 0,
                             "mul_mat_q": True,
                             "logits_all": False,
                             "embedding": False,
                             "offload_kqv": True
-                            }
+    }
 
     @classmethod
     def get_config(cls, name):
         if name in cls._conf_libs:
             return cls._conf_libs[name]
-        raise LLMWareException(message=f"GGUF Configs config key not found - {name}.")
 
     @classmethod
     def set_config(cls, name, value):
