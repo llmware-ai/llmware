@@ -3741,7 +3741,33 @@ global_model_repo_catalog_list = [
          "validation_files": [],
          "parameters": 4.0,
          "link": "https://huggingface.co/llmware/gemma-3-4b-ov"
-         }
+         },
+
+        {"model_name": "qwen2.5-vl-3b-instruct-gguf", "display_name": "qwen2.5-vl-vision-model",
+         "model_family": "GGUFVisionGenerativeModel", "model_category": "generative_local",
+         "model_location": "llmware_repo", "context_window": 4096, "instruction_following": False,
+         "prompt_wrapper": "hf_chat", "temperature": 0.0, "trailing_space": "",
+         "gguf_repo": "llmware/qwen2.5-vl-3b-instruct-gguf",
+         "gguf_file": "Qwen2.5-VL-3B-Instruct-Q4_K_M.gguf",
+         "clip_file": "mmproj-F16.gguf",
+         "link": "https://huggingface.co/llmware/qwen2.5-vl-3b-instruct-gguf",
+         "tokenizer_local": "tokenizer_qw.json",
+         "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+         "validation_files": [], "parameters": 3.0,
+         "custom_model_files": [], "custom_model_repo": ""},
+
+        {"model_name": "minicpm-2.6-gguf", "display_name": "minicpm-vision-model",
+         "model_family": "GGUFVisionGenerativeModel", "model_category": "generative_local",
+         "model_location": "llmware_repo", "context_window": 4096, "instruction_following": False,
+         "prompt_wrapper": "hf_chat", "temperature": 0.0, "trailing_space": "",
+         "gguf_repo": "llmware/minicpm-2.6-gguf",
+         "gguf_file": "MiniCPM-V-2_6-Q4_K_M.gguf",
+         "clip_file": "mmproj-model-f16-2.gguf",
+         "link": "https://huggingface.co/llmware/minicpm-2.6-gguf",
+         "tokenizer_local": "tokenizer_qw.json",
+         "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+         "validation_files": [], "parameters": 7.0,
+         "custom_model_files": [], "custom_model_repo": ""}
 
 ]
 
