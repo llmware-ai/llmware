@@ -84,15 +84,13 @@ class Utilities:
         if system == 'linux' and machine not in ['aarch64', 'x86_64']:
             machine = 'x86_64'
 
-        # deprecation warning for aarch64 linux
         if system == 'linux' and machine == 'aarch64':
 
-            error_msg = ("Linux Aarch64 detected as OS - this is not a supported platform.  Support "
-                         "was deprecated in llmware version 0.2.6 and removed in llmware version 0.3.9. "
-                         "Options - move to linux x86_64, back-level llmware to supported version, or "
-                         "if urgent requirement for aarch64, please raise ticket on github.")
+            """ 0.4.4 - aarch64 linux in process of being supported 
+                -- re-integrating parsers on aarch64 linux 
+                -- removing deprecation warnings """
 
-            raise LLMWareException(message=error_msg)
+            pass
 
         #   deprecation warning for darwin x86_64
         if system == "darwin" and machine == "x86_64":
@@ -153,15 +151,13 @@ class Utilities:
         if system == 'linux' and machine not in ['aarch64', 'x86_64']:
             machine = 'x86_64'
 
-        # deprecation warning for aarch64 linux
         if system == 'linux' and machine == 'aarch64':
 
-            error_msg = ("Linux Aarch64 detected as OS - this is not a supported platform.  Support "
-                         "was deprecated in llmware version 0.2.6 and removed in llmware version 0.3.9. "
-                         "Options - move to linux x86_64, back-level llmware to supported version, or "
-                         "if urgent requirement for aarch64, please raise ticket on github.")
+            """ 0.4.4 - aarch64 linux in process of being supported 
+                -- re-integrating parsers on aarch64 linux 
+                -- removing deprecation warnings """
 
-            raise LLMWareException(message=error_msg)
+            pass
 
         #   deprecation warning for darwin x86_64
         if system == "darwin" and machine == "x86_64":
