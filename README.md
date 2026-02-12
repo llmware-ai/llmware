@@ -4,7 +4,7 @@
 [![members](https://discord-live-members-count-badge.vercel.app/api/discord-members?guildId=1179245642770559067&label=discord%20members&color=5865F2)](https://discord.gg/bphreFK4NJ)
 [![Documentation](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml/badge.svg)](https://github.com/llmware-ai/llmware/actions/workflows/pages.yml)  
 
-## 🧰🛠️🔩Unified framework for building knowledge-based local, private, secure LLM-based applications       
+## 🧰🛠️ Unified framework for building knowledge-based local, private, secure LLM-based applications       
 
 `llmware` is optimized for AI PC and local laptop, edge and self-hosted deployment across a wide range of Windows, Mac and Linux platforms, with support for GGUF, OpenVINO, ONNXRuntime, ONNXRuntime-QNN (Qualcomm), WindowsLocalFoundry, and Pytorch, providing a high-level interface that makes it easy to leverage the right inferencing technology optimized for the target platform.  
 
@@ -445,7 +445,7 @@ LLMWareConfig().set_vector_db("postgres")
 
 <details>
 
-<summary> 🔥 <b> Agents with Function Calls and SLIM Models </b> 🔥 </summary>  
+<summary> <b> Agents with Function Calls and SLIM Models </b> </summary>  
 
 ```python
 
@@ -495,7 +495,7 @@ output = {"report": report, "activity_summary": activity_summary, "journal": age
 </details>
 <details>
 
-<summary> 🚀 <b>Start coding - Quick Start for RAG </b> 🚀 </summary>
+<summary> 🚀 <b>Start coding - Quick Start for RAG </b> </summary>
 
 ```python
 # This example illustrates a simple contract analysis
@@ -593,7 +593,7 @@ if __name__ == "__main__":
 ```
 </details>
 
-## 🔥 Latest Enhancements and Features 🔥  
+## 🔥 Latest Enhancements and Features   
 
 ### ONNXRuntime-QNN - run models on Snapdragon NPU (Windows Arm64) 
 
@@ -624,7 +624,7 @@ if __name__ == "__main__":
 
 - [multimedia-bot example](https://github.com/llmware-ai/llmware/blob/main/examples/UI/multimedia_bot.py)  
 
-🔥🔥🔥 [**Multi-Model Agents with SLIM Models**](examples/SLIM-Agents/) - [**Intro-Video**](https://www.youtube.com/watch?v=cQfdaTcmBpY) 🔥🔥🔥   
+ [**Multi-Model Agents with SLIM Models**](examples/SLIM-Agents/) - [**Intro-Video**](https://www.youtube.com/watch?v=cQfdaTcmBpY)    
 
 ### New Use Cases & Applications  
 
@@ -665,12 +665,6 @@ if __name__ == "__main__":
 - **Enhanced Document Parsing for PDFs, Word, PowerPoint, and Excel**  
   Improved text-chunking controls, table extraction, and content parsing.
   - [Parsing example](examples/Parsing/pdf_parser_new_configs.py)
-
-### Deployment & Optimization
-
-- **Agent Inference Server**  
-  Set up an inference server for multi-model agents to optimize deployments.
-  - [Server setup example](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/agent_api_endpoint.py)
 
 - **Optimizing Accuracy of RAG Prompts**  
   Tutorials for tuning RAG prompt settings for increased accuracy.
@@ -778,10 +772,6 @@ Alternatively, if you prefer to complete setup without the welcome automation sc
 
 4.  **install vector db** - no-install vector db options include milvus lite, chromadb, faiss and lancedb - which do not require a server install, but do require that you install the python sdk library for that vector db, e.g., `pip3 install pymilvus`, or `pip3 install chromadb`.  If you look in [examples/Embedding](https://github.com/llmware-ai/llmware/tree/main/examples/Embedding), you will see examples for getting started with various vector DB, and in the root of the repo, you will see easy-to-get-started docker compose scripts for installing milvus, postgres/pgvector, mongo, qdrant, neo4j, and redis.  
 
-5.  Pytorch 2.3 note:  We have recently seen issues with Pytorch==2.3 on some platforms - if you run into any issues, we have seen that uninstalling Pytorch and downleveling to Pytorch==2.1 usually solves the problem.  
-
-6.  Numpy 2.0 note: we have seen issues with numpy 2.0 with many libraries not yet supporting.  Our pip install setup will accept numpy 2.0 (to avoid pip conflicts), but if you pull from repo, we restrict numpy to versions <2.   If you run into issues with numpy, we have found that they can be fixed by downgrading numpy to <2, e.g., 1.26.4.  To use WhisperCPP, you should downlevel to numpy <2.  
-
 
 ## Data Store Options
 
@@ -853,19 +843,9 @@ Questions and discussions are welcome in our [github discussions](https://github
 
 ## 📣  Release notes and Change Log  
 
-See also [additional deployment/install release notes in wheel_archives](https://github.com/llmware-ai/llmware/tree/main/wheel_archives)   
-
-**Thursday, January 1 - v0.5 - WIP**  
- - Updated BaseModel and PromptCatalog classes 
- - Updated cloud model versions and support for OpenAI, Gemini and Anthropic latest models   
- - Removed deprecated model classes 
- - Removed deprecated modules (Dataset Builder and Graph)  
- - Work-in-Progress for other Model Class and Card updates  
- - Repo is up-to-date, but not in pip install release - targeted week of January 12, 2026  
-   
 For complete history of release notes, please open the Change log tab.  
 
-**Supported Operating Systems**: Windows (x86 and Arm64), MacOS (Metal - M1-M5), Linux (x86)    
+**Supported Operating Systems**: Windows (x86 and Arm64), MacOS (Metal - M1-M5), Linux (x86, aarch64)    
 - Linux - support Ubuntu 20+  (glibc 2.31+)   
 - If you need support for another Linux version, please raise an issue - we will prioritize testing and ensure support.    
 
@@ -886,6 +866,14 @@ For complete history of release notes, please open the Change log tab.
 <details>
   <summary><b>🚧 Change Log</b></summary>
 
+**Thursday, January 1 - v0.4.3 - WIP**  
+ - Updated BaseModel and PromptCatalog classes 
+ - Updated cloud model versions and support for OpenAI, Gemini and Anthropic latest models   
+ - Removed deprecated model classes 
+ - Removed deprecated modules (Dataset Builder and Graph)  
+ - Work-in-Progress for other Model Class and Card updates  
+ - Repo is up-to-date, but not in pip install release - targeted week of January 12, 2026  
+   
 **Monday, March 3 - v0.4.0**  
  - Updates in GGUF implementation, configs and libs  
  - Updates in ONNXRuntime implementation and configs  
