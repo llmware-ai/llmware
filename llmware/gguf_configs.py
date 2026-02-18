@@ -873,13 +873,13 @@ class GGUFConfigs:
                   "linux_x86_lib": "gguf_linux_x86",
                   "linux_cuda_lib": "gguf_linux_cuda",
                   "mac_metal_lib": "gguf_mac",
-                  "windows_arm64_lib": "gguf_arm64",
+                  "windows_arm64_lib": "gguf_win_arm64",
 
                   # prebuilt binaries packaged with llmware - evolving over time
 
-                  "windows": "libllama_win.dll",
-                  "windows_cuda": "libllama_win.dll",
-                  "windows_arm64": "libllama_win.dll",
+                  "windows": "llama.dll",
+                  "windows_cuda": "llama.dll",
+                  "windows_arm64": "llama.dll",
                   "mac_metal": "libllama.dylib",
                   "linux_x86": "libllama.so",
                   "linux_cuda": "libllama.so",
@@ -887,12 +887,12 @@ class GGUFConfigs:
                   # removed/deprecated support for older M-series Macs without Accelerate
                   # "mac_metal_no_acc": "libllama.dylib",
 
-                  "windows_mtmd": "libmtmd.dll",
+                  "windows_mtmd": "mtmd.dll",
                   "mac_metal_mtmd": "libmtmd.dylib",
                   "linux_x86_mtmd": "libmtmd.so",
                   "linux_cuda_mtmd": "libmtmd.so",
-                  "windows_arm64_mtmd": "libmtmd.dll",
-                  "windows_cuda_mtmd": "libmtmd.dll",
+                  "windows_arm64_mtmd": "mtmd.dll",
+                  "windows_cuda_mtmd": "mtmd.dll",
 
                   "n_threads": 6, # max(multiprocessing.cpu_count() // 2, 1),
                   "n_threads_batch": 6, #  max(multiprocessing.cpu_count() // 2, 1),
