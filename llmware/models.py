@@ -10172,9 +10172,15 @@ class GGUFGenerativeModel(BaseModel):
             # Determine the file extension based on the platform
             if system_platform.startswith("linux"):
 
-                # two linux versions supported - linux_x86 and linux_cuda
+                # three linux versions supported - linux_x86 and linux_cuda
+                machine = os.uname().machine.lower()
 
-                if self.use_gpu:
+                if machine == "aarch64" and self.use_gpu:
+                    _lib_paths.append(os.path.join(_base_path,
+                                                   GGUFConfigs().get_config("linux_aarch64_cuda_lib"),
+                                                   GGUFConfigs().get_config("linux_cuda")))
+
+                elif self.use_gpu:
                     _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_cuda_lib"),
                                                    GGUFConfigs().get_config("linux_cuda")))
 
@@ -10183,32 +10189,11 @@ class GGUFGenerativeModel(BaseModel):
                                                     GGUFConfigs().get_config("linux_x86"))
 
                 else:
+                    # by default load the cpu x86 lib
                     _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_x86_lib"),
                                                    GGUFConfigs().get_config("linux_x86")))
 
             elif system_platform == "darwin":
-
-                # as of v0.4.0, only support Mac OS with Metal/Accelerate framework
-
-                machine = os.uname().machine.lower()
-
-                # check for older MacOS versions and give warning
-
-                try:
-                    import platform
-                    macos_ver = platform.mac_ver()
-                    if len(macos_ver) > 0:
-                        ver = macos_ver[0].split(".")
-
-                        v1 = int(ver[0])
-                        v2 = int(ver[1])
-
-                        if v1 < 14:
-                            logger.warning(f"warning: detected older version of macos - {macos_ver} - "
-                                           f"which may produce errors related to the Accelerate framework.\n"
-                                           f"To remove this warning: upgrade to Sonoma (>14.0)")
-                except:
-                    pass
 
                 _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("mac_metal_lib"),
                                                GGUFConfigs().get_config("mac_metal")))
@@ -11247,6 +11232,11 @@ class WhisperCPPModel(BaseModel):
         self.duration = 0
         self.translate = False
 
+        if sys.platform.lower() == "darwin":
+            self.whisper_use_legacy_mac = GGUFConfigs().get_config("whisper_use_legacy_mac")
+        else:
+            self.whisper_use_legacy_mac = False
+
         #   new option to 'force' use of cuda lib, and over-ride safety checks
         if GGUFConfigs().get_config("force_gpu"):
             self.use_gpu = True
@@ -11299,21 +11289,22 @@ class WhisperCPPModel(BaseModel):
 
         self.model_path = os.path.join(model_repo_path, self.gguf_file)
         self.context = self._lib.whisper_init_from_file(self.model_path.encode('utf-8'))
+
         self.params = self._lib.whisper_full_default_params(self.strategy)
 
         self.params.n_threads = self.n_threads
-        self.params.print_special = True
-        self.params.print_progress = False
+        # self.params.print_special = True
+        # self.params.print_progress = False
 
         # set to True by default - will display in 'real-time' the transcription
-        self.params.print_realtime = GGUFConfigs().get_config("whisper_cpp_realtime_display")
-        self.params.print_timestamps = True
-        self.params.tdrz_enable = self.tiny_diarize
-        self.params.progress_callback = whisper_progress_callback(self.callback)
-        self.params.temperature_inc = self.temperature_inc
-        self.params.token_timestamps = True
-        self.params.greedy.best_of = self.greedy_best_of
-        self.params.beam_search.beam_size = self.beam_size
+        # self.params.print_realtime = GGUFConfigs().get_config("whisper_cpp_realtime_display")
+        # self.params.print_timestamps = True
+        # self.params.tdrz_enable = self.tiny_diarize
+        # self.params.progress_callback = whisper_progress_callback(self.callback)
+        # self.params.temperature_inc = self.temperature_inc
+        # self.params.token_timestamps = True
+        # self.params.greedy.best_of = self.greedy_best_of
+        # self.params.beam_search.beam_size = self.beam_size
 
         return self
 
@@ -11337,7 +11328,7 @@ class WhisperCPPModel(BaseModel):
 
             # general case - will look for llama.cpp dynamic library included with llmware
 
-            _base_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "whisper")
+            _base_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "gguf")
 
             _lib_paths = []
 
@@ -11346,63 +11337,54 @@ class WhisperCPPModel(BaseModel):
             # Determine the file extension based on the platform
             if system_platform.startswith("linux"):
 
-                if self.use_gpu:
-                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("whisper_linux_cuda")))
+                machine = os.uname().machine.lower()
+
+                if machine == "aarch64" and self.use_gpu:
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_aarch64_cuda_lib"),
+                                                   GGUFConfigs().get_config("whisper_dgx")))
+
+                elif self.use_gpu:
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_cuda_lib"),
+                                                   GGUFConfigs().get_config("whisper_linux_cuda")))
 
                     # new - will try to use x86 as fallback
-                    fall_back_option = os.path.join(_base_path, GGUFConfigs().get_config("whisper_linux_x86"))
+                    fall_back_option = os.path.join(_base_path, GGUFConfigs().get_config("linux_x86_lib"),
+                                                    GGUFConfigs().get_config("whisper_linux_x86"))
 
                 else:
-                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("whisper_linux_x86")))
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_x86_lib"),
+                                                   GGUFConfigs().get_config("whisper_linux_x86")))
 
             elif system_platform == "darwin":
 
-                machine = os.uname().machine.lower()
-
-                if machine == 'x86_64':
-                    raise LLMWareException("ModuleNotFound Exception - detected MacOS on x86_64 (e.g., not M1/M2/M3). "
-                                           "LLMWare does not ship with a whisper_cpp module for this platform.  To use "
-                                           "WhisperCPPModel will require a custom build whisper_cpp module.  For more "
-                                           "details, please go to the llmware github site, or directly to the "
-                                           "Whisper CPP source: https://www.github.com/ggerganov/whisper.cpp.git")
-
-                    # _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("whisper_mac_x86")))
+                if not self.whisper_use_legacy_mac:
+                    mac_lib = GGUFConfigs().get_config("whisper_mac_metal")
                 else:
+                    mac_lib = GGUFConfigs().get_config("whisper_mac_metal_legacy")
 
-                    if GGUFConfigs().get_config("use_macos_accelerate"):
-
-                        try:
-                            import platform
-                            macos_ver = platform.mac_ver()
-                            if len(macos_ver) > 0:
-                                ver = macos_ver[0].split(".")
-
-                                v1 = int(ver[0])
-                                v2 = int(ver[1])
-
-                                if v1 < 14:
-
-                                    logger.warning(f"warning: detected older version of macos - {macos_ver} - "
-                                                    f"which may produce errors related to the Accelerate framework.\n"
-                                                    f"To remove this warning: (1) upgrade to Sonoma (>14.0) or \n(2) set "
-                                                    f"GGUF configs to use non Accelerate binary by default:\n"
-                                                    f"GGUFConfigs().set_config('use_macos_accelerate', False)")
-
-                        except:
-                            pass
-
-                        _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("whisper_mac_metal")))
-
-                        fall_back_option = os.path.join(_base_path, GGUFConfigs().get_config("whisper_mac_metal_no_acc"))
-
-                    else:
-                        _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("whisper_mac_metal_no_acc")))
-
-                    # _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("whisper_mac_metal")))
+                _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("mac_metal_lib"),mac_lib))
 
             elif sys.platform == "win32":
 
-                _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("whisper_windows")))
+                import platform
+
+                if platform.machine().lower() == "arm64":
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("windows_arm64_lib"),
+                                                   GGUFConfigs().get_config("whisper_windows_arm64")))
+
+                # windows cuda
+                elif self.use_gpu:
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("windows_cuda_lib"),
+                                                   GGUFConfigs().get_config("whisper_windows")))
+
+                    # new - will try to use x86 as fallback
+                    fall_back_option = os.path.join(_base_path, GGUFConfigs().get_config("windows_x86_lib"),
+                                                    GGUFConfigs().get_config("whisper_windows"))
+
+                else:
+                    # main case - windows x86
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("windows_x86_lib"),
+                                                   GGUFConfigs().get_config("whisper_windows")))
 
         # Add the library directory to the DLL search path on Windows (if needed)
         # if sys.platform == "win32" and sys.version_info >= (3, 8): os.add_dll_directory(str(_base_path))
@@ -11551,9 +11533,8 @@ class WhisperCPPModel(BaseModel):
         if prompt:
             self.params.initial_prompt = prompt.encode('utf-8')
 
-        self.params.temperature = self.temperature
-
-        self.params.translate = self.translate
+        # self.params.temperature = self.temperature
+        # self.params.translate = self.translate
 
         result = self._generate(data)
 
@@ -11690,9 +11671,17 @@ class WhisperCPPModel(BaseModel):
         self._lib.whisper_init_from_file.restype = ctypes.c_void_p
 
         self._lib.whisper_full_default_params.argtypes = [ctypes.c_int]
-        self._lib.whisper_full_default_params.restype = whisper_full_params
 
-        self._lib.whisper_full.argtypes = [ctypes.c_void_p, whisper_full_params, ctypes.POINTER(ctypes.c_float), ctypes.c_int]
+        if not self.whisper_use_legacy_mac:
+            self._lib.whisper_full_default_params.restype = whisper_full_params
+        else:
+            self._lib.whisper_full_default_params.restype = whisper_full_params_legacy
+
+        if not self.whisper_use_legacy_mac:
+            self._lib.whisper_full.argtypes = [ctypes.c_void_p, whisper_full_params, ctypes.POINTER(ctypes.c_float), ctypes.c_int]
+        else:
+            self._lib.whisper_full.argtypes = [ctypes.c_void_p, whisper_full_params_legacy, ctypes.POINTER(ctypes.c_float), ctypes.c_int]
+
         self._lib.whisper_full.restype = ctypes.c_int
 
         self._lib.whisper_full_n_segments.argtypes = [ctypes.c_void_p]
@@ -15072,9 +15061,15 @@ class GGUFVisionGenerativeModel(BaseModel):
             # Determine the file extension based on the platform
             if system_platform.startswith("linux"):
 
-                # two linux versions supported - linux_x86 and linux_cuda
+                # three linux versions supported - linux_x86 and linux_cuda
 
-                if self.use_gpu:
+                machine = os.uname().machine.lower()
+
+                if machine == "aarch64" and self.use_gpu:
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_aarch64_cuda_lib"),
+                                                   GGUFConfigs().get_config("linux_cuda")))
+
+                elif self.use_gpu:
                     _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_cuda_lib"),
                                                    GGUFConfigs().get_config("linux_cuda")))
 
@@ -15087,28 +15082,6 @@ class GGUFVisionGenerativeModel(BaseModel):
                                                    GGUFConfigs().get_config("linux_x86")))
 
             elif system_platform == "darwin":
-
-                # as of v0.4.0, only support Mac OS with Metal/Accelerate framework
-
-                machine = os.uname().machine.lower()
-
-                # check for older MacOS versions and give warning
-
-                try:
-                    import platform
-                    macos_ver = platform.mac_ver()
-                    if len(macos_ver) > 0:
-                        ver = macos_ver[0].split(".")
-
-                        v1 = int(ver[0])
-                        v2 = int(ver[1])
-
-                        if v1 < 14:
-                            logger.warning(f"Detected older version of macos - {macos_ver} - "
-                                           f"which may produce errors related to the Accelerate framework.\n"
-                                           f"To remove this warning: upgrade to Sonoma (>14.0)")
-                except:
-                    pass
 
                 _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("mac_metal_lib"),
                                                GGUFConfigs().get_config("mac_metal")))
@@ -15262,9 +15235,15 @@ class GGUFVisionGenerativeModel(BaseModel):
             # Determine the file extension based on the platform
             if system_platform.startswith("linux"):
 
-                # two linux versions supported - linux_x86 and linux_cuda
+                # three linux versions supported - linux_x86 and linux_cuda
 
-                if self.use_gpu:
+                machine = os.uname().machine.lower()
+
+                if machine == "aarch64" and self.use_gpu:
+                    _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_aarch64_cuda_lib"),
+                                                   GGUFConfigs().get_config("linux_cuda_mtmd")))
+
+                elif self.use_gpu:
                     _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("linux_cuda_lib"),
                                                    GGUFConfigs().get_config("linux_cuda_mtmd")))
 
@@ -15277,28 +15256,6 @@ class GGUFVisionGenerativeModel(BaseModel):
                                                    GGUFConfigs().get_config("linux_x86_mtmd")))
 
             elif system_platform == "darwin":
-
-                # as of v0.4.0, only support Mac OS with Metal/Accelerate framework
-
-                machine = os.uname().machine.lower()
-
-                # check for older MacOS versions and give warning
-
-                try:
-                    import platform
-                    macos_ver = platform.mac_ver()
-                    if len(macos_ver) > 0:
-                        ver = macos_ver[0].split(".")
-
-                        v1 = int(ver[0])
-                        v2 = int(ver[1])
-
-                        if v1 < 14:
-                            logger.warning(f"Detected older version of macos - {macos_ver} - "
-                                           f"which may produce errors related to the Accelerate framework.\n"
-                                           f"To remove this warning: upgrade to Sonoma (>14.0)")
-                except:
-                    pass
 
                 _lib_paths.append(os.path.join(_base_path, GGUFConfigs().get_config("mac_metal_lib"),
                                                GGUFConfigs().get_config("mac_metal_mtmd")))
