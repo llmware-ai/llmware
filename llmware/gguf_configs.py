@@ -870,10 +870,15 @@ class GGUFConfigs:
                   # prebuilt shared libraries included in llmware
                   "windows_x86_lib": "gguf_win_x86",
                   "windows_cuda_lib": "gguf_win_cuda",
+                  "windows_arm64_lib": "gguf_win_arm64",
+
                   "linux_x86_lib": "gguf_linux_x86",
                   "linux_cuda_lib": "gguf_linux_cuda",
+
+                  # dgx = linux aarch64 cuda
+                  "linux_aarch64_cuda_lib": "gguf_dgx",
+
                   "mac_metal_lib": "gguf_mac",
-                  "windows_arm64_lib": "gguf_win_arm64",
 
                   # prebuilt binaries packaged with llmware - evolving over time
 
@@ -915,13 +920,16 @@ class GGUFConfigs:
                   "whisper_output_format": "text",
                   "whisper_default_model": "whisper-cpp-base-english",
 
+                  # option to continue using older whisper cpp library on mac
+                  "whisper_use_legacy_mac": True,
                   # prebuilt shared libraries included in llmware - evolving over time
-                  "whisper_mac_metal": "libwhisper_mac_metal_155.dylib",
-                  "whisper_mac_metal_no_acc": "libwhisper_mac_metal_no_acc_155.dylib",
-                  "whisper_windows": "libwhisper_windows_155.dll",
-                  "whisper_windows_arm64": "libwhisper_windows_155.dll",
-                  "whisper_linux_x86": "libwhisper_linux_x86_155.so",
-                  "whisper_linux_cuda": "libwhisper_linux_cuda_155.so"
+                  "whisper_dgx": "libwhisper.so",
+                  "whisper_linux_cuda": "libwhisper.so",
+                  "whisper_linux_x86": "libwhisper.so",
+                  "whisper_mac_metal": "libwhisper.dylib",
+                  "whisper_mac_metal_legacy": "libwhisper_mac_metal_155.dylib",
+                  "whisper_windows": "whisper.dll",
+                  "whisper_windows_arm64": "whisper.dll",
     }
 
     #   note: with temperature used as primary attribute to adjust sampling,
@@ -1034,20 +1042,30 @@ class whisper_grammar_element(ctypes.Structure):
     ]
 
 
+
+class whisper_vad_default_params(ctypes.Structure):
+
+    _fields_ = [
+        ("threshold", ctypes.c_float),
+        ("min_speech_duration_ms", ctypes.c_float),
+        ("min_silence_duration_ms", ctypes.c_float),
+        ("max_speech_duration_ms", ctypes.c_float),
+        ("speech_pad_ms", ctypes.c_float),
+        ("samples_overlap", ctypes.c_float)
+    ]
+
+
 class whisper_full_params(ctypes.Structure):
+
     _fields_ = [
         ("strategy", ctypes.c_int),
         ("n_threads", ctypes.c_int),
         ("n_max_text_ctx", ctypes.c_int),
         ("offset_ms", ctypes.c_int),
         ("duration_ms", ctypes.c_int),
-
         ("translate", ctypes.c_bool),
         ("no_context", ctypes.c_bool),
-
-        # new param
         ("no_timestamps", ctypes.c_bool),
-
         ("single_segment", ctypes.c_bool),
         ("print_special", ctypes.c_bool),
         ("print_progress", ctypes.c_bool),
@@ -1059,24 +1077,17 @@ class whisper_full_params(ctypes.Structure):
         ("max_len", ctypes.c_int),
         ("split_on_word", ctypes.c_bool),
         ("max_tokens", ctypes.c_int),
-        ("speed_up", ctypes.c_bool),
-
-        # new param
         ("debug_mode", ctypes.c_bool),
-
         ("audio_ctx", ctypes.c_int),
-
-        #  new param
         ("tdrz_enable", ctypes.c_bool),
         ("suppress_regex", ctypes.c_char_p),
-
         ("initial_prompt", ctypes.c_char_p),
         ("prompt_tokens", ctypes.POINTER(ctypes.c_int)),
         ("prompt_n_tokens", ctypes.c_int),
         ("language", ctypes.c_char_p),
         ("detect_language", ctypes.c_bool),
         ("suppress_blank", ctypes.c_bool),
-        ("suppress_non_speech_tokens", ctypes.c_bool),
+        ("suppress_nst", ctypes.c_bool),
         ("temperature", ctypes.c_float),
         ("max_initial_ts", ctypes.c_float),
         ("length_penalty", ctypes.c_float),
@@ -1092,20 +1103,88 @@ class whisper_full_params(ctypes.Structure):
         ("progress_callback_user_data", ctypes.c_void_p),
         ("encoder_begin_callback", whisper_encoder_begin_callback),
         ("encoder_begin_callback_user_data", ctypes.c_void_p),
-
-        # new params
-        ("abort_callback", abort_callback),        # check data type
+        ("abort_callback", abort_callback),
         ("abort_callback_user_data", ctypes.c_void_p),
-
         ("logits_filter_callback", whisper_logits_filter_callback),
         ("logits_filter_callback_user_data", ctypes.c_void_p),
-
-        # new params
         ("grammar_rules", whisper_grammar_element),
         ("n_grammar_rules", ctypes.c_size_t),
         ("i_start_rule", ctypes.c_size_t),
-        ("grammar_penalty", ctypes.c_float)
+        ("grammar_penalty", ctypes.c_float),
+        ("vad", ctypes.c_bool),
+        ("vad_model_path", ctypes.c_char_p),
+        ("vad_params", whisper_vad_default_params)
+    ]
 
+
+class whisper_full_params_legacy(ctypes.Structure):
+
+    _fields_ = [
+        ("strategy", ctypes.c_int),
+        ("n_threads", ctypes.c_int),
+        ("n_max_text_ctx", ctypes.c_int),
+        ("offset_ms", ctypes.c_int),
+        ("duration_ms", ctypes.c_int),
+        ("translate", ctypes.c_bool),
+        ("no_context", ctypes.c_bool),
+        ("no_timestamps", ctypes.c_bool),
+        ("single_segment", ctypes.c_bool),
+        ("print_special", ctypes.c_bool),
+        ("print_progress", ctypes.c_bool),
+        ("print_realtime", ctypes.c_bool),
+        ("print_timestamps", ctypes.c_bool),
+        ("token_timestamps", ctypes.c_bool),
+        ("thold_pt", ctypes.c_float),
+        ("thold_ptsum", ctypes.c_float),
+        ("max_len", ctypes.c_int),
+        ("split_on_word", ctypes.c_bool),
+        ("max_tokens", ctypes.c_int),
+
+        # speed_up removed in later versions
+        ("speed_up", ctypes.c_bool),
+
+        ("debug_mode", ctypes.c_bool),
+        ("audio_ctx", ctypes.c_int),
+        ("tdrz_enable", ctypes.c_bool),
+        ("suppress_regex", ctypes.c_char_p),
+        ("initial_prompt", ctypes.c_char_p),
+        ("prompt_tokens", ctypes.POINTER(ctypes.c_int)),
+        ("prompt_n_tokens", ctypes.c_int),
+        ("language", ctypes.c_char_p),
+        ("detect_language", ctypes.c_bool),
+        ("suppress_blank", ctypes.c_bool),
+
+        # update new versions: suppress_non_speech_tokens -> suppress_nst
+        ("suppress_non_speech_tokens", ctypes.c_bool),
+
+        ("temperature", ctypes.c_float),
+        ("max_initial_ts", ctypes.c_float),
+        ("length_penalty", ctypes.c_float),
+        ("temperature_inc", ctypes.c_float),
+        ("entropy_thold", ctypes.c_float),
+        ("logprob_thold", ctypes.c_float),
+        ("no_speech_thold", ctypes.c_float),
+        ("greedy", greedy),
+        ("beam_search", beam_search),
+        ("new_segment_callback", whisper_new_segment_callback),
+        ("new_segment_callback_user_data", ctypes.c_void_p),
+        ("progress_callback", whisper_progress_callback),
+        ("progress_callback_user_data", ctypes.c_void_p),
+        ("encoder_begin_callback", whisper_encoder_begin_callback),
+        ("encoder_begin_callback_user_data", ctypes.c_void_p),
+        ("abort_callback", abort_callback),
+        ("abort_callback_user_data", ctypes.c_void_p),
+        ("logits_filter_callback", whisper_logits_filter_callback),
+        ("logits_filter_callback_user_data", ctypes.c_void_p),
+        ("grammar_rules", whisper_grammar_element),
+        ("n_grammar_rules", ctypes.c_size_t),
+        ("i_start_rule", ctypes.c_size_t),
+        ("grammar_penalty", ctypes.c_float),
+
+        # new parameters added later:
+        # ("vad", ctypes.c_bool),
+        # ("vad_model_path", ctypes.c_char_p),
+        # ("vad_params", whisper_vad_default_params)
     ]
 
 
