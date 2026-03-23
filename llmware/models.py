@@ -1465,6 +1465,16 @@ class ModelCatalog:
 
         return all_models
 
+    def list_intel_npu_optimized_models(self):
+
+        npu_models = []
+        for model_card in self.global_model_list:
+            npu_optimized = model_card.get("npu_optimized","")
+            if npu_optimized:
+                npu_models.append(model_card)
+
+        return npu_models
+
     def model_lookup(self,model_name):
 
         """ Looks up model by model_name. Will check both the primary 'model_name' and the secondary/optional
@@ -4117,6 +4127,11 @@ class OVGenerativeModel(BaseModel):
 
         self.cache_dir = None
 
+        self.device = device
+
+        if "device" in kwargs:
+            self.device = kwargs["device"]
+
         if model_card:
 
             if "primary_keys" in model_card:
@@ -4136,6 +4151,10 @@ class OVGenerativeModel(BaseModel):
 
             if "pipeline" in model_card:
                 self.pipeline = model_card["pipeline"]
+
+            # will auto-detect NPU model and set device accordingly
+            if "npu_optimized" in model_card:
+                self.device = "NPU"
 
         # insert dynamic openvino load here
         if not api_endpoint:
@@ -4222,11 +4241,6 @@ class OVGenerativeModel(BaseModel):
         #   use_gpu parameter not used - deprecated
         self.use_gpu = False
 
-        self.device = device
-
-        if "device" in kwargs:
-            self.device = kwargs["device"]
-
         if "cache_dir" in kwargs:
             self.cache_dir = kwargs["cache_dir"]
 
@@ -4269,6 +4283,8 @@ class OVGenerativeModel(BaseModel):
         #   exposes more options for configuration of the underlying OpenVino implementation
 
         #   if config set to CPU - then ensure CPU execution
+        #   note: if set, this will over-ride any other settings
+
         if OVConfig().get_config("device") == "CPU":
             self.device = "CPU"
             self.optimize_for_gpu_if_available = False
@@ -4435,7 +4451,6 @@ class OVGenerativeModel(BaseModel):
                             f"{self.device} - {self.cache} - {path_to_cache_dir}")
 
             try:
-                #TODO: need to test safety of path_to_cache_dir input in LLMPipeline constructor
 
                 self.pipe = ovg.LLMPipeline(loading_directions, self.device,
                                             {"CACHE_DIR": path_to_cache_dir})
@@ -4468,6 +4483,8 @@ class OVGenerativeModel(BaseModel):
         pipeline for multimedia models that generate images from text prompt. """
 
         global ovg
+
+        # auto set to GPU for faster generation
 
         text_encoder_device = "GPU"
         unet_device = "GPU"
