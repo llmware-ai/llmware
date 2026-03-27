@@ -495,6 +495,10 @@ class MongoWriter:
                 embedding_list.append(update_dict["embedding"])
                 embedding_update_dict = {"embedding": embedding_list}
             else:
+                if not inserted_list:
+                    inserted_list = [{"embedding_status": "no", "embedding_model": "none",
+                                      "embedding_db": "none", "embedded_blocks": 0,
+                                      "embedding_dims": 0, "time_stamp": "NA"}]
                 embedding_update_dict = {"embedding": inserted_list}
 
             self.collection.update_one(f, {"$set": embedding_update_dict})
@@ -1835,6 +1839,10 @@ class PGWriter:
 
             output = embedding_list
         else:
+            if not inserted_list:
+                inserted_list = [{"embedding_status": "no", "embedding_model": "none",
+                                  "embedding_db": "none", "embedded_blocks": 0,
+                                  "embedding_dims": 0, "time_stamp": "NA"}]
             output = inserted_list
 
         return output
@@ -2934,6 +2942,10 @@ class SQLiteWriter:
 
             output = embedding_list
         else:
+            if not inserted_list:
+                inserted_list = [{"embedding_status": "no", "embedding_model": "none",
+                                  "embedding_db": "none", "embedded_blocks": 0,
+                                  "embedding_dims": 0, "time_stamp": "NA"}]
             output = inserted_list
 
         return output
