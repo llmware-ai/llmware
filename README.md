@@ -626,6 +626,10 @@ For project ideas, please see [solutions](https://github.com/llmware-ai/llmware/
 
 - 7 NPU-optimized models 'ready to run' in Model Catalog - see [using-qnn-npu-models example](https://github.com/llmware-ai/llmware/tree/main/solutions/onnxruntime/using-qnn-npu-models.py)  
 
+### Industry-specific Embedding Models for Specialized RAG 
+
+- Check out the LLMware Industry Bert model series - see [industry-bert-models](https://huggingface.co/collections/llmware/industry-bert-models)  
+
 ### Audio & Text Processing
 
 - **Voice Transcription with WhisperCPP**  
