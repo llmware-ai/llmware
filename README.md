@@ -593,94 +593,72 @@ if __name__ == "__main__":
 ```
 </details>
 
-## 🔥 Latest Enhancements and Features   
+## 🔥 Solutions
 
-### ONNXRuntime-QNN - run models on Snapdragon NPU (Windows Arm64) 
+For project ideas, please see [solutions](https://github.com/llmware-ai/llmware/tree/main/solutions) with dozens of innovative examples.  
 
-- 7 NPU-optimized models 'ready to run' in Model Catalog - see [using-qnn-npu-models example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-qnn-npu-models.py)  
-
-### OpenVINO Encoders - new examples (Windows Intel x86)  
+### OpenVINO Encoders - ideal for on-device, efficient RAG:
 
 - 20 OV-optimized encoding models with OVEmbeddingModel class - supports wide of embedding, reranker and classifers, e.g.,  
-- [using_openvino_embedding_model](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_embedding_model.py)  
-- [using_openvino_reranker_model](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_reranker_model.py)  
-- [using_openvino_classifier_model](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_classifier_model.py)  
+- [using_openvino_embedding_model](https://github.com/llmware-ai/llmware/blob/main/solutions/openvino/using_openvino_embedding_model.py)  
+- [using_openvino_reranker_model](https://github.com/llmware-ai/llmware/blob/main/solutions/openvino/using_openvino_reranker_model.py)  
+- [using_openvino_classifier_model](https://github.com/llmware-ai/llmware/blob/main/solutions/openvino/using_openvino_classifier_model.py)  
 
 ### ONNXRuntime Reranker - use rerankers optimized for Onnxruntime deployment   
 
-- [using_onnx_reranker_model](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_onnx_reranker_models.py)   
+- [using_onnx_reranker_model](https://github.com/llmware-ai/llmware/blob/main/solutions/onnxruntime/using_onnx_reranker_models.py)   
   
 ### WindowsLocalFoundry integration - use WindowsLocalFoundry models in llmware  
 
-- [using_local_foundry_model](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_local_foundry_models.py)  
+- [using_local_foundry_model](https://github.com/llmware-ai/llmware/blob/main/solutions/onnxruntime/using_local_foundry_models.py)  
 
 ### Model Depot - largest out-of-the-box collection of OpenVINO-based LLMs (95+)   
 
 - [Model Depot on Huggingface](https://huggingface.co/collections/llmware/model-depot)   
-- [using_stream_generation_with_openvino](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_streamer.py)     
-- [getting_started_with_openvino](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_models.py)  
+- [using_stream_generation_with_openvino](https://github.com/llmware-ai/llmware/blob/main/solutions/openvino/using_openvino_streamer.py)     
+- [getting_started_with_openvino](https://github.com/llmware-ai/llmware/blob/main/solutions/openvino/using_openvino_models.py)  
 
 ### Image Generation - Multimedia Bot  
 
-- [multimedia-bot example](https://github.com/llmware-ai/llmware/blob/main/examples/UI/multimedia_bot.py)  
+- [multimedia-bot example](https://github.com/llmware-ai/llmware/blob/main/solutions/openvino/multimedia_bot.py)  
 
- [**Multi-Model Agents with SLIM Models**](examples/SLIM-Agents/) - [**Intro-Video**](https://www.youtube.com/watch?v=cQfdaTcmBpY)    
+### ONNXRuntime-QNN - run models on Snapdragon NPU (Windows Arm64) 
 
-### New Use Cases & Applications  
-
-- **BizBot: RAG + SQL Local Chatbot**  
-  Implement a local chatbot for business intelligence using RAG and SQL.
-  - [Code example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/biz_bot.py) | [Demo video](https://youtu.be/4nBYDEjxxTE?si=o6PDPbu0PVcT-tYd)
-
-- **Lecture Tool**  
-  Enables Q&A on voice recordings for education and lecture analysis.
-  - [Lecture tool code](https://github.com/llmware-ai/llmware/blob/main/examples/Use_Cases/lecture_tool/)
-
-- **Web Services for Financial Research**  
-  An end-to-end example demonstrating web services with agent calls for financial research.
-  - [Demo video](https://youtu.be/l0jzsg1_Ik0?si=hmLhpT1iv_rxpkHo) | [Code example](examples/Use_Cases/web_services_slim_fx.py)
+- 7 NPU-optimized models 'ready to run' in Model Catalog - see [using-qnn-npu-models example](https://github.com/llmware-ai/llmware/tree/main/solutions/onnxruntime/using-qnn-npu-models.py)  
 
 ### Audio & Text Processing
 
 - **Voice Transcription with WhisperCPP**  
   Start transcription projects with WhisperCPP, featuring tools for sample file usage and famous speeches.
-  - [Getting started guide](examples/Models/using-whisper-cpp-getting-started.py) | [Parsing great speeches](examples/Use_Cases/parsing_great_speeches.py) | [Demo video](https://youtu.be/5y0ez5ZBpPE?si=KVxsXXtX5TzvlEws)
+  - [Getting started guide](solutions/gguf/using-whisper-cpp-getting-started.py) | [Parsing great speeches](solutions/gguf/parsing_great_speeches.py) | [Demo video](https://youtu.be/5y0ez5ZBpPE?si=KVxsXXtX5TzvlEws)
 
 - **Natural Language Query to CSV**  
   Convert natural language queries to CSV with Slim-SQL, supporting custom Postgres tables.
-  - [Demo video](https://youtu.be/z48z5XOXJJg?si=V-CX1w-7KRioI4Bi) | [End-to-end example](examples/SLIM-Agents/text2sql-end-to-end-2.py) | [Custom table usage](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/agent_with_custom_tables.py)
+  - [Demo video](https://youtu.be/z48z5XOXJJg?si=V-CX1w-7KRioI4Bi) | [End-to-end example](solutions/slim_agents/text2sql-end-to-end-2.py) | [Custom table usage](https://github.com/llmware-ai/llmware/tree/main/solutions/slim_agents/agent_with_custom_tables.py)
 
 ### Multi-Model Agents
 
 - **Multi-Model Agents with SLIM**  
   Use SLIM models on CPU for multi-step agents in complex workflows.
-  - [Demo video](https://www.youtube.com/watch?v=cQfdaTcmBpY) | [Example directory](examples/SLIM-Agents)
+  - [Demo video](https://www.youtube.com/watch?v=cQfdaTcmBpY) | [Example directory](solutions/slim_agents)
 
 ### Document & OCR Processing
 
 - **OCR Embedded Document Images**  
   Extract text systematically from images embedded in documents for enhanced document processing.
-  - [OCR example](examples/Parsing/ocr_embedded_doc_images.py)
+  - [OCR example](solutions/sources/ocr_embedded_doc_images.py)
 
 - **Enhanced Document Parsing for PDFs, Word, PowerPoint, and Excel**  
   Improved text-chunking controls, table extraction, and content parsing.
-  - [Parsing example](examples/Parsing/pdf_parser_new_configs.py)
+  - [Parsing example](solutions/sources/pdf_parser_new_configs.py)
 
 - **Optimizing Accuracy of RAG Prompts**  
   Tutorials for tuning RAG prompt settings for increased accuracy.
-  - [Settings example](examples/Models/adjusting_sampling_settings.py) | Videos: [Part I](https://youtu.be/7oMTGhSKuNY?si=14mS2pftk7NoKQbC), [Part II](https://youtu.be/iXp1tj-pPjM?si=T4teUAISnSWgtThu)  
+  - [Settings example](solutions/models/adjusting_sampling_settings.py) | Videos: [Part I](https://youtu.be/7oMTGhSKuNY?si=14mS2pftk7NoKQbC), [Part II](https://youtu.be/iXp1tj-pPjM?si=T4teUAISnSWgtThu)  
   
 New to RAG?  [Check out the Fast Start video series](https://www.youtube.com/playlist?list=PL1-dn33KwsmD7SB9iSO6vx4ZLRAWea1DB)  
 
-[Intro to SLIM Function Call Models](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_function_calls.py)  
-Can't wait?  Get SLIMs right away:  
-
-```python 
-from llmware.models import ModelCatalog
-
-ModelCatalog().get_llm_toolkit()  # get all SLIM models, delivered as small, fast quantized tools 
-ModelCatalog().tool_test_run("slim-sentiment-tool") # see the model in action with test script included  
-```
+[Intro to SLIM Function Call Models](https://github.com/llmware-ai/llmware/blob/main/solutions/models/using_function_calls.py)  
 
 ## 🌱 Getting Started
 
@@ -694,29 +672,28 @@ ModelCatalog().tool_test_run("slim-sentiment-tool") # see the model in action wi
 
 ## 🔥 Top New Examples 🔥  
 
-End-to-End Scenario - [**Function Calls with SLIM Extract and Web Services for Financial Research**](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/web_services_slim_fx.py)  
-Analyzing Voice Files - [**Great Speeches with LLM Query and Extract**](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/parsing_great_speeches.py)  
-New to LLMWare - [**Fast Start tutorial series**](https://github.com/llmware-ai/llmware/tree/main/fast_start)  
-Getting Setup - [**Getting Started**](https://github.com/llmware-ai/llmware/tree/main/examples/Getting_Started)  
-SLIM Examples -  [**SLIM Models**](examples/SLIM-Agents/)  
+End-to-End Scenario - [**Function Calls with SLIM Extract and Web Services for Financial Research**](https://github.com/llmware-ai/llmware/tree/main/solutions/use_cases/web_services_slim_fx.py)  
+Analyzing Voice Files - [**Great Speeches with LLM Query and Extract**](https://github.com/llmware-ai/llmware/tree/main/solutions/use_cases/parsing_great_speeches.py)  
+New to LLMWare - [**Fast Start tutorial series**](https://github.com/llmware-ai/llmware/tree/main/tutorials)  
+Getting Setup - [**Getting Started**](https://github.com/llmware-ai/llmware/tree/main/tutorials/Getting_Started)  
+SLIM Examples -  [**SLIM Models**](solutions/slim_agents/)  
 
 | Example     |  Detail      |
 |-------------|--------------|
-| 1.   BLING models fast start ([code](examples/Models/bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU)) | Get started with fast, accurate, CPU-based models - question-answering, key-value extraction, and basic summarization.  |
-| 2.   Parse and Embed 500 PDF Documents ([code](examples/Embedding/docs2vecs_with_milvus-un_resolutions.py))  | End-to-end example for Parsing, Embedding and Querying UN Resolution documents with Milvus  |
-| 3.  Hybrid Retrieval - Semantic + Text ([code](examples/Retrieval/dual_pass_with_custom_filter.py)) | Using 'dual pass' retrieval to combine best of semantic and text search |  
-| 4.   Multiple Embeddings with PG Vector ([code](examples/Embedding/using_multiple_embeddings.py) / [video](https://www.youtube.com/watch?v=Bncvggy6m5Q)) | Comparing Multiple Embedding Models using Postgres / PG Vector |
-| 5.   DRAGON GGUF Models ([code](examples/Models/dragon_gguf_fast_start.py) / [video](https://www.youtube.com/watch?v=BI1RlaIJcsc&t=130s)) | State-of-the-Art 7B RAG GGUF Models.  | 
-| 6.   RAG with BLING ([code](examples/Use_Cases/contract_analysis_on_laptop_with_bling_models.py) / [video](https://www.youtube.com/watch?v=8aV5p3tErP0)) | Using contract analysis as an example, experiment with RAG for complex document analysis and text extraction using `llmware`'s BLING ~1B parameter GPT model running on your laptop. |  
-| 7.   Master Service Agreement Analysis with DRAGON ([code](examples/Use_Cases/msa_processing.py) / [video](https://www.youtube.com/watch?v=Cf-07GBZT68&t=2s)) | Analyzing MSAs using DRAGON YI 6B Model.   |                                                                                                                         
-| 8.   Streamlit Example ([code](examples/UI/simple_rag_ui_with_streamlit.py))  | Ask questions to Invoices with UI run inference.  |  
-| 9.   Integrating LM Studio ([code](examples/Models/using-open-chat-models.py) / [video](https://www.youtube.com/watch?v=h2FDjUyvsKE&t=101s)) | Integrating LM Studio Models with LLMWare  |                                                                                                                                       
-| 10.  Prompts With Sources ([code](examples/Prompts/prompt_with_sources.py))  | Attach wide range of knowledge sources directly into Prompts.   |   
-| 11.  Fact Checking ([code](examples/Prompts/fact_checking.py))  | Explore the full set of evidence methods in this example script that analyzes a set of contracts.   |
-| 12.  Using 7B GGUF Chat Models ([code](examples/Models/chat_models_gguf_fast_start.py)) | Using 4 state of the art 7B chat models in minutes running locally |  
+| 1.   BLING models fast start ([code](solutions/models/bling_fast_start.py) / [video](https://www.youtube.com/watch?v=JjgqOZ2v5oU)) | Get started with fast, accurate, CPU-based models - question-answering, key-value extraction, and basic summarization.  |
+| 2.   Parse and Embed 500 PDF Documents ([code](solutions/embedding/docs2vecs_with_milvus-un_resolutions.py))  | End-to-end example for Parsing, Embedding and Querying UN Resolution documents with Milvus  |
+| 3.  Hybrid Retrieval - Semantic + Text ([code](solutions/sources/dual_pass_with_custom_filter.py)) | Using 'dual pass' retrieval to combine best of semantic and text search |  
+| 4.   Multiple Embeddings with PG Vector ([code](solutions/embedding/using_multiple_embeddings.py) / [video](https://www.youtube.com/watch?v=Bncvggy6m5Q)) | Comparing Multiple Embedding Models using Postgres / PG Vector |
+| 5.   DRAGON GGUF Models ([code](solutions/models/dragon_gguf_fast_start.py) / [video](https://www.youtube.com/watch?v=BI1RlaIJcsc&t=130s)) | State-of-the-Art 7B RAG GGUF Models.  | 
+| 6.   RAG with BLING ([code](solutions/use_cases/contract_analysis_on_laptop_with_bling_models.py) / [video](https://www.youtube.com/watch?v=8aV5p3tErP0)) | Using contract analysis as an example, experiment with RAG for complex document analysis and text extraction using `llmware`'s BLING ~1B parameter GPT model running on your laptop. |  
+| 7.   Master Service Agreement Analysis with DRAGON ([code](solutions/use_cases/msa_processing.py) / [video](https://www.youtube.com/watch?v=Cf-07GBZT68&t=2s)) | Analyzing MSAs using DRAGON YI 6B Model.   |                                                                                                                         
+| 8.   Streamlit Example ([code](solutions/ui/simple_rag_ui_with_streamlit.py))  | Ask questions to Invoices with UI run inference.  |  
+| 9.   Integrating LM Studio ([code](solutions/models/using-open-chat-models.py) / [video](https://www.youtube.com/watch?v=h2FDjUyvsKE&t=101s)) | Integrating LM Studio Models with LLMWare  |                                                                                                                                       
+| 10.  Prompts With Sources ([code](solutions/sources/prompt_with_sources.py))  | Attach wide range of knowledge sources directly into Prompts.   |   
+| 11.  Fact Checking ([code](solutions/sources/fact_checking.py))  | Explore the full set of evidence methods in this example script that analyzes a set of contracts.   |
 
 
-Check out:  [llmware examples](https://github.com/llmware-ai/llmware/blob/main/examples/README.md)  
+Check out:  [llmware solutions](https://github.com/llmware-ai/llmware/blob/main/solutions/README.md)  
 
 </details>  
 
@@ -770,7 +747,7 @@ Alternatively, if you prefer to complete setup without the welcome automation sc
 
 3.  **run examples** - copy one or more of the example .py files into the root project path.   (We have seen several IDEs that will attempt to run interactively from the nested /example path, and then not have access to the /llmware module - the easy fix is to just copy the example you want to run into the root path).  
 
-4.  **install vector db** - no-install vector db options include milvus lite, chromadb, faiss and lancedb - which do not require a server install, but do require that you install the python sdk library for that vector db, e.g., `pip3 install pymilvus`, or `pip3 install chromadb`.  If you look in [examples/Embedding](https://github.com/llmware-ai/llmware/tree/main/examples/Embedding), you will see examples for getting started with various vector DB, and in the root of the repo, you will see easy-to-get-started docker compose scripts for installing milvus, postgres/pgvector, mongo, qdrant, neo4j, and redis.  
+4.  **install vector db** - no-install vector db options include milvus lite, chromadb, faiss and lancedb - which do not require a server install, but do require that you install the python sdk library for that vector db, e.g., `pip3 install pymilvus`, or `pip3 install chromadb`.  If you look in [examples/Embedding](https://github.com/llmware-ai/llmware/tree/main/solutions/embedding), you will see examples for getting started with various vector DB, and in the root of the repo, you will see easy-to-get-started docker compose scripts for installing milvus, postgres/pgvector, mongo, qdrant, neo4j, and redis.  
 
 
 ## Data Store Options
@@ -895,8 +872,8 @@ For complete history of release notes, please open the Change log tab.
 **Sunday, October 6 - v0.3.7**  
 - Added new model class - OVGenerativeModel - to support the use of models packaged in OpenVino format  
 - Added new model class - ONNXGenerativeModel - to support use of models packaged in ONNX format  
-- Getting started with [OpenVino example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_openvino_models.py)  
-- Getting started with [ONNX example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using_onnx_models.py)  
+- Getting started with [OpenVino example](https://github.com/llmware-ai/llmware/blob/main/solutions/openvino/using_openvino_models.py)  
+- Getting started with [ONNX example](https://github.com/llmware-ai/llmware/blob/main/solutions/onnxruntime/using_onnx_models.py)  
   
 **Tuesday, October 1 - v0.3.6**  
 - Added new prompt and chat templates  
@@ -907,36 +884,33 @@ For complete history of release notes, please open the Change log tab.
 **Monday, August 26 - v0.3.5**  
 - Added 10 new BLING+SLIM models to Model Catalog - featuring Qwen2, Phi-3 and Phi-3.5  
 - Launched new DRAGON models on Qwen-7B, Yi-9B, Mistral-v0.3, and Llama-3.1  
-- New Qwen2 Models (and RAG + function-calling fine-tunes) - [using-qwen2-models](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using-qwen2-models.py)  
-- New Phi-3 function calling models - [using-phi-3-function-calls](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using-phi-3-function-calls.py)  
-- New use case example - [lecture_tool](https://github.com/llmware-ai/llmware/blob/main/examples/Use_Cases/lecture_tool/)   
 - Improved GGUF Configs to expand context window  
 - Added model benchmark performance data to model configs 
 - Enhanced Utilities hashing functions  
 
 **Monday, July 29 - v03.4**  
 - Enhanced safety protections for text2sql db reads for LLMfx agents   
-- New examples - see [example](https://github.com/llmware-ai/llmware/blob/main/examples/UI/dueling_chatbot.py)    
-- More Notebook examples - see [notebook examples](https://github.com/llmware-ai/llmware/blob/main/examples/Notebooks)      
+- New examples - see [example](https://github.com/llmware-ai/llmware/blob/main/solutions/ui/dueling_chatbot.py)    
+- More Notebook examples - see [notebook examples](https://github.com/llmware-ai/llmware/blob/main/tutorials/notebooks)      
   
 **Monday, July 8 - v03.3**  
 - Improvements in model configuration options, logging, and various small fixes  
-- Improved Azure OpenAI configs - see [example](https://github.com/llmware-ai/llmware/blob/main/examples/Models/using-azure-openai.py)  
+- Improved Azure OpenAI configs - see [example](https://github.com/llmware-ai/llmware/blob/main/solutions/models/using-azure-openai.py)  
   
 **Saturday, June 29 - v0.3.2**  
 - Update to PDF and Office parsers - improvements to configurations in logging and text chunking options  
   
 **Saturday, June 22 - v0.3.1**  
 - Added module 3 to Fast Start example series [examples 7-9 on Agents & Function Calls](https://github.com/llmware-ai/llmware/tree/main/fast_start)  
-- Added reranker Jina model for in-memory semantic similarity RAG - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Embedding/using_semantic_reranker_with_rag.py)  
+- Added reranker Jina model for in-memory semantic similarity RAG - see [example](https://github.com/llmware-ai/llmware/tree/main/solutions/embeddings/using_semantic_reranker_with_rag.py)  
 - Enhanced model fetching parameterization in model loading process  
 - Added new 'tiny' versions of slim-extract and slim-summary in both Pytorch and GGUF versions - check out 'slim-extract-tiny-tool' and 'slim-summary-tiny-tool'  
-- [Biz Bot] use case - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/biz_bot.py) and [video](https://youtu.be/4nBYDEjxxTE?si=o6PDPbu0PVcT-tYd)  
+- [Biz Bot] use case - see [example](https://github.com/llmware-ai/llmware/tree/main/solutions/use_cases/biz_bot.py) and [video](https://youtu.be/4nBYDEjxxTE?si=o6PDPbu0PVcT-tYd)  
 - Updated numpy reqs <2 and updated yfinance version minimum (>=0.2.38)     
 
 **Tuesday, June 4 - v0.3.0**  
-- Added support for new Milvus Lite embedded 'no-install' database - see [example](https://github.com/llmware-ai/llmware/tree/main/examples/Embedding/using_milvus_lite.py).   
-- Added two new SLIM models to catalog and agent processes - ['q-gen'](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/using-slim-q-gen.py) and ['qa-gen'](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/using-slim-qa-gen.py)    
+- Added support for new Milvus Lite embedded 'no-install' database - see [example](https://github.com/llmware-ai/llmware/tree/main/solutions/embeddings/using_milvus_lite.py).   
+- Added two new SLIM models to catalog and agent processes - ['q-gen'](https://github.com/llmware-ai/llmware/tree/main/solutions/slim_agents/using-slim-q-gen.py) and ['qa-gen'](https://github.com/llmware-ai/llmware/tree/main/solutions/slim_agents/using-slim-qa-gen.py)    
 - Updated model class instantiation to provide more extensibility to add new classes in different modules  
 - New welcome_to_llmware.sh and welcome_to_llmware_windows.sh fast install scripts  
 - Enhanced Model class base with new configurable post_init and register methods  
@@ -946,16 +920,15 @@ For complete history of release notes, please open the Change log tab.
   
 **Wednesday, May 22 - v0.2.15**  
 - Improvements in Model class handling of Pytorch and Transformers dependencies (just-in-time loading, if needed)  
-- Expanding API endpoint options and inference server functionality - see new [client access options](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/llmware_inference_api_client.py)  and [server_launch](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/llmware_inference_server.py)  
 
 **Saturday, May 18 - v0.2.14**  
-- New OCR image parsing methods with [example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/slicing_and_dicing_office_docs.py)  
+- New OCR image parsing methods with [example](https://github.com/llmware-ai/llmware/tree/main/solutions/use_cases/slicing_and_dicing_office_docs.py)  
 - Adding first part of logging improvements (WIP) in Configs and Models.    
 - New embedding model added to catalog - industry-bert-loans.  
 - Updates to model import methods and configurations.  
 
 **Sunday, May 12 - v0.2.13**  
-- New GGUF streaming method with [basic example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/gguf_streaming.py) and [phi3 local chatbot](https://github.com/llmware-ai/llmware/tree/main/examples/UI/gguf_streaming_chatbot.py)  
+- New GGUF streaming method with [basic example](https://github.com/llmware-ai/llmware/tree/main/solutions/gguf/gguf_streaming.py) and [phi3 local chatbot](https://github.com/llmware-ai/llmware/tree/main/solutions/ui/gguf_streaming_chatbot.py)  
 - Significant cleanups in ancillary imports and dependencies to reduce install complexity - note: the updated requirements.txt and setup.py files.  
 - Defensive code to provide informative warning of any missing dependencies in specialized parts of the code, e.g., OCR, Web Parser.  
 - Updates of tests, notice and documentation.   
@@ -963,8 +936,6 @@ For complete history of release notes, please open the Change log tab.
   
 **Sunday, May 5 - v0.2.12 Update**  
 - Launched ["bling-phi-3"](https://huggingface.co/llmware/bling-phi-3) and ["bling-phi-3-gguf"](https://huggingface.co/llmware/bling-phi-3-gguf) in ModelCatalog - newest and most accurate BLING/DRAGON model  
-- New long document summarization method using slim-summary-tool [example](https://github.com/llmware-ai/llmware/tree/main/examples/Prompts/document_summarizer.py)  
-- New Office (Powerpoint, Word, Excel) sample files [example](https://github.com/llmware-ai/llmware/tree/main/examples/Parsing/parsing_microsoft_ir_docs.py)  
 - Added support for Python 3.12  
 - Deprecated faiss and replaced with 'no-install' chromadb in Fast Start examples  
 - Refactored Datasets, Graph and Web Services classes  
@@ -972,31 +943,30 @@ For complete history of release notes, please open the Change log tab.
   
 **Monday, April 29 - v0.2.11 Update**  
 - Updates to gguf libs for Phi-3 and Llama-3  
-- Added Phi-3 [example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-microsoft-phi-3.py)  and Llama-3 [example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-llama-3.py) and Quantized Versions to Model Catalog  
-- Integrated WhisperCPP Model class and prebuilt shared libraries - [getting-started-example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-whisper-cpp-getting-started.py)  
-- New voice sample files for testing - [example](https://github.com/llmware-ai/llmware/tree/main/examples/Models/using-whisper-cpp-sample-files.py)  
+- Integrated WhisperCPP Model class and prebuilt shared libraries - [getting-started-example](https://github.com/llmware-ai/llmware/tree/main/solutions/gguf/using-whisper-cpp-getting-started.py)  
+- New voice sample files for testing - [example](https://github.com/llmware-ai/llmware/tree/main/solutions/gguf/using-whisper-cpp-sample-files.py)  
 - Improved CUDA detection on Windows and safety checks for older Mac OS versions  
 
 **Monday, April 22 - v0.2.10 Update**  
-- Updates to Agent class to support Natural Language queries of Custom Tables on Postgres [example](https://github.com/llmware-ai/llmware/tree/main/examples/Use_Cases/agent_with_custom_tables.py)  
-- New Agent API endpoint implemented with LLMWare Inference Server and new Agent capabilities [example](https://github.com/llmware-ai/llmware/tree/main/examples/SLIM-Agents/agent_api_endpoint.py)  
+- Updates to Agent class to support Natural Language queries of Custom Tables on Postgres [example](https://github.com/llmware-ai/llmware/tree/main/solutions/use_cases/agent_with_custom_tables.py)  
+- New Agent API endpoint implemented with LLMWare Inference Server and new Agent capabilities [example](https://github.com/llmware-ai/llmware/tree/main/solutions/slim_agents/agent_api_endpoint.py)  
   
 **Tuesday, April 16 - v0.2.9 Update**  
 - New CustomTable class to rapidly create custom DB tables in conjunction with LLM-based workflows.  
 - Enhanced methods for converting CSV and JSON/JSONL files into DB tables.  
-- See new examples [Creating Custom Table example](https://github.com/llmware-ai/llmware/tree/main/examples/Structured_Tables/create_custom_table-1.py)
+- See new examples [Creating Custom Table example](https://github.com/llmware-ai/llmware/tree/main/solutions/sources/create_custom_table-1.py)
     
 **Tuesday, April 9 - v0.2.8 Update**  
 - Office Parser (Word Docx, Powerpoint PPTX, and Excel XLSX) - multiple improvements - new libs + Python method.  
 - Includes: several fixes, improved text chunking controls, header text extraction and configuration options.  
 - Generally, new office parser options conform with the new PDF parser options.  
-- Please see [Office Parsing Configs example](https://github.com/llmware-ai/llmware/tree/main/examples/Parsing/office_parser_new_configs.py)  
+- Please see [Office Parsing Configs example](https://github.com/llmware-ai/llmware/tree/main/solutions/sources/office_parser_new_configs.py)  
 
 **Wednesday, April 3 - v0.2.7 Update**  
 - PDF Parser - multiple improvements - new libs + Python methods.  
 - Includes: UTF-8 encoding for European languages.  
 - Includes: Better text chunking controls, header text extraction and configuration options.  
-- Please see [PDF Parsing Configs example](https://github.com/llmware-ai/llmware/tree/main/examples/Parsing/pdf_parser_new_configs.py) for more details.  
+- Please see [PDF Parsing Configs example](https://github.com/llmware-ai/llmware/tree/main/solutions/sources/pdf_parser_new_configs.py) for more details.  
 - Note:  deprecating support for aarch64-linux (will use 0.2.6 parsers).  Full support going forward for Linux Ubuntu20+ on x86_64 + with CUDA.  
   
 **Friday, March 22 - v0.2.6 Update**  
