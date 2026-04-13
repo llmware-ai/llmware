@@ -1,0 +1,62 @@
+[
+ {
+  "model_name": "slim-extract",
+  "model_family": "HFGenerativeModel",
+  "context_window": 2048,
+  "description": "specialized custom extraction"
+ },
+ {
+  "model_name": "slim-extract-tool",
+  "model_family": "GGUFGenerativeModel",
+  "context_window": 2048,
+  "description": "specialized custom extraction - quantized for local inference"
+ },
+ {
+  "model_name": "industry-bert-contracts",
+  "model_family": "HFEmbeddingModel",
+  "context_window": 512,
+  "description": "embedding model fine-tuned on contracts"
+ },
+ {
+  "model_name": "slim-summary-tool",
+  "model_family": "GGUFGenerativeModel",
+  "context_window": 2048,
+  "description": "specialized summary function model - quantized for local inference"
+ },
+ {
+  "model_name": "slim-topics",
+  "model_family": "HFGenerativeModel",
+  "context_window": 2048,
+  "description": "specialized topic categorization function model"
+ },
+ {
+  "model_name": "slim-boolean-tool",
+  "model_family": "GGUFGenerativeModel",
+  "context_window": 2048,
+  "description": "specialized quantized model for boolean question answering with explanation capability"
+ },
+ {
+  "model_name": "bling-answer-tool",
+  "model_family": "GGUFGenerativeModel",
+  "context_window": 2048,
+  "description": "general purpose quantized question-answering model - small and fast"
+ },
+ {
+  "model_name": "text-davinci-003",
+  "model_family": "OpenAIGenModel",
+  "context_window": 4096,
+  "description": "OG OpenAI model that started the GenAI boom in 2022"
+ },
+ {
+  "model_name": "llama-2-chat",
+  "model_family": "GGUFGenerativeModel",
+  "context_window": 4096,
+  "description": "popular 7b chat model quantized for local deployment"
+ },
+ {
+  "model_name": "slim-sql-tool",
+  "model_family": "GGUFGenerativeModel",
+  "context_window": 2048,
+  "description": "specialized small text2sql quantized model for local deployment"
+ }
+]
