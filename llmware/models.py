@@ -14892,6 +14892,13 @@ class GGUFVisionGenerativeModel(BaseModel):
 
         self.post_init()
 
+    def __del__(self):
+
+        logger.info(f"GGUFVisionGenerativeModel - cleaning up mtmd free on closing model instance")
+
+        if self.mtmd_ctx is not None:
+            self._libmtmd.mtmd_free(self.mtmd_ctx)
+
     def load_model_for_inference(self, model_repo_path, model_card=None, **kwargs):
 
         """ Loads and instantiates model along with other required objects. """
