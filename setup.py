@@ -74,6 +74,7 @@ setup(
         'redis': ['redis==5.0.1'],
         'mongo': ['pymongo>=4.7.0'],
         'neo4j': ['neo4j==5.16.0'],
+        'litellm': ['litellm>=1.55.0,<1.85'],
         'full': ['pymongo>=4.7.0', 'torch>=1.13.1', 'transformers>=4.36.0', 'einops>=0.7.0',
                  'Wikipedia-API>=0.6.0','openai>=1.0', 'datasets>=2.15.0', 'yfinance>=0.2.38', 'pymilvus<=2.5.1',
                  'chromadb>=0.4.22', 'streamlit', 'psycopg-binary==3.1.17', 'psycopg==3.1.17',
