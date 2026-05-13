@@ -25,7 +25,8 @@ from importlib import util
 import importlib
 
 from llmware.configs import (LLMWareConfig, MongoConfig, MilvusConfig, PostgresConfig, RedisConfig,
-                             PineconeConfig, QdrantConfig, Neo4jConfig, LanceDBConfig, ChromaDBConfig, VectorDBRegistry,
+                             PineconeConfig, QdrantConfig, Neo4jConfig, LanceDBConfig, ChromaDBConfig,
+                             ValkeyConfig, VectorDBRegistry,
                              LLMWareException, DependencyNotInstalledException, ModelNotFoundException)
 
 from llmware.resources import CollectionRetrieval, CollectionWriter, Status
@@ -58,6 +59,9 @@ GLOBAL_PINECONE_IMPORT = False
 
 redis = None
 GLOBAL_REDIS_IMPORT = False
+
+glide = None
+GLOBAL_VALKEY_GLIDE_IMPORT = False
 
 #   pgvector requires import of both pgvector and psycopg
 pgvector = None
@@ -1739,6 +1743,286 @@ class EmbeddingRedis:
         self.r.ft(self.collection_name).dropindex(delete_documents=True)
 
         # remove emb key - 'unset' the blocks in the text collection
+        self.utils.unset_text_index()
+
+        return 0
+
+
+class EmbeddingValkey:
+
+    """Implements the use of Valkey as a vector database via the Valkey GLIDE client.
+
+    ``EmbeddingValkey`` implements the interface to ``Valkey`` with the ``valkey-search`` module
+    for vector similarity search. It is used by the ``EmbeddingHandler``.
+
+    Requires:
+        - Valkey server >= 9.1 with valkey-search module >= 1.2.0
+        - Python client: valkey-glide-sync (pip install valkey-glide-sync)
+
+    Parameters
+    ----------
+    library : object
+        A ``Library`` object.
+
+    model : object
+        A model object. See :mod:`models` for available models.
+
+    model_name : str, default=None
+        Name of the model.
+
+    embedding_dims : int, default=None
+        Dimension of the embedding.
+
+    Returns
+    -------
+    embedding_valkey : EmbeddingValkey
+        A new ``EmbeddingValkey`` object.
+    """
+
+    def __init__(self, library, model=None, model_name=None, embedding_dims=None):
+
+        self.library = library
+        self.library_name = library.library_name
+        self.account_name = library.account_name
+
+        # Connection parameters from ValkeyConfig
+        valkey_host = ValkeyConfig.get_config("host")
+        valkey_port = ValkeyConfig.get_config("port")
+        use_tls = ValkeyConfig.get_config("use_tls")
+
+        # Dynamic import of valkey-glide-sync
+        global GLOBAL_VALKEY_GLIDE_IMPORT
+        if not GLOBAL_VALKEY_GLIDE_IMPORT:
+            if util.find_spec("glide_sync"):
+                try:
+                    global glide
+                    glide = importlib.import_module("glide_sync")
+                    GLOBAL_VALKEY_GLIDE_IMPORT = True
+                except Exception:
+                    raise LLMWareException(message="Exception: could not load valkey-glide-sync module.")
+            else:
+                raise LLMWareException(message="Exception: need to install valkey-glide-sync to use this class. "
+                                               "Install with: pip install valkey-glide-sync")
+
+        # Create synchronous GLIDE client
+        from glide_sync import GlideClient
+        from glide_shared.config import GlideClientConfiguration, NodeAddress
+
+        addresses = [NodeAddress(host=valkey_host, port=valkey_port)]
+        config = GlideClientConfiguration(addresses=addresses, use_tls=use_tls)
+        self.client = GlideClient.create(config)
+
+        # Model setup
+        self.model = model
+        self.model_name = model_name
+        self.embedding_dims = embedding_dims
+
+        if self.model:
+            self.model_name = self.model.model_name
+            self.embedding_dims = self.model.embedding_dims
+
+        self.utils = _EmbeddingUtils(library_name=self.library_name,
+                                     model_name=self.model_name,
+                                     account_name=self.account_name,
+                                     db_name="valkey",
+                                     embedding_dims=self.embedding_dims)
+
+        self.collection_name = self.utils.create_safe_collection_name()
+        self.collection_key = self.utils.create_db_specific_key()
+
+        self.DOC_PREFIX = self.collection_name
+
+        # Create or verify the index exists
+        self._ensure_index()
+
+    def _ensure_index(self):
+        """Create the vector search index if it does not already exist."""
+
+        from glide_sync import ft
+
+        # Check if index already exists by attempting ft.info
+        try:
+            ft.info(self.client, self.collection_name)
+            logger.info(f"update: EmbeddingValkey - index already exists - {self.collection_name}")
+            return
+        except Exception:
+            # Index does not exist, create it
+            pass
+
+        # Import field types for schema definition
+        from glide_shared.commands.server_modules.ft_options.ft_create_options import (
+            FtCreateOptions, VectorField, VectorFieldAttributesHnsw,
+            NumericField, TextField, DataType, DistanceMetricType, VectorType, VectorAlgorithm
+        )
+
+        # Define schema with vector field and metadata fields
+        vector_attrs = VectorFieldAttributesHnsw(
+            dimensions=self.embedding_dims,
+            distance_metric=DistanceMetricType.L2,
+            type=VectorType.FLOAT32
+        )
+
+        schema = [
+            NumericField("block_doc_id"),
+            TextField("block_mongo_id"),
+            VectorField("embedding_vector", VectorAlgorithm.HNSW, vector_attrs)
+        ]
+
+        # Create index on hash keys with the collection prefix
+        options = FtCreateOptions(data_type=DataType.HASH, prefixes=[f"{self.DOC_PREFIX}:"])
+
+        try:
+            ft.create(self.client, self.collection_name, schema, options)
+            logger.info(f"update: EmbeddingValkey - created new index - {self.collection_name}")
+        except Exception as e:
+            logger.warning(f"update: EmbeddingValkey - error creating index - {e}")
+            raise LLMWareException(message=f"EmbeddingValkey - could not create index: {e}")
+
+    def create_new_embedding(self, doc_ids=None, batch_size=500):
+        """Create new embedding - iterates through text blocks, generates vectors, and stores in Valkey."""
+
+        all_blocks_cursor, num_of_blocks = self.utils.get_blocks_cursor(doc_ids=doc_ids)
+
+        # Initialize a new status
+        status = Status(self.library.account_name)
+        status.new_embedding_status(self.library.library_name, self.model_name, num_of_blocks)
+
+        embeddings_created = 0
+        current_index = 0
+        finished = False
+
+        while not finished:
+
+            block_ids, doc_ids_batch, sentences = [], [], []
+            obj_batch = []
+
+            # Build the next batch
+            for i in range(batch_size):
+
+                block = all_blocks_cursor.pull_one()
+
+                if not block:
+                    finished = True
+                    break
+
+                text_search = block["text_search"].strip()
+                if not text_search or len(text_search) < 1:
+                    continue
+
+                block_ids.append(str(block["_id"]))
+                doc_ids_batch.append(int(block["doc_ID"]))
+                sentences.append(text_search)
+
+                obj = {"block_mongo_id": str(block["_id"]),
+                       "block_doc_id": str(int(block["doc_ID"])),
+                       "block_id": str(int(block["block_ID"]))}
+
+                obj_batch.append(obj)
+
+            if len(sentences) > 0:
+
+                # Process the batch - generate embeddings
+                vectors = self.model.embedding(sentences)
+
+                for i, embedding in enumerate(vectors):
+
+                    valkey_dict = obj_batch[i]
+
+                    # Convert embedding to binary blob (float32)
+                    embedding_array = np.array(embedding)
+                    valkey_dict["embedding_vector"] = embedding_array.astype(np.float32).tobytes()
+
+                    key_name = f"{self.DOC_PREFIX}:{valkey_dict['block_mongo_id']}"
+
+                    # Store as hash in Valkey
+                    self.client.hset(key_name, valkey_dict)
+
+                current_index = self.utils.update_text_index(block_ids, current_index)
+
+                embeddings_created += len(sentences)
+
+                status.increment_embedding_status(self.library.library_name, self.model_name, len(sentences))
+
+                logger.info(f"update: EmbeddingValkey - Embeddings Created: "
+                            f"{embeddings_created} of {num_of_blocks}")
+
+        embedding_summary = self.utils.generate_embedding_summary(embeddings_created)
+
+        logger.info(f"update: EmbeddingValkey - embedding_summary - {embedding_summary}")
+
+        return embedding_summary
+
+    def search_index(self, query_embedding_vector, sample_count=10):
+        """Search the Valkey vector index using KNN query."""
+
+        from glide_sync import ft
+        from glide_shared.commands.server_modules.ft_options.ft_search_options import FtSearchOptions
+
+        query_embedding_vector = np.array(query_embedding_vector)
+        query_vec_bytes = query_embedding_vector.astype(np.float32).tobytes()
+
+        # KNN vector search query
+        query = f"*=>[KNN {sample_count} @embedding_vector $query_vec]"
+
+        options = FtSearchOptions(params={"query_vec": query_vec_bytes})
+
+        results = ft.search(self.client, self.collection_name, query, options)
+
+        block_list = []
+
+        # results format: [count, {key: {field: value, ...}, ...}]
+        if results and len(results) >= 2:
+            result_docs = results[1] if len(results) > 1 else {}
+
+            if isinstance(result_docs, dict):
+                for doc_key, doc_fields in result_docs.items():
+                    _id = doc_fields.get(b"block_mongo_id", doc_fields.get("block_mongo_id"))
+                    score = doc_fields.get(b"__embedding_vector_score",
+                                           doc_fields.get("__embedding_vector_score", 0))
+
+                    if isinstance(_id, bytes):
+                        _id = _id.decode("utf-8")
+                    if isinstance(score, bytes):
+                        score = float(score.decode("utf-8"))
+                    else:
+                        score = float(score)
+
+                    block_result_list = self.utils.lookup_text_index(_id)
+
+                    for block in block_result_list:
+                        block_list.append((block, score))
+
+        return block_list
+
+    def delete_index(self):
+        """Delete the vector index and clean up associated hash keys."""
+
+        from glide_sync import ft
+
+        try:
+            ft.dropindex(self.client, self.collection_name)
+            logger.info(f"update: EmbeddingValkey - dropped index - {self.collection_name}")
+        except Exception as e:
+            logger.warning(f"update: EmbeddingValkey - error dropping index - {e}")
+
+        # Clean up hash keys with the collection prefix using SCAN
+        cursor = "0"
+        while True:
+            result = self.client.custom_command(["SCAN", cursor, "MATCH", f"{self.DOC_PREFIX}:*", "COUNT", "1000"])
+            if isinstance(result, (list, tuple)) and len(result) == 2:
+                cursor = result[0]
+                keys = result[1]
+                if keys:
+                    for key in keys:
+                        self.client.custom_command(["DEL", key])
+                if isinstance(cursor, bytes):
+                    cursor = cursor.decode("utf-8")
+                if cursor == "0":
+                    break
+            else:
+                break
+
+        # Remove embedding key flag from text collection
         self.utils.unset_text_index()
 
         return 0
