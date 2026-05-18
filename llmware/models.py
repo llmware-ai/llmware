@@ -96,6 +96,7 @@ class _ModelRegistry:
                      "ClaudeModel":{"module": "llmware.models", "open_source": False},
                      "GoogleGeminiModel":{"module": "llmware.models", "open_source": False},
                      "OpenAIEmbeddingModel":{"module": "llmware.models", "open_source": False},
+                     "LiteLLMModel":{"module": "llmware.models", "open_source": False},
                      }
 
     model_catalog_state_attributes = ["selected_model", "loaded_model_name", "loaded_model_class", "temperature",
@@ -7124,6 +7125,267 @@ class ClaudeModel(BaseModel):
         logger.debug(f"ClaudeModel - output_response - {output_response}")
 
         # output inference parameters
+        self.llm_response = text_out
+        self.usage = usage
+        self.logits = None
+        self.output_tokens = None
+        self.final_prompt = prompt_enriched
+
+        self.register()
+
+        return output_response
+
+
+class LiteLLMModel(BaseModel):
+
+    """ LiteLLMModel class implements the LiteLLM SDK for calling 100+ LLM providers
+    (Anthropic, Bedrock, Vertex AI, Cohere, Mistral, etc.) through a unified interface.
+    Users specify the provider via the model string, e.g. 'anthropic/claude-sonnet-4-5'. """
+
+    def __init__(self, model_name=None, api_key=None, context_window=32768,
+                 max_output=1000, temperature=0.0, **kwargs):
+
+        super().__init__(**kwargs)
+
+        self.model_class = "LiteLLMModel"
+        self.model_category = "generative"
+        self.llm_response = None
+        self.usage = None
+        self.logits = None
+        self.output_tokens = None
+        self.final_prompt = None
+
+        self.api_key = api_key
+        self.model_name = model_name
+
+        self.error_message = "\nUnable to connect to LiteLLM. Please try again later."
+
+        self.separator = "\n"
+
+        self.max_total_len = context_window
+        self.max_input_len = int(context_window * 0.5)
+        self.llm_max_output_len = int(context_window * 0.5)
+
+        if temperature >= 0.0:
+            self.temperature = temperature
+        else:
+            self.temperature = 0.0
+
+        self.target_requested_output_tokens = max_output
+        self.add_prompt_engineering = False
+        self.add_context = ""
+        self.prompt = ""
+        self.instruction_following = False
+        self.prompt_wrapper = None
+
+        if "model_card" in kwargs:
+            self.model_card = kwargs["model_card"]
+        else:
+            self.model_card = {}
+
+        self.post_init()
+
+    def set_api_key(self, api_key, env_var="USER_MANAGED_LLM_API_KEY"):
+
+        os.environ[env_var] = api_key
+        logger.info(f"LiteLLMModel - stored api_key in environmental variable- {env_var}")
+
+        return self
+
+    def _get_api_key(self, env_var="USER_MANAGED_LLM_API_KEY"):
+
+        self.api_key = os.environ.get(env_var)
+        return self.api_key
+
+    def token_counter(self, text_sample):
+
+        tokenizer = Utilities().get_default_tokenizer()
+        toks = tokenizer.encode(text_sample).ids
+        return len(toks)
+
+    def prompt_engineer(self, query, context, inference_dict=None):
+
+        self.instruction_following = False
+        self.prompt_wrapper = False
+
+        if not self.instruction_following:
+            if context:
+                output = context + "\n" + query
+            else:
+                output = query
+
+            if self.prompt_wrapper:
+                output = PromptCatalog().apply_prompt_wrapper(output, self.prompt_wrapper,
+                                                              instruction=None)
+            return output
+
+        if not self.add_prompt_engineering:
+            if context:
+                selected_prompt = "default_with_context"
+            else:
+                selected_prompt = "default_no_context"
+        else:
+            selected_prompt = self.add_prompt_engineering
+
+        prompt_dict = PromptCatalog().build_core_prompt(prompt_name=selected_prompt,
+                                                        separator=self.separator,
+                                                        query=query,
+                                                        context=context,
+                                                        inference_dict=inference_dict)
+
+        if prompt_dict:
+            prompt_engineered = prompt_dict["core_prompt"]
+        else:
+            prompt_engineered = "Please read the following text: " + context + self.separator
+            prompt_engineered += "Based on this text, please answer the question: " + query + self.separator
+            prompt_engineered += ("Please answer the question only with facts provided in the materials.  "
+                                 "If the question can not be answered in the materials, then please "
+                                 "respond 'Not Found.'")
+
+        if self.prompt_wrapper:
+            prompt_engineered = PromptCatalog().apply_prompt_wrapper(prompt_engineered, self.prompt_wrapper,
+                                                                     instruction=None)
+
+        return prompt_engineered
+
+    def inference(self, prompt, add_context=None, add_prompt_engineering=None, inference_dict=None,
+                  api_key=None):
+
+        self.prompt = prompt
+
+        if add_context:
+            self.add_context = add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        if api_key:
+            self.api_key = api_key
+
+        if not self.api_key:
+            self.api_key = self._get_api_key()
+
+        self.preview()
+
+        try:
+            import litellm
+        except ImportError:
+            raise DependencyNotInstalledException("litellm")
+
+        prompt_enriched = self.prompt_engineer(self.prompt, self.add_context, inference_dict=inference_dict)
+
+        time_start = time.time()
+
+        try:
+            response = litellm.completion(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt_enriched}],
+                temperature=self.temperature,
+                max_tokens=self.target_requested_output_tokens,
+                api_key=self.api_key if self.api_key else None,
+                drop_params=True,
+            )
+
+            text_out = response.choices[0].message.content
+
+            usage = {"input": response.usage.prompt_tokens,
+                     "output": response.usage.completion_tokens,
+                     "total": response.usage.total_tokens,
+                     "metric": "tokens",
+                     "processing_time": time.time() - time_start}
+
+        except Exception as e:
+            text_out = "/***ERROR***/"
+            usage = {"input": 0, "output": 0, "total": 0, "metric": "tokens",
+                     "processing_time": time.time() - time_start}
+
+            logger.error(f"LiteLLMModel - inference produced error - {e}")
+
+        output_response = {"llm_response": text_out, "usage": usage}
+
+        self.llm_response = text_out
+        self.usage = usage
+        self.logits = None
+        self.output_tokens = None
+        self.final_prompt = prompt_enriched
+
+        self.register()
+
+        return output_response
+
+    def stream(self, prompt, add_context=None, add_prompt_engineering=None, inference_dict=None,
+               api_key=None):
+
+        self.prompt = prompt
+
+        if add_context:
+            self.add_context = add_context
+
+        if add_prompt_engineering:
+            self.add_prompt_engineering = add_prompt_engineering
+
+        if inference_dict:
+
+            if "temperature" in inference_dict:
+                self.temperature = inference_dict["temperature"]
+
+            if "max_tokens" in inference_dict:
+                self.target_requested_output_tokens = inference_dict["max_tokens"]
+
+        if api_key:
+            self.api_key = api_key
+
+        if not self.api_key:
+            self.api_key = self._get_api_key()
+
+        self.preview()
+
+        try:
+            import litellm
+        except ImportError:
+            raise DependencyNotInstalledException("litellm")
+
+        prompt_enriched = self.prompt_engineer(self.prompt, self.add_context, inference_dict=inference_dict)
+
+        time_start = time.time()
+
+        try:
+            response = litellm.completion(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt_enriched}],
+                temperature=self.temperature,
+                max_tokens=self.target_requested_output_tokens,
+                api_key=self.api_key if self.api_key else None,
+                drop_params=True,
+                stream=True,
+            )
+
+            text_out = ""
+            for chunk in response:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    text_out += chunk.choices[0].delta.content
+                    yield chunk.choices[0].delta.content
+
+            usage = {"input": 0, "output": 0, "total": 0, "metric": "tokens",
+                     "processing_time": time.time() - time_start}
+
+        except Exception as e:
+            text_out = "/***ERROR***/"
+            usage = {"input": 0, "output": 0, "total": 0, "metric": "tokens",
+                     "processing_time": time.time() - time_start}
+
+            logger.error(f"LiteLLMModel - stream inference produced error - {e}")
+
+        output_response = {"llm_response": text_out, "usage": usage}
+
         self.llm_response = text_out
         self.usage = usage
         self.logits = None
