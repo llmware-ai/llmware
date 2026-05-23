@@ -1,0 +1,25 @@
+{
+  "name": "mpath",
+  "version": "0.5.1",
+  "description": "{G,S}et object values using MongoDB-like path notation",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test/*"
+  },
+  "engines": {
+    "node": ">=4.0.0"
+  },
+  "repository": "git://github.com/aheckmann/mpath.git",
+  "keywords": [
+    "mongodb",
+    "path",
+    "get",
+    "set"
+  ],
+  "author": "Aaron Heckmann <aaron.heckmann+github@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "1.8.1",
+    "benchmark": "~1.0.0"
+  }
+}

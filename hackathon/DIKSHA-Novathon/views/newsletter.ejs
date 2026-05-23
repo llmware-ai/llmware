@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscribe to Newsletter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bg-gradient-custom {
+            background: linear-gradient(to right, #1d3a12, #1d3a12, #1d3a12);
+        }
+    </style>
+</head>
+<body class="font-sans bg-gradient-custom text-white">
+
+    <!-- Hero Section -->
+    <section class="py-16 px-6 text-center">
+        <h1 class="text-4xl font-bold mb-4">Stay Updated with Tech News!</h1>
+        <p class="text-lg mb-6">Subscribe to get the latest news and trends in the tech world.</p>
+    </section>
+
+    <!-- Subscription Form Section -->
+    <section class="bg-white text-gray-800 py-16">
+        <div class="container mx-auto px-6 md:px-12 max-w-4xl">
+            <h2 class="text-2xl font-semibold text-center" style="color: #1d3a12;">Subscribe to Our Newsletter</h2>
+
+            <form id="newsletterForm" class="flex flex-col gap-4 text-center">
+                <input
+                    type="email"
+                    id="emailInput"
+                    placeholder="Enter your email address"
+                    required
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2"
+                    style="--tw-ring-color: #7a631d;"
+                />
+                <button
+                    type="submit"
+                    class="bg-[#FFBE00] text-white px-6 py-2 rounded-lg hover:bg-[#FFBE00] transition"
+                >
+                    Subscribe
+                </button>
+            </form>
+            <p id="successMessage" class="hidden mt-4 text-green-500 font-medium">
+                Thank you for subscribing! Redirecting to the latest tech news...
+            </p>
+            <p id="errorMessage" class="hidden mt-4 text-red-500 font-medium">Please enter a valid email.</p>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 py-6 text-center text-white">
+        <p>&copy; 2024 Tech News. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        const form = document.getElementById("newsletterForm");
+        const emailInput = document.getElementById("emailInput");
+        const successMessage = document.getElementById("successMessage");
+        const errorMessage = document.getElementById("errorMessage");
+
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const email = emailInput.value;
+
+            // Simple email validation
+            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                successMessage.classList.remove("hidden");
+                errorMessage.classList.add("hidden");
+
+                // Redirect to the news page with the email as a query parameter
+                window.location.href = `/news?email=${encodeURIComponent(email)}`;
+            } else {
+                successMessage.classList.add("hidden");
+                errorMessage.classList.remove("hidden");
+            }
+        });
+    </script>
+</body>
+</html>

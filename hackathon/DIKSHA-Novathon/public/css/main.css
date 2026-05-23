@@ -1,0 +1,98 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+header {
+  background-color: #06BBCC;
+  color: #fff;
+  text-align: center;
+  padding: 50px 0;
+}
+
+header h1 {
+  margin-bottom: 20px;
+}
+
+header p {
+  font-size: 18px;
+}
+
+main {
+  text-align: center;
+  padding: 50px 0;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.button {
+  margin: 0 10px;
+}
+
+.button a {
+  display: inline-block;
+  padding: 10px 20px;
+  text-decoration: none;
+  color: #fff;
+  background-color: #333;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.button a:hover {
+  background-color: #555;
+}
+
+footer {
+  background-color: #333;
+  color: #fff;
+  padding: 20px 0; /* Reduced padding */
+}
+
+.footer-content {
+  text-align: center;
+}
+
+.footer-content h3 {
+  margin-bottom: 20px;
+}
+
+.footer-content ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.footer-content ul li {
+  margin-bottom: 10px;
+}
+
+.footer-content ul li a {
+  text-decoration: none;
+  color: #fff;
+}
+
+.footer-content ul li a:hover {
+  text-decoration: underline;
+}
+
+/* Existing CSS */
+
+.logo {
+  width: 200px; /* Adjust width as needed */
+  height: auto; /* Maintain aspect ratio */
+  margin-bottom: 20px;
+  position: absolute; /* Position the logo absolutely */
+  top: 20px; /* Distance from the top */
+  left: 20px; /* Distance from the left */
+}
