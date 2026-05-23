@@ -1,0 +1,8 @@
+ <div className={`font-black ${isUser ? 'text-primary' : 'text-third'}`}>
+                        {message.name}
+                    </div>
+                    <div className='flex items-center overflow-hidden'>
+                        <img src={message.avatar} alt={message.name} 
+                        className='w-8 rounded-xl'/>
+                        <p className='mx-2'>{message.text}</p>
+                    </div>
