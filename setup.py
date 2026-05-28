@@ -72,6 +72,7 @@ setup(
         'whisper': ['soundfile>=0.12.0', 'soxr>=0.5.0'],
         'postgres': ['psycopg-binary==3.1.17', 'psycopg==3.1.17', 'pgvector==0.2.4'],
         'redis': ['redis==5.0.1'],
+        'valkey': ['valkey-glide-sync>=2.0.0,<3.0.0'],
         'mongo': ['pymongo>=4.7.0'],
         'neo4j': ['neo4j==5.16.0'],
         'full': ['pymongo>=4.7.0', 'torch>=1.13.1', 'transformers>=4.36.0', 'einops>=0.7.0',
