@@ -54,3 +54,18 @@ def test_core_library_functions():
     assert library_name not in all_library_names
 
 
+def test_create_new_library_idempotent_with_unsafe_name():
+    """ Regression test for #1155: calling create_new_library twice with the same
+        original name that gets remapped by the db-layer's safe_name() (e.g. '-' on
+        sqlite/postgres) should load the existing library, not raise an IntegrityError. """
+
+    LLMWareConfig().set_active_db("sqlite")
+
+    library_name = "my-test-library-1155"
+    library_1 = Library().create_new_library(library_name)
+    library_2 = Library().create_new_library(library_name)
+
+    assert library_1.library_name == library_2.library_name
+    library_2.delete_library(confirm_delete=True)
+
+
