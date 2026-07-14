@@ -195,6 +195,36 @@ ModelCatalog().register_open_chat_model("my_open_chat_model2",
                                         model_type="chat")
 ```
 
+# Add a remote OpenAI-compatible endpoint (DaoXE)
+
+The same `register_open_chat_model` path works for **remote** OpenAI-compatible Chat Completions APIs, not only local LM Studio.  
+[DaoXE](https://daoxe.com) is a multi-model, multi-protocol API gateway: OpenAI Chat Completions / Responses **and** Anthropic Messages (Claude protocol), plus other catalog endpoints. This snippet uses the OpenAI-compatible surface that `OpenChatModel` already supports.
+
+```python
+import os
+from llmware.models import ModelCatalog
+from llmware.prompts import Prompt
+
+# Create a key at https://daoxe.com — model IDs come from your live catalog / account.
+# DaoXE does not serve users in mainland China; availability can vary by region and account.
+api_key = os.environ["DAOXE_API_KEY"]
+model_id = os.environ["DAOXE_MODEL"]          # real model ID from your DaoXE catalog
+api_base = os.environ.get("DAOXE_BASE_URL", "https://daoxe.com/v1")
+
+# model_name is both the llmware catalog key and the remote `model` field
+ModelCatalog().register_open_chat_model(
+    model_name=model_id,
+    api_base=api_base,
+    prompt_wrapper="",
+    model_type="chat",
+)
+
+prompter = Prompt().load_model(model_id, api_key=api_key)
+response = prompter.prompt_main("What is the future of AI?")
+```
+
+Full runnable example: [`solutions/models/using-daoxe-remote.py`](https://github.com/llmware-ai/llmware/blob/main/solutions/models/using-daoxe-remote.py).
+
 
 Need help or have questions?
 ============================
