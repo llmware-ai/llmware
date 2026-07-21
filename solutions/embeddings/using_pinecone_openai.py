@@ -91,7 +91,7 @@ def set_up_embeddings(
     '''This function sets up the embeddings in ``library`` with the model ``embedding_model``.
 
     If you bring your own data and this data contains text and images, than you need to change ``embedding_model``
-    to one that can process both simultanously.
+    to one that can process both simultaneously.
     '''
     logger.info(f'Setting up embeddings in library {library.library_name} with model {embedding_model}')
 
