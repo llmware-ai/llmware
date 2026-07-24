@@ -1185,24 +1185,28 @@ class PGRetrieval:
                     f"FROM {self.library_name} " \
                     f"WHERE ts @@ to_tsquery('english', {search_string})"
 
+        #   filter values are bound as query parameters - never interpolated into the SQL string
+        insert_array = ()
+
         if key_value_dict:
             for key, value in key_value_dict.items():
 
                 if isinstance(value,list):
 
-                    # need to check this
-                    value_range = str(value)
-                    value_range = value_range.replace("[", "(")
-                    value_range = value_range.replace("]", ")")
-
-                    sql_query += f" AND {key} IN {value_range}"
+                    sql_query += f" AND {key} IN %s"
+                    insert_array += (tuple(value),)
                 else:
-                    sql_query += f" AND {key} = '{value}'"
+                    sql_query += f" AND {key} = %s"
+                    insert_array += (value,)
 
         sql_query += " ORDER BY rank"
         sql_query += ";"
 
-        results = self.conn.cursor().execute(sql_query)
+        if insert_array:
+            results = self.conn.cursor().execute(sql_query, insert_array)
+        else:
+            results = self.conn.cursor().execute(sql_query)
+
         output_results = self.unpack_search_result(results)
 
         self.conn.close()
@@ -1233,6 +1237,10 @@ class PGRetrieval:
         sql_query = f"SELECT * FROM {self.library_name}"
 
         conditions_clause = " WHERE"
+
+        #   filter values are bound as query parameters - never interpolated into the SQL string
+        insert_array = ()
+
         for key, value in key_dict.items():
 
             #   handles passing a filter with 'mongo' style $in key range
@@ -1243,23 +1251,22 @@ class PGRetrieval:
                     logger.debug(f"update: Postgres - filter_by_key_dict - value - {value}")
 
                     if isinstance(value,list):
-                        v_str = "("
-                        for entry in value:
-                            v_str += str(entry) + ","
-                        if v_str.endswith(","):
-                            v_str = v_str[:-1]
-                        v_str += ")"
-                        conditions_clause += f" {key} IN {v_str} AND "
+                        conditions_clause += f" {key} IN %s AND "
+                        insert_array += (tuple(value),)
             else:
 
-                conditions_clause += f" {key} = '{value}' AND "
+                conditions_clause += f" {key} = %s AND "
+                insert_array += (value,)
 
         if conditions_clause.endswith(' AND '):
             conditions_clause = conditions_clause[:-5]
         if len(conditions_clause) > len(" WHERE"):
             sql_query += conditions_clause + ";"
 
-        results = self.conn.cursor().execute(sql_query)
+        if insert_array:
+            results = self.conn.cursor().execute(sql_query, insert_array)
+        else:
+            results = self.conn.cursor().execute(sql_query)
 
         output = self.unpack(results)
 
@@ -2256,6 +2263,7 @@ class SQLiteRetrieval:
 
         sql_query = f"SELECT rank, rowid, * FROM {self.library_name} WHERE text_search MATCH '{query_str}' "
 
+        #   filter values are bound as query parameters - never interpolated into the SQL string
         insert_array = ()
 
         if key_value_dict:
@@ -2266,20 +2274,16 @@ class SQLiteRetrieval:
                     sql_query += f" AND ("
 
                     for items in value:
-                        if isinstance(value,str):
-                            sql_query += f" {key} = '{items}' OR "
-                        else:
-                            sql_query += f" {key} = {items} OR "
+                        sql_query += f" {key} = ? OR "
+                        insert_array += (items,)
 
                     if sql_query.endswith("OR "):
                         sql_query = sql_query[:-3]
                     sql_query += ")"
 
                 else:
-                    if isinstance(value,str):
-                        sql_query += f" AND {key} = '{value}'"
-                    else:
-                        sql_query += f" AND {key} = {value}"
+                    sql_query += f" AND {key} = ?"
+                    insert_array += (value,)
 
         sql_query += " ORDER BY rank"
         sql_query += ";"
@@ -2315,6 +2319,10 @@ class SQLiteRetrieval:
         sql_query = f"SELECT rowid, * FROM {self.library_name}"
 
         conditions_clause = " WHERE"
+
+        #   filter values are bound as query parameters - never interpolated into the SQL string
+        insert_array = ()
+
         for key, value in key_dict.items():
 
             #   handles passing a filter with 'mongo' style $in key range
@@ -2325,20 +2333,12 @@ class SQLiteRetrieval:
                     logger.debug(f"update: SQLite - filter_by_key_dict - value - {value}")
 
                     if isinstance(value,list):
-                        v_str = "("
-                        for entry in value:
-                            v_str += str(entry) + ","
-                        if v_str.endswith(","):
-                            v_str = v_str[:-1]
-                        v_str += ")"
-                        conditions_clause += f" {key} IN {v_str} AND "
+                        placeholders = ",".join(["?"] * len(value))
+                        conditions_clause += f" {key} IN ({placeholders}) AND "
+                        insert_array += tuple(value)
             else:
-                if isinstance(value, int):
-                    conditions_clause += f" {key} = {value} AND "
-                else:
-                    conditions_clause += f" {key} = '{value}' AND "
-
-            # conditions_clause += f" {key} = {value} AND "
+                conditions_clause += f" {key} = ? AND "
+                insert_array += (value,)
 
         if conditions_clause.endswith(" AND "):
             conditions_clause = conditions_clause[:-5]
@@ -2346,7 +2346,7 @@ class SQLiteRetrieval:
         if len(conditions_clause) > len(" WHERE"):
             sql_query += conditions_clause + ";"
 
-        results = self.conn.cursor().execute(sql_query)
+        results = self.conn.cursor().execute(sql_query, insert_array)
 
         output = self.unpack(results)
 
