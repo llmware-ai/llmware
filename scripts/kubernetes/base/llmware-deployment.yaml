@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llmware
+  namespace: llmware
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llmware
+  template:
+    metadata:
+      labels:
+        app: llmware
+    spec:
+      # Build this image from scripts/docker/Dockerfile and push it to a
+      # registry your cluster can pull from before applying these manifests
+      # (see fast-start.sh and the README in this directory).
+      containers:
+        - name: llmware
+          image: llmware:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: llmware-config
+          volumeMounts:
+            - name: llmware-data
+              mountPath: /llmware_data
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+          command: ["/bin/sh", "-c", "sleep infinity"]
+      volumes:
+        - name: llmware-data
+          persistentVolumeClaim:
+            claimName: llmware-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llmware-data
+  namespace: llmware
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 10Gi
