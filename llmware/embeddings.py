@@ -1830,6 +1830,7 @@ class EmbeddingValkey:
         config = GlideClientConfiguration(
             addresses=addresses,
             client_name="llmware_embedding_client",
+            client_info_tag="llmware",
             use_tls=use_tls,
             credentials=credentials,
             request_timeout=request_timeout
