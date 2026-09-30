@@ -110,7 +110,7 @@ class _ModelRegistry:
     prompt_wrappers = ["alpaca", "human_bot", "chatgpt", "<INST>", "open_chat", "hf_chat", "chat_ml", "phi_3",
                        "llama_3_chat","tiny_llama_chat","stablelm_zephyr_chat", "google_gemma_chat",
                        "vicuna_chat", "phi_4", "deepseek_chat", "phi-4-mini",
-                       "granite_chat", "lfm2_chat", "olmo_chat", "oss_chat", "phi_3_vision"]
+                       "granite_chat", "jamba2_chat", "lfm2_chat", "olmo_chat", "oss_chat", "phi_3_vision"]
 
     registered_wrappers = global_model_finetuning_prompt_wrappers_lookup
 
@@ -9867,7 +9867,6 @@ class GGUFGenerativeModel(BaseModel):
         #   set verbose level in environ level - will be picked up by callback in llama_cpp
         os.environ["llama_cpp_verbose"] = GGUFConfigs().get_config("llama_cpp_verbose")
         # os.environ["llama_cpp_verbose"] = "ON"
-        #   adding new parameters - use_sampling, temperature, max_output
 
         self.use_sampling = sample
         self.sample = sample
@@ -9883,12 +9882,7 @@ class GGUFGenerativeModel(BaseModel):
 
         if max_output > gguf_configs_max:
             # truncate max output to GGUFConfigs max
-            # logger.warning(f"update: requested output len - {max_output} > {gguf_configs_max}, which is the "
-            #                f"current GGUF default max.\n--Truncating to {gguf_configs_max} output tokens.\n--Note: "
-            #                f"to change GGUF default max to new integer amount, say 500:\n "
-            #                f"  GGUFConfigs().set_config(\"max_output_tokens\", 500)"
-            #                )
-
+            # implements safety automatically without warning
             max_output = gguf_configs_max
 
         self.max_output = max_output
@@ -10009,7 +10003,6 @@ class GGUFGenerativeModel(BaseModel):
 
         # set default minimum
         self.n_batch = 2048
-        # self.n_batch = 512
 
         self.last_n_tokens_size = 64
 
@@ -10069,6 +10062,7 @@ class GGUFGenerativeModel(BaseModel):
 
         if not GGUFConfigs().get_config("backend_initialized"):
             # is this backend init required?
+            # note: re-initializing more than once can create error with vulkan
             self._lib.llama_backend_init()
             GGUFConfigs().set_config("backend_initialized", True)
 
@@ -10079,9 +10073,6 @@ class GGUFGenerativeModel(BaseModel):
         # update model params parameters
         # important to set this correctly for Mac performance
         self.model_params.n_gpu_layers = 50
-
-        # deprecated - change default split_mode from 1 -> 0
-        # self.model_params.split_mode = 0
 
         self.model_params.main_gpu = 0
         self.model_params.vocab_only = False
@@ -10116,13 +10107,6 @@ class GGUFGenerativeModel(BaseModel):
         self.context_params.pooling_type = LLAMA_POOLING_TYPE_UNSPECIFIED
         self.context_params.rope_freq_base = 0.0  # (rope_freq_base if rope_freq_base != 0.0 else 0)
         self.context_params.rope_freq_scale = 0.0
-
-        # changed: defaults changed in llama cpp from build b6323 -> b6325
-        # self.context_params.yarn_ext_factor = -1.0
-        # self.context_params.yarn_attn_factor = 1.0
-        # self.context_params.yarn_beta_fast = 32.0
-        # self.context_params.yarn_beta_slow = 1.0
-        # end changes
 
         self.context_params.type_k = 1
         self.context_params.type_v = 1
@@ -10304,22 +10288,20 @@ class GGUFGenerativeModel(BaseModel):
         raise LLMWareException(message=f"GGUFGenerativeModel - attempting to load llama cpp backend lib - "
                                        f"Llama cpp backend not found.")
 
-    def _init_sampler(self):
+    def _init_sampler(self, temp=0.0):
 
-        # create sampler
+        """ Creates sampler used in generation """
+
         # default params are struct
         params = llama_sampler_chain_params()
         self._sampler = self._lib.llama_sampler_chain_init(params)
 
-        temp = 0.0
+        # default setting of temp to 0.0
 
         if temp < 0.0:
-            # sampler.add_softmax()
             self._lib.llama_sampler_chain_add(self._sampler, self._lib.llama_sampler_init_softmax())
-            # sampler.add_dist(self._seed)
 
         elif temp == 0.0:
-            # sampler.add_greedy()
             greedy_sampler = self._lib.llama_sampler_init_greedy()
 
             self._lib.llama_sampler_chain_add(self._sampler, greedy_sampler)
@@ -10329,8 +10311,6 @@ class GGUFGenerativeModel(BaseModel):
     def sample_gguf(self, idx=None):
 
         """ Adapted to sample_gguf to avoid potential name space conflicts. """
-
-        # assert self.n_tokens > 0
 
         tmp_sampler = False
 
@@ -10389,12 +10369,11 @@ class GGUFGenerativeModel(BaseModel):
 
         for token in self.generate(prompt_tokens):
 
-            # first token capture
+            # get first token speed
             if get_first_token_speed:
                 if token_counter == 0:
                     first_token_processing_time = time.time() - t_gen_start
                     token_counter += 1
-            # first token capture ends here
 
             if self.get_logits:
                 self.register_top_logits()
@@ -10491,7 +10470,9 @@ class GGUFGenerativeModel(BaseModel):
 
                 return_code = self._lib.llama_decode(self._ctx.ctx, self._batch.batch)
 
-                # TODO: add better error handling if return_code 1 - usually overflow of ctx
+                # TODO: add better error handling if return_code 1 -
+                #  usually overflow of ctx
+
                 if return_code != 0:
                     raise RuntimeError(f"GGUFGenerativeModel - generate - llama_decode call returned {return_code} - in most cases, this "
                                        f"is due to exceeding the maximum context window.")
@@ -10510,7 +10491,7 @@ class GGUFGenerativeModel(BaseModel):
 
                 self.n_tokens += n_tokens
 
-                # TODO: inserting test for logits
+                # top logits capture off by default
                 # self.register_top_logits()
 
             while sample_idx < self.n_tokens:
@@ -10538,7 +10519,6 @@ class GGUFGenerativeModel(BaseModel):
                     self.n_tokens = sample_idx
 
                     self._lib.llama_memory_seq_rm(self._lib.llama_get_memory(self._ctx.ctx), -1, self.n_tokens, -1)
-                    # self._lib.llama_kv_cache_seq_rm(self._ctx.ctx, -1, self.n_tokens, -1)
 
                     break
 
@@ -10553,7 +10533,6 @@ class GGUFGenerativeModel(BaseModel):
 
         n_ctx = self.n_ctx_train()
         tokens = (ctypes.c_int32 * n_ctx)()
-        # change from self._model.model
         n_tokens = self._lib.llama_tokenize(self.vocab, text, len(text), tokens, n_ctx, add_bos, special)
 
         if n_tokens < 0:
@@ -15204,6 +15183,7 @@ class GGUFVisionGenerativeModel(BaseModel):
 
         self.mtmd_ctx = None
 
+        import multiprocessing
         # Get default parameters
         ctx_params = self._libmtmd.mtmd_context_params_default()
         ctx_params.use_gpu = True  # todo: expose as configuration option directly
@@ -15386,6 +15366,17 @@ class GGUFVisionGenerativeModel(BaseModel):
             base64_data = base64.b64encode(img_file.read()).decode('utf-8')
             return f"data:image/jpg;base64,{base64_data}"
 
+    def mtmd_helper_bitmap_init_from_buf(self, ctx, buf, length,
+                                         placeholder, opt=None):
+
+        """Initialize an MTMD bitmap from a buffer."""
+
+        if opt is None:
+            opt = self._libmtmd.mtmd_helper_init_opt_default()
+
+        return self._libmtmd.mtmd_helper_bitmap_init_from_buf_wrapper(
+                            ctx, buf, length, placeholder, opt).bitmap
+
     def _create_bitmap_from_bytes(self, image_bytes: bytes):
 
         """Create mtmd_bitmap from image bytes."""
@@ -15396,7 +15387,7 @@ class GGUFVisionGenerativeModel(BaseModel):
         bitmap = self._libmtmd.mtmd_helper_bitmap_init_from_buf(
             self.mtmd_ctx,
             (ctypes.c_uint8 * len(image_bytes)).from_buffer(bytearray(image_bytes)),
-            len(image_bytes)
+            len(image_bytes), c_bool(False)
         )
 
         if bitmap is None:
@@ -15406,14 +15397,14 @@ class GGUFVisionGenerativeModel(BaseModel):
 
     def prepare_image_prompt(self, prompt, image_path):
 
-        """ Main entry point for building image encodings and merging with token encodings to prepare
-        prompt for generative decoder model """
+        """ Main entrypoint method to prepare image_prompt """
 
         data_uri = self.image_to_base64_data_uri(image_path)
         import base64
         image_bytes = base64.b64decode(data_uri.split(",")[1])
 
         bitmap = self._create_bitmap_from_bytes(image_bytes)
+        bitmap = bitmap.bitmap
 
         bitmaps = []
         bitmap_cleanup = []
@@ -15422,7 +15413,9 @@ class GGUFVisionGenerativeModel(BaseModel):
 
         # Create input text structure
         input_text = mtmd_input_text()
-        input_text.text = prompt.encode('utf-8')
+        input_text_bytes = prompt.encode("utf-8")
+        input_text.text = input_text_bytes
+        input_text.text_len = len(input_text_bytes)
         input_text.add_special = True
         input_text.parse_special = True
 
@@ -15436,7 +15429,7 @@ class GGUFVisionGenerativeModel(BaseModel):
         result = self._libmtmd.mtmd_tokenize(
             self.mtmd_ctx,
             chunks,
-            ctypes.byref(input_text),
+            byref(input_text),
             bitmap_array,
             len(bitmaps)
         )
@@ -15451,7 +15444,6 @@ class GGUFVisionGenerativeModel(BaseModel):
 
         # Process each chunk
         n_past = llama_pos(0)
-
         n_chunks = self._libmtmd.mtmd_input_chunks_size(chunks)
 
         for i in range(n_chunks):
@@ -15476,23 +15468,22 @@ class GGUFVisionGenerativeModel(BaseModel):
 
                     if self.n_tokens + len(tokens) > self.n_ctx():
                         raise ValueError(
-                            f"Prompt is larger than n_ctx: {self.n_tokens + len(tokens)} > {self.n_ctx()}"
+                            f"Prompt exceeds n_ctx: {self.n_tokens + len(tokens)} > {self.n_ctx()}"
                         )
 
                     self.eval(tokens)
 
             elif chunk_type in [MTMD_INPUT_CHUNK_TYPE_IMAGE,
                                 MTMD_INPUT_CHUNK_TYPE_AUDIO]:
-
+                # Handle image/audio chunk using helper
                 chunk_n_tokens = self._libmtmd.mtmd_input_chunk_get_n_tokens(chunk)
 
                 if self.n_tokens + chunk_n_tokens > self.n_ctx():
                     raise ValueError(
-                        f"Prompt is larger than n_ctx: {self.n_tokens + chunk_n_tokens} > {self.n_ctx()}"
+                        f"Prompt exceeds n_ctx: {self.n_tokens + chunk_n_tokens} > {self.n_ctx()}"
                     )
 
                 new_n_past = llama_pos(0)
-
                 result = self._libmtmd.mtmd_helper_eval_chunk_single(
                     self.mtmd_ctx,
                     self._ctx.ctx,
@@ -15501,14 +15492,16 @@ class GGUFVisionGenerativeModel(BaseModel):
                     llama_seq_id(0),
                     self.n_batch,
                     False,  # logits_last
-                    ctypes.byref(new_n_past)
+                    byref(new_n_past)
                 )
 
                 if result != 0:
                     raise ValueError(f"Failed to evaluate chunk: error code {result}")
 
+                # Update llama's token count
                 self.n_tokens = new_n_past.value
 
+            # Get prompt tokens to avoid a cache miss
             prompt = self.input_ids[: self.n_tokens].tolist()
 
         self._libmtmd.mtmd_input_chunks_free(chunks)

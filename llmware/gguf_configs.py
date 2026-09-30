@@ -1,39 +1,32 @@
 
-# Copyright 2023-2026 llmware
+"""GGUF Configs module implements a wide range of configuration and formal interface elements to enable GGUF and the
+use of llama.cpp as a back-end inference engine.   This module consists of the following major elements:
 
-# Licensed under the Apache License, Version 2.0 (the "License"); you
-# may not use this file except in compliance with the License.  You
-# may obtain a copy of the License at
-
-# http://www.apache.org/licenses/LICENSE-2.0
-
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-# implied.  See the License for the specific language governing
-# permissions and limitations under the License.
-
-""" GGUF Configs module implements the 'internal' ctypes interfaces into llama cpp, which is referenced
-in llmware in the GGUFGenerativeModel class in the models module.  For more information,
-see:
-
-    -- Llama CPP:  www.github.com/ggerganov/llama.cpp
-    -- Python binding:  www.github.com/abetlen/llama_cpp_python
-
+    1.  Formal ctype interfaces to access C++/C methods and objects in Python
+        -- includes exposing ~100 python interfaces in 'add_ctypes_declarations' method
+        -- over time, will add more linkages into GGUFGenerativeModel class
+    2.  Formal python wrapper objects on major llama.cpp classes - _Model, _Context, _Batch, _TokenDataArray
+    3.  Minimal callback function to control verbosity from back-end llama.cpp
+    4.  GGUFConfigs - most commonly used configuration items
 """
 
-import logging
-import os
-import numpy as np
-import sys
-import time
-import multiprocessing
-from typing import NewType
-from llmware.configs import LLMWareException, ModelNotFoundException
+# PINNED to b10625 - ggml 0.22.0 - llama cpp 0.3.0-dev
+# released late August 2026
+# note: there are breaking changes from b10625 in Sept - will pick up in rev
 
-logger = logging.getLogger(__name__)
+import os, sys
+import numpy as np
 import ctypes
 from dataclasses import field
+
+from ctypes import (c_bool, c_char_p ,c_int, c_uint8, c_uint32, c_float,
+                    c_size_t, c_void_p, POINTER, Structure,byref)
+from typing import NewType
+import logging
+
+logger = logging.getLogger("llmware_log")
+
+# pinned to llama cpp b10625 (aug/sept 2026)
 
 
 LLAMA_ROPE_SCALING_TYPE_UNSPECIFIED = -1
@@ -68,6 +61,7 @@ llama_token_p = ctypes.POINTER(llama_token)
 llama_seq_id = ctypes.c_int32
 ggml_backend_sched_eval_callback = ctypes.CFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p)
 llama_log_callback = ctypes.CFUNCTYPE(None, ctypes.c_int, ctypes.c_char_p, ctypes.c_void_p)
+
 llama_grammar_p = ctypes.c_void_p
 llama_progress_callback = ctypes.CFUNCTYPE(ctypes.c_bool, ctypes.c_float, ctypes.c_void_p)
 
@@ -94,7 +88,6 @@ class llama_token_data_array(ctypes.Structure):
         ("data", llama_token_data_p),
         ("size", ctypes.c_size_t),
         ("sorted", ctypes.c_bool),
-        #TODO: new
         ("selected", ctypes.c_int64)
     ]
 
@@ -142,19 +135,36 @@ class llama_model_params(ctypes.Structure):
         ("tensor_buft_overrides", ctypes.c_void_p),
         ("n_gpu_layers", ctypes.c_int32),
         ("split_mode", ctypes.c_int),
+        ("load_mode", ctypes.c_int),
         ("main_gpu", ctypes.c_int32),
         ("tensor_split", ctypes.POINTER(ctypes.c_float)),
         ("progress_callback", llama_progress_callback),
         ("progress_callback_user_data", ctypes.c_void_p),
         ("kv_overrides", ctypes.POINTER(llama_model_kv_override)),
         ("vocab_only", ctypes.c_bool),
-        ("use_mmap", ctypes.c_bool),
-        ("use_mlock", ctypes.c_bool),
-        ("check_tensors", ctypes.c_bool)
+
+        # deprecated/removed
+        # ("use_mmap", ctypes.c_bool),
+        # ("use_mlock", ctypes.c_bool),
+
+        ("check_tensors", ctypes.c_bool),
+        ("use_extra_bufts", ctypes.c_bool),
+        ("no_host", ctypes.c_bool),
+        ("no_alloc", ctypes.c_bool),
+        ("load_mtp", ctypes.c_bool)
     ]
 
 
 ggml_abort_callback = ctypes.CFUNCTYPE(ctypes.c_bool, ctypes.c_void_p)
+
+# new - b10625 update
+
+class llama_sampler_seq_config(ctypes.Structure):
+
+    _fields = [
+        ("seq_id", llama_seq_id),
+        ("sampler", ctypes.c_void_p)
+    ]
 
 
 class llama_context_params(ctypes.Structure):
@@ -165,8 +175,12 @@ class llama_context_params(ctypes.Structure):
         ("n_batch", ctypes.c_uint32),
         ("n_ubatch", ctypes.c_uint32),
         ("n_seq_max", ctypes.c_uint32),
+        ("n_rs_seq", ctypes.c_uint32),
+        ("n_outputs_max", ctypes.c_uint32),
+        ("n_outputs_max_per_seq", ctypes.c_uint32),
         ("n_threads", ctypes.c_uint32),
         ("n_threads_batch", ctypes.c_uint32),
+        ("ctx_type", ctypes.c_int32),
         ("rope_scaling_type", ctypes.c_int),
         ("pooling_type", ctypes.c_int),
         ("attention_type", ctypes.c_int),
@@ -186,14 +200,23 @@ class llama_context_params(ctypes.Structure):
         ("abort_callback_data", ctypes.c_void_p),
         ("embeddings", ctypes.c_bool),
         ("offload_kqv", ctypes.c_bool),
-        ("flash_attn", ctypes.c_bool),
+
+        # removed/deprecated
+        # ("flash_attn", ctypes.c_bool),
+
         ("no_perf", ctypes.c_bool),
         ("op_offload", ctypes.c_bool),
         ("swa_full", ctypes.c_bool),
         ("kv_unified", ctypes.c_bool),
-        ("sampler", ctypes.c_void_p),
-        ("n_sampler", ctypes.c_int),
-        ("flash_attn_type", ctypes.c_int), # -1 LLAMA_FLASH_ATTN_TYPE_AUTO),
+
+        # change from sampler to samplers
+        # change to POINTER(llama_sampler_seq_config))
+        ("samplers", ctypes.POINTER(llama_sampler_seq_config)),
+
+        # change from n_sampler -> n_samplers
+        ("n_samplers", ctypes.c_int),
+
+        ("ctx_other", llama_context_p_ctypes)
 
     ]
 
@@ -303,6 +326,16 @@ class llama_sampler_chain_params(ctypes.Structure):
     ]
 
 
+llama_state_seq_flags = ctypes.c_uint32
+LLAMA_LOAD_MODE_AUTO = -1
+LLAMA_LOAD_MODE_NONE = 0
+LLAMA_LOAD_MODE_MMAP = 1
+LLAMA_LOAD_MODE_MLOCK = 2
+LLAMA_LOAD_MODE_MMAP_MLOCK = 3
+LLAMA_LOAD_MODE_DIRECT_IO = 4
+LLAMA_CONTEXT_TYPE_DEFAULT = 0
+LLAMA_CONTEXT_TYPE_MTP = 1
+
 class llama_sampler(ctypes.Structure):
     _fields_ = [
         ("iface", ctypes.POINTER(llama_sampler_i)),
@@ -310,30 +343,43 @@ class llama_sampler(ctypes.Structure):
     ]
 
 
+llama_sampler_p_ctypes = ctypes.POINTER(llama_sampler)
+
+llama_sampler_i_backend_init = ctypes.CFUNCTYPE(ctypes.c_bool,
+                                                llama_sampler_p_ctypes,
+                                                ctypes.c_void_p, ctypes.c_uint32)
+
 llama_sampler_p = ctypes.POINTER(llama_sampler)
 llama_sampler_p_ctypes = ctypes.POINTER(llama_sampler)
 
 llama_sampler_chain_get = ctypes.CFUNCTYPE(llama_sampler_p, llama_sampler_p_ctypes, ctypes.c_int32, llama_sampler_p_ctypes)
-llama_sampler_chain_n = ctypes.CFUNCTYPE(ctypes.c_int, llama_sampler_p_ctypes)
+llama_sampler_chain_n = ctypes.CFUNCTYPE(ctypes.c_int32, llama_sampler_p_ctypes)
 llama_sampler_chain_remove = ctypes.CFUNCTYPE(llama_sampler_p , llama_sampler_p_ctypes, ctypes.c_int32, llama_sampler_p_ctypes)
 llama_sampler_p_ctypes = ctypes.POINTER(llama_sampler)
 
 llama_sampler_i_name = ctypes.CFUNCTYPE(ctypes.c_char_p, llama_sampler_p_ctypes)
-llama_sampler_i_accept = ctypes.CFUNCTYPE(None, llama_sampler_p_ctypes, llama_token)
-llama_sampler_i_apply = ctypes.CFUNCTYPE(
+
+llama_sampler_i_backend_accept = ctypes.CFUNCTYPE(None, llama_sampler_p_ctypes, llama_token)
+
+llama_sampler_i_backend_apply = ctypes.CFUNCTYPE(
     None, llama_sampler_p_ctypes, llama_token_data_array_p
 )
-llama_sampler_i_reset = ctypes.CFUNCTYPE(None, llama_sampler_p_ctypes)
+llama_sampler_i_backend_reset = ctypes.CFUNCTYPE(None, llama_sampler_p_ctypes)
+
 llama_sampler_i_clone = ctypes.CFUNCTYPE(llama_sampler_p_ctypes, llama_sampler_p_ctypes)
 llama_sampler_i_free = ctypes.CFUNCTYPE(None, llama_sampler_p_ctypes)
 
+llama_sampler_i_copy_state = ctypes.CFUNCTYPE(None, llama_sampler_p_ctypes, llama_sampler_p_ctypes)
+llama_sampler_i_backend_set_input = ctypes.CFUNCTYPE(None, llama_sampler_p_ctypes)
+
 llama_sampler_i._fields_ = [
+
     ("name", llama_sampler_i_name),
-    ("accept", llama_sampler_i_accept),
-    ("apply", llama_sampler_i_apply),
-    ("reset", llama_sampler_i_reset),
-    ("clone", llama_sampler_i_clone),
-    ("free", llama_sampler_i_free),
+    ("backend_accept", llama_sampler_i_backend_accept),
+    ("backend_apply", llama_sampler_i_backend_apply),
+    ("backend_set_input", llama_sampler_i_backend_set_input),
+    ("backend_reset", llama_sampler_i_backend_reset),
+    ("copy_state", llama_sampler_i_copy_state),
 ]
 
 llama_sampler_name = ctypes.CFUNCTYPE(ctypes.c_char_p, llama_sampler_p_ctypes)
@@ -370,6 +416,63 @@ def add_ctypes_declarations (_lib):
 
     """ Exposed methods on llama cpp binary as of January 2026 - roughly aligning to releases up to ~7900 """
 
+    # new - b10625 pin
+    llama_version = _lib.llama_version
+    llama_version.argtypes = []
+    llama_version.restype = ctypes.c_char_p
+
+    llama_sampler_copy = _lib.llama_sampler_copy
+    llama_sampler_copy.argtypes = [llama_sampler_p_ctypes, llama_sampler_p_ctypes]
+    llama_sampler_copy.restype = ctypes.c_void_p # NONE
+
+    llama_load_mode_name = _lib.llama_load_mode_name
+    llama_load_mode_name.argtypes = [ctypes.c_int]
+    llama_load_mode_name.restype = ctypes.c_char_p
+
+    llama_load_mode_from_str = _lib.llama_load_mode_from_str
+    llama_load_mode_from_str.argtypes = [ctypes.c_char_p]
+    llama_load_mode_from_str.restype = ctypes.c_int
+
+    llama_ftype_name = _lib.llama_ftype_name
+    llama_ftype_name.argtypes = [ctypes.c_int]
+    llama_ftype_name.restype = ctypes.c_char_p
+
+    llama_n_rs_seq = _lib.llama_n_rs_seq
+    llama_n_rs_seq.argtypes = [llama_context_p_ctypes]
+    llama_n_rs_seq.restype = ctypes.c_uint32
+
+    llama_model_n_layer_nextn = _lib.llama_model_n_layer_nextn
+    llama_model_n_layer_nextn.argtypes = [llama_model_p_ctypes]
+    llama_model_n_layer_nextn.restype = ctypes.c_int32
+
+    llama_model_meta_key_str = _lib.llama_model_meta_key_str
+    llama_model_meta_key_str.argtypes = [ctypes.c_int]
+    llama_model_meta_key_str.restype = ctypes.c_char_p
+
+    llama_model_ftype = _lib.llama_model_ftype
+    llama_model_ftype.argtypes = [llama_model_p_ctypes]
+    llama_model_ftype.restype = ctypes.c_int
+
+    llama_state_seq_get_size_ext = _lib.llama_state_seq_get_size_ext
+    llama_state_seq_get_size_ext.argtypes = [llama_context_p_ctypes, llama_seq_id, llama_state_seq_flags]
+    llama_state_seq_get_size_ext.restype = ctypes.c_size_t
+
+    llama_state_seq_get_data_ext = _lib.llama_state_seq_get_data_ext
+    llama_state_seq_get_data_ext.argtypes = [llama_context_p_ctypes, ctypes.POINTER(ctypes.c_uint8), ctypes.c_size_t, llama_seq_id, llama_state_seq_flags]
+    llama_state_seq_get_data_ext.restype = ctypes.c_size_t
+
+    llama_state_seq_set_data_ext = _lib.llama_state_seq_set_data_ext
+    llama_state_seq_set_data_ext.argtypes = [llama_context_p_ctypes, ctypes.POINTER(ctypes.c_uint8), ctypes.c_size_t, llama_seq_id, llama_state_seq_flags]
+    llama_state_seq_set_data_ext.restype = ctypes.c_size_t
+
+    llama_n_threads = _lib.llama_n_threads
+    llama_n_threads.argtypes = [llama_context_p_ctypes]
+    llama_n_threads.restype = ctypes.c_int32
+
+    llama_n_threads_batch = _lib.llama_n_threads_batch
+    llama_n_threads_batch.argtypes = [llama_context_p_ctypes]
+    llama_n_threads_batch.restype = ctypes.c_int32
+
     llama_memory_clear = _lib.llama_memory_clear
     llama_memory_clear.argtypes = [llama_memory_t_ctypes, ctypes.c_bool]
     llama_memory_clear.restype = None
@@ -387,11 +490,6 @@ def add_ctypes_declarations (_lib):
     llama_sampler_chain_init.restype = llama_sampler_p_ctypes
 
     llama_sampler_chain_add = _lib.llama_sampler_chain_add
-
-    # below is key fix for Mac - correcting the ctypes declaration for the arg types
-    # -- previously, alt/incorrect:  [llama_sampler_p_ctypes] - only one arg
-    # -- incorrect declaration was OK on Windows and Linux
-    # -- correct declaration is two args both with same llama_sampler_p_ctypes
 
     llama_sampler_chain_add.argtypes = [llama_sampler_p_ctypes, llama_sampler_p_ctypes]
     llama_sampler_chain_add.restype = None
@@ -776,7 +874,6 @@ class _LlamaTokenDataArray:
         self.candidates.sorted = ctypes.c_bool(False)
         self.candidates.size = ctypes.c_size_t(self.n_vocab)
 
-
 @llama_log_callback
 def llama_log_callback(level, text, user_data):
 
@@ -791,6 +888,7 @@ def llama_log_callback(level, text, user_data):
         # no action taken if verbose is if OFF
         do_nothing = 0
 
+
 @whisper_log_callback
 def whisper_log_callback(level, text, user_data):
 
@@ -800,25 +898,6 @@ def whisper_log_callback(level, text, user_data):
     #   --adapted from more sophisticated logging mechanism in llama-cpp-python
 
     if os.environ.get("whisper_cpp_verbose") != "OFF":
-        print(text.decode("utf-8"), end="", flush=True, file=sys.stderr)
-    else:
-        # no action taken if verbose is if OFF
-        do_nothing = 0
-
-
-mtmd_log_callback = ctypes.CFUNCTYPE(None, ctypes.c_int, ctypes.c_char_p, ctypes.c_void_p)
-
-
-@mtmd_log_callback
-def mtmd_log_callback(level, text, user_data):
-
-    """ Controls the display log output from mtmd engine - currently exposing two options 'ON' or 'OFF' """
-
-    #   note: reserving level and user_data as options for the future
-    #   --adapted from more sophisticated logging mechanism in llama-cpp-python
-    #   --integrated with llama_cpp_verbose logging option for integrated debugging
-
-    if os.environ.get("llama_cpp_verbose") != "OFF":
         print(text.decode("utf-8"), end="", flush=True, file=sys.stderr)
     else:
         # no action taken if verbose is if OFF
@@ -838,6 +917,10 @@ class GGUFConfigs:
     #   note: to "bring your own" llama.cpp custom compiled back-end, set the following:
     #   GGUFConfigs().set_config("custom_lib_path") = "/path/to/your/lib"
 
+    #   please note that there are a lot of small changes in the llama.cpp interfaces
+    #   over short periods of time, so please check the interface definitions above,
+    #   especially:  llama_model_params and llama_context_params to conform with your branch
+
     _conf_libs = {"custom_lib_path": None,
 
                   # --Mac:  uses Mac Metal GPU by default
@@ -854,9 +937,9 @@ class GGUFConfigs:
                   "cuda_linux_driver_min": [525, 60],
                   "cuda_windows_driver_min": [528,33],
 
-                  # adjusted from 256 (default for a long time - too low)
+                  # conservative maximum, depending upon hardware memory
                   "max_output_tokens": 2048,
-                  "temperature_default": 0.3,
+                  "temperature_default": 0.0,
 
                   "llama_cpp_verbose": "OFF",
                   "force_gpu": False,
@@ -865,33 +948,23 @@ class GGUFConfigs:
                   # option to capture and provide the 'first token' of generation
                   # used for GGUF - and implemented for HFGenerative (Pytorch) and
                   # ONNXGenerative classes as well
-                  "get_first_token_speed": False,
+                  "get_first_token_speed": True,
 
                   # prebuilt shared libraries included in llmware
                   "windows_x86_lib": "gguf_win_x86",
                   "windows_cuda_lib": "gguf_win_cuda",
                   "windows_arm64_lib": "gguf_win_arm64",
-
                   "linux_x86_lib": "gguf_linux_x86",
                   "linux_cuda_lib": "gguf_linux_cuda",
-
-                  # dgx = linux aarch64 cuda
                   "linux_aarch64_cuda_lib": "gguf_dgx",
-
                   "mac_metal_lib": "gguf_mac",
+
+                  # todo: need to check
+                  "windows_amd_lib": "gguf_win_amd_vulkan",
 
                   # prebuilt binaries packaged with llmware - evolving over time
 
-                  "windows": "llama.dll",
-                  "windows_cuda": "llama.dll",
                   "windows_arm64": "llama.dll",
-                  "mac_metal": "libllama.dylib",
-                  "linux_x86": "libllama.so",
-                  "linux_cuda": "libllama.so",
-
-                  # removed/deprecated support for older M-series Macs without Accelerate
-                  # "mac_metal_no_acc": "libllama.dylib",
-
                   "windows_mtmd": "mtmd.dll",
                   "mac_metal_mtmd": "libmtmd.dylib",
                   "linux_x86_mtmd": "libmtmd.so",
@@ -899,13 +972,33 @@ class GGUFConfigs:
                   "windows_arm64_mtmd": "mtmd.dll",
                   "windows_cuda_mtmd": "mtmd.dll",
 
+                  # prebuilt shared libraries included in llmware
+                  "windows": "llama.dll",
+
+                  # alt/og: libllama_win_cuda.dll
+                  "windows_cuda": "libllama_win.dll",
+                  # "mac_metal": "libllama_mac_metal.dylib",
+                  # "mac_metal_no_acc": "libllama_mac_metal_no_acc.dylib",
+                  "mac_metal": "libllama.dylib",
+                  "mac_x86": "libllama_mac_x86.dylib",
+                  "android_arm64": "libllama.so",
+                  # standard name for linux libs
+                  # "linux_x86_og": "libllama_linux_x86.so",
+                  # "linux_cuda_og": "libllama_linux_cuda.so",
+                  "linux_x86": "libllama.so",
+                  "linux_cuda": "libllama.so",
+
+                  "linux_aarch64_cuda": "libllama.so",
+
+                  # "n_threads": 8,
+                  # "n_threads_batch": 8,
+
                   "n_threads": 6, # max(multiprocessing.cpu_count() // 2, 1),
                   "n_threads_batch": 6, #  max(multiprocessing.cpu_count() // 2, 1),
 
                   # whisper cpp configs
                   "whisper_cpp_lib_path": None,
                   "whisper_cpp_verbose": "OFF",
-
                   # turn on for testing/debugging
                   "whisper_cpp_realtime_display": False,
                   "whisper_language": "en",
@@ -920,16 +1013,14 @@ class GGUFConfigs:
                   "whisper_output_format": "text",
                   "whisper_default_model": "whisper-cpp-base-english",
 
-                  # option to continue using older whisper cpp library on mac
-                  "whisper_use_legacy_mac": True,
-                  # prebuilt shared libraries included in llmware - evolving over time
-                  "whisper_dgx": "libwhisper.so",
-                  "whisper_linux_cuda": "libwhisper.so",
-                  "whisper_linux_x86": "libwhisper.so",
-                  "whisper_mac_metal": "libwhisper.dylib",
-                  "whisper_mac_metal_legacy": "libwhisper_mac_metal_155.dylib",
+                  # prebuilt shared libraries included in llmware
+                  "whisper_mac_metal": "libwhisper_mac_metal_155.dylib",
                   "whisper_windows": "whisper.dll",
+                  "whisper_windows_cuda": "whisper.dll",
                   "whisper_windows_arm64": "whisper.dll",
+                  "whisper_linux_x86": "libwhisper.so",
+                  "whisper_linux_cuda": "libwhisper.so",
+                  "whisper_dgx": "libwhisper.so"
     }
 
     #   note: with temperature used as primary attribute to adjust sampling,
@@ -1188,93 +1279,235 @@ class whisper_full_params_legacy(ctypes.Structure):
     ]
 
 
-""" MTMD & CLIP GGUF Interface Configurations """
+# insert configs for CLIP Model
 
 mtmd_context_p = NewType("mtmd_context_p", int)
-mtmd_context_p_ctypes = ctypes.c_void_p
+mtmd_context_p_ctypes = c_void_p
 
 mtmd_bitmap_p = NewType("mtmd_bitmap_p", int)
-mtmd_bitmap_p_ctypes = ctypes.c_void_p
+mtmd_bitmap_p_ctypes = c_void_p
 
 mtmd_image_tokens_p = NewType("mtmd_image_tokens_p", int)
-mtmd_image_tokens_p_ctypes = ctypes.c_void_p
+mtmd_image_tokens_p_ctypes = c_void_p
 
 mtmd_input_chunk_p = NewType("mtmd_input_chunk_p", int)
-mtmd_input_chunk_p_ctypes = ctypes.c_void_p
+mtmd_input_chunk_p_ctypes = c_void_p
 
 mtmd_input_chunks_p = NewType("mtmd_input_chunks_p", int)
-mtmd_input_chunks_p_ctypes = ctypes.c_void_p
+mtmd_input_chunks_p_ctypes = c_void_p
+
+mtmd_helper_video_p = NewType("mtmd_helper_video_p", int)
+mtmd_helper_video_p_ctypes = c_void_p
 
 MTMD_INPUT_CHUNK_TYPE_TEXT = 0
 MTMD_INPUT_CHUNK_TYPE_IMAGE = 1
 MTMD_INPUT_CHUNK_TYPE_AUDIO = 2
 
+mtmd_progress_callback = ctypes.CFUNCTYPE(c_bool, c_float, c_void_p)
+mtmd_log_callback = ctypes.CFUNCTYPE(None, ctypes.c_int, ctypes.c_char_p, ctypes.c_void_p)
 
-class mtmd_context_params(ctypes.Structure):
+@mtmd_log_callback
+def mtmd_log_callback(level, text, user_data):
 
-    """ This interface is linked to mtmd with releases b7062+, e.g., starting ~Nov 2025 """
+    """ Controls the display log output from llama.cpp engine - currently exposing two options 'ON' or 'OFF' """
 
-    # if errors, look at this interface in llama.cpp/tools/mtmd/mtmd.h
-    # -- this api has been evolving
-    # -- see also class below as drop-in replacement if using a mtmd lib from before Nov 2025
+    #   note: reserving level and user_data as options for the future
+    #   --adapted from more sophisticated logging mechanism in llama-cpp-python
+
+    if os.environ.get("llama_cpp_verbose") != "OFF":
+        print(text.decode("utf-8"), end="", flush=True, file=sys.stderr)
+    else:
+        # no action taken if verbose is if OFF
+        do_nothing = 0
+
+
+class mtmd_context_params(Structure):
+
+    # Pinned to version b10625 - ggml 0.22.0
+    # release from ~ late August 2026
+    # updated confirmed - sept 17 2016
+
+    """ This is the updated mtmd context params b10625 """
 
     _fields_ = [
-        ("use_gpu", ctypes.c_bool),
-        ("print_timings", ctypes.c_bool),
-        ("n_threads", ctypes.c_int),
-        ("image_marker", ctypes.c_char_p),
-        ("media_marker", ctypes.c_char_p),
 
-        # verbosity removed in b7062
-        # ("verbosity", ctypes.c_int),  # ggml_log_level
-
-        # new starting b6935
-        ("llama_flash_attn_type", ctypes.c_int),
+        ("use_gpu", c_bool),
+        ("device", c_void_p),
+        ("print_timings", c_bool),
+        ("n_threads", c_int),
+        ("image_marker", c_char_p),
+        ("media_marker", c_char_p),
+        ("flash_attn_type", ctypes.c_int),
         ("warmup", ctypes.c_bool),
         ("image_min_tokens", ctypes.c_int),
         ("image_max_tokens", ctypes.c_int),
         ("cb_eval_user_data", ctypes.c_void_p),
-        ("cb_eval", ggml_backend_sched_eval_callback)
+        ("cb_eval", ggml_backend_sched_eval_callback),
+        ("batch_max_tokens", c_int),
+        ("progress_callback", mtmd_progress_callback),
+        ("progress_callback_user_data", c_void_p)
     ]
 
 
-class mtmd_context_params_alt_pre7062 (ctypes.Structure):
+class mtmd_input_text(Structure):
 
-    """ This is a deprecated interface that maps to mtmd releases in second half of 2025, up
-    to the b7062 release in November 2025 """
+    # confirmed - updated - sept 17, 2026
 
     _fields_ = [
-        ("use_gpu", ctypes.c_bool),
-        ("print_timings", ctypes.c_bool),
-        ("n_threads", ctypes.c_int),
-        ("verbosity", ctypes.c_int),  # ggml_log_level
-        ("image_marker", ctypes.c_char_p),
-        ("media_marker", ctypes.c_char_p)
+        ("text", c_char_p),
+        ("text_len", c_size_t),
+        ("add_special", c_bool),
+        ("parse_special", c_bool),
+    ]
+
+class mtmd_input_part(Structure):
+
+    _fields_ = [
+        ("text", ctypes.POINTER(mtmd_input_text)),
+        ("bitmap", mtmd_bitmap_p_ctypes)
     ]
 
 
-class mtmd_input_text(ctypes.Structure):
+class mtmd_decoder_pos(Structure):
+    """Decoder attention position for M-RoPE models."""
+
     _fields_ = [
-        ("text", ctypes.c_char_p),
-        ("add_special", ctypes.c_bool),
-        ("parse_special", ctypes.c_bool),
+        ("t", c_uint32),
+        ("x", c_uint32),
+        ("y", c_uint32),
+        ("z", c_uint32),
+    ]
+
+
+class mtmd_caps(Structure):
+    """Capabilities exposed by an mmproj file."""
+
+    _fields_ = [
+        ("inp_vision", c_bool),
+        ("inp_audio", c_bool),
+    ]
+
+
+class mtmd_gen_audio_info(Structure):
+
+    _fields_ = [
+        ("type", c_int),
+        ("sample_rate", ctypes.c_int32),
+        ("model_variant", c_char_p),
+    ]
+
+
+class mtmd_gen_inp(Structure):
+
+    _fields_ = [
+        ("type", c_int),
+        ("code0", ctypes.c_int32),
+        ("embd", POINTER(c_float)),
+        ("top_k", ctypes.c_int32),
+        ("top_p", c_float),
+        ("seed", c_uint32),
+        ("temp", c_float),
+        ("codes", POINTER(ctypes.c_int32)),
+        ("n_codes", c_size_t),
+        ("feats", POINTER(c_float)),
+        ("n_feats", c_size_t),
+        ("state_data", POINTER(ctypes.c_char)),
+        ("state_size", c_size_t),
+    ]
+
+class mtmd_gen_out(Structure):
+
+    _fields_ = [
+        ("codes", POINTER(ctypes.c_int32)),
+        ("n_codes", c_size_t),
+        ("feats", POINTER(c_float)),
+        ("n_feats", c_size_t),
+        ("embd", POINTER(c_float)),
+        ("is_eos", c_bool),
+        ("audio", POINTER(c_float)),
+        ("n_samples", c_size_t),
+        ("state_data", POINTER(ctypes.c_char)),
+        ("state_size", c_size_t),
+    ]
+
+
+mtmd_bitmap_lazy_callback = ctypes.CFUNCTYPE(
+    c_int,
+    c_size_t,
+    c_void_p,
+    POINTER(mtmd_bitmap_p_ctypes),
+    POINTER(c_char_p),
+)
+
+mtmd_helper_post_decode_callback = ctypes.CFUNCTYPE(
+    c_int,
+    llama_batch,
+    c_void_p,
+)
+
+
+class mtmd_helper_bitmap_wrapper(Structure):
+    """Bitmap wrapper returned by MTMD helper media loaders."""
+
+    _fields_ = [
+        ("bitmap", mtmd_bitmap_p_ctypes),
+        ("video_ctx", mtmd_helper_video_p_ctypes),
+    ]
+
+
+class mtmd_helper_video_info(Structure):
+    """Metadata for a decoded video stream."""
+
+    _fields_ = [
+        ("width", c_uint32),
+        ("height", c_uint32),
+        ("fps", c_float),
+        ("n_frames", c_int),
+    ]
+
+
+class mtmd_helper_video_init_params(Structure):
+    """Parameters for initializing an MTMD helper video stream."""
+
+    _fields_ = [
+        ("fps_target", c_float),
+        ("ffmpeg_bin_dir", c_char_p),
+        ("timestamp_interval_ms", ctypes.c_int64),
+    ]
+
+
+class mtmd_helper_init_opt(Structure):
+
+    _fields_ = [("video_params", mtmd_helper_video_init_params)]
+
+
+class mtmd_helper_gen_audio_inp(Structure):
+
+    _fields_ = [
+        ("seq_id", llama_seq_id),
+        ("prompt", c_char_p),
+        ("prompt_len", c_size_t),
+        ("speaker_ref", mtmd_bitmap_p_ctypes),
+        ("lang", c_char_p),
+        ("top_k", ctypes.c_int32),
+        ("top_p", c_float),
+        ("seed", c_uint32),
+        ("out_type", c_int),
     ]
 
 
 def add_libmtmd_ctypes_declarations(_libmtmd):
 
-    """ Main mtmd library interfaces """
-
     mtmd_default_marker = _libmtmd.mtmd_default_marker
     mtmd_default_marker.argtypes = []
-    mtmd_default_marker.restype = ctypes.c_char_p
+    mtmd_default_marker.restype = c_char_p
 
     mtmd_context_params_default = _libmtmd.mtmd_context_params_default
     mtmd_context_params_default.argtypes = []
     mtmd_context_params_default.restype = mtmd_context_params
 
     mtmd_init_from_file = _libmtmd.mtmd_init_from_file
-    mtmd_init_from_file.argtypes = [ctypes.c_char_p, llama_model_p_ctypes, mtmd_context_params]
+    mtmd_init_from_file.argtypes = [c_char_p, llama_model_p_ctypes, mtmd_context_params]
     mtmd_init_from_file.restype = mtmd_context_p_ctypes
 
     mtmd_free = _libmtmd.mtmd_free
@@ -1283,10 +1516,10 @@ def add_libmtmd_ctypes_declarations(_libmtmd):
 
     mtmd_support_vision = _libmtmd.mtmd_support_vision
     mtmd_support_vision.argtypes = [mtmd_context_p_ctypes]
-    mtmd_support_vision.restype = ctypes.c_bool
+    mtmd_support_vision.restype = c_bool
 
     mtmd_bitmap_init = _libmtmd.mtmd_bitmap_init
-    mtmd_bitmap_init.argtypes = [ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint8)]
+    mtmd_bitmap_init.argtypes = [c_uint32, c_uint32, POINTER(c_uint8)]
     mtmd_bitmap_init.restype = mtmd_bitmap_p_ctypes
 
     mtmd_bitmap_free = _libmtmd.mtmd_bitmap_free
@@ -1303,60 +1536,172 @@ def add_libmtmd_ctypes_declarations(_libmtmd):
 
     mtmd_input_chunks_size = _libmtmd.mtmd_input_chunks_size
     mtmd_input_chunks_size.argtypes = [mtmd_input_chunks_p_ctypes]
-    mtmd_input_chunks_size.restype = ctypes.c_size_t
+    mtmd_input_chunks_size.restype = c_size_t
 
     mtmd_input_chunks_get = _libmtmd.mtmd_input_chunks_get
-    mtmd_input_chunks_get.argtypes = [mtmd_input_chunks_p_ctypes, ctypes.c_size_t]
+    mtmd_input_chunks_get.argtypes = [mtmd_input_chunks_p_ctypes, c_size_t]
     mtmd_input_chunks_get.restype = mtmd_input_chunk_p_ctypes
 
     mtmd_tokenize = _libmtmd.mtmd_tokenize
-    mtmd_tokenize.argtypes = [mtmd_context_p_ctypes, mtmd_input_chunks_p_ctypes,
-                              ctypes.POINTER(mtmd_input_text), ctypes.POINTER(mtmd_bitmap_p_ctypes),
-                              ctypes.c_size_t]
-    mtmd_tokenize.restype = ctypes.c_int
+    mtmd_tokenize.argtypes = [mtmd_context_p_ctypes,
+                              mtmd_input_chunks_p_ctypes,
+                              POINTER(mtmd_input_text),
+                              POINTER(mtmd_bitmap_p_ctypes),
+                              c_size_t]
+    mtmd_tokenize.restype = c_int
 
     mtmd_input_chunk_get_n_tokens = _libmtmd.mtmd_input_chunk_get_n_tokens
     mtmd_input_chunk_get_n_tokens.argtypes = [mtmd_input_chunk_p_ctypes]
-    mtmd_input_chunk_get_n_tokens.restype = ctypes.c_size_t
+    mtmd_input_chunk_get_n_tokens.restype = c_size_t
 
     mtmd_input_chunk_get_type = _libmtmd.mtmd_input_chunk_get_type
     mtmd_input_chunk_get_type.argtypes = [mtmd_input_chunk_p_ctypes]
-    mtmd_input_chunk_get_type.restype = ctypes.c_int
+    mtmd_input_chunk_get_type.restype = c_int
 
     mtmd_input_chunk_get_tokens_text = _libmtmd.mtmd_input_chunk_get_tokens_text
-    mtmd_input_chunk_get_tokens_text.argtypes = [mtmd_input_chunk_p_ctypes, ctypes.POINTER(ctypes.c_size_t)]
-    mtmd_input_chunk_get_tokens_text.restype = ctypes.POINTER(llama_token)
+    mtmd_input_chunk_get_tokens_text.argtypes = [mtmd_input_chunk_p_ctypes, POINTER(c_size_t)]
+    mtmd_input_chunk_get_tokens_text.restype = POINTER(llama_token)
 
-    # mtmd_helper_bitmap_init_from_buf
+    # not in scope for pinned b10625
     mtmd_helper_bitmap_init_from_buf = _libmtmd.mtmd_helper_bitmap_init_from_buf
-    mtmd_helper_bitmap_init_from_buf.argtypes = [mtmd_context_p_ctypes, ctypes.POINTER(ctypes.c_uint8), ctypes.c_size_t]
-    mtmd_helper_bitmap_init_from_buf.restype = mtmd_bitmap_p_ctypes
-
-    # mtmd_helper_bitmap_init_from_file(mtmd_context * ctx, const char * fname)
-    mtmd_helper_bitmap_init_from_file = _libmtmd.mtmd_helper_bitmap_init_from_file
-    mtmd_helper_bitmap_init_from_file.argtypes = [mtmd_context_p_ctypes, ctypes.c_char_p]
-    mtmd_helper_bitmap_init_from_file.restype = mtmd_bitmap_p_ctypes
+    mtmd_helper_bitmap_init_from_buf.argtypes = [mtmd_context_p_ctypes,
+                                                 POINTER(c_uint8),
+                                                 c_size_t,
+                                                 c_bool]
+                                                 #mtmd_helper_init_opt]
+    mtmd_helper_bitmap_init_from_buf.restype = mtmd_helper_bitmap_wrapper
 
     mtmd_helper_get_n_tokens = _libmtmd.mtmd_helper_get_n_tokens
     mtmd_helper_get_n_tokens.argtypes = [mtmd_input_chunks_p_ctypes]
-    mtmd_helper_get_n_tokens.restype = ctypes.c_size_t
+    mtmd_helper_get_n_tokens.restype = c_size_t
 
     mtmd_helper_eval_chunk_single = _libmtmd.mtmd_helper_eval_chunk_single
     mtmd_helper_eval_chunk_single.argtypes = [mtmd_context_p_ctypes,
                                               llama_context_p_ctypes,
                                               mtmd_input_chunk_p_ctypes,
                                               llama_pos, llama_seq_id,
-                                              ctypes.c_int, ctypes.c_bool, ctypes.POINTER(llama_pos)]
-    mtmd_helper_eval_chunk_single.restype = ctypes.c_int
-
-    # expose mtmd_helper_log_set - but catch if not found
+                                              c_int, c_bool, POINTER(llama_pos)]
+    mtmd_helper_eval_chunk_single.restype = c_int
 
     try:
-        mtmd_helper_log_set = _libmtmd.mtmd_helper_log_set
-        mtmd_helper_log_set.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
-        mtmd_helper_log_set.restype = None
+        mtmd_log_set = _libmtmd.mtmd_log_set
+        mtmd_log_set.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        mtmd_log_set.restype = None
     except:
+        logger.info(f"add_libtmd_ctypes_declarations - could not add mtmd_log_set")
         pass
 
-    return _libmtmd
+    mtmd_helper_get_n_tokens = _libmtmd.mtmd_helper_get_n_tokens
+    mtmd_helper_get_n_tokens.argtypes = [mtmd_input_chunks_p_ctypes]
+    mtmd_helper_get_n_tokens.restype = c_size_t
 
+    mtmd_helper_get_n_pos = _libmtmd.mtmd_helper_get_n_pos
+    mtmd_helper_get_n_pos.argtypes = [mtmd_input_chunks_p_ctypes]
+    mtmd_helper_get_n_pos.restype = llama_pos
+
+    mtmd_helper_image_get_decoder_pos = _libmtmd.mtmd_helper_image_get_decoder_pos
+    mtmd_helper_image_get_decoder_pos.argtypes = [mtmd_image_tokens_p_ctypes,
+                                                  llama_pos,
+                                                  POINTER(mtmd_decoder_pos)]
+    mtmd_helper_image_get_decoder_pos.restype = None
+
+    mtmd_helper_eval_chunks = _libmtmd.mtmd_helper_eval_chunks
+    mtmd_helper_eval_chunks.argtypes = [mtmd_context_p_ctypes,
+                                        llama_context_p_ctypes,
+                                        mtmd_input_chunks_p_ctypes,
+                                        llama_pos,
+                                        llama_seq_id,
+                                        c_int,
+                                        c_bool,
+                                        POINTER(llama_pos),]
+    mtmd_helper_eval_chunks.restype = c_int
+
+    mtmd_helper_eval_chunk_single = _libmtmd.mtmd_helper_eval_chunk_single
+    mtmd_helper_eval_chunk_single.argtypes = [
+            mtmd_context_p_ctypes,
+            llama_context_p_ctypes,
+            mtmd_input_chunk_p_ctypes,
+            llama_pos,
+            llama_seq_id,
+            c_int,
+            c_bool,
+            POINTER(llama_pos),
+            ]
+    mtmd_helper_eval_chunk_single.restype = c_int
+
+    mtmd_helper_decode_image_chunk = _libmtmd.mtmd_helper_decode_image_chunk
+    mtmd_helper_decode_image_chunk.argtypes = [
+            mtmd_context_p_ctypes,
+            llama_context_p_ctypes,
+            mtmd_input_chunk_p_ctypes,
+            POINTER(c_float),
+            llama_pos,
+            llama_seq_id,
+            c_int,
+            POINTER(llama_pos),
+            mtmd_helper_post_decode_callback,
+            c_void_p,
+        ]
+    mtmd_helper_decode_image_chunk.restype = c_int
+
+    mtmd_support_vision = _libmtmd.mtmd_support_vision
+    mtmd_support_vision.argtypes = [mtmd_context_p_ctypes]
+    mtmd_support_vision.restype = c_bool
+
+    mtmd_input_chunks_init = _libmtmd.mtmd_input_chunks_init
+    mtmd_input_chunks_init.argtypes = []
+    mtmd_input_chunks_init.restype = mtmd_input_chunks_p_ctypes
+
+    mtmd_input_chunks_free = _libmtmd.mtmd_input_chunks_free
+    mtmd_input_chunks_free.argtypes = [mtmd_input_chunks_p_ctypes]
+    mtmd_input_chunks_free.restype = None
+
+    mtmd_input_chunks_size = _libmtmd.mtmd_input_chunks_size
+    mtmd_input_chunks_size.argtypes = [mtmd_input_chunks_p_ctypes]
+    mtmd_input_chunks_size.restype = c_size_t
+
+    mtmd_input_chunks_get = _libmtmd.mtmd_input_chunks_get
+    mtmd_input_chunks_get.argtypes = [mtmd_input_chunks_p_ctypes, c_size_t]
+    mtmd_input_chunks_get.restype = mtmd_input_chunk_p_ctypes
+
+    mtmd_input_chunk_get_n_tokens = _libmtmd.mtmd_input_chunk_get_n_tokens
+    mtmd_input_chunk_get_n_tokens.argtypes = [mtmd_input_chunk_p_ctypes]
+    mtmd_input_chunk_get_n_tokens.restype = c_size_t
+
+    mtmd_input_chunk_get_type = _libmtmd.mtmd_input_chunk_get_type
+    mtmd_input_chunk_get_type.argtypes = [mtmd_input_chunk_p_ctypes]
+    mtmd_input_chunk_get_type.restype = c_int
+
+    mtmd_input_chunk_get_tokens_text = _libmtmd.mtmd_input_chunk_get_tokens_text
+    mtmd_input_chunk_get_tokens_text.argtypes = [mtmd_input_chunk_p_ctypes, POINTER(c_size_t)]
+    mtmd_input_chunk_get_tokens_text.restype = POINTER(llama_token)
+
+    mtmd_input_chunk_get_tokens_image = _libmtmd.mtmd_input_chunk_get_tokens_image
+    mtmd_input_chunk_get_tokens_image.argtypes = [mtmd_input_chunk_p_ctypes]
+    mtmd_input_chunk_get_tokens_image.restype =mtmd_image_tokens_p_ctypes
+
+    mtmd_decode_use_non_causal = _libmtmd.mtmd_decode_use_non_causal
+    mtmd_decode_use_non_causal.argtypes = [mtmd_context_p_ctypes, mtmd_input_chunk_p_ctypes]
+    mtmd_decode_use_non_causal.restype = c_bool
+
+    mtmd_decode_use_mrope = _libmtmd.mtmd_decode_use_mrope
+    mtmd_decode_use_mrope.argtypes = [mtmd_context_p_ctypes]
+    mtmd_decode_use_mrope.restype = c_bool
+
+    mtmd_support_audio = _libmtmd.mtmd_support_audio
+    mtmd_support_audio.argtypes = [mtmd_context_p_ctypes]
+    mtmd_support_audio.restype = c_bool
+
+    mtmd_get_audio_sample_rate = _libmtmd.mtmd_get_audio_sample_rate
+    mtmd_get_audio_sample_rate.argtypes = [mtmd_context_p_ctypes]
+    mtmd_get_audio_sample_rate.restype = c_int
+
+    mtmd_get_marker = _libmtmd.mtmd_get_marker
+    mtmd_get_marker.argtypes = [mtmd_context_p_ctypes]
+    mtmd_get_marker.restype = c_char_p
+
+    mtmd_bitmap_init = _libmtmd.mtmd_bitmap_init
+    mtmd_bitmap_init.argtypes = [c_uint32, c_uint32, POINTER(c_uint8)]
+    mtmd_bitmap_init.restype = mtmd_bitmap_p_ctypes
+
+    return _libmtmd
