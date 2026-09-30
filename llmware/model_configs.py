@@ -3314,6 +3314,18 @@ global_model_repo_catalog_list = [
              "validation_files": [], "parameters": 1.3,
              "custom_model_files": [], "custom_model_repo": ""},
 
+        {"model_name": "jamba-2-3b-gguf", "display_name": "jamba2-3b",
+              "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
+              "model_location": "llmware_repo", "context_window": 8192, "instruction_following": False,
+              "prompt_wrapper": "jamba2_chat", "temperature": 0.0, "trailing_space": "",
+              "gguf_repo": "llmware/jamba-2-3b-gguf",
+              "gguf_file": "ai21labs_AI21-Jamba2-3B-Q4_K_M.gguf",
+              "link": "https://huggingface.co/llmware/jamba-2-3b-gguf",
+              "tokenizer_local": "tokenizer_jamba.json",
+              "fetch": {"module": "llmware.models", "method": "pull_snapshot_from_hf"},
+              "validation_files": [], "parameters": 3.0,
+              "custom_model_files": [], "custom_model_repo": ""},
+
         {"model_name": "llama-3.2-3b-instruct-gguf", "display_name": "llama-3.2-3b",
              "model_family": "GGUFGenerativeModel", "model_category": "generative_local",
              "model_location": "llmware_repo", "context_window": 4096,  "instruction_following": False,
@@ -4010,6 +4022,12 @@ global_model_finetuning_prompt_wrappers_lookup = {
                          "main_stop": "<|eot_id|>",
                          "start_llm_response": "<|start_header_id|>assistant<|end_header_id|>\n"},
 
+        "jamba2_chat": {"system_start": "<|startoftext|><|im_start|>system",
+                        "system_stop": "<|im_end|>",
+                        "main_start": "<|im_start|>user",
+                        "main_stop": "<|im_end|>",
+                        "start_llm_response": "<|im_start|>assistant"},
+
         "tiny_llama_chat": {"system_start": "<|system|>", "system_stop": "</s>",
                             "main_start": "<|user|>", "main_stop": "</s>",
                             "start_llm_response": "<|assistant|>"},
@@ -4069,6 +4087,9 @@ global_tokenizer_bos_eos_lookup = {
       "tokenizer_ll3.json": {"bos_id": 128000, "bos_token": "<|begin_of_text|>",
                                           "eos_id": [128001, 128008, 128009, 128256], "eos_token": "<|eot_id|>"
                                           },
+
+      "tokenizer_jamba.json": {"bos_id": 1, "bos_token": "<|startoftext|>",
+                               "eos_id": [519], "eos_token": "<|im_end|>"},
 
       "tokenizer_qw.json": {"bos_id": 151643, "bos_token": "<|endoftext|>",
                                          "eos_id": [151643, 151645],
