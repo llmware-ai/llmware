@@ -10177,6 +10177,17 @@ class GGUFGenerativeModel(BaseModel):
             else:
                 raise LLMWareException(message="ModuleNotFound error: could not find location of custom lib")
 
+            # for windows cuda, ensure that cuda paths can be found
+            # mirrors standard in main default path
+            if sys.platform == "win32" and sys.version_info >= (3, 8):
+                os.add_dll_directory(str(custom_path))
+
+                if "CUDA_PATH" in os.environ:
+                    os.add_dll_directory(os.path.join(os.environ["CUDA_PATH"], "bin"))
+                    os.add_dll_directory(os.path.join(os.environ["CUDA_PATH"], "lib"))
+
+                cdll_args["winmode"] = ctypes.RTLD_GLOBAL
+
         else:
 
             _base_path = os.path.join(LLMWareConfig.get_config("shared_lib_path"), "gguf")
@@ -10242,7 +10253,6 @@ class GGUFGenerativeModel(BaseModel):
             if sys.platform == "win32" and sys.version_info >= (3, 8):
                 os.add_dll_directory(str(_base_path))
 
-                # need to review
                 if "CUDA_PATH" in os.environ:
                     os.add_dll_directory(os.path.join(os.environ["CUDA_PATH"], "bin"))
                     os.add_dll_directory(os.path.join(os.environ["CUDA_PATH"], "lib"))

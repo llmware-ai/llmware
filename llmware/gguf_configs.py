@@ -990,7 +990,7 @@ class GGUFConfigs:
                   "windows": "llama.dll",
 
                   # alt/og: libllama_win_cuda.dll
-                  "windows_cuda": "libllama_win.dll",
+                  "windows_cuda": "llama.dll",
                   # "mac_metal": "libllama_mac_metal.dylib",
                   # "mac_metal_no_acc": "libllama_mac_metal_no_acc.dylib",
                   "mac_metal": "libllama.dylib",
