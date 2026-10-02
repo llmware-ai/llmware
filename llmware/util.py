@@ -499,7 +499,7 @@ class Utilities:
                       "meantime" ,"meanwhile" ,"merely" ,"mg" ,"might","miss", "ml" ,"more" ,"moreover",
                       "most" ,"mostly" ,"mr" ,"mr." ,"mrs" ,"mrs." ,"ms", "ms." ,"much" ,"mug","must" ,"my" ,"myself",
                       "n" ,"na" ,"name" ,"namely" ,"nay" ,"nd" ,"near" ,"nearly" ,"necessarily" ,"necessary" ,"need"
-                      ,"needs", "neither" ,"never""nevertheless" ,"new" ,"next" ,"nine" ,"ninety" ,"no" ,"nobody",
+                      ,"needs", "neither" ,"never" ,"nevertheless" ,"new" ,"next" ,"nine" ,"ninety" ,"no" ,"nobody",
                       "non" ,"none","nonetheless","noone" ,"nor" ,"normally" ,"nos" ,"not" ,"note" ,"noted" ,
                       "nothing" ,"now" ,"nowhere" ,"o" ,"obtain","obtained", "obviously" ,"of" ,"off" ,"often",
                       "oh" ,"ok" ,"okay" ,"old" ,"omit" ,"omitted" ,"on" ,"once" ,"one","ones","only" ,"onto" ,"or",
