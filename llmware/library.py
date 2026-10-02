@@ -135,13 +135,27 @@ class Library:
         # apply safety check to library_name path
         library_name = Utilities().secure_filename(library_name)
 
+        # safety check for name based on db - moved before check_if_library_exists (fixes #1155):
+        # previously this ran *after* the existence check, so a name remapped to a different
+        # db-safe name on a later call would fail the existence check under the original name
+        # while the library was already registered under the remapped one.
+        safe_name = CollectionRetrieval(library_name,account_name=self.account_name).safe_name(library_name)
+
+        if safe_name != library_name:
+            logger.warning(f"Library - create_new_library - selected library name is being changed for safety on selected resource - "
+                           f"{safe_name}")
+
+            if isinstance(safe_name,str):
+                library_name = safe_name
+            else:
+                raise LLMWareException(message=f"Library - create_new_library - selected name is not "
+                                               f"valid library name - {library_name}")
+
         library_exists = self.check_if_library_exists(library_name,account_name)
 
         if library_exists:
-
             # do not create
             logger.info(f"Library - create_new_library - library already exists - returning library - {library_name} - {account_name}")
-
             return self.load_library(library_name, account_name)
 
         # assign self.library_name to the 'safe' library_name
@@ -151,22 +165,6 @@ class Library:
         account_path = os.path.join(LLMWareConfig.get_library_path(), account_name)
         if not os.path.exists(account_path):
             os.makedirs(account_path,exist_ok=True)
-
-        # safety check for name based on db
-        safe_name = CollectionRetrieval(library_name,account_name=self.account_name).safe_name(library_name)
-
-        if safe_name != library_name:
-
-            logger.warning(f"Library - create_new_library - selected library name is being changed for safety on selected resource - "
-                           f"{safe_name}")
-
-            if isinstance(safe_name,str):
-                library_name = safe_name
-                self.library_name = safe_name
-
-            else:
-                raise LLMWareException(message=f"Library - create_new_library - selected name is not "
-                                               f"valid library name - {library_name}")
 
         self.library_main_path = os.path.join(LLMWareConfig.get_library_path(), account_name, library_name)
 
