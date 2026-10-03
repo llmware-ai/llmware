@@ -1,0 +1,195 @@
+.hero {
+    width: 100%;
+    padding-top: 140px;
+    padding-bottom: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    font-family: var(--poppins);
+    position: relative;
+  
+    .main-txt {
+      margin-top: -40px;
+    }
+    .main-txt h1 {
+      text-align: center;
+      font-size: 60px;
+      font-weight: 600;
+    }
+    .main-txt h1 span {
+      background-color: var(--ui-blue);
+      padding: 8px 18px;
+      border-radius: 20px;
+      display: inline-block;
+      rotate: -4deg;
+    }
+    .create-btn {
+      padding: 20px 40px;
+      border: none;
+      background-color: var(--ui-dark-bg);
+      color: var(--ui-text-inverse);
+      font-size: 16px;
+      border-radius: 100px;
+      cursor: pointer;
+    }
+    //tabs
+    .head-container {
+      position: relative;
+    }
+    .tab01 {
+      position: absolute;
+      top: -80px;
+      left: -120px;
+      z-index: 10;
+    }
+    .tab02 {
+      position: absolute;
+      top: -84px;
+      right: -70px;
+      z-index: 10;
+    }
+    .tab03 {
+      position: absolute;
+      top: 10px;
+      left: 0px;
+      z-index: 10;
+    }
+    .tab04 {
+      position: absolute;
+      top: 0px;
+      right: 0px;
+      z-index: 10;
+    }
+    .tab img {
+      width: 140px;
+      height: 140px;
+    }
+  }
+  
+  @media (max-width: 950px) {
+    .hero {
+      justify-content: flex-start;
+      padding-top: 100px;
+      .main-txt h1 {
+        text-align: center;
+        font-size: 50px;
+        font-weight: 600;
+      }
+  
+      //tabs
+      .head-container {
+        position: relative;
+      }
+      .tab01 {
+        position: absolute;
+        top: -60px;
+        left: -60px;
+        z-index: 10;
+      }
+      .tab02 {
+        position: absolute;
+        top: -84px;
+        right: -70px;
+        z-index: 10;
+      }
+      .tab03 {
+        position: absolute;
+        top: 20px;
+        left: 0px;
+        z-index: 10;
+      }
+      .tab04 {
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        z-index: 10;
+      }
+      .tab img {
+        width: 110px;
+        height: 110px;
+      }
+      .create-btn {
+        padding: 20px 24px;
+      }
+    }
+  }
+  
+  @media (max-width: 720px) {
+    .hero {
+      min-height: none;
+      .main-txt h1 {
+        text-align: center;
+        font-size: 44px;
+        font-weight: 600;
+      }
+      .tab img {
+        width: 110px;
+        height: 110px;
+      }
+      .create-btn {
+        padding: 14px 20px;
+      }
+    }
+  }
+  
+  @media (max-width: 560px) {
+    .hero {
+      .main-txt h1 {
+        font-size: 8vw;
+        line-height: 3, 5rem;
+      }
+      .tab img {
+        width: 100px;
+        height: 100px;
+      }
+      .tab02 {
+        top: -70px;
+        right: -50px;
+      }
+      .create-btn {
+        padding: 14px 20px;
+        font-size: 14px;
+      }
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .hero {
+      padding-bottom: 60px;
+      .tab01 {
+        position: absolute;
+        top: -40px;
+        left: -40px;
+        z-index: 10;
+      }
+      .tab02 {
+        position: absolute;
+        top: -50px;
+        right: -30px;
+        z-index: 10;
+      }
+      .tab03 {
+        position: absolute;
+        top: 20px;
+        left: 10px;
+        z-index: 10;
+      }
+      .tab04 {
+        position: absolute;
+        top: 10px;
+        right: 0px;
+        z-index: 10;
+      }
+      .tab img {
+        width: 80px;
+        height: 80px;
+      }
+      .create-btn {
+        padding: 14px 20px;
+        font-size: 14px;
+      }
+    }
+  }
+  
