@@ -69,7 +69,38 @@ In this repository, we feature several 'end-to-end' examples that show how to us
     - Supports rapid development, testing and prototyping and flexibility of deployment models for wide range of RAG and Agent use cases  
 
 
-Check back often - we are updating these examples regularly - and many of these examples have companion videos as well.  
+### Optional market sentiment research
+
+[Adanos market sentiment](adanos_market_sentiment.py) fetches a dated snapshot
+and passes it as `add_context` to the existing `bling-phi-3-gguf` local model.
+It does not replace llmware's sentiment models or change core dependencies.
+Design discussion: [#1320](https://github.com/llmware-ai/llmware/discussions/1320).
+
+[Adanos](https://adanos.org/) is a commercial service with a free plan; the
+integration author represents Adanos. Source access, historical retention, and
+quotas differ by account plan. See the [API documentation](https://api.adanos.org/docs).
+Set `ADANOS_API_KEY` through your process environment or secret manager, never
+in this source file. Without a key the example skips API calls and model loading.
+With a key, first use may download the local model weights.
+
+```shell
+python solutions/use_cases/adanos_market_sentiment.py --source news_stocks --asset BRK --from 2026-10-01 --to 2026-10-02
+```
+
+Sources: `reddit_stocks`, `reddit_crypto`, `x_stocks`, `news_stocks`,
+`polymarket_stocks`. Only Reddit supports crypto; use `--asset BTC` there.
+News uses company keys such as `BRK`, not `BRK.B`. Dates are inclusive UTC
+`from`/`to`, not deprecated `days`. Choose a recent window covered by your plan.
+401/403/429, unavailable providers, invalid JSON and oversized responses remain
+errors, not neutral sentiment. Transport is capped at 32 KB and model context
+at 3,000 ASCII characters; narrow the dates rather than silently truncate data.
+
+The returned evidence retains source, dates and retrieval time. Historical
+aggregates fetched today are not evidence of past availability. Provider data
+and generated summaries need independent verification and are not investment
+advice. No trading, historical backtest, or storage workflow is added.
+
+Check back often - we are updating these examples regularly - and many of these examples have companion videos as well.
 
 
 ### **Let's get started!  🚀**
