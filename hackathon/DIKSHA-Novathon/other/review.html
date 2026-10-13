@@ -1,0 +1,414 @@
+<<<<<<< HEAD
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/logo1.png" type="image/png">
+    <title>Student Reviews</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .nav-items {
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .nav-items a {
+            margin: 0 1rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-items a:hover {
+            color: #6d28d9;
+        }
+
+        .navbar ul li:hover a {
+    background-color: #555;
+    transform: scale(1.2); /* Popup effect */
+}
+.circle {
+            height: 18px;
+            width: 18px;
+            border-radius: 24px;
+            background-color: #ff0000;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1000; /* Ensure the trail is above everything */
+            pointer-events: none; /* Prevent the circles from interfering with mouse events */
+        }
+
+.navbar ul li:hover::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    background-color: #00aced;
+    top: 100%;
+    left: 0;
+    transform: scaleX(1);
+    transition: all 0.3s ease;
+}
+
+.navbar ul li::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    background-color: transparent;
+    top: 100%;
+    left: 0;
+    transform: scaleX(0);
+    transition: all 0.3s ease;
+}
+
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .logo {
+            height: 40px;
+            width: auto;
+        }
+
+        .text-lg {
+            padding-left: 10px;
+        }
+
+        .bg-gradient-to-r {
+            background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%);
+        }
+
+        .rating-star {
+            color: #fbbf24;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+    <!-- 20 circle elements -->
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-4 nav-container">
+            <div class="flex items-center">
+                <a href="index.html"><img src="logo1.jpg" alt="Logo" class="logo"></a>
+                <a href="index.html"><div class="text-lg font-bold text-purple-800">
+                    Learnhike
+                </div></a>
+            </div>
+            <div class="nav-items">
+                <a href="index.html" class="text-gray-800 hover:text-purple-800">Home</a>
+                <a href="ride.html" class="text-gray-800 hover:text-purple-800">About</a>
+                <a href="serv.html" class="text-gray-800 hover:text-purple-800">Grading System</a>
+                <a href="about.html" class="text-gray-800 hover:text-purple-800">AI services</a>
+                <a href="review.html" class="text-gray-800 hover:text-purple-800">Reviews</a>
+                <a href="contactus.html" class="text-gray-800 hover:text-purple-800">Contact</a>
+            </div>
+            <div>
+                <button class="bg-purple-500 text-white px-4 py-2 rounded shadow hover:bg-purple-600" onclick="window.location.href='login.html'">Login</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-20">
+        <div class="container mx-auto text-center">
+            <h1 class="text-4xl font-bold mb-2">Student Reviews</h1>
+            <p class="text-lg mb-6">Read what  student have to say about our courses!</p>
+            <button id="reviewButton" class="bg-white text-purple-800 px-4 py-2 rounded shadow hover:bg-gray-200">Leave a Review</button>
+        </div>
+    </section>
+
+    
+
+   
+     <script>
+        const coords = { x: 0, y: 0 };
+        const circles = document.querySelectorAll(".circle");
+        
+        // Assign initial positions to the circles
+        circles.forEach(function (circle) {
+            circle.x = 0;
+            circle.y = 0;
+        });
+
+        window.addEventListener("mousemove", function (e) {
+            // Use pageX and pageY to account for scroll distance
+            coords.x = e.pageX;
+            coords.y = e.pageY;
+        });
+
+        function animateCircles() {
+            let x = coords.x;
+            let y = coords.y;
+
+            circles.forEach(function (circle, index) {
+                circle.style.left = x - 12 + "px";
+                circle.style.top = y - 12 + "px";
+                circle.style.scale = (circles.length - index) / circles.length;
+
+                circle.x = x;
+                circle.y = y;
+
+                const nextCircle = circles[index + 1] || circles[0];
+                x += (nextCircle.x - x) * 0.3;
+                y += (nextCircle.y - y) * 0.3;
+            });
+
+            requestAnimationFrame(animateCircles);
+        }
+
+        animateCircles();
+    </script>
+    
+       
+
+
+</body>
+
+=======
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/logo1.png" type="image/png">
+    <title>Student Reviews</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .nav-items {
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .nav-items a {
+            margin: 0 1rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-items a:hover {
+            color: #6d28d9;
+        }
+
+        .navbar ul li:hover a {
+    background-color: #555;
+    transform: scale(1.2); /* Popup effect */
+}
+.circle {
+            height: 18px;
+            width: 18px;
+            border-radius: 24px;
+            background-color: #ff0000;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1000; /* Ensure the trail is above everything */
+            pointer-events: none; /* Prevent the circles from interfering with mouse events */
+        }
+
+.navbar ul li:hover::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    background-color: #00aced;
+    top: 100%;
+    left: 0;
+    transform: scaleX(1);
+    transition: all 0.3s ease;
+}
+
+.navbar ul li::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    background-color: transparent;
+    top: 100%;
+    left: 0;
+    transform: scaleX(0);
+    transition: all 0.3s ease;
+}
+
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .logo {
+            height: 40px;
+            width: auto;
+        }
+
+        .text-lg {
+            padding-left: 10px;
+        }
+
+        .bg-gradient-to-r {
+            background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%);
+        }
+
+        .rating-star {
+            color: #fbbf24;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+    <!-- 20 circle elements -->
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-4 nav-container">
+            <div class="flex items-center">
+                <a href="index.html"><img src="logo1.jpg" alt="Logo" class="logo"></a>
+                <a href="index.html"><div class="text-lg font-bold text-purple-800">
+                    Learnhike
+                </div></a>
+            </div>
+            <div class="nav-items">
+                <a href="index.html" class="text-gray-800 hover:text-purple-800">Home</a>
+                <a href="ride.html" class="text-gray-800 hover:text-purple-800">About</a>
+                <a href="serv.html" class="text-gray-800 hover:text-purple-800">Grading System</a>
+                <a href="about.html" class="text-gray-800 hover:text-purple-800">AI services</a>
+                <a href="review.html" class="text-gray-800 hover:text-purple-800">Reviews</a>
+                <a href="contactus.html" class="text-gray-800 hover:text-purple-800">Contact</a>
+            </div>
+            <div>
+                <button class="bg-purple-500 text-white px-4 py-2 rounded shadow hover:bg-purple-600" onclick="window.location.href='login.html'">Login</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-20">
+        <div class="container mx-auto text-center">
+            <h1 class="text-4xl font-bold mb-2">Student Reviews</h1>
+            <p class="text-lg mb-6">Read what  student have to say about our courses!</p>
+            <button id="reviewButton" class="bg-white text-purple-800 px-4 py-2 rounded shadow hover:bg-gray-200">Leave a Review</button>
+        </div>
+    </section>
+
+    
+
+   
+     <script>
+        const coords = { x: 0, y: 0 };
+        const circles = document.querySelectorAll(".circle");
+        
+        // Assign initial positions to the circles
+        circles.forEach(function (circle) {
+            circle.x = 0;
+            circle.y = 0;
+        });
+
+        window.addEventListener("mousemove", function (e) {
+            // Use pageX and pageY to account for scroll distance
+            coords.x = e.pageX;
+            coords.y = e.pageY;
+        });
+
+        function animateCircles() {
+            let x = coords.x;
+            let y = coords.y;
+
+            circles.forEach(function (circle, index) {
+                circle.style.left = x - 12 + "px";
+                circle.style.top = y - 12 + "px";
+                circle.style.scale = (circles.length - index) / circles.length;
+
+                circle.x = x;
+                circle.y = y;
+
+                const nextCircle = circles[index + 1] || circles[0];
+                x += (nextCircle.x - x) * 0.3;
+                y += (nextCircle.y - y) * 0.3;
+            });
+
+            requestAnimationFrame(animateCircles);
+        }
+
+        animateCircles();
+    </script>
+    
+       
+
+
+</body>
+
+>>>>>>> 680960f0 (commit)
+</html>

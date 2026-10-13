@@ -1,0 +1,33 @@
+{
+  "name": "scmp",
+  "version": "2.1.0",
+  "description": "safe, constant-time comparison of Buffers",
+  "main": "index.js",
+  "scripts": {
+    "pretest": "standard --verbose",
+    "test": "mocha",
+    "posttest": "node benchmark/benchmark.js && node benchmark/crypto-check.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/freewil/scmp.git"
+  },
+  "keywords": [
+    "safe-compare",
+    "compare",
+    "time-equivalent-comparison",
+    "time equivalent",
+    "constant-time",
+    "constant time"
+  ],
+  "author": "Sean Lavine",
+  "license": "BSD-3-Clause",
+  "readmeFilename": "README.md",
+  "devDependencies": {
+    "benchmark": "^2.1.4",
+    "mocha": "^6.2.0",
+    "safe-buffer": "^5.1.2",
+    "standard": "^14.3.1"
+  },
+  "dependencies": {}
+}

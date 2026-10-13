@@ -1,0 +1,20 @@
+{
+  "name": "muri",
+  "version": "1.3.0",
+  "description": "MongoDB URI parser",
+  "main": "index.js",
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": "git://github.com/aheckmann/muri.git",
+  "keywords": [
+    "mongodb",
+    "uri",
+    "parser"
+  ],
+  "author": "Aaron Heckmann <aaron.heckmann+github@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "1.21.5"
+  }
+}

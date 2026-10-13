@@ -1,0 +1,84 @@
+/* styles.css */
+.roboto-medium {
+    font-family: "Roboto", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+  }
+  .app {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+    font-family: ;
+  }
+  
+  .login-container {
+    width:950px;
+    height:525px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .left-section {
+    flex: 1;
+    padding: 30px;
+    border-right: 1px solid #ccc;
+    
+  }
+  
+  .right-section {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+  
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  label {
+    padding:5px;
+    display: block;
+    margin-bottom: 10px;
+  }
+  
+  input[type='email'],
+  input[type='tel'],
+  input[type='number'],
+  input[type='text'],
+  input[type='password']{
+    width: calc(100% - 20px);
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 18px;
+    outline: none;
+  }
+  
+  button {
+    background-color: #06BBCC;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  button:hover {
+    background-color: #0056b3;
+  }
+  
+  h2 {
+    margin: 12px;
+  }
+  
