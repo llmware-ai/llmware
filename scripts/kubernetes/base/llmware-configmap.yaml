@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llmware-config
+  namespace: llmware
+data:
+  # Read by llmware.configs.MongoConfig as the connection string for the
+  # collection database (see llmware/configs.py). Selecting mongo as the
+  # active backend itself is done in application code via
+  # LLMWareConfig.set_active_db("mongo"), not via an env var.
+  COLLECTION_DB_URI: "mongodb://mongodb.llmware.svc.cluster.local:27017"
