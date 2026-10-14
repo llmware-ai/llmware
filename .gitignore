@@ -7,6 +7,7 @@ dist/
 __pycache__/
 llmware.egg-info/
 venv/
+.venv/
 
 # Jekyll
 docs/_site/
@@ -17,3 +18,6 @@ docs/_site/
 
 # Testing
 .env
+
+# Working drafts
+discussion-draft-*.md

@@ -81,7 +81,7 @@ class LLMWareConfig:
            "tmp_path_name": "tmp" + os.sep}
 
     # note: two alias for postgres vector db - "postgres" and "pg_vector" are the same
-    _supported = {"vector_db": ["chromadb", "neo4j", "milvus", "pg_vector", "postgres", "redis", "pinecone", "faiss", "qdrant", "mongo_atlas","lancedb"],
+    _supported = {"vector_db": ["chromadb", "neo4j", "milvus", "pg_vector", "postgres", "redis", "valkey", "pinecone", "faiss", "qdrant", "mongo_atlas","lancedb"],
                   "collection_db": ["mongo", "postgres", "sqlite"],
                   "table_db": ["postgres", "sqlite"]}
 
@@ -481,6 +481,7 @@ class VectorDBRegistry:
                       "postgres": {"module": "llmware.embeddings", "class": "EmbeddingPGVector"},
                       "pg_vector": {"module": "llmware.embeddings", "class": "EmbeddingPGVector"},
                       "redis": {"module": "llmware.embeddings", "class": "EmbeddingRedis"},
+                      "valkey": {"module": "llmware.embeddings", "class": "EmbeddingValkey"},
                       "neo4j": {"module": "llmware.embeddings", "class": "EmbeddingNeo4j"},
                       "lancedb": {"module": "llmware.embeddings", "class": "EmbeddingLanceDB"},
                       "faiss": {"module": "llmware.embeddings", "class": "EmbeddingFAISS"},
@@ -719,6 +720,40 @@ class RedisConfig:
              "user_name": "",
              "pw": "",
              "db_name": ""}
+
+    @classmethod
+    def get_config(cls, name):
+        if name in cls._conf:
+            return cls._conf[name]
+        raise ConfigKeyException(name)
+
+    @classmethod
+    def set_config(cls, name, value):
+        cls._conf[name] = value
+
+
+class ValkeyConfig:
+
+    """Configuration object for Valkey (using Valkey GLIDE sync client).
+
+    Valkey is an open-source, high-performance key/value datastore (BSD-3-Clause) that supports
+    vector search via the valkey-search module. This config is used by EmbeddingValkey.
+
+    Scope:
+        - Standalone Valkey only. Cluster-mode Valkey is not supported in v1;
+          use a non-clustered endpoint (single primary, optional replicas).
+
+    Requires:
+        - Valkey server >= 9.1 with valkey-search module >= 1.2.0
+        - Python client: valkey-glide-sync (pip install valkey-glide-sync)
+    """
+
+    _conf = {"host": os.environ.get("USER_MANAGED_VALKEY_HOST", "localhost"),
+             "port": int(os.environ.get("USER_MANAGED_VALKEY_PORT", 6379)),
+             "user_name": os.environ.get("USER_MANAGED_VALKEY_USER", ""),
+             "pw": os.environ.get("USER_MANAGED_VALKEY_PW", ""),
+             "use_tls": os.environ.get("USER_MANAGED_VALKEY_USE_TLS", "").lower() in ("true", "1", "yes"),
+             "request_timeout_ms": int(os.environ.get("USER_MANAGED_VALKEY_REQUEST_TIMEOUT_MS", 5000))}
 
     @classmethod
     def get_config(cls, name):
