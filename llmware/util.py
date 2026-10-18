@@ -820,7 +820,7 @@ class Utilities:
                     match_found += 1
 
                     if len(key_terms) > 1:
-                        if len(text_tokens) > (j + len(key_terms)):
+                        if len(text_tokens) >= (j + len(key_terms)):
                             for x in range(1,len(key_terms)):
                                 if text_tokens[j+x].lower() == key_terms[x].lower():
                                     match_found += 1
