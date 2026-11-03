@@ -1209,22 +1209,30 @@ class Library:
 
     def expand_text_result_before(self, block, window_size=400):
 
-        """ Expands text result before. Duplicate of Query method - added to Library class for direct access and
-        convenience in certain use cases."""
+        """Collect preceding whole blocks in document order until window_size
+        characters are reached, stopping at a missing block or document start.
+        The anchor block is not included. Empty text still advances traversal.
+        """
 
         block_id = block["block_ID"] -1
         doc_id = block["doc_ID"]
 
-        before_text = ""
+        text_length = 0
         pre_blocks = []
 
-        while len(before_text) < window_size and block_id >= 0:
+        while text_length < window_size and block_id >= 0:
 
             before_block = self.block_lookup(block_id, doc_id)
 
-            if before_block:
-                before_text += before_block["text"]
-                pre_blocks.append(before_block)
+            if not before_block:
+                break
+
+            text_length += len(before_block["text"])
+            pre_blocks.append(before_block)
+            block_id -= 1
+
+        pre_blocks.reverse()
+        before_text = "".join(entry["text"] for entry in pre_blocks)
 
         output = {"expanded_text": before_text, "results": pre_blocks}
 
