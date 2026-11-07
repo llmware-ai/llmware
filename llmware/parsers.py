@@ -3544,6 +3544,7 @@ class Parser:
                             new_block.update({"block_ID": new_block_id})
                             new_block.update({"content_type": "text"})
                             new_block.update({"embedding_flags": {}})
+                            new_block.update({"text": text_chunk})
                             new_block.update({"text_search": text_chunk})
 
                             #   writes a special entry in 'special_field1' of the database
