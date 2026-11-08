@@ -1221,11 +1221,15 @@ class Library:
         while len(before_text) < window_size and block_id >= 0:
 
             before_block = self.block_lookup(block_id, doc_id)
+            if not before_block:
+                break
 
-            if before_block:
-                before_text += before_block["text"]
-                pre_blocks.append(before_block)
+            before_text += before_block["text"]
+            pre_blocks.append(before_block)
+            block_id -= 1
 
+        pre_blocks.reverse()
+        before_text = "".join(block["text"] for block in pre_blocks)
         output = {"expanded_text": before_text, "results": pre_blocks}
 
         return output
